@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/env";
 
 export type HomepageSettingsRow = {
@@ -16,7 +16,7 @@ export type HomepageSettingsRow = {
 
 export async function getHomepageSettings(): Promise<HomepageSettingsRow | null> {
   if (!isSupabaseConfigured()) return null;
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) return null;
 
   const { data } = await supabase.from("homepage_settings").select("*").eq("id", 1).maybeSingle();
@@ -51,7 +51,7 @@ export type ContactPopupPublic = {
 
 export async function getContactPopupSettings(): Promise<ContactPopupPublic | null> {
   if (!isSupabaseConfigured()) return null;
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) return null;
 
   const { data } = await supabase
@@ -94,7 +94,7 @@ export type FilterServiceRow = {
 
 export async function getPublicFilterCountries(): Promise<FilterCountryRow[]> {
   if (!isSupabaseConfigured()) return [];
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) return [];
 
   const { data } = await supabase
@@ -108,7 +108,7 @@ export async function getPublicFilterCountries(): Promise<FilterCountryRow[]> {
 
 export async function getPublicFilterServiceTypes(): Promise<FilterServiceRow[]> {
   if (!isSupabaseConfigured()) return [];
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) return [];
 
   const { data } = await supabase

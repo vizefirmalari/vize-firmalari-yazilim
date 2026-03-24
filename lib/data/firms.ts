@@ -1,5 +1,5 @@
 import type { FirmFilters, FirmRow, FirmSort } from "@/lib/types/firm";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/env";
 
 const MOCK_FIRMS: FirmRow[] = [
@@ -121,7 +121,7 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
     return applyFilters(MOCK_FIRMS, filters);
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) {
     return applyFilters(MOCK_FIRMS, filters);
   }
@@ -181,7 +181,7 @@ export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {
     return MOCK_FIRMS.find((f) => f.slug === slug) ?? null;
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) {
     return MOCK_FIRMS.find((f) => f.slug === slug) ?? null;
   }
@@ -206,7 +206,7 @@ export async function getAllFirmSlugs(): Promise<string[]> {
     return MOCK_FIRMS.map((f) => f.slug);
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) {
     return MOCK_FIRMS.map((f) => f.slug);
   }
