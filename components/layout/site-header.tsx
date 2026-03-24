@@ -21,20 +21,24 @@ export function SiteHeader({
       <div className="container-shell flex min-h-[5.25rem] items-center gap-4 py-3">
         <Link
           href="/"
-          className="group flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 focus-visible:ring-offset-2"
+          aria-label="Vize Firmaları — Ana sayfa"
+          className="group flex min-w-0 shrink-0 items-center gap-3 sm:gap-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 focus-visible:ring-offset-2"
         >
           <Image
             src="/logo.png"
             alt=""
-            width={220}
-            height={66}
+            width={48}
+            height={48}
             priority
             aria-hidden
-            className="h-12 w-auto shrink-0 object-contain object-left transition-transform duration-200 group-hover:scale-[1.02] sm:h-14"
+            className="h-11 w-11 shrink-0 object-contain transition-transform duration-200 ease-out group-hover:scale-[1.03] sm:h-12 sm:w-12"
           />
-          <span className="min-w-0 bg-gradient-to-br from-primary to-secondary bg-clip-text font-black leading-[1.1] tracking-tight text-transparent sm:leading-none">
-            <span className="block text-lg sm:text-xl md:text-2xl">
-              Vize Firmaları
+          <span className="flex min-w-0 items-baseline gap-x-1.5 leading-none">
+            <span className="bg-linear-to-br from-primary via-primary to-secondary bg-clip-text text-[1.125rem] font-bold tracking-tight text-transparent sm:text-2xl">
+              Vize
+            </span>
+            <span className="text-[1.0625rem] font-semibold tracking-tight text-primary/88 sm:text-[1.375rem]">
+              Firmaları
             </span>
           </span>
         </Link>
