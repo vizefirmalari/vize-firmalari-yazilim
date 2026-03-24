@@ -16,7 +16,7 @@ type Props = {
 };
 
 export function GoogleSignInButton({
-  redirectAfter = "/",
+  redirectAfter = "/hesabim",
   disabled,
   onError,
   label = "Google ile devam et",
@@ -38,25 +38,23 @@ export function GoogleSignInButton({
       return;
     }
 
+    const redirectTo = getAuthCallbackUrl(redirectAfter);
+
     setBusy(true);
     let willRedirect = false;
     try {
-      /**
-       * PKCE akışında bazı ortamlarda kütüphanenin otomatik `location.assign` çağrısı
-       * tetiklenmeyebiliyor. `skipBrowserRedirect` + elle yönlendirme daha güvenilir.
-       */
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: getAuthCallbackUrl(redirectAfter),
-          skipBrowserRedirect: true,
-          queryParams: {
-            prompt: "select_account",
-          },
+          redirectTo,
+          queryParams: { prompt: "select_account" },
         },
       });
 
       if (error) {
+        if (process.env.NODE_ENV === "development") {
+          console.error("[GoogleSignIn] signInWithOAuth:", error.message);
+        }
         toast.error(error.message);
         onError?.(error.message);
         return;
@@ -68,13 +66,15 @@ export function GoogleSignInButton({
         return;
       }
 
-      const msg =
-        "Google giriş adresi alınamadı. Supabase’de Google sağlayıcısı ve Redirect URL’lerini kontrol edin.";
+      const msg = "Google giriş URL’si alınamadı.";
       toast.error(msg);
       onError?.(msg);
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : "Google ile giriş başlatılamadı.";
+      if (process.env.NODE_ENV === "development") {
+        console.error("[GoogleSignIn]", e);
+      }
       toast.error(msg);
       onError?.(msg);
     } finally {

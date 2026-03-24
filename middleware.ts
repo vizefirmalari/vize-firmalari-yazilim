@@ -1,34 +1,44 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+function withNoStore(res: NextResponse) {
+  res.headers.set("Cache-Control", "no-store, must-revalidate");
+  return res;
+}
+
+/**
+ * Tüm sayfalarda Supabase oturumunu yeniler; çerezler request/response ile senkron kalır.
+ * /admin/* için ek olarak admin rolü kontrolü.
+ */
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const pathname = request.nextUrl.pathname;
 
-  if (!url || !key) {
-    if (request.nextUrl.pathname.startsWith("/admin")) {
+  if (!supabaseUrl || !supabaseKey) {
+    if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
       return NextResponse.redirect(
         new URL("/admin/login?error=config", request.url)
       );
     }
-    return response;
+    return withNoStore(response);
   }
 
-  const supabase = createServerClient(url, key, {
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value)
-        );
+        cookiesToSet.forEach(({ name, value }) => {
+          request.cookies.set(name, value);
+        });
         response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
-        );
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
       },
     },
   });
@@ -37,9 +47,8 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
   if (!pathname.startsWith("/admin")) {
-    return response;
+    return withNoStore(response);
   }
 
   if (pathname.startsWith("/admin/login")) {
@@ -50,14 +59,18 @@ export async function middleware(request: NextRequest) {
         .eq("id", user.id)
         .maybeSingle();
       if (profile?.role === "admin") {
-        return NextResponse.redirect(new URL("/admin", request.url));
+        return withNoStore(
+          NextResponse.redirect(new URL("/admin", request.url))
+        );
       }
     }
-    return response;
+    return withNoStore(response);
   }
 
   if (!user) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    return withNoStore(
+      NextResponse.redirect(new URL("/admin/login", request.url))
+    );
   }
 
   const { data: profile } = await supabase
@@ -67,14 +80,20 @@ export async function middleware(request: NextRequest) {
     .maybeSingle();
 
   if (profile?.role !== "admin") {
-    return NextResponse.redirect(
-      new URL("/admin/login?error=forbidden", request.url)
+    return withNoStore(
+      NextResponse.redirect(new URL("/admin/login?error=forbidden", request.url))
     );
   }
 
-  return response;
+  return withNoStore(response);
 }
 
 export const config = {
-  matcher: ["/admin", "/admin/:path*"],
+  matcher: [
+    /*
+     * Oturum çerezlerinin güncel kalması için uygulama rotalarının çoğu.
+     * Hariç: Next statik/image, favicon, yaygın statik uzantılar.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|icon\\.jpg|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 };
