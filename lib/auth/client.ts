@@ -16,3 +16,13 @@ export function getAuthCallbackUrl(nextPath = "/"): string {
   const path = nextPath.startsWith("/") ? nextPath : `/${nextPath}`;
   return `${origin}/auth/callback?next=${encodeURIComponent(path)}`;
 }
+
+/** Açık yönlendirme önlemi: yalnızca kök-relative tek / ile başlayan yollar */
+export function safeAuthRedirectPath(
+  next: string | null | undefined,
+  fallback = "/hesabim"
+): string {
+  if (!next || typeof next !== "string") return fallback;
+  if (!next.startsWith("/") || next.startsWith("//")) return fallback;
+  return next;
+}

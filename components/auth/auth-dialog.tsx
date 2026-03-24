@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 
-import { getAuthCallbackUrl } from "@/lib/auth/client";
+import { getAuthCallbackUrl, safeAuthRedirectPath } from "@/lib/auth/client";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -100,7 +100,7 @@ function AuthDialogBody({
   const router = useRouter();
   const searchParams = useSearchParams();
   const err = searchParams.get("error");
-  const next = searchParams.get("next") ?? "/";
+  const next = safeAuthRedirectPath(searchParams.get("next"), "/hesabim");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -145,7 +145,7 @@ function AuthDialogBody({
     }
 
     onClose();
-    router.replace(next.startsWith("/") ? next : "/");
+    router.replace(next);
     router.refresh();
   }
 
@@ -171,7 +171,7 @@ function AuthDialogBody({
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: getAuthCallbackUrl("/"),
+        emailRedirectTo: getAuthCallbackUrl("/hesabim"),
       },
     });
 
@@ -292,7 +292,7 @@ function AuthDialogBody({
     );
   }
 
-  const redirectAfter = next.startsWith("/") ? next : "/";
+  const redirectAfter = next;
 
   return (
     <div className="space-y-6">

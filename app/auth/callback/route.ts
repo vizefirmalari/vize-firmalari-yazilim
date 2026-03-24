@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { safeAuthRedirectPath } from "@/lib/auth/client";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
@@ -9,8 +10,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  let next = searchParams.get("next") ?? "/";
-  if (!next.startsWith("/")) next = "/";
+  let next = safeAuthRedirectPath(searchParams.get("next"), "/hesabim");
 
   if (code) {
     const supabase = await createSupabaseServerClient();

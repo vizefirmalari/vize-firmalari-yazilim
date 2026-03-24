@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import { safeAuthRedirectPath } from "@/lib/auth/client";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -20,7 +21,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const err = searchParams.get("error");
-  const next = searchParams.get("next") ?? "/";
+  const next = safeAuthRedirectPath(searchParams.get("next"), "/hesabim");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,7 +57,7 @@ export function LoginForm() {
       return;
     }
 
-    router.replace(next.startsWith("/") ? next : "/");
+    router.replace(next);
     router.refresh();
   }
 
@@ -78,7 +79,7 @@ export function LoginForm() {
 
       <div className="mt-8 space-y-3">
         <GoogleSignInButton
-          redirectAfter={next.startsWith("/") ? next : "/"}
+          redirectAfter={next}
           disabled={loading}
           onError={setMessage}
         />

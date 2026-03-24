@@ -45,7 +45,7 @@ export function RegisterForm() {
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: getAuthCallbackUrl("/"),
+        emailRedirectTo: getAuthCallbackUrl("/hesabim"),
       },
     });
 
