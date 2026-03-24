@@ -1,8 +1,11 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { isSupabaseConfigured } from "@/lib/env";
+import { useState } from "react";
+import { toast } from "sonner";
+
 import { getAuthCallbackUrl } from "@/lib/auth/client";
+import { isSupabaseConfigured } from "@/lib/env";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Props = {
   redirectAfter?: string;
@@ -18,38 +21,78 @@ export function GoogleSignInButton({
   onError,
   label = "Google ile devam et",
 }: Props) {
+  const [busy, setBusy] = useState(false);
+
   async function handleGoogle() {
     if (!isSupabaseConfigured()) {
-      onError?.("Supabase yapılandırması eksik.");
+      const msg = "Supabase yapılandırması eksik.";
+      toast.error(msg);
+      onError?.(msg);
       return;
     }
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
-      onError?.("Oturum başlatılamadı.");
+      const msg = "Oturum başlatılamadı.";
+      toast.error(msg);
+      onError?.(msg);
       return;
     }
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: getAuthCallbackUrl(redirectAfter),
-      },
-    });
+    setBusy(true);
+    let willRedirect = false;
+    try {
+      /**
+       * PKCE akışında bazı ortamlarda kütüphanenin otomatik `location.assign` çağrısı
+       * tetiklenmeyebiliyor. `skipBrowserRedirect` + elle yönlendirme daha güvenilir.
+       */
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: getAuthCallbackUrl(redirectAfter),
+          skipBrowserRedirect: true,
+          queryParams: {
+            prompt: "select_account",
+          },
+        },
+      });
 
-    if (error) {
-      onError?.(error.message);
+      if (error) {
+        toast.error(error.message);
+        onError?.(error.message);
+        return;
+      }
+
+      if (data.url) {
+        willRedirect = true;
+        window.location.assign(data.url);
+        return;
+      }
+
+      const msg =
+        "Google giriş adresi alınamadı. Supabase’de Google sağlayıcısı ve Redirect URL’lerini kontrol edin.";
+      toast.error(msg);
+      onError?.(msg);
+    } catch (e) {
+      const msg =
+        e instanceof Error ? e.message : "Google ile giriş başlatılamadı.";
+      toast.error(msg);
+      onError?.(msg);
+    } finally {
+      if (!willRedirect) setBusy(false);
     }
   }
+
+  const loading = disabled || busy;
 
   return (
     <button
       type="button"
-      disabled={disabled}
+      disabled={loading}
       onClick={() => void handleGoogle()}
       className="flex w-full items-center justify-center gap-3 rounded-xl border border-primary/15 bg-white py-3 text-sm font-semibold text-foreground shadow-sm transition hover:bg-[#F7F9FB] disabled:opacity-60"
     >
       <GoogleGlyph className="h-5 w-5 shrink-0" aria-hidden />
-      {label}
+      {busy ? "Yönlendiriliyor…" : label}
     </button>
   );
 }
