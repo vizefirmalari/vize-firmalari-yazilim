@@ -38,6 +38,14 @@ export default async function HesabimPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (process.env.NODE_ENV === "development") {
+    console.log(
+      "[hesabim] getUser:",
+      user?.id ?? "null",
+      user ? "→ panel" : "→ redirect login"
+    );
+  }
+
   if (!user) {
     redirect(loginRedirect);
   }

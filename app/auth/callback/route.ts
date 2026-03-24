@@ -4,13 +4,11 @@ import { type NextRequest, NextResponse } from "next/server";
 import { safeAuthRedirectPath } from "@/lib/auth/client";
 
 /**
- * OAuth PKCE / e-posta doğrulama / şifre sıfırlama kodu → oturum çerezleri.
- *
- * Kritik: Çerezler, dönülecek redirect `NextResponse` üzerine yazılmalı.
- * `cookies()` + ayrı `NextResponse.redirect()` kullanımında Set-Cookie sık sık kaybolur.
+ * PKCE kodu → oturum çerezleri. Çerezler `successResponse` üzerine yazılır (redirect ile birlikte gider).
  */
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
+  const host = request.headers.get("host") ?? requestUrl.host;
   const origin = requestUrl.origin;
   const code = requestUrl.searchParams.get("code");
   const nextPath = safeAuthRedirectPath(
@@ -24,7 +22,14 @@ export async function GET(request: NextRequest) {
   );
   errorRedirect.headers.set("Cache-Control", "no-store, must-revalidate");
 
+  if (process.env.NODE_ENV === "development") {
+    console.log("[auth/callback] host=", host, "origin=", origin, "next=", nextPath);
+  }
+
   if (!code) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[auth/callback] code yok → auth-code-error");
+    }
     return errorRedirect;
   }
 
@@ -37,12 +42,14 @@ export async function GET(request: NextRequest) {
   const successResponse = NextResponse.redirect(redirectTarget);
   successResponse.headers.set("Cache-Control", "no-store, must-revalidate");
 
+  let cookiesWritten = 0;
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+        cookiesWritten += cookiesToSet.length;
         cookiesToSet.forEach(({ name, value, options }) => {
           successResponse.cookies.set(name, value, options);
         });
@@ -62,7 +69,9 @@ export async function GET(request: NextRequest) {
   if (process.env.NODE_ENV === "development") {
     const { data: userData } = await supabase.auth.getUser();
     console.log(
-      "[auth/callback] session OK, user:",
+      "[auth/callback] OK cookies set count=",
+      cookiesWritten,
+      "user=",
       userData.user?.id ?? "(none)"
     );
   }

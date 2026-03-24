@@ -47,6 +47,21 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (
+    process.env.NODE_ENV === "development" &&
+    (pathname === "/hesabim" || pathname === "/auth/callback")
+  ) {
+    const h = request.headers.get("host");
+    console.log(
+      "[middleware]",
+      pathname,
+      "host=",
+      h,
+      "user=",
+      user?.id ?? "null"
+    );
+  }
+
   if (!pathname.startsWith("/admin")) {
     return withNoStore(response);
   }

@@ -12,24 +12,19 @@ export function getBrowserOrigin(): string {
 }
 
 /**
- * OAuth `redirectTo` için tam callback URL’si.
- * - Lokalhost: tarayıcı kökü (port doğru kalır, örn. :3001).
- * - Üretim: `NEXT_PUBLIC_SITE_URL` varsa o (örn. https://www.vizefirmalari.com), yoksa `window.location.origin`.
+ * OAuth `redirectTo` — her zaman **aktif sekmenin kökü** (`window.location.origin`).
+ * Böylece www / apex / port çerez alanı ile callback aynı host’ta kalır.
+ * Supabase Dashboard’da hem www hem apex için `/auth/callback` izinleri ekleyin.
+ *
+ * Sunucu tarafında (e-posta şablonları vb.) `NEXT_PUBLIC_SITE_URL` kullanılır.
  */
 export function getAuthCallbackUrl(nextPath = "/"): string {
   const path = nextPath.startsWith("/") ? nextPath : `/${nextPath}`;
-  const envSite = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-
-  let origin: string;
-  if (typeof window !== "undefined") {
-    const h = window.location.hostname;
-    const loopback =
-      h === "localhost" || h === "127.0.0.1" || h === "[::1]";
-    origin = loopback ? window.location.origin : envSite || window.location.origin;
-  } else {
-    origin = envSite || "http://localhost:3000";
-  }
-
+  const origin =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+        "http://localhost:3000";
   return `${origin}/auth/callback?next=${encodeURIComponent(path)}`;
 }
 
