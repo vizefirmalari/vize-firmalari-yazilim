@@ -69,16 +69,22 @@ export function SiteHeader({
           />
         </form>
 
-        <nav className="ml-auto flex items-center gap-2">
+        <nav className="ml-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
           <Link
             href="/giris"
-            className="rounded-xl px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10"
+            className="rounded-xl px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 sm:px-4"
           >
-            Giriş Yap
+            Giriş yap
+          </Link>
+          <Link
+            href="/kayit"
+            className="rounded-xl px-3 py-2 text-sm font-semibold text-secondary hover:bg-secondary/10 sm:px-4"
+          >
+            Kayıt ol
           </Link>
           <Link
             href="/firma-ekle"
-            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-primary shadow-sm hover:brightness-95"
+            className="rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-primary shadow-sm hover:brightness-95 sm:px-4"
           >
             Firma Ekle
           </Link>
