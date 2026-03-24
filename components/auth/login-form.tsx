@@ -65,7 +65,7 @@ export function LoginForm() {
       <h1 className="text-2xl font-bold text-primary">Giriş yap</h1>
       <p className={`${authMutedClass} mt-2`}>
         Hesabınız yok mu?{" "}
-        <Link href="/kayit" className={authLinkClass}>
+        <Link href="/?auth=register" className={authLinkClass}>
           Kayıt ol
         </Link>
       </p>
@@ -112,7 +112,7 @@ export function LoginForm() {
               Şifre
             </label>
             <Link
-              href="/sifre-unuttum"
+              href="/?auth=forgot"
               className="text-xs font-semibold text-secondary hover:underline"
             >
               Şifremi unuttum

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { AuthModalProvider } from "@/components/auth/auth-modal-context";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { SITE_FAVICON_URL } from "@/lib/constants";
 import { getSiteUrl } from "@/lib/env";
 
@@ -39,7 +41,10 @@ export default function RootLayout({
       <body
         className={`${plusJakarta.className} min-h-full flex flex-col bg-[#F7F9FB] text-[#1A1A1A]`}
       >
-        {children}
+        <AuthModalProvider>
+          {children}
+          <AuthShell />
+        </AuthModalProvider>
         <Toaster richColors position="top-right" />
       </body>
     </html>

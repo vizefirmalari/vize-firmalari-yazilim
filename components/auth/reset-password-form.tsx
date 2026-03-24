@@ -104,13 +104,13 @@ export function ResetPasswordForm() {
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
-            href="/sifre-unuttum"
+            href="/?auth=forgot"
             className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#082f49]"
           >
             Tekrar dene
           </Link>
           <Link
-            href="/giris"
+            href="/?auth=login"
             className="rounded-xl border border-border px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/5"
           >
             Giriş
@@ -126,7 +126,7 @@ export function ResetPasswordForm() {
         <h1 className="text-2xl font-bold text-primary">Şifreniz güncellendi</h1>
         <p className={`${authMutedClass} mt-3`}>Yeni şifrenizle giriş yapabilirsiniz.</p>
         <Link
-          href="/giris"
+          href="/?auth=login"
           className="mt-8 inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#082f49]"
         >
           Giriş yap

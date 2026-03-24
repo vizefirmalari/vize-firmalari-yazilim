@@ -8,12 +8,15 @@ type Props = {
   redirectAfter?: string;
   disabled?: boolean;
   onError?: (msg: string) => void;
+  /** Varsayılan: "Google ile devam et" */
+  label?: string;
 };
 
 export function GoogleSignInButton({
   redirectAfter = "/",
   disabled,
   onError,
+  label = "Google ile devam et",
 }: Props) {
   async function handleGoogle() {
     if (!isSupabaseConfigured()) {
@@ -46,7 +49,7 @@ export function GoogleSignInButton({
       className="flex w-full items-center justify-center gap-3 rounded-xl border border-primary/15 bg-white py-3 text-sm font-semibold text-foreground shadow-sm transition hover:bg-[#F7F9FB] disabled:opacity-60"
     >
       <GoogleGlyph className="h-5 w-5 shrink-0" aria-hidden />
-      Google ile devam et
+      {label}
     </button>
   );
 }

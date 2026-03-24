@@ -62,10 +62,10 @@ export function ForgotPasswordForm() {
           adresine gönderildi. Gelen kutunuzu ve spam klasörünü kontrol edin.
         </p>
         <Link
-          href="/giris"
+          href="/?auth=login"
           className="mt-8 inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#082f49]"
         >
-          Giriş sayfasına dön
+          Giriş yap
         </Link>
       </div>
     );
@@ -103,7 +103,7 @@ export function ForgotPasswordForm() {
       </form>
 
       <p className={`${authMutedClass} mt-8`}>
-        <Link href="/giris" className={authLinkClass}>
+        <Link href="/?auth=login" className={authLinkClass}>
           Girişe dön
         </Link>
       </p>

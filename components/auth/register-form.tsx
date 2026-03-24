@@ -45,7 +45,7 @@ export function RegisterForm() {
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: getAuthCallbackUrl("/giris"),
+        emailRedirectTo: getAuthCallbackUrl("/"),
       },
     });
 
@@ -68,10 +68,10 @@ export function RegisterForm() {
           giriş yapabilirsiniz.
         </p>
         <Link
-          href="/giris"
+          href="/?auth=login"
           className="mt-8 inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#082f49]"
         >
-          Giriş sayfasına git
+          Giriş yap
         </Link>
       </div>
     );
@@ -82,7 +82,7 @@ export function RegisterForm() {
       <h1 className="text-2xl font-bold text-primary">Kayıt ol</h1>
       <p className={`${authMutedClass} mt-2`}>
         Zaten hesabınız var mı?{" "}
-        <Link href="/giris" className={authLinkClass}>
+        <Link href="/?auth=login" className={authLinkClass}>
           Giriş yap
         </Link>
       </p>

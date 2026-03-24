@@ -22,10 +22,10 @@ export default function AuthCodeErrorPage() {
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
-              href="/giris"
+              href="/?auth=login"
               className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
             >
-              Giriş sayfası
+              Giriş yap
             </Link>
             <Link
               href="/"
