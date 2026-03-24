@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { SITE_FAVICON_URL } from "@/lib/constants";
 import { getSiteUrl } from "@/lib/env";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -13,6 +14,10 @@ const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  icons: {
+    icon: [{ url: SITE_FAVICON_URL, type: "image/png" }],
+    shortcut: SITE_FAVICON_URL,
+  },
   title: {
     default: "VizeFirmalari",
     template: "%s | VizeFirmalari",
