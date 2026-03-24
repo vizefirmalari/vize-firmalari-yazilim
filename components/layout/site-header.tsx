@@ -1,5 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
+
+import { SITE_HEADER_LOGO_URL } from "@/lib/constants";
 
 type SiteHeaderProps = {
   /** @deprecated `defaultQuery` ile aynı */
@@ -24,12 +25,15 @@ export function SiteHeader({
           aria-label="Vize Firmaları — Ana sayfa"
           className="group flex min-w-0 shrink-0 items-center gap-3 sm:gap-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 focus-visible:ring-offset-2"
         >
-          <Image
-            src="/logo.png"
+          {/* `next/image` + yerel /logo.png bazı ortamlarda `/_next/image` ile kırılıyor; CDN’den doğrudan yükleme */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={SITE_HEADER_LOGO_URL}
             alt=""
             width={48}
             height={48}
-            priority
+            fetchPriority="high"
+            decoding="async"
             aria-hidden
             className="h-11 w-11 shrink-0 object-contain transition-transform duration-200 ease-out group-hover:scale-[1.03] sm:h-12 sm:w-12"
           />
