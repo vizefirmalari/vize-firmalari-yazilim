@@ -1,23 +1,42 @@
+import Image from "next/image";
 import Link from "next/link";
 
 type SiteHeaderProps = {
+  /** @deprecated `defaultQuery` ile aynı */
+  query?: string;
   defaultQuery?: string;
   /** Arama gönderilirken mevcut filtreleri koru */
   hiddenParams?: Record<string, string>;
 };
 
 export function SiteHeader({
+  query,
   defaultQuery = "",
   hiddenParams = {},
 }: SiteHeaderProps) {
+  const searchValue = query ?? defaultQuery;
+
   return (
-    <header className="sticky top-0 z-50 border-b border-[#0B3C5D]/10 bg-[#F7F9FB]/95 shadow-sm backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 border-b border-border/70 bg-surface/90 backdrop-blur">
+      <div className="container-shell flex min-h-[5.25rem] items-center gap-4 py-3">
         <Link
           href="/"
-          className="shrink-0 text-lg font-bold tracking-tight text-[#0B3C5D]"
+          className="group flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 focus-visible:ring-offset-2"
         >
-          VizeFirmalari
+          <Image
+            src="/logo.png"
+            alt=""
+            width={220}
+            height={66}
+            priority
+            aria-hidden
+            className="h-12 w-auto shrink-0 object-contain object-left transition-transform duration-200 group-hover:scale-[1.02] sm:h-14"
+          />
+          <span className="min-w-0 bg-gradient-to-br from-primary to-secondary bg-clip-text font-black leading-[1.1] tracking-tight text-transparent sm:leading-none">
+            <span className="block text-lg sm:text-xl md:text-2xl">
+              Vize Firmaları
+            </span>
+          </span>
         </Link>
 
         <form
@@ -32,79 +51,50 @@ export function SiteHeader({
           <label htmlFor="header-search" className="sr-only">
             Ülke veya firma ara
           </label>
-          <div className="relative">
-            <span
-              className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[#0B3C5D]/50"
-              aria-hidden
-            >
-              <SearchIcon className="h-4 w-4" />
-            </span>
-            <input
-              id="header-search"
-              name="q"
-              type="search"
-              placeholder="Ülke veya firma ara"
-              defaultValue={defaultQuery}
-              className="w-full rounded-xl border border-[#0B3C5D]/10 bg-white py-2.5 pl-10 pr-4 text-sm text-[#1A1A1A] shadow-sm outline-none ring-[#328CC1]/40 transition placeholder:text-[#1A1A1A]/40 focus:border-[#328CC1] focus:ring-2"
-            />
-          </div>
+          <input
+            id="header-search"
+            name="q"
+            type="search"
+            defaultValue={searchValue}
+            placeholder="Ülke veya firma ara"
+            className="h-11 w-full rounded-xl border border-border bg-background px-4 text-sm text-foreground outline-none transition focus:border-secondary"
+          />
         </form>
 
-        <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+        <nav className="ml-auto flex items-center gap-2">
           <Link
             href="/giris"
-            className="rounded-xl px-3 py-2 text-sm font-medium text-[#0B3C5D] transition hover:bg-[#0B3C5D]/5"
+            className="rounded-xl px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10"
           >
             Giriş Yap
           </Link>
           <Link
             href="/firma-ekle"
-            className="rounded-xl bg-[#D9A441] px-4 py-2 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
+            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-primary shadow-sm hover:brightness-95"
           >
             Firma Ekle
           </Link>
-        </div>
+        </nav>
       </div>
 
-      <form action="/" method="get" className="border-t border-[#0B3C5D]/5 px-4 pb-3 md:hidden">
-        {Object.entries(hiddenParams).map(([name, value]) => (
-          <input key={name} type="hidden" name={name} value={value} />
-        ))}
-        <label htmlFor="header-search-mobile" className="sr-only">
-          Ülke veya firma ara
-        </label>
-        <div className="relative">
-          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[#0B3C5D]/50">
-            <SearchIcon className="h-4 w-4" />
-          </span>
+      <div className="container-shell pb-3 md:hidden">
+        <form action="/" method="get" role="search">
+          {Object.entries(hiddenParams).map(([name, value]) => (
+            <input key={name} type="hidden" name={name} value={value} />
+          ))}
+          <label htmlFor="header-search-mobile" className="sr-only">
+            Ülke veya firma ara
+          </label>
           <input
             id="header-search-mobile"
             name="q"
             type="search"
+            defaultValue={searchValue}
             placeholder="Ülke veya firma ara"
-            defaultValue={defaultQuery}
-            className="w-full rounded-xl border border-[#0B3C5D]/10 bg-white py-2.5 pl-10 pr-4 text-sm text-[#1A1A1A] shadow-sm outline-none ring-[#328CC1]/40 focus:border-[#328CC1] focus:ring-2"
+            className="h-11 w-full rounded-xl border border-border bg-background px-4 text-sm text-foreground outline-none transition focus:border-secondary"
           />
-        </div>
-      </form>
+        </form>
+      </div>
     </header>
-  );
-}
-
-function SearchIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <path
-        d="M16.5 16.5 21 21"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }

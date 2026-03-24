@@ -4,20 +4,30 @@ import { FirmsRealtime } from "@/components/home/firms-realtime";
 
 type FirmsSectionProps = {
   firms: FirmRow[];
+  sectionTitle?: string | null;
+  sectionSubtitle?: string | null;
 };
 
-export function FirmsSection({ firms }: FirmsSectionProps) {
+export function FirmsSection({
+  firms,
+  sectionTitle,
+  sectionSubtitle,
+}: FirmsSectionProps) {
+  const title =
+    sectionTitle?.trim() || "Öne Çıkan Vize Firmaları";
+  const subtitle =
+    sectionSubtitle?.trim() ||
+    "Güven endeksine göre sıralanmış, doğrulanmış danışmanlık firmaları";
+
   return (
     <section id="firmalar" className="scroll-mt-28">
       <FirmsRealtime />
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-[#0B3C5D]">
-            Öne Çıkan Vize Firmaları
+            {title}
           </h2>
-          <p className="mt-1 text-sm text-[#1A1A1A]/65">
-            Güven endeksine göre sıralanmış, doğrulanmış danışmanlık firmaları
-          </p>
+          <p className="mt-1 text-sm text-[#1A1A1A]/65">{subtitle}</p>
         </div>
       </div>
 

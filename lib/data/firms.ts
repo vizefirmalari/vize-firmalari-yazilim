@@ -8,6 +8,7 @@ const MOCK_FIRMS: FirmRow[] = [
     name: "Deneme 1",
     slug: "deneme-1",
     logo_url: null,
+    short_description: null,
     description:
       "Avrupa ve Schengen vize süreçlerinde deneyimli ekibiyle güvenilir danışmanlık sunan örnek bir firmadır.",
     trust_score: 85,
@@ -18,6 +19,7 @@ const MOCK_FIRMS: FirmRow[] = [
     email: "info@deneme1.example.com",
     website: "https://example.com",
     instagram: "https://instagram.com/vizefirmalari",
+    status: "published",
     created_at: new Date().toISOString(),
   },
   {
@@ -25,6 +27,7 @@ const MOCK_FIRMS: FirmRow[] = [
     name: "Deneme 2",
     slug: "deneme-2",
     logo_url: null,
+    short_description: null,
     description:
       "Kuzey Amerika oturum ve göç süreçlerinde uçtan uca destek sağlayan profesyonel bir danışmanlık firmasıdır.",
     trust_score: 72,
@@ -35,6 +38,7 @@ const MOCK_FIRMS: FirmRow[] = [
     email: "iletisim@deneme2.example.com",
     website: "https://example.org",
     instagram: null,
+    status: "published",
     created_at: new Date().toISOString(),
   },
 ];
@@ -122,7 +126,7 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
     return applyFilters(MOCK_FIRMS, filters);
   }
 
-  let query = supabase.from("firms").select("*");
+  let query = supabase.from("firms").select("*").eq("status", "published");
 
   if (filters.q) {
     const safe = filters.q.replace(/,/g, " ").trim();
@@ -149,7 +153,27 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
     return applyFilters(MOCK_FIRMS, filters);
   }
 
-  return (data ?? []) as FirmRow[];
+  let rows = (data ?? []) as FirmRow[];
+
+  const { data: hs } = await supabase
+    .from("homepage_settings")
+    .select("featured_firm_ids")
+    .eq("id", 1)
+    .maybeSingle();
+
+  const featuredIds = (hs?.featured_firm_ids as string[]) ?? [];
+  if (featuredIds.length) {
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const featured: FirmRow[] = [];
+    for (const id of featuredIds) {
+      const row = byId.get(id);
+      if (row) featured.push(row);
+    }
+    const rest = rows.filter((r) => !featuredIds.includes(r.id));
+    rows = [...featured, ...rest];
+  }
+
+  return rows;
 }
 
 export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {
@@ -166,6 +190,7 @@ export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {
     .from("firms")
     .select("*")
     .eq("slug", slug)
+    .eq("status", "published")
     .maybeSingle();
 
   if (error) {
@@ -186,7 +211,10 @@ export async function getAllFirmSlugs(): Promise<string[]> {
     return MOCK_FIRMS.map((f) => f.slug);
   }
 
-  const { data, error } = await supabase.from("firms").select("slug");
+  const { data, error } = await supabase
+    .from("firms")
+    .select("slug")
+    .eq("status", "published");
   if (error) {
     console.error("[getAllFirmSlugs]", error.message);
     return MOCK_FIRMS.map((f) => f.slug);

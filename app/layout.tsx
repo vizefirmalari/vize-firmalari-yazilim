@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 import { getSiteUrl } from "@/lib/env";
 
@@ -33,6 +34,7 @@ export default function RootLayout({
         className={`${plusJakarta.className} min-h-full flex flex-col bg-[#F7F9FB] text-[#1A1A1A]`}
       >
         {children}
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );

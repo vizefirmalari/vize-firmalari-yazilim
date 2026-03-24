@@ -21,7 +21,20 @@ function toCsv(list: string[]): string {
   return list.join(",");
 }
 
-export function FilterSidebar() {
+export type FilterSidebarProps = {
+  /** Dar liste (ilk 8) — yoksa sabit TOP_COUNTRIES */
+  countryTop?: string[];
+  /** Genişletilmiş liste — yoksa ALL_COUNTRIES */
+  countryAll?: string[];
+  /** İşlem türü etiketleri — yoksa SERVICE_OPTIONS */
+  serviceNames?: string[];
+};
+
+export function FilterSidebar({
+  countryTop,
+  countryAll,
+  serviceNames,
+}: FilterSidebarProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showAllCountries, setShowAllCountries] = useState(false);
@@ -76,7 +89,16 @@ export function FilterSidebar() {
     pushParams({ sort: next === "trust_desc" ? null : next, q: q || null });
   };
 
-  const visibleCountries = showAllCountries ? ALL_COUNTRIES : [...TOP_COUNTRIES];
+  const topList =
+    countryTop && countryTop.length > 0 ? countryTop : [...TOP_COUNTRIES];
+  const fullList =
+    countryAll && countryAll.length > 0 ? countryAll : ALL_COUNTRIES;
+  const serviceList =
+    serviceNames && serviceNames.length > 0
+      ? serviceNames
+      : [...SERVICE_OPTIONS];
+
+  const visibleCountries = showAllCountries ? fullList : topList;
 
   return (
     <aside className="lg:sticky lg:top-[5.25rem] lg:self-start">
@@ -121,7 +143,7 @@ export function FilterSidebar() {
         <div className="mt-8 border-t border-[#0B3C5D]/10 pt-6">
           <p className="text-xs font-medium text-[#1A1A1A]/55">İşlem Türü</p>
           <div className="mt-3 space-y-2">
-            {SERVICE_OPTIONS.map((s) => (
+            {serviceList.map((s) => (
               <label
                 key={s}
                 className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F7F9FB]"

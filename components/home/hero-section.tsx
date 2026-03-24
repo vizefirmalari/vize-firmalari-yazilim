@@ -1,44 +1,58 @@
 import Link from "next/link";
 
-export function HeroSection() {
-  return (
-    <section className="relative overflow-hidden border-b border-[#0B3C5D]/10 bg-[#0B3C5D] text-white">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-40"
-        aria-hidden
-      >
-        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#328CC1] blur-3xl" />
-        <div className="absolute -right-16 bottom-0 h-80 w-80 rounded-full bg-[#D9A441]/30 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(11,60,93,0.95),rgba(50,140,193,0.35))]" />
-      </div>
+export type HeroProps = {
+  title?: string | null;
+  subtitle?: string | null;
+  ctaText?: string | null;
+  ctaHref?: string | null;
+};
 
-      <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
-        <div className="max-w-2xl">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-white/80">
-            Güvenilir karşılaştırma
+export function Hero({
+  title,
+  subtitle,
+  ctaText,
+  ctaHref,
+}: HeroProps = {}) {
+  const resolvedTitle =
+    title?.trim() || "Vize Danışmanlık Firmalarını Karşılaştırın";
+  const resolvedSubtitle =
+    subtitle?.trim() ||
+    "Güvenilir firmaları inceleyin, karşılaştırın ve başvurunuzu başlatın.";
+  const resolvedCta = ctaText?.trim() || "Firmaları Gör";
+  const resolvedHref = ctaHref?.trim() || "#firmalar";
+
+  return (
+    <section className="container-shell py-10 lg:py-14">
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary to-secondary px-6 py-12 text-white shadow-sm sm:px-10">
+        <div
+          className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/15 blur-2xl"
+          aria-hidden
+        />
+        <div
+          className="absolute -bottom-24 right-10 h-56 w-56 rounded-full bg-accent/30 blur-3xl"
+          aria-hidden
+        />
+        <div className="relative max-w-2xl">
+          <p className="mb-3 inline-flex rounded-full bg-white/15 px-4 py-1 text-xs font-semibold tracking-wide">
+            Premium Vize Ekosistemi
           </p>
-          <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-            Vize Danışmanlık Firmalarını Karşılaştırın
+          <h1 className="text-3xl font-bold leading-tight sm:text-4xl">
+            {resolvedTitle}
           </h1>
-          <p className="mt-4 text-lg text-white/85 sm:text-xl">
-            Güvenilir firmaları inceleyin, karşılaştırın ve başvurunuzu başlatın
+          <p className="mt-4 text-sm text-white/90 sm:text-base">
+            {resolvedSubtitle}
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="#firmalar"
-              className="inline-flex items-center justify-center rounded-xl bg-[#D9A441] px-6 py-3 text-base font-semibold text-[#1A1A1A] shadow-lg shadow-black/10 transition hover:bg-[#c8942f]"
-            >
-              Firmaları Gör
-            </Link>
-            <Link
-              href="/firma-ekle"
-              className="inline-flex items-center justify-center rounded-xl border border-white/25 bg-white/5 px-6 py-3 text-base font-semibold text-white backdrop-blur transition hover:bg-white/10"
-            >
-              Firmanızı ekleyin
-            </Link>
-          </div>
+          <Link
+            href={resolvedHref}
+            className="mt-7 inline-flex rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-primary shadow-sm transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            {resolvedCta}
+          </Link>
         </div>
       </div>
     </section>
   );
 }
+
+/** @deprecated `Hero` kullanın; geriye dönük uyumluluk için aynı bileşen. */
+export const HeroSection = Hero;

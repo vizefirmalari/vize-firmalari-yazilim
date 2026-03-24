@@ -62,7 +62,9 @@ export function FirmCard({ firm }: FirmCardProps) {
       </div>
 
       <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-[#1A1A1A]/75">
-        {firm.description ?? "Bu firma için açıklama yakında eklenecek."}
+        {firm.short_description ??
+          firm.description ??
+          "Bu firma için açıklama yakında eklenecek."}
       </p>
 
       <div className="mt-4 flex flex-wrap justify-center gap-1.5">
@@ -105,7 +107,9 @@ export function FirmCard({ firm }: FirmCardProps) {
           </span>
         </summary>
         <p className="mt-2 text-sm leading-relaxed text-[#1A1A1A]/75">
-          {firm.description ?? "Detaylı bilgi için firma sayfasını ziyaret edin."}
+          {firm.short_description ??
+            firm.description ??
+            "Detaylı bilgi için firma sayfasını ziyaret edin."}
         </p>
       </details>
 
