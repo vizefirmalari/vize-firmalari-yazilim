@@ -13,6 +13,6 @@ export const DEFAULT_COUNTRIES = ALL_COUNTRIES;
 export const SITE_HEADER_LOGO_URL =
   "https://rgkwwjtayaysvvywbibt.supabase.co/storage/v1/object/public/media/Web%20Uygulama%20Dosyalari/Vize%20firmalari%20seffaf%20logo%20guncel%20en%20son%204.png";
 
-/** Tarayıcı favicon — Storage CDN (metadata `icons`). */
+/** Tarayıcı favicon — Storage CDN (metadata `icons`). `?v=` önbellek kırılması için. */
 export const SITE_FAVICON_URL =
-  "https://rgkwwjtayaysvvywbibt.supabase.co/storage/v1/object/public/media/Web%20Uygulama%20Dosyalari/favicon.png";
+  "https://rgkwwjtayaysvvywbibt.supabase.co/storage/v1/object/public/media/Web%20Uygulama%20Dosyalari/favicon.png?v=20260324b";

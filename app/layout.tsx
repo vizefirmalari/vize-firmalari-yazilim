@@ -15,8 +15,9 @@ const siteUrl = getSiteUrl();
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   icons: {
-    icon: [{ url: SITE_FAVICON_URL, type: "image/png" }],
-    shortcut: SITE_FAVICON_URL,
+    icon: [{ url: SITE_FAVICON_URL, type: "image/png", sizes: "any" }],
+    shortcut: [{ url: SITE_FAVICON_URL, type: "image/png" }],
+    apple: [{ url: SITE_FAVICON_URL, type: "image/png" }],
   },
   title: {
     default: "VizeFirmalari",
