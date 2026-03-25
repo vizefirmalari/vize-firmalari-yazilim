@@ -1,30 +1,72 @@
 /**
- * Tarayıcıda OAuth `redirectTo` ve e-posta doğrulama URL'leri için kök adres.
- * Üretimde `NEXT_PUBLIC_SITE_URL` tanımlı olmalı (Vercel: Project URL veya custom domain).
+ * OAuth / e-posta doğrulama redirect kökü.
+ * Üretimde localhost env hatası veya eksik env ile asla localhost’a düşülmez.
  */
-export function getBrowserOrigin(): string {
-  if (typeof window !== "undefined") {
-    return window.location.origin;
-  }
-  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-  if (fromEnv) return fromEnv;
-  return "http://localhost:3000";
+
+import { PUBLIC_SITE_CANONICAL_ORIGIN } from "@/lib/site-origin";
+
+export { PUBLIC_SITE_CANONICAL_ORIGIN };
+
+function isLoopbackHostname(host: string): boolean {
+  return (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "[::1]"
+  );
+}
+
+function envSiteCandidates(): { primary: string | undefined; raw: string | undefined } {
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  const app = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  return { primary: site || app, raw: site || app };
+}
+
+function isLocalOrigin(url: string): boolean {
+  return /localhost|127\.0\.0\.1/i.test(url);
 }
 
 /**
- * OAuth `redirectTo` — her zaman **aktif sekmenin kökü** (`window.location.origin`).
- * Böylece www / apex / port çerez alanı ile callback aynı host’ta kalır.
- * Supabase Dashboard’da hem www hem apex için `/auth/callback` izinleri ekleyin.
- *
- * Sunucu tarafında (e-posta şablonları vb.) `NEXT_PUBLIC_SITE_URL` kullanılır.
+ * signInWithOAuth `redirectTo` ve e-posta `redirectTo` için kök URL.
+ * - Tarayıcı + localhost → mevcut port/kök.
+ * - Tarayıcı + canlı host → NEXT_PUBLIC_* (localhost içermiyorsa), yoksa kanonik www.
+ * - Sunucu + development → env veya http://localhost:3000.
+ * - Sunucu + production → temiz env veya kanonik www (asla localhost).
  */
-export function getAuthCallbackUrl(nextPath = "/"): string {
+export function resolveAuthSiteOrigin(): string {
+  const { primary: envUrl } = envSiteCandidates();
+
+  if (typeof window !== "undefined") {
+    if (isLoopbackHostname(window.location.hostname)) {
+      return window.location.origin;
+    }
+    if (envUrl && !isLocalOrigin(envUrl)) {
+      return envUrl;
+    }
+    return PUBLIC_SITE_CANONICAL_ORIGIN;
+  }
+
+  if (process.env.NODE_ENV === "development") {
+    if (envUrl) return envUrl;
+    return "http://localhost:3000";
+  }
+
+  if (envUrl && !isLocalOrigin(envUrl)) {
+    return envUrl;
+  }
+  return PUBLIC_SITE_CANONICAL_ORIGIN;
+}
+
+/** @deprecated `resolveAuthSiteOrigin` kullanın */
+export function getBrowserOrigin(): string {
+  return resolveAuthSiteOrigin();
+}
+
+/**
+ * Supabase `redirectTo` — örn. https://www.vizefirmalari.com/auth/callback?next=%2Fhesabim
+ */
+export function getAuthCallbackUrl(nextPath = "/hesabim"): string {
   const path = nextPath.startsWith("/") ? nextPath : `/${nextPath}`;
-  const origin =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-        "http://localhost:3000";
+  const origin = resolveAuthSiteOrigin();
   return `${origin}/auth/callback?next=${encodeURIComponent(path)}`;
 }
 
