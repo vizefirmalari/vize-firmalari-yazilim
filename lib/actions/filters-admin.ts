@@ -111,3 +111,72 @@ export async function deleteServiceType(id: string): Promise<{ ok: true } | { ok
   revalidatePath("/");
   return { ok: true };
 }
+
+async function ensureUniqueName(
+  table: "countries" | "company_types" | "main_service_categories" | "sub_services",
+  name: string
+): Promise<{ ok: true; id: string; name: string } | { ok: false; error: string }> {
+  const ctx = await getAdminContext();
+  if (!ctx) return { ok: false, error: "Yetkisiz" };
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "Supabase yapılandırması eksik" };
+
+  const normalized = name.trim();
+  if (!normalized) return { ok: false, error: "Boş değer eklenemez." };
+
+  const { data: existing, error: existingErr } = await supabase
+    .from(table)
+    .select("id,name")
+    .ilike("name", normalized)
+    .maybeSingle();
+  if (existingErr && existingErr.code !== "PGRST116") {
+    return { ok: false, error: existingErr.message };
+  }
+  if (existing) {
+    return {
+      ok: true,
+      id: String((existing as { id: string }).id),
+      name: String((existing as { name: string }).name),
+    };
+  }
+
+  const slug = slugify(normalized);
+  const { data, error } = await supabase
+    .from(table)
+    .insert({ name: normalized, slug, is_active: true, sort_order: 100 })
+    .select("id,name")
+    .single();
+  if (error) return { ok: false, error: error.message };
+
+  await logAdminActivity(supabase, ctx.userId, `${table}.inline_created`, table, String(data.id), {
+    name: normalized,
+  });
+
+  revalidatePath("/admin/firms/new");
+  revalidatePath("/admin/firms");
+  revalidatePath("/admin/filters/countries");
+  revalidatePath("/admin/filters/services");
+  revalidatePath("/");
+
+  return {
+    ok: true,
+    id: String((data as { id: string }).id),
+    name: String((data as { name: string }).name),
+  };
+}
+
+export async function createInlineCountry(name: string) {
+  return ensureUniqueName("countries", name);
+}
+
+export async function createInlineCompanyType(name: string) {
+  return ensureUniqueName("company_types", name);
+}
+
+export async function createInlineMainServiceCategory(name: string) {
+  return ensureUniqueName("main_service_categories", name);
+}
+
+export async function createInlineSubService(name: string) {
+  return ensureUniqueName("sub_services", name);
+}

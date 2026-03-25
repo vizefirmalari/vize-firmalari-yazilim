@@ -1,5 +1,10 @@
 import { FirmForm } from "@/components/admin/firm-form";
-import { getPicklistCountries } from "@/lib/data/admin-filters";
+import {
+  getPicklistCompanyTypes,
+  getPicklistCountries,
+  getPicklistMainServiceCategories,
+  getPicklistSubServices,
+} from "@/lib/data/admin-filters";
 
 export const metadata = {
   title: "Yeni firma",
@@ -7,7 +12,12 @@ export const metadata = {
 };
 
 export default async function NewFirmPage() {
-  const countries = await getPicklistCountries();
+  const [countries, companyTypes, mainServiceCategories, subServices] = await Promise.all([
+    getPicklistCountries(),
+    getPicklistCompanyTypes(),
+    getPicklistMainServiceCategories(),
+    getPicklistSubServices(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -16,7 +26,7 @@ export default async function NewFirmPage() {
           Yeni firma
         </h1>
         <p className="mt-1 text-sm text-[#1A1A1A]/60">
-          Beş bölümde hızlı giriş; kaydet üstte ve altta sabit.
+          Beş bölümde hızlı giriş; eksik sınıflandırmaları formdan anında ekleyin.
         </p>
       </div>
       <FirmForm
@@ -24,6 +34,9 @@ export default async function NewFirmPage() {
         countryIds={[]}
         featuredCountryIds={[]}
         countries={countries}
+        companyTypes={companyTypes}
+        mainServiceCategories={mainServiceCategories}
+        subServices={subServices}
       />
     </div>
   );

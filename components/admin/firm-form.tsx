@@ -15,11 +15,13 @@ import {
   firmFormSchema,
   computeCorporatenessFromFactors,
 } from "@/lib/validations/firm";
-import {
-  MAIN_SERVICE_CATEGORIES,
-  SUB_SERVICE_CATALOG,
-} from "@/lib/constants/firm-services-taxonomy";
 import { FirmImageUpload } from "@/components/admin/firm-image-upload";
+import {
+  createInlineCompanyType,
+  createInlineCountry,
+  createInlineMainServiceCategory,
+  createInlineSubService,
+} from "@/lib/actions/filters-admin";
 
 type Option = { id: string; name: string };
 
@@ -32,18 +34,6 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
-
-const FIRM_CATEGORY_OPTIONS = [
-  { value: "", label: "Seçin…" },
-  { value: "Bireysel vize danışmanlığı", label: "Bireysel vize danışmanlığı" },
-  { value: "Kurumsal göçmenlik ve vize", label: "Kurumsal göçmenlik ve vize" },
-  { value: "Öğrenci vizesi uzmanı", label: "Öğrenci vizesi uzmanı" },
-  { value: "Schengen ve Avrupa odaklı", label: "Schengen ve Avrupa odaklı" },
-  { value: "Kuzey Amerika (ABD / Kanada)", label: "Kuzey Amerika (ABD / Kanada)" },
-  { value: "Konsolosluk ve evrak işlemleri", label: "Konsolosluk ve evrak işlemleri" },
-  { value: "Tam kapsamlı (uçtan uca)", label: "Tam kapsamlı (uçtan uca)" },
-  { value: "Diğer", label: "Diğer" },
-] as const;
 
 function FieldHelp({ children }: { children: React.ReactNode }) {
   return (
@@ -157,6 +147,9 @@ type FirmFormProps = {
   countryIds: string[];
   featuredCountryIds?: string[];
   countries: Option[];
+  companyTypes: string[];
+  mainServiceCategories: string[];
+  subServices: string[];
 };
 
 const inputClass =
@@ -177,6 +170,9 @@ export function FirmForm({
   countryIds,
   featuredCountryIds = [],
   countries,
+  companyTypes,
+  mainServiceCategories,
+  subServices,
 }: FirmFormProps) {
   const defaults = useMemo(
     () => buildFirmFormState(initial, privateInitial ?? null),
@@ -194,15 +190,111 @@ export function FirmForm({
   const [subCustomInput, setSubCustomInput] = useState("");
   const [customTag, setCustomTag] = useState("");
   const [seoTagDraft, setSeoTagDraft] = useState("");
+  const [countryOptions, setCountryOptions] = useState<Option[]>(countries);
+  const [companyTypeOptions, setCompanyTypeOptions] = useState<string[]>(companyTypes);
+  const [mainServiceOptions, setMainServiceOptions] =
+    useState<string[]>(mainServiceCategories);
+  const [subServiceOptions, setSubServiceOptions] = useState<string[]>(subServices);
+  const [newCountryDraft, setNewCountryDraft] = useState("");
+  const [newCompanyTypeDraft, setNewCompanyTypeDraft] = useState("");
+  const [newMainServiceDraft, setNewMainServiceDraft] = useState("");
+  const [creatingPicklist, setCreatingPicklist] = useState<
+    null | "country" | "companyType" | "mainService" | "subService"
+  >(null);
 
   useEffect(() => {
     setForm(buildFirmFormState(initial, privateInitial ?? null));
     setSelectedCountries(countryIds);
     setSelectedFeatured(featuredCountryIds);
-  }, [initial, privateInitial, countryIds, featuredCountryIds]);
+    setCountryOptions(countries);
+    setCompanyTypeOptions(companyTypes);
+    setMainServiceOptions(mainServiceCategories);
+    setSubServiceOptions(subServices);
+  }, [
+    initial,
+    privateInitial,
+    countryIds,
+    featuredCountryIds,
+    countries,
+    companyTypes,
+    mainServiceCategories,
+    subServices,
+  ]);
 
   function patch<K extends keyof FirmFormState>(key: K, value: FirmFormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function addCountryInline() {
+    const name = newCountryDraft.trim();
+    if (!name) return;
+    setCreatingPicklist("country");
+    const res = await createInlineCountry(name);
+    setCreatingPicklist(null);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
+    const next = [...countryOptions];
+    if (!next.some((c) => c.id === res.id)) next.push({ id: res.id, name: res.name });
+    next.sort((a, b) => a.name.localeCompare(b.name, "tr"));
+    setCountryOptions(next);
+    setSelectedCountries((prev) => (prev.includes(res.id) ? prev : [...prev, res.id]));
+    setNewCountryDraft("");
+    setCountryQ("");
+    toast.success(`Yeni ülke eklendi: ${res.name}`);
+  }
+
+  async function addCompanyTypeInline() {
+    const name = newCompanyTypeDraft.trim();
+    if (!name) return;
+    setCreatingPicklist("companyType");
+    const res = await createInlineCompanyType(name);
+    setCreatingPicklist(null);
+    if (!res.ok) return toast.error(res.error);
+    const next = [...companyTypeOptions];
+    if (!next.includes(res.name)) next.push(res.name);
+    next.sort((a, b) => a.localeCompare(b, "tr"));
+    setCompanyTypeOptions(next);
+    patch("firm_category", res.name);
+    setNewCompanyTypeDraft("");
+    toast.success(`Yeni firma türü eklendi: ${res.name}`);
+  }
+
+  async function addMainServiceInline() {
+    const name = newMainServiceDraft.trim();
+    if (!name) return;
+    setCreatingPicklist("mainService");
+    const res = await createInlineMainServiceCategory(name);
+    setCreatingPicklist(null);
+    if (!res.ok) return toast.error(res.error);
+    const next = [...mainServiceOptions];
+    if (!next.includes(res.name)) next.push(res.name);
+    next.sort((a, b) => a.localeCompare(b, "tr"));
+    setMainServiceOptions(next);
+    if (!form.main_services.includes(res.name)) {
+      patch("main_services", [...form.main_services, res.name]);
+    }
+    setNewMainServiceDraft("");
+    toast.success(`Yeni ana kategori eklendi: ${res.name}`);
+  }
+
+  async function addSubServiceInline(nameRaw?: string) {
+    const value = (nameRaw ?? subCustomInput).trim();
+    if (!value) return;
+    setCreatingPicklist("subService");
+    const res = await createInlineSubService(value);
+    setCreatingPicklist(null);
+    if (!res.ok) return toast.error(res.error);
+    const next = [...subServiceOptions];
+    if (!next.includes(res.name)) next.push(res.name);
+    next.sort((a, b) => a.localeCompare(b, "tr"));
+    setSubServiceOptions(next);
+    if (!form.sub_services.includes(res.name)) {
+      patch("sub_services", [...form.sub_services, res.name]);
+    }
+    setSubCustomInput("");
+    toast.success(`Yeni alt hizmet eklendi: ${res.name}`);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -247,18 +339,18 @@ export function FirmForm({
     }
   }
 
-  const filteredCountries = countries.filter((c) =>
+  const filteredCountries = countryOptions.filter((c) =>
     c.name.toLocaleLowerCase("tr").includes(countryQ.toLocaleLowerCase("tr"))
   );
 
   const filteredSubPicker = useMemo(() => {
     const q = subServiceQ.toLocaleLowerCase("tr").trim();
-    return SUB_SERVICE_CATALOG.filter((s) => {
+    return subServiceOptions.filter((s) => {
       if (form.sub_services.includes(s)) return false;
       if (!q) return true;
       return s.toLocaleLowerCase("tr").includes(q);
     });
-  }, [subServiceQ, form.sub_services]);
+  }, [subServiceQ, form.sub_services, subServiceOptions]);
 
   const corporatenessPreview = useMemo(
     () =>
@@ -365,18 +457,41 @@ export function FirmForm({
                 onChange={(e) => patch("firm_category", e.target.value)}
                 className={inputClass}
               >
-                {FIRM_CATEGORY_OPTIONS.map((o) => (
-                  <option key={o.value || "empty"} value={o.value}>
-                    {o.label}
+                <option value="">Seçin…</option>
+                {companyTypeOptions.map((typeName) => (
+                  <option key={typeName} value={typeName}>
+                    {typeName}
                   </option>
                 ))}
-                {form.firm_category &&
-                !FIRM_CATEGORY_OPTIONS.some((o) => o.value === form.firm_category) ? (
+                {form.firm_category && !companyTypeOptions.includes(form.firm_category) ? (
                   <option value={form.firm_category}>
                     {form.firm_category} (kayıtlı)
                   </option>
                 ) : null}
               </select>
+              <FieldHelp>Listede yoksa aşağıdan ekleyebilirsiniz.</FieldHelp>
+              <div className="mt-2 flex gap-2">
+                <input
+                  value={newCompanyTypeDraft}
+                  onChange={(e) => setNewCompanyTypeDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void addCompanyTypeInline();
+                    }
+                  }}
+                  placeholder="+ Yeni firma türü"
+                  className="w-full rounded-xl border border-[#0B3C5D]/12 bg-white px-3 py-2 text-sm outline-none ring-[#328CC1]/25 focus:border-[#328CC1]/40 focus:ring-2"
+                />
+                <button
+                  type="button"
+                  onClick={() => void addCompanyTypeInline()}
+                  disabled={creatingPicklist === "companyType"}
+                  className="shrink-0 rounded-xl border border-[#0B3C5D]/15 px-3 py-2 text-xs font-semibold text-[#0B3C5D] hover:bg-[#eef2f6] disabled:opacity-60"
+                >
+                  {creatingPicklist === "companyType" ? "Ekleniyor…" : "+ Yeni ekle"}
+                </button>
+              </div>
             </label>
             <label className={labelClass}>
               Kuruluş yılı
@@ -709,30 +824,52 @@ export function FirmForm({
             className={`${inputClass} mt-3`}
           />
           <div className="mt-3 max-h-44 space-y-1.5 overflow-y-auto rounded-xl border border-[#0B3C5D]/10 p-3">
-            {filteredCountries.map((c) => (
-              <label
-                key={c.id}
-                className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F8FAFC]"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedCountries.includes(c.id)}
-                  onChange={() =>
-                    setSelectedCountries((prev) =>
-                      prev.includes(c.id)
-                        ? prev.filter((x) => x !== c.id)
-                        : [...prev, c.id]
-                    )
-                  }
-                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                />
-                {c.name}
-              </label>
-            ))}
+            {filteredCountries.length ? (
+              filteredCountries.map((c) => (
+                <label
+                  key={c.id}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F8FAFC]"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedCountries.includes(c.id)}
+                    onChange={() =>
+                      setSelectedCountries((prev) =>
+                        prev.includes(c.id)
+                          ? prev.filter((x) => x !== c.id)
+                          : [...prev, c.id]
+                      )
+                    }
+                    className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                  />
+                  {c.name}
+                </label>
+              ))
+            ) : (
+              <div className="space-y-2 px-1 py-2 text-xs text-[#1A1A1A]/55">
+                <p>Sonuç bulunamadı.</p>
+                <div className="flex gap-2">
+                  <input
+                    value={newCountryDraft}
+                    onChange={(e) => setNewCountryDraft(e.target.value)}
+                    placeholder="Yeni ülke adı"
+                    className="w-full rounded-lg border border-[#0B3C5D]/12 bg-white px-2.5 py-1.5 text-xs outline-none ring-[#328CC1]/20 focus:ring-2"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void addCountryInline()}
+                    disabled={creatingPicklist === "country"}
+                    className="shrink-0 rounded-lg border border-[#0B3C5D]/15 px-2.5 py-1.5 font-semibold text-[#0B3C5D] hover:bg-[#eef2f6] disabled:opacity-60"
+                  >
+                    {creatingPicklist === "country" ? "Ekleniyor…" : "Yeni ülke olarak ekle"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {selectedCountries.map((id) => {
-              const n = countries.find((c) => c.id === id)?.name ?? id;
+              const n = countryOptions.find((c) => c.id === id)?.name ?? id;
               return (
                 <span
                   key={id}
@@ -761,7 +898,7 @@ export function FirmForm({
             Firmanın hangi ana hatlarda hizmet verdiğini işaretleyin.
           </p>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {MAIN_SERVICE_CATEGORIES.map((cat) => (
+            {mainServiceOptions.map((cat) => (
               <label
                 key={cat}
                 className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D]"
@@ -775,6 +912,28 @@ export function FirmForm({
                 {cat}
               </label>
             ))}
+          </div>
+          <div className="mt-3 flex gap-2">
+            <input
+              value={newMainServiceDraft}
+              onChange={(e) => setNewMainServiceDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void addMainServiceInline();
+                }
+              }}
+              placeholder="+ Yeni ana hizmet kategorisi"
+              className="w-full rounded-xl border border-[#0B3C5D]/12 bg-white px-3 py-2 text-sm outline-none ring-[#328CC1]/25 focus:border-[#328CC1]/40 focus:ring-2"
+            />
+            <button
+              type="button"
+              onClick={() => void addMainServiceInline()}
+              disabled={creatingPicklist === "mainService"}
+              className="shrink-0 rounded-xl border border-[#0B3C5D]/15 px-3 py-2 text-xs font-semibold text-[#0B3C5D] hover:bg-[#eef2f6] disabled:opacity-60"
+            >
+              {creatingPicklist === "mainService" ? "Ekleniyor…" : "+ Yeni ekle"}
+            </button>
           </div>
         </div>
 
@@ -816,15 +975,20 @@ export function FirmForm({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  const v = subCustomInput.trim();
-                  if (!v) return;
-                  addSubService(v);
-                  setSubCustomInput("");
+                  void addSubServiceInline(subCustomInput);
                 }
               }}
               placeholder="Örn. Dubai altın vizesi — Enter"
               className={inputClass}
             />
+            <button
+              type="button"
+              onClick={() => void addSubServiceInline()}
+              disabled={creatingPicklist === "subService"}
+              className="mt-2 rounded-xl border border-[#0B3C5D]/15 px-3 py-2 text-xs font-semibold text-[#0B3C5D] hover:bg-[#eef2f6] disabled:opacity-60"
+            >
+              {creatingPicklist === "subService" ? "Ekleniyor…" : "+ Yeni alt hizmet ekle"}
+            </button>
           </label>
           <div className="mt-3">
             <p className="text-xs font-medium text-[#1A1A1A]/50">Seçilen alt hizmetler</p>
