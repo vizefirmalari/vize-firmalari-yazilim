@@ -31,7 +31,10 @@ export function FirmCard({ firm }: FirmCardProps) {
           {firm.logo_url ? (
             <Image
               src={firm.logo_url}
-              alt={firm.name}
+              alt={
+                firm.logo_alt_text?.trim() ||
+                `${firm.name} logosu`
+              }
               width={64}
               height={64}
               className="h-full w-full object-contain"

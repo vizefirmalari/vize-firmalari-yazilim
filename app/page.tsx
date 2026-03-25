@@ -5,6 +5,10 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getFirms, parseFirmFilters } from "@/lib/data/firms";
 import {
+  mergePublicServiceFilterOptions,
+  SERVICE_OPTIONS,
+} from "@/lib/constants";
+import {
   getHomepageSettings,
   getPublicFilterCountries,
   getPublicFilterServiceTypes,
@@ -57,7 +61,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   let countryTop: string[] | undefined;
   let countryAll: string[] | undefined;
-  let serviceNames: string[] | undefined;
 
   if (dbCountries.length) {
     const sorted = [...dbCountries].sort(
@@ -69,11 +72,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     countryTop = topSource.slice(0, 8).map((c) => c.name);
   }
 
-  if (dbServices.length) {
-    serviceNames = [...dbServices]
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map((s) => s.name);
-  }
+  const serviceNamesFromDb = dbServices.length
+    ? [...dbServices]
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((s) => s.name)
+    : [];
+  const serviceNames = mergePublicServiceFilterOptions(
+    serviceNamesFromDb,
+    SERVICE_OPTIONS
+  );
 
   const hiddenParams: Record<string, string> = {};
   if (filters.countries.length) {

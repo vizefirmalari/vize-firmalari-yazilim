@@ -3,6 +3,20 @@ export type FirmRow = {
   name: string;
   slug: string;
   logo_url: string | null;
+  /** Logo için SEO / erişilebilirlik alt metni */
+  logo_alt_text?: string | null;
+  logo_title?: string | null;
+  logo_description?: string | null;
+  /** Arama ve paylaşım meta alanları */
+  seo_title?: string | null;
+  meta_description?: string | null;
+  canonical_url?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image_url?: string | null;
+  is_indexable?: boolean | null;
+  /** SEO odaklı içerik etiketleri */
+  tags?: string[] | null;
   /** Kart ve liste önizlemesi için kısa metin */
   short_description?: string | null;
   description: string | null;

@@ -18,6 +18,9 @@ function whatsappHref(raw: string): string {
 }
 
 function jsonLd(firm: FirmRow, url: string) {
+  const ogOrLogo = firm.og_image_url?.trim() || firm.logo_url || undefined;
+  const keywords =
+    firm.tags?.filter(Boolean).length ? firm.tags?.join(", ") : undefined;
   return {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
@@ -26,11 +29,12 @@ function jsonLd(firm: FirmRow, url: string) {
     url,
     telephone: firm.phone ?? undefined,
     email: firm.email ?? undefined,
+    keywords,
     areaServed: firm.countries.map((c) => ({
       "@type": "Place",
       name: c,
     })),
-    image: firm.logo_url ?? undefined,
+    image: ogOrLogo,
   };
 }
 
@@ -50,29 +54,44 @@ export async function generateMetadata({
 
   const siteUrl = getSiteUrl();
   const pageUrl = `${siteUrl}/firma/${firm.slug}`;
+  const canonical =
+    firm.canonical_url?.trim() ||
+    pageUrl;
+  const titleBase =
+    firm.seo_title?.trim() || `${firm.name} | VizeFirmalari`;
   const desc =
-    firm.description?.slice(0, 155) ??
+    firm.meta_description?.trim() ||
+    firm.short_description?.trim() ||
+    firm.description?.slice(0, 155) ||
     `${firm.name} — Güven endeksi ${firm.trust_score}/100.`;
+  const ogTitle =
+    firm.og_title?.trim() || firm.seo_title?.trim() || `${firm.name} | VizeFirmalari`;
+  const ogDesc = firm.og_description?.trim() || desc;
+  const ogImage =
+    firm.og_image_url?.trim() || firm.logo_url?.trim() || undefined;
+  const indexable = firm.is_indexable !== false;
 
   return {
-    title: firm.name,
+    title: titleBase,
     description: desc,
-    alternates: { canonical: pageUrl },
+    alternates: { canonical },
     openGraph: {
-      title: `${firm.name} | VizeFirmalari`,
-      description: desc,
-      url: pageUrl,
+      title: ogTitle,
+      description: ogDesc,
+      url: canonical,
       siteName: "VizeFirmalari",
       locale: "tr_TR",
       type: "website",
-      images: firm.logo_url ? [{ url: firm.logo_url }] : undefined,
+      images: ogImage ? [{ url: ogImage }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
-      title: `${firm.name} | VizeFirmalari`,
-      description: desc,
+      title: ogTitle,
+      description: ogDesc,
     },
-    robots: { index: true, follow: true },
+    robots: indexable
+      ? { index: true, follow: true }
+      : { index: false, follow: true },
   };
 }
 
@@ -109,7 +128,10 @@ export default async function FirmaPage({ params }: PageProps) {
                   {firm.logo_url ? (
                     <Image
                       src={firm.logo_url}
-                      alt={firm.name}
+                      alt={
+                        firm.logo_alt_text?.trim() ||
+                        `${firm.name} logosu`
+                      }
                       width={80}
                       height={80}
                       className="h-full w-full object-contain"

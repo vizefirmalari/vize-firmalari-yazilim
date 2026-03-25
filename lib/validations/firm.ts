@@ -45,10 +45,13 @@ export function computeListingTrustScore(
   );
 }
 
-export const firmFormSchema = z.object({
+const firmFormSchemaObject = z.object({
   name: z.string().min(2, "En az 2 karakter").max(200),
   slug: z.string().min(2).max(140).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   logo_url: z.string().max(2000).optional().nullable(),
+  logo_alt_text: z.string().max(200).optional().nullable(),
+  logo_title: z.string().max(200).optional().nullable(),
+  logo_description: z.string().max(500).optional().nullable(),
   cover_image_url: z.string().max(2000).optional().nullable(),
   gallery_images: imageUrlArray,
   office_photo_urls: imageUrlArray,
@@ -56,7 +59,7 @@ export const firmFormSchema = z.object({
   document_image_urls: imageUrlArray,
   promo_image_urls: imageUrlArray,
 
-  short_description: z.string().max(500).optional().nullable(),
+  short_description: z.string().max(160).optional().nullable(),
   description: z.string().max(20000).optional().nullable(),
   slogan: z.string().max(200).optional().nullable(),
   short_badge: z.string().max(80).optional().nullable(),
@@ -188,8 +191,23 @@ export const firmFormSchema = z.object({
 
   country_ids: z.array(z.string().uuid()),
   featured_country_ids: z.array(z.string().uuid()),
-  service_type_ids: z.array(z.string().uuid()),
-  custom_service_labels: z.array(z.string().max(80)).default([]),
+  main_services: z.array(z.string().max(80)).max(12).default([]),
+  sub_services: z.array(z.string().max(120)).max(120).default([]),
+  custom_service_labels: z.array(z.string().max(80)).max(80).default([]),
+  tags: z.array(z.string().max(120)).max(80).default([]),
+});
+
+export const firmFormSchema = firmFormSchemaObject.superRefine((data, ctx) => {
+  if (data.logo_url?.trim()) {
+    if (!data.logo_alt_text?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Logo yüklüyken alt metin zorunludur (SEO ve erişilebilirlik). Kimlik sekmesinde doldurun.",
+        path: ["logo_alt_text"],
+      });
+    }
+  }
 });
 
 export type FirmFormInput = z.infer<typeof firmFormSchema>;

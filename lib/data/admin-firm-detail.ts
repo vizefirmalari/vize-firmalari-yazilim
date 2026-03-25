@@ -15,7 +15,6 @@ export type AdminFirmDetail = {
   firm: Record<string, unknown>;
   country_ids: string[];
   featured_country_ids: string[];
-  service_type_ids: string[];
   private: FirmAdminPrivateRow | null;
 };
 
@@ -44,11 +43,6 @@ export async function getFirmForAdmin(
     .select("country_id")
     .eq("firm_id", id);
 
-  const { data: fs } = await supabase
-    .from("firm_service_types")
-    .select("service_type_id")
-    .eq("firm_id", id);
-
   const { data: priv } = await supabase
     .from("firm_admin_private")
     .select("*")
@@ -59,7 +53,6 @@ export async function getFirmForAdmin(
     firm: firm as Record<string, unknown>,
     country_ids: (fc ?? []).map((r) => r.country_id as string),
     featured_country_ids: (ff ?? []).map((r) => r.country_id as string),
-    service_type_ids: (fs ?? []).map((r) => r.service_type_id as string),
     private: priv
       ? ({
           admin_evaluation_note: (priv.admin_evaluation_note as string) ?? null,

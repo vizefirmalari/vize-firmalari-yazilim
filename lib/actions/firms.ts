@@ -26,6 +26,16 @@ function firmRowPayload(v: FirmFormInput) {
     name: v.name,
     slug: v.slug,
     logo_url: v.logo_url ?? null,
+    logo_alt_text: v.logo_url?.trim()
+      ? v.logo_alt_text?.trim() || null
+      : null,
+    logo_title: v.logo_url?.trim()
+      ? emptyToNull(v.logo_title ?? undefined)
+      : null,
+    logo_description: v.logo_url?.trim()
+      ? emptyToNull(v.logo_description ?? undefined)
+      : null,
+    tags: [...new Set((v.tags ?? []).map((t) => t.trim()).filter(Boolean))],
     cover_image_url: v.cover_image_url ?? null,
     gallery_images: v.gallery_images ?? [],
     office_photo_urls: v.office_photo_urls ?? [],
@@ -133,7 +143,9 @@ function firmRowPayload(v: FirmFormInput) {
     page_heading: v.page_heading ?? null,
     page_subheading: v.page_subheading ?? null,
     admin_note: v.admin_note ?? null,
-    custom_services: v.custom_service_labels ?? [],
+    main_services: [...new Set(v.main_services ?? [])],
+    sub_services: [...new Set(v.sub_services ?? [])],
+    custom_services: [...new Set(v.custom_service_labels ?? [])],
   };
 }
 
@@ -148,6 +160,22 @@ function privateRowPayload(v: FirmFormInput) {
     team_notes: emptyToNull(v.team_notes ?? undefined),
     updated_at: new Date().toISOString(),
   };
+}
+
+async function assertSlugAvailable(
+  supabase: SupabaseAdmin,
+  slug: string,
+  excludeFirmId?: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { data, error } = await supabase
+    .from("firms")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: true };
+  if (excludeFirmId && data.id === excludeFirmId) return { ok: true };
+  return { ok: false, error: "Bu slug başka bir firmada kullanılıyor." };
 }
 
 async function upsertFirmAdminPrivate(supabase: SupabaseAdmin, firmId: string, v: FirmFormInput) {
@@ -187,28 +215,16 @@ async function syncFirmDenormalized(supabase: SupabaseAdmin, firmId: string) {
     featuredNames = (countries ?? []).map((c) => c.name as string);
   }
 
-  const { data: fs } = await supabase
-    .from("firm_service_types")
-    .select("service_type_id")
-    .eq("firm_id", firmId);
-  const sids = (fs ?? []).map((r) => r.service_type_id as string);
-  let typeNames: string[] = [];
-  if (sids.length) {
-    const { data: types } = await supabase
-      .from("service_types")
-      .select("name")
-      .in("id", sids);
-    typeNames = (types ?? []).map((t) => t.name as string);
-  }
-
   const { data: firmRow } = await supabase
     .from("firms")
-    .select("custom_services")
+    .select("main_services, sub_services, custom_services")
     .eq("id", firmId)
     .single();
 
+  const main = (firmRow?.main_services as string[] | null) ?? [];
+  const sub = (firmRow?.sub_services as string[] | null) ?? [];
   const custom = (firmRow?.custom_services as string[] | null) ?? [];
-  const services = [...typeNames, ...custom];
+  const services = [...new Set([...main, ...sub, ...custom])];
 
   await supabase
     .from("firms")
@@ -236,6 +252,10 @@ export async function createFirmFromForm(
   if (!supabase) return { ok: false, error: "Supabase yapılandırması eksik" };
 
   const v = parsed.data;
+
+  const slugOk = await assertSlugAvailable(supabase, v.slug);
+  if (!slugOk.ok) return { ok: false, error: slugOk.error };
+
   const payload = { ...firmRowPayload(v), updated_at: new Date().toISOString() };
 
   const { data: inserted, error } = await supabase
@@ -267,14 +287,7 @@ export async function createFirmFromForm(
       v.featured_country_ids.map((country_id) => ({ firm_id: firmId, country_id }))
     );
   }
-  if (v.service_type_ids.length) {
-    await supabase.from("firm_service_types").insert(
-      v.service_type_ids.map((service_type_id) => ({
-        firm_id: firmId,
-        service_type_id,
-      }))
-    );
-  }
+  await supabase.from("firm_service_types").delete().eq("firm_id", firmId);
 
   await syncFirmDenormalized(supabase, firmId);
   await logAdminActivity(supabase, ctx.userId, "firm.created", "firm", firmId, {
@@ -303,6 +316,10 @@ export async function updateFirmFromForm(
   if (!supabase) return { ok: false, error: "Supabase yapılandırması eksik" };
 
   const v = parsed.data;
+
+  const slugOk = await assertSlugAvailable(supabase, v.slug, firmId);
+  if (!slugOk.ok) return { ok: false, error: slugOk.error };
+
   const payload = { ...firmRowPayload(v), updated_at: new Date().toISOString() };
 
   const { error } = await supabase.from("firms").update(payload).eq("id", firmId);
@@ -327,14 +344,6 @@ export async function updateFirmFromForm(
   if (v.featured_country_ids.length) {
     await supabase.from("firm_featured_countries").insert(
       v.featured_country_ids.map((country_id) => ({ firm_id: firmId, country_id }))
-    );
-  }
-  if (v.service_type_ids.length) {
-    await supabase.from("firm_service_types").insert(
-      v.service_type_ids.map((service_type_id) => ({
-        firm_id: firmId,
-        service_type_id,
-      }))
     );
   }
 

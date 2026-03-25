@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
 import { FirmForm } from "@/components/admin/firm-form";
-import {
-  getPicklistCountries,
-  getPicklistServiceTypes,
-} from "@/lib/data/admin-filters";
+import { getPicklistCountries } from "@/lib/data/admin-filters";
 import { getFirmForAdmin } from "@/lib/data/admin-firm-detail";
 
 export const metadata = {
@@ -19,7 +16,6 @@ export default async function EditFirmPage({ params }: PageProps) {
   if (!detail) notFound();
 
   const countries = await getPicklistCountries();
-  const serviceTypes = await getPicklistServiceTypes();
 
   return (
     <div className="space-y-6">
@@ -38,9 +34,7 @@ export default async function EditFirmPage({ params }: PageProps) {
         privateInitial={detail.private}
         countryIds={detail.country_ids}
         featuredCountryIds={detail.featured_country_ids}
-        serviceTypeIds={detail.service_type_ids}
         countries={countries}
-        serviceTypes={serviceTypes}
       />
     </div>
   );

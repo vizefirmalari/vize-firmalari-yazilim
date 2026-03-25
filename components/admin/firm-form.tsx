@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { createFirmFromForm, updateFirmFromForm } from "@/lib/actions/firms";
 import {
@@ -11,25 +11,140 @@ import {
 } from "@/lib/admin/firm-form-initial";
 import type { FirmAdminPrivateRow } from "@/lib/data/admin-firm-detail";
 import { slugify } from "@/lib/slug";
-import { computeListingTrustScore, firmFormSchema } from "@/lib/validations/firm";
-import { FirmImageArrayUpload, FirmImageUpload } from "@/components/admin/firm-image-upload";
+import { firmFormSchema } from "@/lib/validations/firm";
+import {
+  MAIN_SERVICE_CATEGORIES,
+  SUB_SERVICE_CATALOG,
+} from "@/lib/constants/firm-services-taxonomy";
+import { FirmImageUpload } from "@/components/admin/firm-image-upload";
 
 type Option = { id: string; name: string };
 
 const TABS = [
-  { id: "basic", label: "Temel bilgiler" },
-  { id: "media", label: "Görseller" },
+  { id: "identity", label: "Kimlik" },
   { id: "contact", label: "İletişim" },
-  { id: "geo", label: "Ülkeler ve hizmetler" },
-  { id: "corp", label: "Kurumsal bilgiler" },
-  { id: "scores", label: "Skorlar" },
-  { id: "page", label: "Sayfa içeriği" },
-  { id: "seo", label: "SEO" },
-  { id: "state", label: "Durum ve görünürlük" },
-  { id: "admin", label: "Admin notları" },
+  { id: "services", label: "Hizmetler" },
+  { id: "seo", label: "SEO ve etiketler" },
+  { id: "publish", label: "Yayın" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
+
+const FIRM_CATEGORY_OPTIONS = [
+  { value: "", label: "Seçin…" },
+  { value: "Bireysel vize danışmanlığı", label: "Bireysel vize danışmanlığı" },
+  { value: "Kurumsal göçmenlik ve vize", label: "Kurumsal göçmenlik ve vize" },
+  { value: "Öğrenci vizesi uzmanı", label: "Öğrenci vizesi uzmanı" },
+  { value: "Schengen ve Avrupa odaklı", label: "Schengen ve Avrupa odaklı" },
+  { value: "Kuzey Amerika (ABD / Kanada)", label: "Kuzey Amerika (ABD / Kanada)" },
+  { value: "Konsolosluk ve evrak işlemleri", label: "Konsolosluk ve evrak işlemleri" },
+  { value: "Tam kapsamlı (uçtan uca)", label: "Tam kapsamlı (uçtan uca)" },
+  { value: "Diğer", label: "Diğer" },
+] as const;
+
+function FieldHelp({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mt-1.5 text-xs leading-relaxed text-[#1A1A1A]/48">{children}</p>
+  );
+}
+
+function Spinner({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      className={`animate-spin text-current ${className}`}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      aria-hidden
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  );
+}
+
+function tabForValidationPath(path: (string | number)[]): TabId {
+  const key = String(path[0] ?? "");
+  const contactKeys = new Set([
+    "phone",
+    "whatsapp",
+    "email",
+    "website",
+    "instagram",
+    "facebook",
+    "twitter",
+    "linkedin",
+    "youtube",
+    "telegram",
+    "address",
+    "city",
+    "district",
+    "hq_country",
+    "maps_url",
+    "working_hours",
+    "weekend_hours_note",
+    "contact_person_name",
+    "contact_person_role",
+    "show_phone",
+    "show_whatsapp",
+    "show_email",
+    "show_website",
+    "show_address",
+    "show_working_hours",
+  ]);
+  const serviceKeys = new Set([
+    "country_ids",
+    "featured_country_ids",
+    "main_services",
+    "sub_services",
+    "custom_service_labels",
+  ]);
+  const seoKeys = new Set([
+    "seo_title",
+    "meta_description",
+    "canonical_url",
+    "og_title",
+    "og_description",
+    "og_image_url",
+    "tags",
+    "short_badge",
+    "custom_cta_text",
+    "page_heading",
+    "page_subheading",
+  ]);
+  const publishKeys = new Set([
+    "status",
+    "featured",
+    "show_on_homepage",
+    "is_indexable",
+    "show_in_search",
+    "firm_page_enabled",
+    "show_on_card",
+    "contact_popup_enabled",
+    "quick_apply_enabled",
+    "social_buttons_enabled",
+    "sort_priority",
+    "sponsored_display",
+    "premium_badge",
+    "verified_badge",
+  ]);
+  if (contactKeys.has(key)) return "contact";
+  if (serviceKeys.has(key)) return "services";
+  if (seoKeys.has(key)) return "seo";
+  if (publishKeys.has(key)) return "publish";
+  return "identity";
+}
 
 type FirmFormProps = {
   mode: "create" | "edit";
@@ -38,18 +153,18 @@ type FirmFormProps = {
   privateInitial?: FirmAdminPrivateRow | null;
   countryIds: string[];
   featuredCountryIds?: string[];
-  serviceTypeIds: string[];
   countries: Option[];
-  serviceTypes: Option[];
 };
 
 const inputClass =
-  "mt-1 w-full rounded-xl border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 py-2.5 text-sm outline-none ring-[#328CC1]/30 focus:ring-2";
+  "mt-1.5 w-full rounded-xl border border-[#0B3C5D]/12 bg-[#F8FAFC] px-3 py-2.5 text-sm text-[#1A1A1A] outline-none ring-[#328CC1]/25 transition focus:border-[#328CC1]/40 focus:ring-2";
 const labelClass = "block text-sm font-medium text-[#0B3C5D]";
-const sectionShell =
-  "rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm sm:p-6";
-const sectionTitle =
-  "text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/50";
+const groupTitle =
+  "text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1A1A]/45";
+const panel = "rounded-2xl border border-[#0B3C5D]/8 bg-white p-5 shadow-[0_8px_30px_rgba(11,60,93,0.04)] sm:p-6";
+/** İç alt bölümler — SaaS tarzı kart grupları */
+const subsection =
+  "rounded-xl border border-[#0B3C5D]/6 bg-[#FAFBFC] p-4 sm:p-5";
 
 export function FirmForm({
   mode,
@@ -58,26 +173,30 @@ export function FirmForm({
   privateInitial,
   countryIds,
   featuredCountryIds = [],
-  serviceTypeIds,
   countries,
-  serviceTypes,
 }: FirmFormProps) {
   const defaults = useMemo(
     () => buildFirmFormState(initial, privateInitial ?? null),
     [initial, privateInitial]
   );
 
-  const [tab, setTab] = useState<TabId>("basic");
+  const [tab, setTab] = useState<TabId>("identity");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<FirmFormState>(defaults);
   const [selectedCountries, setSelectedCountries] = useState<string[]>(countryIds);
   const [selectedFeatured, setSelectedFeatured] =
     useState<string[]>(featuredCountryIds);
-  const [selectedServices, setSelectedServices] =
-    useState<string[]>(serviceTypeIds);
   const [countryQ, setCountryQ] = useState("");
-  const [featuredQ, setFeaturedQ] = useState("");
+  const [subServiceQ, setSubServiceQ] = useState("");
+  const [subCustomInput, setSubCustomInput] = useState("");
   const [customTag, setCustomTag] = useState("");
+  const [seoTagDraft, setSeoTagDraft] = useState("");
+
+  useEffect(() => {
+    setForm(buildFirmFormState(initial, privateInitial ?? null));
+    setSelectedCountries(countryIds);
+    setSelectedFeatured(featuredCountryIds);
+  }, [initial, privateInitial, countryIds, featuredCountryIds]);
 
   function patch<K extends keyof FirmFormState>(key: K, value: FirmFormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -86,112 +205,124 @@ export function FirmForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    const raw = formStateToPayload(
-      form,
-      selectedCountries,
-      selectedFeatured,
-      selectedServices
-    );
-    const { _suggested_corporate: _s, ...payload } = raw;
+    try {
+      const raw = formStateToPayload(form, selectedCountries, selectedFeatured);
+      const { _suggested_corporate: _s, ...payload } = raw;
 
-    const parsed = firmFormSchema.safeParse(payload);
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Doğrulama hatası");
+      const parsed = firmFormSchema.safeParse(payload);
+      if (!parsed.success) {
+        const issue = parsed.error.issues[0];
+        setTab(
+          tabForValidationPath(issue.path as (string | number)[])
+        );
+        toast.error(issue?.message ?? "Doğrulama hatası");
+        return;
+      }
+
+      const res =
+        mode === "create"
+          ? await createFirmFromForm(parsed.data)
+          : await updateFirmFromForm(firmId!, parsed.data);
+
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+
+      toast.success(mode === "create" ? "Firma oluşturuldu" : "Kayıt güncellendi", {
+        description: "Değişiklikler kaydedildi.",
+      });
+
+      if (mode === "create" && "id" in res) {
+        window.location.href = `/admin/firms/${res.id}/edit`;
+      }
+    } catch (err) {
+      console.error("[FirmForm]", err);
+      toast.error("Kayıt sırasında bir hata oluştu. Bağlantınızı kontrol edip tekrar deneyin.");
+    } finally {
       setSaving(false);
-      return;
-    }
-
-    const res =
-      mode === "create"
-        ? await createFirmFromForm(parsed.data)
-        : await updateFirmFromForm(firmId!, parsed.data);
-
-    setSaving(false);
-
-    if (!res.ok) {
-      toast.error(res.error);
-      return;
-    }
-    toast.success(mode === "create" ? "Firma oluşturuldu" : "Firma güncellendi");
-    if (mode === "create" && "id" in res) {
-      window.location.href = `/admin/firms/${res.id}/edit`;
     }
   }
 
   const filteredCountries = countries.filter((c) =>
     c.name.toLocaleLowerCase("tr").includes(countryQ.toLocaleLowerCase("tr"))
   );
-  const filteredFeaturedPool = countries.filter((c) =>
-    c.name.toLocaleLowerCase("tr").includes(featuredQ.toLocaleLowerCase("tr"))
-  );
 
-  const listingTrust = computeListingTrustScore(form.hype_score, form.corporate_score);
-  const suggestedCorporate = formStateToPayload(
-    form,
-    selectedCountries,
-    selectedFeatured,
-    selectedServices
-  )._suggested_corporate;
+  const filteredSubPicker = useMemo(() => {
+    const q = subServiceQ.toLocaleLowerCase("tr").trim();
+    return SUB_SERVICE_CATALOG.filter((s) => {
+      if (form.sub_services.includes(s)) return false;
+      if (!q) return true;
+      return s.toLocaleLowerCase("tr").includes(q);
+    });
+  }, [subServiceQ, form.sub_services]);
 
-  const cardCountryLabels = selectedCountries
-    .map((id) => countries.find((c) => c.id === id)?.name)
-    .filter(Boolean) as string[];
+  function renderIdentity() {
+    return (
+      <div className={`${panel} space-y-8`}>
+        <header className="border-b border-[#0B3C5D]/8 pb-5">
+          <h2 className="text-lg font-semibold text-[#0B3C5D]">Kimlik</h2>
+          <p className="mt-1 text-sm text-[#1A1A1A]/55">
+            Liste ve firma sayfasında görünen temel bilgiler. Hype puanı sistem tarafından yönetilir.
+          </p>
+        </header>
 
-  const seoTitleLen = form.seo_title.trim().length;
-  const slugWarn = !form.slug.trim();
-  const seoTitleWarn = seoTitleLen > 0 && (seoTitleLen < 30 || seoTitleLen > 65);
-  const metaMissing = !form.meta_description.trim();
-
-  function renderTabContent(id: TabId) {
-    switch (id) {
-      case "basic":
-        return (
-          <div className={`${sectionShell} space-y-5`}>
-            <h2 className={sectionTitle}>Temel bilgiler</h2>
-            <div className="grid gap-4 lg:grid-cols-2">
-              <label className={labelClass}>
-                Firma adı *
-                <input
-                  required
-                  value={form.name}
-                  onChange={(e) => patch("name", e.target.value)}
-                  maxLength={200}
-                  className={inputClass}
-                />
-              </label>
-              <div className="flex flex-wrap items-end gap-2">
+        <div className={subsection}>
+          <p className={groupTitle}>Firma profili</p>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2">
+            <label className={`${labelClass} sm:col-span-2`}>
+              Firma adı <span className="text-red-600">*</span>
+              <input
+                required
+                value={form.name}
+                onChange={(e) => patch("name", e.target.value)}
+                maxLength={200}
+                className={inputClass}
+                autoComplete="organization"
+              />
+              <FieldHelp>Ziyaretçi ve arama sonuçlarında görünen resmi isim.</FieldHelp>
+            </label>
+            <div className="sm:col-span-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                 <label className={`${labelClass} min-w-0 flex-1`}>
-                  URL slug *
+                  Slug <span className="text-red-600">*</span>
                   <input
                     required
                     value={form.slug}
                     onChange={(e) => patch("slug", e.target.value)}
                     className={inputClass}
+                    spellCheck={false}
                   />
                 </label>
                 <button
                   type="button"
                   onClick={() => patch("slug", slugify(form.name))}
-                  className="shrink-0 rounded-xl border border-[#0B3C5D]/15 bg-white px-3 py-2.5 text-xs font-semibold text-[#0B3C5D] hover:bg-[#eef2f6]"
+                  className="shrink-0 rounded-xl border border-[#0B3C5D]/15 bg-white px-4 py-2.5 text-sm font-semibold text-[#0B3C5D] hover:bg-[#f0f4f8]"
                 >
                   İsimden üret
                 </button>
               </div>
+              <FieldHelp>
+                Küçük harf ve tire; benzersiz olmalı. Yayın URL’si: /firma/
+                <span className="font-mono">{form.slug || "…"}</span>
+              </FieldHelp>
             </div>
-            <label className={labelClass}>
+            <label className={`${labelClass} sm:col-span-2`}>
               Kısa açıklama
-              <span className="ml-2 text-xs font-normal text-[#1A1A1A]/45">
-                {form.short_description.length}/500
+              <span className="ml-2 font-normal text-[#1A1A1A]/40">
+                {form.short_description.length}/160
               </span>
               <textarea
                 value={form.short_description}
                 onChange={(e) => patch("short_description", e.target.value)}
-                rows={3}
-                maxLength={500}
+                rows={2}
+                maxLength={160}
+                placeholder="Kart ve arama sonuçları için — net, ikna edici."
                 className={inputClass}
               />
+              <FieldHelp>Kart ve özet alanlarda kullanılır; tek cümlede güven verin.</FieldHelp>
             </label>
-            <label className={labelClass}>
+            <label className={`${labelClass} sm:col-span-2`}>
               Detaylı açıklama
               <textarea
                 value={form.description}
@@ -200,707 +331,118 @@ export function FirmForm({
                 maxLength={20000}
                 className={inputClass}
               />
-            </label>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className={labelClass}>
-                Firma türü / kategori
-                <input
-                  value={form.firm_category}
-                  onChange={(e) => patch("firm_category", e.target.value)}
-                  placeholder="Örn. Göçmenlik hukuku, Schengen uzmanı"
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Kuruluş yılı
-                <input
-                  value={form.founded_year}
-                  onChange={(e) => patch("founded_year", e.target.value)}
-                  inputMode="numeric"
-                  placeholder="Örn. 2012"
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <label className={labelClass}>
-              Slogan
-              <input
-                value={form.slogan}
-                onChange={(e) => patch("slogan", e.target.value)}
-                maxLength={200}
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
-              Sayfa tanıtım metni (kısa)
-              <textarea
-                value={form.page_intro}
-                onChange={(e) => patch("page_intro", e.target.value)}
-                rows={2}
-                maxLength={600}
-                className={inputClass}
-              />
-              <span className="mt-1 block text-xs text-[#1A1A1A]/45">
-                Firma detay sayfasında öne çıkan kısa giriş.
-              </span>
-            </label>
-            <label className={labelClass}>
-              Kart rozeti / etiket
-              <input
-                value={form.short_badge}
-                onChange={(e) => patch("short_badge", e.target.value)}
-                maxLength={80}
-                placeholder="Örn. Schengen uzmanı"
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
-              Firma durumu özeti
-              <textarea
-                value={form.status_summary}
-                onChange={(e) => patch("status_summary", e.target.value)}
-                rows={2}
-                maxLength={400}
-                className={inputClass}
-              />
+              <FieldHelp>Firma sayfasındaki ana metin; uzun ve yapılandırılmış içerik için bölümler sekmesini de kullanın.</FieldHelp>
             </label>
           </div>
-        );
+        </div>
 
-      case "media":
-        return (
-          <div className="space-y-6">
-            <div className={sectionShell}>
-              <h2 className={sectionTitle}>Logo ve kapak</h2>
-              <div className="mt-4 grid gap-8 lg:grid-cols-2">
-                <FirmImageUpload
-                  label="Kare logo (kart / ana sayfa)"
-                  kind="logo"
-                  firmId={firmId}
-                  value={form.logo_url}
-                  onChange={(u) => patch("logo_url", u)}
-                  helper="Ana sayfa kart görünümünde kullanılacak kare logo. Önerilen boyut: 500×500 piksel. PNG, JPG veya WebP."
-                  previewClassName="h-28 w-28 rounded-xl border border-[#0B3C5D]/10 bg-white object-contain p-1"
-                />
-                <FirmImageUpload
-                  label="Kapak görseli (detay üstü)"
-                  kind="cover"
-                  firmId={firmId}
-                  value={form.cover_image_url}
-                  onChange={(u) => patch("cover_image_url", u)}
-                  helper="Firma detay sayfasında üst bölümde gösterilecek kapak görseli. Önerilen boyut: 1920×1080 piksel."
-                  previewClassName="h-32 w-full max-w-md rounded-xl object-cover"
-                />
-              </div>
-            </div>
-            <div className={`${sectionShell} space-y-8`}>
-              <h2 className={sectionTitle}>Ek görseller</h2>
-              <FirmImageArrayUpload
-                label="Galeri"
-                kind="gallery"
-                firmId={firmId}
-                urls={form.gallery_images}
-                onChange={(u) => patch("gallery_images", u)}
-                helper="Bucket: media — firms/{id}/gallery/"
-              />
-              <FirmImageArrayUpload
-                label="Ofis fotoğrafları"
-                kind="office"
-                firmId={firmId}
-                urls={form.office_photo_urls}
-                onChange={(u) => patch("office_photo_urls", u)}
-              />
-              <FirmImageUpload
-                label="Ekip fotoğrafı"
-                kind="team"
-                firmId={firmId}
-                value={form.team_photo_url}
-                onChange={(u) => patch("team_photo_url", u)}
-              />
-              <FirmImageArrayUpload
-                label="Belge görselleri"
-                kind="document"
-                firmId={firmId}
-                urls={form.document_image_urls}
-                onChange={(u) => patch("document_image_urls", u)}
-                max={8}
-              />
-              <FirmImageArrayUpload
-                label="Tanıtım görselleri"
-                kind="promo"
-                firmId={firmId}
-                urls={form.promo_image_urls}
-                onChange={(u) => patch("promo_image_urls", u)}
-              />
-            </div>
-          </div>
-        );
-
-      case "contact":
-        return (
-          <div className={`${sectionShell} space-y-6`}>
-            <h2 className={sectionTitle}>İletişim kanalları</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {(
-                [
-                  ["phone", "Telefon"],
-                  ["whatsapp", "WhatsApp"],
-                  ["email", "E-posta"],
-                  ["website", "Web sitesi"],
-                  ["instagram", "Instagram"],
-                  ["facebook", "Facebook"],
-                  ["twitter", "X / Twitter"],
-                  ["linkedin", "LinkedIn"],
-                  ["youtube", "YouTube"],
-                  ["telegram", "Telegram"],
-                ] as const
-              ).map(([key, label]) => (
-                <label key={key} className={labelClass}>
-                  {label}
-                  <input
-                    value={String(form[key])}
-                    onChange={(e) => patch(key, e.target.value)}
-                    className={inputClass}
-                  />
-                </label>
-              ))}
-            </div>
-            <h3 className="text-sm font-semibold text-[#0B3C5D]">Adres</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className={`${labelClass} sm:col-span-2`}>
-                Açık adres
-                <textarea
-                  value={form.address}
-                  onChange={(e) => patch("address", e.target.value)}
-                  rows={2}
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                İlçe
-                <input
-                  value={form.district}
-                  onChange={(e) => patch("district", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Şehir
-                <input
-                  value={form.city}
-                  onChange={(e) => patch("city", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Ülke (adres)
-                <input
-                  value={form.hq_country}
-                  onChange={(e) => patch("hq_country", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Google Maps bağlantısı
-                <input
-                  value={form.maps_url}
-                  onChange={(e) => patch("maps_url", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className={labelClass}>
-                Çalışma saatleri
-                <textarea
-                  value={form.working_hours}
-                  onChange={(e) => patch("working_hours", e.target.value)}
-                  rows={2}
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Hafta sonu
-                <input
-                  value={form.weekend_hours_note}
-                  onChange={(e) => patch("weekend_hours_note", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className={labelClass}>
-                İletişim kişisi (isteğe bağlı)
-                <input
-                  value={form.contact_person_name}
-                  onChange={(e) => patch("contact_person_name", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Görevi
-                <input
-                  value={form.contact_person_role}
-                  onChange={(e) => patch("contact_person_role", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <h3 className="text-sm font-semibold text-[#0B3C5D]">Görünürlük</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {(
-                [
-                  ["show_phone", "Telefonu göster"],
-                  ["show_whatsapp", "WhatsApp göster"],
-                  ["show_email", "E-posta göster"],
-                  ["show_website", "Web sitesi göster"],
-                  ["show_address", "Adresi göster"],
-                  ["show_working_hours", "Çalışma saatlerini göster"],
-                ] as const
-              ).map(([key, label]) => (
-                <label key={key} className="flex items-center gap-2 text-sm font-medium text-[#0B3C5D]">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(form[key])}
-                    onChange={(e) => patch(key, e.target.checked)}
-                    className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-          </div>
-        );
-
-      case "geo":
-        return (
-          <div className="space-y-6">
-            <div className={sectionShell}>
-              <h2 className={sectionTitle}>Hizmet verilen ülkeler</h2>
-              <input
-                value={countryQ}
-                onChange={(e) => setCountryQ(e.target.value)}
-                placeholder="Ülke ara…"
-                className={`${inputClass} mt-2`}
-              />
-              <div className="mt-3 max-h-52 space-y-2 overflow-y-auto rounded-xl border border-[#0B3C5D]/10 p-3">
-                {filteredCountries.map((c) => (
-                  <label
-                    key={c.id}
-                    className="flex cursor-pointer items-center gap-2 text-sm text-[#1A1A1A]"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedCountries.includes(c.id)}
-                      onChange={() =>
-                        setSelectedCountries((prev) =>
-                          prev.includes(c.id)
-                            ? prev.filter((x) => x !== c.id)
-                            : [...prev, c.id]
-                        )
-                      }
-                      className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                    />
-                    {c.name}
-                  </label>
-                ))}
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {selectedCountries.map((id) => {
-                  const n = countries.find((c) => c.id === id)?.name ?? id;
-                  return (
-                    <span
-                      key={id}
-                      className="inline-flex items-center gap-1 rounded-full bg-[#F4F6F8] px-2 py-1 text-xs font-medium text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10"
-                    >
-                      {n}
-                      <button
-                        type="button"
-                        className="text-[#1A1A1A]/45 hover:text-[#1A1A1A]"
-                        onClick={() =>
-                          setSelectedCountries((p) => p.filter((x) => x !== id))
-                        }
-                        aria-label="Kaldır"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className={sectionShell}>
-              <h2 className={sectionTitle}>Öne çıkan hizmet ülkeleri</h2>
-              <p className="mt-1 text-xs text-[#1A1A1A]/50">
-                Kart veya detayda vurgulanacak ülkeler (alt küme önerilir).
-              </p>
-              <input
-                value={featuredQ}
-                onChange={(e) => setFeaturedQ(e.target.value)}
-                placeholder="Öne çıkan ülke ara…"
-                className={`${inputClass} mt-2`}
-              />
-              <div className="mt-3 max-h-40 space-y-2 overflow-y-auto rounded-xl border border-[#D9A441]/20 bg-[#D9A441]/5 p-3">
-                {filteredFeaturedPool.map((c) => (
-                  <label
-                    key={c.id}
-                    className="flex cursor-pointer items-center gap-2 text-sm text-[#1A1A1A]"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedFeatured.includes(c.id)}
-                      onChange={() =>
-                        setSelectedFeatured((prev) =>
-                          prev.includes(c.id)
-                            ? prev.filter((x) => x !== c.id)
-                            : [...prev, c.id]
-                        )
-                      }
-                      className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#D9A441]"
-                    />
-                    {c.name}
-                  </label>
-                ))}
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {selectedFeatured.map((id) => {
-                  const n = countries.find((c) => c.id === id)?.name ?? id;
-                  return (
-                    <span
-                      key={id}
-                      className="inline-flex items-center gap-1 rounded-full bg-[#D9A441]/20 px-2 py-1 text-xs font-semibold text-[#1A1A1A]"
-                    >
-                      {n}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSelectedFeatured((p) => p.filter((x) => x !== id))
-                        }
-                      >
-                        ×
-                      </button>
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className={sectionShell}>
-              <h2 className={sectionTitle}>İşlem türleri</h2>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {serviceTypes.map((s) => (
-                  <label
-                    key={s.id}
-                    className="flex cursor-pointer items-center gap-2 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-2 text-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedServices.includes(s.id)}
-                      onChange={() =>
-                        setSelectedServices((prev) =>
-                          prev.includes(s.id)
-                            ? prev.filter((x) => x !== s.id)
-                            : [...prev, s.id]
-                        )
-                      }
-                      className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                    />
-                    {s.name}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className={sectionShell}>
-              <h2 className={sectionTitle}>Özel hizmet etiketleri</h2>
-              <p className="mt-1 text-xs text-[#1A1A1A]/50">
-                Express, VIP, öğrenci vizesi, red sonrası danışmanlık vb.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {form.custom_service_labels.map((t) => (
-                  <span
-                    key={t}
-                    className="inline-flex items-center gap-1 rounded-full bg-[#328CC1]/15 px-2 py-1 text-xs font-semibold text-[#0B3C5D]"
-                  >
-                    {t}
-                    <button
-                      type="button"
-                      className="text-[#1A1A1A]/45"
-                      onClick={() =>
-                        patch(
-                          "custom_service_labels",
-                          form.custom_service_labels.filter((x) => x !== t)
-                        )
-                      }
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <input
-                value={customTag}
-                onChange={(e) => setCustomTag(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const v = customTag.trim();
-                    if (!v || form.custom_service_labels.includes(v)) return;
-                    patch("custom_service_labels", [
-                      ...form.custom_service_labels,
-                      v,
-                    ]);
-                    setCustomTag("");
-                  }
-                }}
-                placeholder="Etiket yazıp Enter"
-                className={`${inputClass} mt-2`}
-              />
-            </div>
-
-            <div className={sectionShell}>
-              <h2 className={sectionTitle}>Hizmet modeli</h2>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {(
-                  [
-                    ["offers_online_service", "Online hizmet"],
-                    ["offers_physical_office", "Fiziksel ofis"],
-                    ["offers_remote_support", "Şehir dışı / uzaktan destek"],
-                    ["offers_multilingual_support", "Çok dilli destek"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <label key={key} className="flex items-center gap-2 text-sm font-medium text-[#0B3C5D]">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(form[key])}
-                      onChange={(e) => patch(key, e.target.checked)}
-                      className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case "corp":
-        return (
-          <div className={`${sectionShell} space-y-6`}>
-            <h2 className={sectionTitle}>Kurumsal kayıt ve güven</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className={labelClass}>
-                Şirket türü
-                <input
-                  value={form.company_type}
-                  onChange={(e) => patch("company_type", e.target.value)}
-                  placeholder="Ltd, A.Ş., şahıs…"
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Kuruluş yılı (kurumsal)
-                <input
-                  value={form.founded_year}
-                  onChange={(e) => patch("founded_year", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-[#0B3C5D]">
-                <input
-                  type="checkbox"
-                  checked={form.has_tax_document}
-                  onChange={(e) => patch("has_tax_document", e.target.checked)}
-                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                />
-                Vergi levhası mevcut
-              </label>
-              <label className="flex items-center gap-2 text-sm font-medium text-[#0B3C5D]">
-                <input
-                  type="checkbox"
-                  checked={form.has_physical_office}
-                  onChange={(e) => patch("has_physical_office", e.target.checked)}
-                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                />
-                Fiziksel ofis var
-              </label>
-              <label className="flex items-center gap-2 text-sm font-medium text-[#0B3C5D]">
-                <input
-                  type="checkbox"
-                  checked={form.office_address_verified}
-                  onChange={(e) => patch("office_address_verified", e.target.checked)}
-                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                />
-                Ofis adresi doğrulandı
-              </label>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className={labelClass}>
-                Vergi numarası
-                <input
-                  value={form.tax_number}
-                  onChange={(e) => patch("tax_number", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Vergi dairesi
-                <input
-                  value={form.tax_office}
-                  onChange={(e) => patch("tax_office", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Belge / izin numarası
-                <input
-                  value={form.permit_number}
-                  onChange={(e) => patch("permit_number", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-            </div>
+        <div className={subsection}>
+          <p className={groupTitle}>Sınıflandırma</p>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2">
             <label className={labelClass}>
-              Yasal izin açıklaması
-              <textarea
-                value={form.legal_authorization_note}
-                onChange={(e) => patch("legal_authorization_note", e.target.value)}
-                rows={3}
+              Firma türü
+              <select
+                value={form.firm_category}
+                onChange={(e) => patch("firm_category", e.target.value)}
                 className={inputClass}
-              />
+              >
+                {FIRM_CATEGORY_OPTIONS.map((o) => (
+                  <option key={o.value || "empty"} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+                {form.firm_category &&
+                !FIRM_CATEGORY_OPTIONS.some((o) => o.value === form.firm_category) ? (
+                  <option value={form.firm_category}>
+                    {form.firm_category} (kayıtlı)
+                  </option>
+                ) : null}
+              </select>
             </label>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <label className={labelClass}>
-                Çalışan sayısı (tahmini)
-                <input
-                  value={form.employee_count}
-                  onChange={(e) => patch("employee_count", e.target.value)}
-                  inputMode="numeric"
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Hizmet verilen şehir sayısı
-                <input
-                  value={form.cities_served_count}
-                  onChange={(e) => patch("cities_served_count", e.target.value)}
-                  inputMode="numeric"
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Yurtdışı uzmanlık (0–100)
-                <input
-                  value={form.international_expertise_level}
-                  onChange={(e) => patch("international_expertise_level", e.target.value)}
-                  inputMode="numeric"
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {(
-                [
-                  ["has_corporate_email", "Kurumsal e-posta var"],
-                  ["has_corporate_domain", "Kurumsal domain var"],
-                  ["has_professional_website", "Profesyonel web sitesi"],
-                  ["multilingual_team", "Çok dilli ekip"],
-                ] as const
-              ).map(([key, label]) => (
-                <label key={key} className="flex items-center gap-2 text-sm font-medium text-[#0B3C5D]">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(form[key])}
-                    onChange={(e) => patch(key, e.target.checked)}
-                    className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className={labelClass}>
-                Sosyal medya aktifliği
-                <select
-                  value={form.social_media_activity}
-                  onChange={(e) =>
-                    patch(
-                      "social_media_activity",
-                      e.target.value as FirmFormState["social_media_activity"]
-                    )
-                  }
-                  className={inputClass}
-                >
-                  <option value="">Seçin</option>
-                  <option value="low">Düşük</option>
-                  <option value="medium">Orta</option>
-                  <option value="high">Yüksek</option>
-                </select>
-              </label>
-              <label className={labelClass}>
-                Müşteri yorumu / referans düzeyi
-                <select
-                  value={form.testimonials_level}
-                  onChange={(e) =>
-                    patch(
-                      "testimonials_level",
-                      e.target.value as FirmFormState["testimonials_level"]
-                    )
-                  }
-                  className={inputClass}
-                >
-                  <option value="">Seçin</option>
-                  <option value="none">Yok</option>
-                  <option value="few">Az</option>
-                  <option value="moderate">Orta</option>
-                  <option value="strong">Güçlü</option>
-                </select>
-              </label>
-            </div>
             <label className={labelClass}>
-              Profil doluluk oranı (0–100, iç tahmin)
+              Kuruluş yılı
               <input
-                value={form.profile_completeness}
-                onChange={(e) => patch("profile_completeness", e.target.value)}
+                value={form.founded_year}
+                onChange={(e) => patch("founded_year", e.target.value)}
                 inputMode="numeric"
+                placeholder="Örn. 2015"
                 className={inputClass}
               />
             </label>
-            <p className="text-xs text-[#1A1A1A]/50">
-              Bu bölümdeki işaretler kurumsallık skoru önizlemesine girdi oluşturur; skor sekmesinden
-              ağırlıklı öneriyi uygulayabilirsiniz.
-            </p>
           </div>
-        );
+        </div>
 
-      case "scores":
-        return (
-          <div className="space-y-6">
-            <div className={sectionShell}>
-              <h2 className={sectionTitle}>Hype puanı</h2>
-              <p className="mt-1 text-sm text-[#1A1A1A]/65">
-                Aktiflik ve görünürlük odaklı metrik. Yeni firmalarda varsayılan 0; zaman içinde
-                platform aktivitesiyle güncellenebilir.
-              </p>
-              <p className="mt-4 text-3xl font-bold text-[#0B3C5D]">{form.hype_score}</p>
+        <div className={subsection}>
+          <p className={groupTitle}>Marka (isteğe bağlı)</p>
+          <div className="mt-4 max-w-sm">
+            <FirmImageUpload
+              label="Logo"
+              kind="logo"
+              firmId={firmId}
+              value={form.logo_url}
+              onChange={(u) => patch("logo_url", u)}
+              helper="Kare logo önerilir. PNG, JPG veya WebP."
+            />
+          </div>
+          <div className="mt-6 grid max-w-2xl gap-4 sm:grid-cols-2">
+            <label className={`${labelClass} sm:col-span-2`}>
+              Logo alt metni (SEO)
+              {form.logo_url?.trim() ? (
+                <span className="text-red-600"> *</span>
+              ) : null}
               <input
-                type="range"
-                min={0}
-                max={100}
-                value={form.hype_score}
-                onChange={(e) => patch("hype_score", Number(e.target.value))}
-                className="mt-4 w-full accent-[#328CC1]"
+                value={form.logo_alt_text}
+                onChange={(e) => patch("logo_alt_text", e.target.value)}
+                maxLength={200}
+                placeholder="Örn. Acme Vize Danışmanlığı logosu"
+                className={inputClass}
+                aria-required={Boolean(form.logo_url?.trim())}
               />
-            </div>
-            <div className={sectionShell}>
-              <h2 className={sectionTitle}>Kurumsallık skoru</h2>
-              <p className="mt-1 text-sm text-[#1A1A1A]/65">
-                Kurumsal değerlendirme; yönetim panelinden kontrol edilir.
+              <p className="mt-1.5 text-xs leading-relaxed text-[#1A1A1A]/50">
+                Alt metin, görselin arama motorları tarafından anlaşılması için önemlidir.
               </p>
-              <p className="mt-4 text-3xl font-bold text-[#D9A441]">{form.corporate_score}</p>
+            </label>
+            <label className={labelClass}>
+              Logo title (isteğe bağlı)
+              <input
+                value={form.logo_title}
+                onChange={(e) => patch("logo_title", e.target.value)}
+                maxLength={200}
+                placeholder="İmleç üzerinde kısa ipucu"
+                className={inputClass}
+              />
+            </label>
+            <label className={labelClass}>
+              Logo açıklaması (isteğe bağlı)
+              <textarea
+                value={form.logo_description}
+                onChange={(e) => patch("logo_description", e.target.value)}
+                rows={2}
+                maxLength={500}
+                placeholder="İç not / kısa görsel açıklaması"
+                className={inputClass}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>Skorlar</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F8FAFC] p-4">
+              <p className="text-xs font-medium text-[#1A1A1A]/50">Hype puanı</p>
+              <p className="mt-2 text-3xl font-bold tabular-nums text-[#0B3C5D]">
+                {form.hype_score}
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-[#1A1A1A]/50">
+                Aktiflik ve platform sinyalleriyle güncellenir; bu panelden değiştirilmez.
+              </p>
+            </div>
+            <div className="rounded-xl border border-[#D9A441]/25 bg-[#D9A441]/6 p-4">
+              <p className="text-xs font-medium text-[#1A1A1A]/50">Kurumsallık skoru</p>
+              <p className="mt-2 text-3xl font-bold tabular-nums text-[#8B6914]">
+                {form.corporate_score}
+              </p>
               <input
                 type="range"
                 min={0}
@@ -908,267 +450,56 @@ export function FirmForm({
                 value={form.corporate_score}
                 onChange={(e) => patch("corporate_score", Number(e.target.value))}
                 className="mt-4 w-full accent-[#D9A441]"
+                aria-label="Kurumsallık skoru"
               />
-              <div className="mt-6 border-t border-[#0B3C5D]/10 pt-6">
-                <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/50">
-                  Ağırlıklı önizleme
-                </p>
-                <p className="mt-2 text-sm text-[#1A1A1A]/65">
-                  Önerilen kurumsallık (iç hesap):{" "}
-                  <strong className="text-[#0B3C5D]">{suggestedCorporate}</strong>
-                </p>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  {(
-                    [
-                      ["corporate_factor_tax", "Vergi / belge kanıtı"],
-                      ["corporate_factor_office", "Ofis ve adres"],
-                      ["corporate_factor_digital", "Dijital varlık"],
-                      ["corporate_factor_refs", "Referans / itibar"],
-                    ] as const
-                  ).map(([key, lab]) => (
-                    <div key={key}>
-                      <p className="text-xs font-medium text-[#0B3C5D]">{lab}</p>
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={form[key]}
-                        onChange={(e) => patch(key, Number(e.target.value))}
-                        className="mt-1 w-full accent-[#0B3C5D]"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => patch("corporate_score", suggestedCorporate)}
-                  className="mt-4 rounded-xl border border-[#0B3C5D]/20 bg-[#F7F9FB] px-4 py-2 text-sm font-semibold text-[#0B3C5D] hover:bg-[#eef2f6]"
-                >
-                  Önerilen puana uygula
-                </button>
-              </div>
-            </div>
-            <div className={sectionShell}>
-              <h2 className={sectionTitle}>Liste sıralaması (türetilmiş)</h2>
-              <p className="text-sm text-[#1A1A1A]/65">
-                Filtrelerde kullanılan birleşik skor:{" "}
-                <strong className="text-[#0B3C5D]">{listingTrust}</strong> (hype %42 + kurumsallık
-                %58)
-              </p>
             </div>
           </div>
-        );
+        </div>
 
-      case "page":
-        return (
-          <div className={`${sectionShell} space-y-6`}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className={sectionTitle}>Sayfa içeriği</h2>
-              {mode === "edit" && firmId ? (
-                <Link
-                  href={`/admin/firms/${firmId}/sections`}
-                  className="text-sm font-semibold text-[#328CC1] underline-offset-4 hover:underline"
-                >
-                  Gelişmiş blok düzenleyici →
-                </Link>
-              ) : null}
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className={labelClass}>
-                Sayfa başlığı
-                <input
-                  value={form.page_heading}
-                  onChange={(e) => patch("page_heading", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Sayfa alt başlığı
-                <input
-                  value={form.page_subheading}
-                  onChange={(e) => patch("page_subheading", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <label className={labelClass}>
-              Özel CTA metni
-              <input
-                value={form.custom_cta_text}
-                onChange={(e) => patch("custom_cta_text", e.target.value)}
-                className={inputClass}
-              />
-            </label>
+        <div className={subsection}>
+          <p className={groupTitle}>Yalnızca ekip</p>
+          <label className={`${labelClass} mt-3`}>
+            <span className="text-[#1A1A1A]/60">
+              Özel not (yalnızca yönetim paneli — ziyaretçi görmez)
+            </span>
+            <textarea
+              value={form.internal_review}
+              onChange={(e) => patch("internal_review", e.target.value)}
+              rows={4}
+              maxLength={5000}
+              placeholder="İç süreç, risk, görüşme özeti…"
+              className={inputClass}
+            />
+          </label>
+        </div>
+      </div>
+    );
+  }
+
+  function renderContact() {
+    return (
+      <div className={`${panel} space-y-8`}>
+        <header className="border-b border-[#0B3C5D]/8 pb-5">
+          <h2 className="text-lg font-semibold text-[#0B3C5D]">İletişim</h2>
+          <p className="mt-1 text-sm text-[#1A1A1A]/55">
+            Müşterinin göreceği kanallar. Aşağıdaki &quot;Halka açık görünürlük&quot; ile hangi alanın listelendiğini seçin.
+          </p>
+        </header>
+
+        <div className={subsection}>
+          <p className={groupTitle}>İletişim kanalları</p>
+          <FieldHelp>Telefon ve WhatsApp için ülke kodu ekleyin. Web sitesi tam adres (https://…) olmalıdır.</FieldHelp>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             {(
               [
-                ["about_section", "Hakkında"],
-                ["service_process_text", "Hizmet süreci"],
-                ["application_process_text", "Başvuru süreci"],
-                ["documents_process_text", "Evrak süreci"],
-                ["appointment_process_text", "Randevu süreci"],
-                ["visa_fees_note", "Vize ücretleri hakkında"],
-                ["why_this_firm", "Neden bu firma"],
-                ["corporate_summary_box", "Kurumsal özet kutusu"],
-                ["disclaimer_notice", "Uyarı / bilgilendirme"],
-                ["campaign_text", "Kampanya metni"],
-                ["video_promo_text", "Video / tanıtım metni"],
+                ["phone", "Telefon"],
+                ["whatsapp", "WhatsApp"],
+                ["email", "E-posta"],
+                ["website", "Web sitesi"],
               ] as const
             ).map(([key, lab]) => (
               <label key={key} className={labelClass}>
                 {lab}
-                <textarea
-                  value={String(form[key])}
-                  onChange={(e) => patch(key, e.target.value)}
-                  rows={4}
-                  className={inputClass}
-                />
-              </label>
-            ))}
-            <div>
-              <p className={labelClass}>SSS (sırayla)</p>
-              <div className="mt-2 space-y-3">
-                {form.faq_json.map((row, i) => (
-                  <div
-                    key={i}
-                    className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/80 p-3"
-                  >
-                    <input
-                      value={row.question}
-                      onChange={(e) => {
-                        const next = [...form.faq_json];
-                        next[i] = { ...next[i]!, question: e.target.value };
-                        patch("faq_json", next);
-                      }}
-                      placeholder="Soru"
-                      className={`${inputClass} mb-2`}
-                    />
-                    <textarea
-                      value={row.answer}
-                      onChange={(e) => {
-                        const next = [...form.faq_json];
-                        next[i] = { ...next[i]!, answer: e.target.value };
-                        patch("faq_json", next);
-                      }}
-                      placeholder="Cevap"
-                      rows={2}
-                      className={inputClass}
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        patch(
-                          "faq_json",
-                          form.faq_json.filter((_, j) => j !== i)
-                        )
-                      }
-                      className="mt-2 text-xs font-semibold text-red-600"
-                    >
-                      Satırı sil
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() =>
-                    patch("faq_json", [...form.faq_json, { question: "", answer: "" }])
-                  }
-                  className="rounded-xl border border-dashed border-[#0B3C5D]/25 px-4 py-2 text-sm font-semibold text-[#0B3C5D]"
-                >
-                  + SSS ekle
-                </button>
-              </div>
-            </div>
-            <div>
-              <p className={labelClass}>Avantajlar listesi</p>
-              <ul className="mt-2 space-y-2">
-                {form.advantages_list.map((line, i) => (
-                  <li key={i} className="flex gap-2">
-                    <input
-                      value={line}
-                      onChange={(e) => {
-                        const next = [...form.advantages_list];
-                        next[i] = e.target.value;
-                        patch("advantages_list", next);
-                      }}
-                      className={inputClass}
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        patch(
-                          "advantages_list",
-                          form.advantages_list.filter((_, j) => j !== i)
-                        )
-                      }
-                      className="shrink-0 text-red-600"
-                    >
-                      ×
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <button
-                type="button"
-                onClick={() => patch("advantages_list", [...form.advantages_list, ""])}
-                className="mt-2 text-sm font-semibold text-[#328CC1]"
-              >
-                + Madde ekle
-              </button>
-            </div>
-            <h3 className="text-sm font-semibold text-[#0B3C5D]">Bölüm görünürlüğü</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {(
-                [
-                  ["show_faq", "SSS göster"],
-                  ["show_campaign_area", "Kampanya alanı"],
-                  ["show_process_section", "Süreç alanları"],
-                  ["show_contact_box", "İletişim kutusu"],
-                  ["show_social_section", "Sosyal medya alanı"],
-                ] as const
-              ).map(([key, label]) => (
-                <label key={key} className="flex items-center gap-2 text-sm font-medium text-[#0B3C5D]">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(form[key])}
-                    onChange={(e) => patch(key, e.target.checked)}
-                    className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-          </div>
-        );
-
-      case "seo":
-        return (
-          <div className={`${sectionShell} space-y-5`}>
-            <h2 className={sectionTitle}>SEO</h2>
-            <div className="rounded-xl bg-amber-50/80 p-4 text-sm text-amber-950 ring-1 ring-amber-200">
-              <p className="font-semibold">Kontrol listesi</p>
-              <ul className="mt-2 list-inside list-disc space-y-1">
-                {slugWarn ? <li>Slug boş olamaz.</li> : null}
-                {seoTitleWarn ? (
-                  <li>SEO başlığı ideal uzunlukta değil (yaklaşık 30–65 karakter).</li>
-                ) : null}
-                {metaMissing ? <li>Meta açıklama boş — arama sonuçları zayıf kalır.</li> : null}
-                {!slugWarn && !seoTitleWarn && !metaMissing ? (
-                  <li className="list-none">Temel SEO alanları dolu görünüyor.</li>
-                ) : null}
-              </ul>
-            </div>
-            {(
-              [
-                ["seo_title", "SEO title"],
-                ["meta_description", "Meta description"],
-                ["canonical_url", "Canonical URL"],
-                ["og_title", "OG title"],
-                ["og_description", "OG description"],
-                ["og_image_url", "OG image URL"],
-              ] as const
-            ).map(([key, label]) => (
-              <label key={key} className={labelClass}>
-                {label}
                 <input
                   value={String(form[key])}
                   onChange={(e) => patch(key, e.target.value)}
@@ -1176,253 +507,721 @@ export function FirmForm({
                 />
               </label>
             ))}
-            <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-4">
-              <p className="text-xs font-semibold uppercase text-[#1A1A1A]/50">
-                Önizleme snippet
-              </p>
-              <p className="mt-2 text-lg font-medium text-[#1a0dab]">
-                {form.seo_title.trim() || form.name || "Başlık"}
-              </p>
-              <p className="text-sm text-[#006621]">vizefirmalari.com › firma › {form.slug || "…"}</p>
-              <p className="mt-1 text-sm text-[#1A1A1A]/75">
-                {form.meta_description.trim().slice(0, 160) ||
-                  form.short_description.slice(0, 160) ||
-                  "Meta açıklama ekleyin."}
-              </p>
-            </div>
-            <label className="flex items-center gap-2 text-sm font-medium text-[#0B3C5D]">
-              <input
-                type="checkbox"
-                checked={form.is_indexable}
-                onChange={(e) => patch("is_indexable", e.target.checked)}
-                className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-              />
-              Arama motorları indeksleyebilsin (noindex değil)
-            </label>
-            <p className="text-xs text-[#1A1A1A]/50">
-              Yapılandırılmış veri için{" "}
-              <code className="font-mono text-[11px]">schema_json</code> altyapısı firma sayfasında
-              kullanılabilir.
-            </p>
           </div>
-        );
+        </div>
 
-      case "state":
-        return (
-          <div className={`${sectionShell} space-y-5`}>
-            <h2 className={sectionTitle}>Yayın ve görünürlük</h2>
-            <label className={labelClass}>
-              Yayın durumu
-              <select
-                value={form.status}
-                onChange={(e) =>
-                  patch("status", e.target.value as FirmFormState["status"])
-                }
+        <div className={subsection}>
+          <p className={groupTitle}>Sosyal medya</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {(
+              [
+                ["instagram", "Instagram"],
+                ["facebook", "Facebook"],
+                ["twitter", "X / Twitter"],
+                ["linkedin", "LinkedIn"],
+              ] as const
+            ).map(([key, lab]) => (
+              <label key={key} className={labelClass}>
+                {lab}
+                <input
+                  value={String(form[key])}
+                  onChange={(e) => patch(key, e.target.value)}
+                  className={inputClass}
+                />
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>Konum</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className={`${labelClass} sm:col-span-2`}>
+              Adres
+              <textarea
+                value={form.address}
+                onChange={(e) => patch("address", e.target.value)}
+                rows={2}
                 className={inputClass}
-              >
-                <option value="draft">Taslak</option>
-                <option value="published">Yayında</option>
-                <option value="inactive">Pasif</option>
-              </select>
+              />
             </label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {(
-                [
-                  ["featured", "Öne çıkan"],
-                  ["show_on_homepage", "Ana sayfada göster"],
-                  ["show_in_search", "Arama / listelerde göster"],
-                  ["firm_page_enabled", "Firma sayfası aktif"],
-                  ["show_on_card", "Kartta göster"],
-                  ["contact_popup_enabled", "İletişim popup aktif"],
-                  ["quick_apply_enabled", "Hızlı başvuru aktif"],
-                  ["social_buttons_enabled", "Sosyal butonlar aktif"],
-                  ["sponsored_display", "Sponsorlu görünüm"],
-                  ["premium_badge", "Premium rozet"],
-                  ["verified_badge", "Doğrulandı rozeti"],
-                ] as const
-              ).map(([key, label]) => (
-                <label key={key} className="flex items-center gap-2 text-sm font-medium text-[#0B3C5D]">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(form[key])}
-                    onChange={(e) => patch(key, e.target.checked)}
-                    className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
             <label className={labelClass}>
-              Manuel sıralama önceliği
+              Şehir
+              <input
+                value={form.city}
+                onChange={(e) => patch("city", e.target.value)}
+                className={inputClass}
+              />
+            </label>
+            <label className={labelClass}>
+              Ülke
+              <input
+                value={form.hq_country}
+                onChange={(e) => patch("hq_country", e.target.value)}
+                className={inputClass}
+              />
+            </label>
+            <label className={`${labelClass} sm:col-span-2`}>
+              Google Maps URL
+              <input
+                value={form.maps_url}
+                onChange={(e) => patch("maps_url", e.target.value)}
+                className={inputClass}
+              />
+            </label>
+            <label className={`${labelClass} sm:col-span-2`}>
+              Çalışma saatleri
+              <textarea
+                value={form.working_hours}
+                onChange={(e) => patch("working_hours", e.target.value)}
+                rows={2}
+                placeholder="Hafta içi 09:00–18:00"
+                className={inputClass}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>Halka açık görünürlük</p>
+          <FieldHelp>İşaretli alanlar firma kartı ve sayfada gösterilir.</FieldHelp>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                ["show_phone", "Telefon göster"],
+                ["show_whatsapp", "WhatsApp göster"],
+                ["show_email", "E-posta göster"],
+                ["show_website", "Web sitesi göster"],
+              ] as const
+            ).map(([key, lab]) => (
+              <label
+                key={key}
+                className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D]"
+              >
+                <input
+                  type="checkbox"
+                  checked={Boolean(form[key])}
+                  onChange={(e) => patch(key, e.target.checked)}
+                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                />
+                {lab}
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderServices() {
+    function addSubService(label: string) {
+      const t = label.trim();
+      if (!t || form.sub_services.includes(t)) return;
+      patch("sub_services", [...form.sub_services, t]);
+    }
+
+    function toggleMainCategory(cat: string) {
+      const has = form.main_services.includes(cat);
+      patch(
+        "main_services",
+        has
+          ? form.main_services.filter((x) => x !== cat)
+          : [...form.main_services, cat]
+      );
+    }
+
+    return (
+      <div className={`${panel} space-y-8`}>
+        <header className="border-b border-[#0B3C5D]/8 pb-5">
+          <h2 className="text-lg font-semibold text-[#0B3C5D]">Hizmetler</h2>
+          <p className="mt-1 text-sm text-[#1A1A1A]/55">
+            Üç katman: ana kategoriler, alt hizmetler ve özel etiketler. Liste ve filtreler birleşik{" "}
+            <span className="font-mono text-xs">services</span> dizisinden üretilir.
+          </p>
+        </header>
+
+        <div className={subsection}>
+          <p className={groupTitle}>Coğrafya</p>
+          <FieldHelp>Hangi ülkelerde danışmanlık verildiğini seçin; arama ve kartlarda kullanılır.</FieldHelp>
+          <input
+            value={countryQ}
+            onChange={(e) => setCountryQ(e.target.value)}
+            placeholder="Ülke ara…"
+            className={`${inputClass} mt-3`}
+          />
+          <div className="mt-3 max-h-44 space-y-1.5 overflow-y-auto rounded-xl border border-[#0B3C5D]/10 p-3">
+            {filteredCountries.map((c) => (
+              <label
+                key={c.id}
+                className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F8FAFC]"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedCountries.includes(c.id)}
+                  onChange={() =>
+                    setSelectedCountries((prev) =>
+                      prev.includes(c.id)
+                        ? prev.filter((x) => x !== c.id)
+                        : [...prev, c.id]
+                    )
+                  }
+                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                />
+                {c.name}
+              </label>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {selectedCountries.map((id) => {
+              const n = countries.find((c) => c.id === id)?.name ?? id;
+              return (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-1 rounded-full bg-[#0B3C5D]/8 px-2.5 py-1 text-xs font-medium text-[#0B3C5D]"
+                >
+                  {n}
+                  <button
+                    type="button"
+                    className="text-[#1A1A1A]/40 hover:text-[#1A1A1A]"
+                    onClick={() =>
+                      setSelectedCountries((p) => p.filter((x) => x !== id))
+                    }
+                    aria-label="Kaldır"
+                  >
+                    ×
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>1 — Ana hizmet kategorileri</p>
+          <p className="mt-1 text-xs text-[#1A1A1A]/45">
+            Firmanın hangi ana hatlarda hizmet verdiğini işaretleyin.
+          </p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {MAIN_SERVICE_CATEGORIES.map((cat) => (
+              <label
+                key={cat}
+                className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D]"
+              >
+                <input
+                  type="checkbox"
+                  checked={form.main_services.includes(cat)}
+                  onChange={() => toggleMainCategory(cat)}
+                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                />
+                {cat}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>2 — Alt hizmetler</p>
+          <p className="mt-1 text-xs text-[#1A1A1A]/45">
+            Önerilen listeden arayıp ekleyin veya aşağıya yazıp Enter ile özgün alt hizmet ekleyin.
+          </p>
+          <input
+            value={subServiceQ}
+            onChange={(e) => setSubServiceQ(e.target.value)}
+            placeholder="Alt hizmet ara (örn. Schengen)…"
+            className={`${inputClass} mt-3`}
+          />
+          <div className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-xl border border-[#0B3C5D]/10 bg-white p-2">
+            {filteredSubPicker.length === 0 ? (
+              <p className="px-2 py-3 text-center text-xs text-[#1A1A1A]/45">
+                Eşleşen öneri yok veya hepsi seçildi — alttan manuel ekleyin.
+              </p>
+            ) : (
+              filteredSubPicker.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => addSubService(s)}
+                  className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-sm text-[#1A1A1A] hover:bg-[#F0F6FA]"
+                >
+                  <span>{s}</span>
+                  <span className="text-xs font-semibold text-[#328CC1]">+ Ekle</span>
+                </button>
+              ))
+            )}
+          </div>
+          <label className={`${labelClass} mt-4`}>
+            Listede yoksa yazın
+            <input
+              value={subCustomInput}
+              onChange={(e) => setSubCustomInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const v = subCustomInput.trim();
+                  if (!v) return;
+                  addSubService(v);
+                  setSubCustomInput("");
+                }
+              }}
+              placeholder="Örn. Dubai altın vizesi — Enter"
+              className={inputClass}
+            />
+          </label>
+          <div className="mt-3">
+            <p className="text-xs font-medium text-[#1A1A1A]/50">Seçilen alt hizmetler</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {form.sub_services.length === 0 ? (
+                <span className="text-sm text-[#1A1A1A]/40">Henüz seçim yok</span>
+              ) : (
+                form.sub_services.map((t) => (
+                  <span
+                    key={t}
+                    className="inline-flex items-center gap-1 rounded-full bg-[#0B3C5D]/10 px-2.5 py-1 text-xs font-semibold text-[#0B3C5D]"
+                  >
+                    {t}
+                    <button
+                      type="button"
+                      className="text-[#1A1A1A]/45 hover:text-[#1A1A1A]"
+                      onClick={() =>
+                        patch(
+                          "sub_services",
+                          form.sub_services.filter((x) => x !== t)
+                        )
+                      }
+                      aria-label="Kaldır"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>3 — Özel etiketler</p>
+          <p className="mt-1 text-xs text-[#1A1A1A]/45">
+            Paket / marka odaklı ifadeler: VIP, express, kurumsal sözleşme vb.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {form.custom_service_labels.map((t) => (
+              <span
+                key={t}
+                className="inline-flex items-center gap-1 rounded-full bg-[#D9A441]/18 px-2.5 py-1 text-xs font-semibold text-[#5c4a12]"
+              >
+                {t}
+                <button
+                  type="button"
+                  className="text-[#1A1A1A]/40"
+                  onClick={() =>
+                    patch(
+                      "custom_service_labels",
+                      form.custom_service_labels.filter((x) => x !== t)
+                    )
+                  }
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+          <input
+            value={customTag}
+            onChange={(e) => setCustomTag(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const v = customTag.trim();
+                if (!v || form.custom_service_labels.includes(v)) return;
+                patch("custom_service_labels", [...form.custom_service_labels, v]);
+                setCustomTag("");
+              }
+            }}
+            placeholder="Özel etiket yazıp Enter"
+            className={`${inputClass} mt-2 max-w-md`}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  function renderSeo() {
+    const titleLen = form.seo_title.trim().length;
+    const metaLen = form.meta_description.trim().length;
+    const previewBase =
+      (typeof process !== "undefined" &&
+        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "")) ||
+      "http://localhost:3000";
+    const defaultCanonical = `${previewBase}/firma/${form.slug || "slug"}`;
+    const displayUrl = (form.canonical_url.trim() || defaultCanonical).slice(0, 72);
+    const effectiveTitle = form.seo_title.trim() || form.name.trim() || "Firma adı";
+    const fallbackMeta =
+      form.meta_description.trim() ||
+      form.short_description.trim() ||
+      (form.description.trim() ? `${form.description.trim().slice(0, 155)}…` : "");
+    const effectiveMeta = fallbackMeta || "Meta açıklama ekleyin; arama sonuçlarında görünür.";
+    const titleTooLong = effectiveTitle.length > 60;
+    const metaTooLong = effectiveMeta.length > 158;
+
+    function addSeoTagFromDraft() {
+      const t = seoTagDraft.trim();
+      if (!t || form.tags.includes(t)) return;
+      if (form.tags.length >= 80) return;
+      patch("tags", [...form.tags, t]);
+      setSeoTagDraft("");
+    }
+
+    return (
+      <div className={`${panel} space-y-8`}>
+        <header className="border-b border-[#0B3C5D]/8 pb-5">
+          <h2 className="text-lg font-semibold text-[#0B3C5D]">SEO ve etiketler</h2>
+          <p className="mt-1 text-sm text-[#1A1A1A]/55">
+            Arama ve paylaşım meta verileri; kart rozetini en altta düzenleyin.
+          </p>
+        </header>
+
+        <div className={subsection}>
+          <p className={groupTitle}>Önizleme (metin)</p>
+          <p className="mt-2 text-xs leading-relaxed text-[#1A1A1A]/50">
+            <span className="font-medium text-[#1A1A1A]/65">Başlık:</span> {effectiveTitle}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-[#1A1A1A]/50">
+            <span className="font-medium text-[#1A1A1A]/65">URL:</span>{" "}
+            <span className="break-all font-mono text-[11px]">{displayUrl}</span>
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-[#1A1A1A]/50">
+            <span className="font-medium text-[#1A1A1A]/65">Açıklama:</span> {effectiveMeta}
+          </p>
+          {titleTooLong || metaTooLong ? (
+            <p className="mt-2 text-xs text-amber-800">
+              {titleTooLong
+                ? `Başlık uzun (~60 kar. önerilir, şu an ${effectiveTitle.length}). `
+                : ""}
+              {metaTooLong
+                ? `Meta açıklama snippet’te kısılır (~155–160 kar., şu an ${effectiveMeta.length}).`
+                : ""}
+            </p>
+          ) : null}
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>Meta ve kanonik URL</p>
+          <div className="mt-4 grid gap-4">
+            <label className={labelClass}>
+              SEO title
+              <span className="ml-2 font-normal text-[#1A1A1A]/40">{titleLen} kar.</span>
+              <input
+                value={form.seo_title}
+                onChange={(e) => patch("seo_title", e.target.value)}
+                maxLength={200}
+                placeholder="Boş bırakılırsa firma adı kullanılır"
+                className={inputClass}
+              />
+              <FieldHelp>Tarayıcı sekmesi ve arama başlığı; boşsa firma adı kullanılır.</FieldHelp>
+            </label>
+            <label className={labelClass}>
+              Meta description
+              <span className="ml-2 font-normal text-[#1A1A1A]/40">{metaLen}/320</span>
+              <textarea
+                value={form.meta_description}
+                onChange={(e) => patch("meta_description", e.target.value)}
+                rows={3}
+                maxLength={320}
+                placeholder="Arama sonuçlarında görünecek özet; anahtar niyeti net yazın."
+                className={inputClass}
+              />
+              <FieldHelp>Arama snippet’inde görünür; ~155–160 karakter hedefleyin.</FieldHelp>
+            </label>
+            <label className={labelClass}>
+              Canonical URL
+              <input
+                value={form.canonical_url}
+                onChange={(e) => patch("canonical_url", e.target.value)}
+                placeholder={defaultCanonical}
+                className={inputClass}
+              />
+              <FieldHelp>
+                Boşsa: <span className="font-mono text-[11px]">{defaultCanonical}</span>
+              </FieldHelp>
+            </label>
+          </div>
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>Open Graph (sosyal paylaşım)</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className={`${labelClass} sm:col-span-2`}>
+              OG title
+              <input
+                value={form.og_title}
+                onChange={(e) => patch("og_title", e.target.value)}
+                maxLength={200}
+                placeholder="Boşsa SEO title veya firma adı"
+                className={inputClass}
+              />
+            </label>
+            <label className={`${labelClass} sm:col-span-2`}>
+              OG description
+              <textarea
+                value={form.og_description}
+                onChange={(e) => patch("og_description", e.target.value)}
+                rows={2}
+                maxLength={320}
+                placeholder="Boşsa meta açıklama kullanılır"
+                className={inputClass}
+              />
+            </label>
+            <label className={`${labelClass} sm:col-span-2`}>
+              OG image URL
+              <input
+                value={form.og_image_url}
+                onChange={(e) => patch("og_image_url", e.target.value)}
+                maxLength={1000}
+                placeholder="Paylaşım görseli (tam URL)"
+                className={inputClass}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>SEO etiketleri</p>
+          <FieldHelp>Enter ile ekleyin. Yapılandırılmış veri ve iç bağlam için anahtar ifadeler.</FieldHelp>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {form.tags.map((tag, idx) => (
+              <span
+                key={`${tag}-${idx}`}
+                className="inline-flex items-center gap-1 rounded-full bg-[#0B3C5D]/8 px-2.5 py-1 text-xs font-medium text-[#0B3C5D]"
+              >
+                {tag}
+                <button
+                  type="button"
+                  className="text-[#1A1A1A]/40 hover:text-[#1A1A1A]"
+                  onClick={() => patch("tags", form.tags.filter((x) => x !== tag))}
+                  aria-label={`${tag} kaldır`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+          <input
+            value={seoTagDraft}
+            onChange={(e) => setSeoTagDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addSeoTagFromDraft();
+              }
+            }}
+            maxLength={120}
+            placeholder="Etiket yazıp Enter"
+            className={`${inputClass} mt-2 max-w-md`}
+          />
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>Kart rozeti</p>
+          <label className={`${labelClass} mt-3 max-w-lg`}>
+            Kısa etiket
+            <input
+              value={form.short_badge}
+              onChange={(e) => patch("short_badge", e.target.value)}
+              maxLength={80}
+              placeholder="Örn. Schengen uzmanı"
+              className={inputClass}
+            />
+            <FieldHelp>Liste kartında firma adının altında görünen kısa vurgu.</FieldHelp>
+          </label>
+        </div>
+
+        {mode === "edit" && firmId ? (
+          <p className="text-sm text-[#1A1A1A]/50">
+            Uzun içerik blokları için{" "}
+            <Link
+              href={`/admin/firms/${firmId}/sections`}
+              className="font-semibold text-[#328CC1] underline-offset-2 hover:underline"
+            >
+              sayfa bölümleri düzenleyicisi
+            </Link>
+            .
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  function renderPublish() {
+    return (
+      <div className={`${panel} space-y-8`}>
+        <header className="border-b border-[#0B3C5D]/8 pb-5">
+          <h2 className="text-lg font-semibold text-[#0B3C5D]">Yayın</h2>
+          <p className="mt-1 text-sm text-[#1A1A1A]/55">
+            Yayın durumu ve görünürlük anahtarları. Taslak kayıtlar sitede listelenmez.
+          </p>
+        </header>
+
+        <div className={subsection}>
+          <p className={groupTitle}>Durum</p>
+          <label className={`${labelClass} mt-3`}>
+            Yayın durumu
+            <select
+              value={form.status}
+              onChange={(e) =>
+                patch("status", e.target.value as FirmFormState["status"])
+              }
+              className={inputClass}
+            >
+              <option value="draft">Taslak</option>
+              <option value="published">Yayında</option>
+              <option value="inactive">Pasif</option>
+            </select>
+            <FieldHelp>
+              &quot;Yayında&quot; olmayan kayıtlar ziyaretçi listelerinde görünmez.
+            </FieldHelp>
+          </label>
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>Listeler ve arama</p>
+          <FieldHelp>İndeks ve firma sayfası ayrı ayrı kontrol edilebilir.</FieldHelp>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                ["featured", "Öne çıkan firma"],
+                ["show_on_homepage", "Ana sayfada göster"],
+                ["show_in_search", "Arama / listelerde göster"],
+                ["is_indexable", "Arama motorları indeksleyebilsin"],
+                ["firm_page_enabled", "Firma sayfası açık"],
+                ["show_on_card", "Kart görünümünde göster"],
+              ] as const
+            ).map(([key, lab]) => (
+              <label
+                key={key}
+                className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D]"
+              >
+                <input
+                  type="checkbox"
+                  checked={Boolean(form[key])}
+                  onChange={(e) => patch(key, e.target.checked)}
+                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                />
+                {lab}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <details className="rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC]/50 p-4">
+          <summary className="cursor-pointer text-sm font-semibold text-[#0B3C5D]">
+            Etkileşim ve rozetler
+          </summary>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                ["contact_popup_enabled", "İletişim penceresi"],
+                ["quick_apply_enabled", "Hızlı başvuru"],
+                ["social_buttons_enabled", "Sosyal bağlantı ikonları"],
+                ["sponsored_display", "Sponsorlu görünüm"],
+                ["premium_badge", "Premium rozet"],
+                ["verified_badge", "Doğrulandı rozeti"],
+              ] as const
+            ).map(([key, lab]) => (
+              <label
+                key={key}
+                className="flex cursor-pointer items-center gap-3 rounded-lg bg-white px-3 py-2 text-sm font-medium text-[#0B3C5D] ring-1 ring-[#0B3C5D]/8"
+              >
+                <input
+                  type="checkbox"
+                  checked={Boolean(form[key])}
+                  onChange={(e) => patch(key, e.target.checked)}
+                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                />
+                {lab}
+              </label>
+            ))}
+            <label className={`${labelClass} sm:col-span-2`}>
+              Liste önceliği (sayı; yüksek önce)
               <input
                 type="number"
                 value={form.sort_priority}
                 onChange={(e) => patch("sort_priority", Number(e.target.value))}
                 className={inputClass}
               />
-              <span className="mt-1 block text-xs text-[#1A1A1A]/45">
-                Yüksek değer önce gelir; liste sıralamasında yardımcı olur.
-              </span>
             </label>
           </div>
-        );
+        </details>
+      </div>
+    );
+  }
 
-      case "admin":
-        return (
-          <div className={`${sectionShell} space-y-5 ring-2 ring-[#0B3C5D]/10`}>
-            <h2 className={sectionTitle}>Yalnızca panel (halka açık değil)</h2>
-            <p className="text-sm text-red-800/90">
-              Aşağıdaki özel notlar ayrı güvenli tabloda saklanır; site ziyaretçileri göremez.
-            </p>
-            <label className={labelClass}>
-              Panel admin notu (firms.admin_note)
-              <textarea
-                value={form.admin_note}
-                onChange={(e) => patch("admin_note", e.target.value)}
-                rows={3}
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
-              İç değerlendirme
-              <textarea
-                value={form.internal_review}
-                onChange={(e) => patch("internal_review", e.target.value)}
-                rows={3}
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
-              Araştırma notu
-              <textarea
-                value={form.research_notes}
-                onChange={(e) => patch("research_notes", e.target.value)}
-                rows={4}
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
-              Kurumsallık değerlendirme notu (özel)
-              <textarea
-                value={form.admin_evaluation_note}
-                onChange={(e) => patch("admin_evaluation_note", e.target.value)}
-                rows={3}
-                className={inputClass}
-              />
-            </label>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className={labelClass}>
-                Son görüşme (YYYY-AA-GG)
-                <input
-                  value={form.last_meeting_at}
-                  onChange={(e) => patch("last_meeting_at", e.target.value)}
-                  placeholder="2025-03-01"
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Son kontrol
-                <input
-                  value={form.last_reviewed_at}
-                  onChange={(e) => patch("last_reviewed_at", e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <label className={labelClass}>
-              Ekip içi notlar
-              <textarea
-                value={form.team_notes}
-                onChange={(e) => patch("team_notes", e.target.value)}
-                rows={3}
-                className={inputClass}
-              />
-            </label>
-            <div>
-              <p className={labelClass}>Durum geçmişi (kayıt)</p>
-              <div className="mt-2 space-y-2">
-                {form.status_history.map((row, i) => (
-                  <div
-                    key={i}
-                    className="flex flex-wrap gap-2 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-2"
-                  >
-                    <input
-                      value={row.at}
-                      onChange={(e) => {
-                        const next = [...form.status_history];
-                        next[i] = { ...next[i]!, at: e.target.value };
-                        patch("status_history", next);
-                      }}
-                      placeholder="2025-03-01"
-                      className={`${inputClass} w-36`}
-                    />
-                    <input
-                      value={row.status ?? ""}
-                      onChange={(e) => {
-                        const next = [...form.status_history];
-                        next[i] = { ...next[i]!, status: e.target.value };
-                        patch("status_history", next);
-                      }}
-                      placeholder="Durum"
-                      className={`${inputClass} min-w-[120px] flex-1`}
-                    />
-                    <input
-                      value={row.note ?? ""}
-                      onChange={(e) => {
-                        const next = [...form.status_history];
-                        next[i] = { ...next[i]!, note: e.target.value };
-                        patch("status_history", next);
-                      }}
-                      placeholder="Not"
-                      className={`${inputClass} min-w-[160px] flex-[2]`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        patch(
-                          "status_history",
-                          form.status_history.filter((_, j) => j !== i)
-                        )
-                      }
-                      className="text-red-600"
-                    >
-                      Sil
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() =>
-                    patch("status_history", [
-                      ...form.status_history,
-                      { at: new Date().toISOString().slice(0, 10), status: "", note: "" },
-                    ])
-                  }
-                  className="text-sm font-semibold text-[#328CC1]"
-                >
-                  + Geçmiş satırı
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-
+  function renderTab() {
+    switch (tab) {
+      case "identity":
+        return renderIdentity();
+      case "contact":
+        return renderContact();
+      case "services":
+        return renderServices();
+      case "seo":
+        return renderSeo();
+      case "publish":
+        return renderPublish();
       default:
         return null;
     }
   }
 
+  const pageHeading =
+    mode === "edit" ? (form.name.trim() || "İsimsiz kayıt") : "Yeni firma";
+
   return (
-    <form onSubmit={onSubmit} className="pb-24 lg:pb-8">
-      <div className="sticky top-0 z-40 border-b border-[#0B3C5D]/10 bg-[#F4F6F8]/95 py-3 backdrop-blur lg:top-[52px]">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible">
+    <form
+      onSubmit={onSubmit}
+      aria-busy={saving}
+      className="pb-10"
+    >
+      <div className="sticky top-14 z-30 border-b border-[#0B3C5D]/10 bg-[#F4F6F8]/95 shadow-[0_1px_0_rgba(11,60,93,0.06)] backdrop-blur-md">
+        <div className="mx-auto max-w-4xl space-y-3 px-4 py-3 sm:px-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1A1A1A]/40">
+                {mode === "edit" ? "Firma düzenle" : "Yeni kayıt"}
+              </p>
+              <h1 className="mt-0.5 truncate text-base font-semibold text-[#0B3C5D] sm:text-lg">
+                {pageHeading}
+              </h1>
+            </div>
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#D9A441] px-4 py-2.5 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f] disabled:cursor-not-allowed disabled:opacity-60 sm:px-6"
+            >
+              {saving ? (
+                <>
+                  <Spinner className="h-4 w-4" />
+                  Kaydediliyor…
+                </>
+              ) : (
+                "Kaydet"
+              )}
+            </button>
+          </div>
+
+          <div
+            className="flex gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            role="tablist"
+            aria-label="Firma formu sekmeleri"
+          >
             {TABS.map((t) => (
               <button
                 key={t.id}
                 type="button"
+                role="tab"
+                aria-selected={tab === t.id}
                 onClick={() => setTab(t.id)}
-                className={`shrink-0 rounded-xl px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+                className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition ${
                   tab === t.id
                     ? "bg-[#0B3C5D] text-white shadow-sm"
                     : "bg-white text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10 hover:bg-[#eef2f6]"
@@ -1432,144 +1231,28 @@ export function FirmForm({
               </button>
             ))}
           </div>
-          <div className="hidden items-center gap-2 md:flex">
-            {mode === "edit" && firmId ? (
-              <Link
-                href={`/admin/firms/${firmId}/sections`}
-                className="rounded-xl border border-[#0B3C5D]/15 bg-white px-4 py-2 text-sm font-semibold text-[#0B3C5D] hover:bg-[#eef2f6]"
-              >
-                Blok düzenleyici
-              </Link>
-            ) : null}
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-xl bg-[#D9A441] px-5 py-2 text-sm font-semibold text-[#1A1A1A] shadow-sm hover:bg-[#c8942f] disabled:opacity-60"
+
+          <div className="lg:hidden">
+            <label className="sr-only" htmlFor="firm-tab-mobile">
+              Bölüm seç
+            </label>
+            <select
+              id="firm-tab-mobile"
+              value={tab}
+              onChange={(e) => setTab(e.target.value as TabId)}
+              className="w-full rounded-xl border border-[#0B3C5D]/12 bg-white px-3 py-2.5 text-sm font-semibold text-[#0B3C5D]"
             >
-              {saving ? "Kaydediliyor…" : "Kaydet"}
-            </button>
+              {TABS.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
-        <label className="mt-3 block md:hidden">
-          <span className="sr-only">Bölüm</span>
-          <select
-            value={tab}
-            onChange={(e) => setTab(e.target.value as TabId)}
-            className="w-full rounded-xl border border-[#0B3C5D]/15 bg-white px-3 py-2.5 text-sm font-semibold text-[#0B3C5D]"
-          >
-            {TABS.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
 
-      <div className="mt-6 xl:grid xl:grid-cols-[1fr_300px] xl:items-start xl:gap-8">
-        <div className="min-w-0 space-y-6">{renderTabContent(tab)}</div>
-
-        <aside className="mt-8 space-y-4 xl:sticky xl:top-28 xl:mt-0">
-          <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/50">
-              Kart önizlemesi
-            </p>
-            <div className="mt-3 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-4">
-              <div className="flex items-start gap-3">
-                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-white ring-1 ring-[#0B3C5D]/10">
-                  {form.logo_url ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={form.logo_url} alt="" className="h-full w-full object-contain" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-xs font-bold text-[#0B3C5D]">
-                      ?
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate font-semibold text-[#0B3C5D]">
-                    {form.name || "Firma adı"}
-                  </p>
-                  {form.short_badge ? (
-                    <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-[#D9A441]">
-                      {form.short_badge}
-                    </p>
-                  ) : null}
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    <span className="rounded-md bg-[#328CC1]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[#0B3C5D]">
-                      Hype {form.hype_score}
-                    </span>
-                    <span className="rounded-md bg-[#D9A441]/20 px-1.5 py-0.5 text-[10px] font-semibold text-[#1A1A1A]">
-                      Kurum {form.corporate_score}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-[#1A1A1A]/70">
-                {form.short_description || "Kısa açıklama…"}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1">
-                {cardCountryLabels.slice(0, 4).map((c) => (
-                  <span
-                    key={c}
-                    className="rounded bg-white px-1.5 py-0.5 text-[10px] text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10"
-                  >
-                    {c}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/50">
-              Detay üst önizleme
-            </p>
-            <div className="mt-3 overflow-hidden rounded-xl ring-1 ring-[#0B3C5D]/10">
-              <div className="relative h-24 w-full bg-[#0B3C5D]/15">
-                {form.cover_image_url ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={form.cover_image_url}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-[10px] text-[#1A1A1A]/40">
-                    Kapak yok
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-3 bg-white p-3">
-                <div className="relative -mt-8 h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 border-white bg-white shadow-sm">
-                  {form.logo_url ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={form.logo_url} alt="" className="h-full w-full object-contain" />
-                  ) : null}
-                </div>
-                <div className="min-w-0 pt-1">
-                  <p className="truncate text-sm font-bold text-[#0B3C5D]">
-                    {form.page_heading || form.name || "Başlık"}
-                  </p>
-                  <p className="truncate text-xs text-[#1A1A1A]/60">
-                    {form.page_subheading || form.page_intro || "Alt başlık"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#0B3C5D]/10 bg-white/95 p-3 backdrop-blur md:hidden">
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full rounded-xl bg-[#D9A441] py-3 text-sm font-semibold text-[#1A1A1A] shadow-sm disabled:opacity-60"
-        >
-          {saving ? "Kaydediliyor…" : "Kaydet"}
-        </button>
-      </div>
+      <div className="mx-auto mt-6 max-w-4xl">{renderTab()}</div>
     </form>
   );
 }

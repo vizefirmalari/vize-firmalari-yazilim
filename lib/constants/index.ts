@@ -4,6 +4,12 @@ export {
   TOP_COUNTRIES,
 } from "./filters";
 
+export {
+  MAIN_SERVICE_CATEGORIES,
+  SUB_SERVICE_CATALOG,
+  mergePublicServiceFilterOptions,
+} from "./firm-services-taxonomy";
+
 import { ALL_COUNTRIES } from "./filters";
 
 /** FirmsListing ve benzeri için tam ülke listesi */

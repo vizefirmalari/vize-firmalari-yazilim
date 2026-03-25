@@ -1,9 +1,13 @@
 import type { FirmAdminPrivateRow } from "@/lib/data/admin-firm-detail";
+import { MAIN_SERVICE_CATEGORIES } from "@/lib/constants/firm-services-taxonomy";
 
 export type FirmFormState = {
   name: string;
   slug: string;
   logo_url: string | null;
+  logo_alt_text: string;
+  logo_title: string;
+  logo_description: string;
   cover_image_url: string | null;
   gallery_images: string[];
   office_photo_urls: string[];
@@ -121,6 +125,9 @@ export type FirmFormState = {
   status_history: { at: string; status?: string | null; note?: string | null }[];
   team_notes: string;
   custom_service_labels: string[];
+  main_services: string[];
+  sub_services: string[];
+  tags: string[];
 };
 
 function numStr(v: unknown): string {
@@ -186,10 +193,41 @@ export function buildFirmFormState(
   const corp = Number(i.corporate_score ?? trust);
   const factors = parseFactors(i.corporate_score_factors);
 
+  const mainFromDb = [...((i.main_services as string[]) ?? [])];
+  const subFromDb = [...((i.sub_services as string[]) ?? [])];
+  const customLabels = ((i.custom_services as string[]) ?? []) as string[];
+  const legacyServices = [...((i.services as string[]) ?? [])];
+  const hasNewModel = mainFromDb.length > 0 || subFromDb.length > 0;
+  const mainSet = new Set<string>([...MAIN_SERVICE_CATEGORIES]);
+  let main_services = mainFromDb;
+  let sub_services = subFromDb;
+  if (!hasNewModel && legacyServices.length > 0) {
+    const mapLegacyMain: Record<string, string> = {
+      "Vize İşlemleri": "Vize Hizmeti",
+      "Form & Dilekçe": "Evrak / Danışmanlık",
+      "Konsolosluk İşlemleri": "Evrak / Danışmanlık",
+    };
+    const foundMain: string[] = [];
+    const rest: string[] = [];
+    for (const label of legacyServices) {
+      const mapped = mapLegacyMain[label] ?? label;
+      if (mainSet.has(mapped)) {
+        if (!foundMain.includes(mapped)) foundMain.push(mapped);
+      } else if (!customLabels.includes(label)) {
+        rest.push(label);
+      }
+    }
+    if (foundMain.length) main_services = foundMain;
+    if (rest.length) sub_services = rest;
+  }
+
   return {
     name: String(i.name ?? ""),
     slug: String(i.slug ?? ""),
     logo_url: (i.logo_url as string | null) ?? null,
+    logo_alt_text: String(i.logo_alt_text ?? ""),
+    logo_title: String(i.logo_title ?? ""),
+    logo_description: String(i.logo_description ?? ""),
     cover_image_url: (i.cover_image_url as string | null) ?? null,
     gallery_images: [...((i.gallery_images as string[]) ?? [])],
     office_photo_urls: [...((i.office_photo_urls as string[]) ?? [])],
@@ -306,15 +344,19 @@ export function buildFirmFormState(
     last_reviewed_at: String(privateRow?.last_reviewed_at ?? ""),
     status_history: parseStatusHistory(privateRow?.status_history_json),
     team_notes: String(privateRow?.team_notes ?? ""),
-    custom_service_labels: ((i.custom_services as string[]) ?? []) as string[],
+    custom_service_labels: customLabels,
+    main_services,
+    sub_services,
+    tags: Array.isArray(i.tags)
+      ? [...(i.tags as string[])].filter((t) => typeof t === "string" && t.length > 0)
+      : [],
   };
 }
 
 export function formStateToPayload(
   form: FirmFormState,
   selectedCountries: string[],
-  selectedFeatured: string[],
-  selectedServices: string[]
+  selectedFeatured: string[]
 ) {
   const corpFactors = {
     tax_doc: form.corporate_factor_tax,
@@ -335,6 +377,9 @@ export function formStateToPayload(
     name: form.name,
     slug: form.slug,
     logo_url: form.logo_url,
+    logo_alt_text: form.logo_alt_text || null,
+    logo_title: form.logo_title || null,
+    logo_description: form.logo_description || null,
     cover_image_url: form.cover_image_url,
     gallery_images: form.gallery_images,
     office_photo_urls: form.office_photo_urls,
@@ -465,8 +510,10 @@ export function formStateToPayload(
     team_notes: form.team_notes || null,
     country_ids: selectedCountries,
     featured_country_ids: selectedFeatured,
-    service_type_ids: selectedServices,
+    main_services: form.main_services,
+    sub_services: form.sub_services,
     custom_service_labels: form.custom_service_labels,
+    tags: [...new Set(form.tags.map((t) => t.trim()).filter(Boolean))],
     _suggested_corporate: suggestedCorporate,
   };
 }
