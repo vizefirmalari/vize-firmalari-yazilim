@@ -1,20 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { createFirmFromForm, updateFirmFromForm } from "@/lib/actions/firms";
 import {
   buildFirmFormState,
+  computeCorporatenessPreview,
   formStateToPayload,
   type FirmFormState,
 } from "@/lib/admin/firm-form-initial";
+import { CorporatenessScorePanel } from "@/components/admin/corporateness-score-panel";
 import type { FirmAdminPrivateRow } from "@/lib/data/admin-firm-detail";
 import { slugify } from "@/lib/slug";
-import {
-  firmFormSchema,
-  computeCorporatenessFromFactors,
-} from "@/lib/validations/firm";
+import { firmFormSchema } from "@/lib/validations/firm";
 import { FirmImageUpload } from "@/components/admin/firm-image-upload";
 import {
   createInlineCompanyType,
@@ -87,6 +87,15 @@ function tabForValidationPath(path: (string | number)[]): TabId {
     "maps_url",
     "working_hours",
     "weekend_hours_note",
+    "company_type",
+    "has_tax_document",
+    "permit_number",
+    "has_physical_office",
+    "has_corporate_email",
+    "employee_count",
+    "website_quality_level",
+    "social_follower_count_total",
+    "social_post_count_total",
     "contact_person_name",
     "contact_person_role",
     "show_phone",
@@ -174,10 +183,19 @@ export function FirmForm({
   mainServiceCategories,
   subServices,
 }: FirmFormProps) {
+  const router = useRouter();
+
   const defaults = useMemo(
     () => buildFirmFormState(initial, privateInitial ?? null),
     [initial, privateInitial]
   );
+
+  /** Veritabanında saklanan skor (liste / firma sayfası bunu kullanır) */
+  const savedCorporatenessScore = useMemo(() => {
+    const v = initial?.corporateness_score;
+    const n = typeof v === "number" ? v : Number(v);
+    return Number.isFinite(n) ? n : null;
+  }, [initial]);
 
   const [tab, setTab] = useState<TabId>("identity");
   const [saving, setSaving] = useState(false);
@@ -301,8 +319,7 @@ export function FirmForm({
     e.preventDefault();
     setSaving(true);
     try {
-      const raw = formStateToPayload(form, selectedCountries, selectedFeatured);
-      const { _suggested_corporate: _s, ...payload } = raw;
+      const payload = formStateToPayload(form, selectedCountries, selectedFeatured);
 
       const parsed = firmFormSchema.safeParse(payload);
       if (!parsed.success) {
@@ -325,11 +342,16 @@ export function FirmForm({
       }
 
       toast.success(mode === "create" ? "Firma oluşturuldu" : "Kayıt güncellendi", {
-        description: "Değişiklikler kaydedildi.",
+        description:
+          mode === "edit"
+            ? "Kurumsallık skoru sunucuda hesaplandı ve veritabanına yazıldı."
+            : "Değişiklikler kaydedildi.",
       });
 
       if (mode === "create" && "id" in res) {
         window.location.href = `/admin/firms/${res.id}/edit`;
+      } else if (mode === "edit") {
+        router.refresh();
       }
     } catch (err) {
       console.error("[FirmForm]", err);
@@ -353,19 +375,8 @@ export function FirmForm({
   }, [subServiceQ, form.sub_services, subServiceOptions]);
 
   const corporatenessPreview = useMemo(
-    () =>
-      computeCorporatenessFromFactors({
-        tax: form.corporate_factor_tax,
-        office: form.corporate_factor_office,
-        digital: form.corporate_factor_digital,
-        refs: form.corporate_factor_refs,
-      }),
-    [
-      form.corporate_factor_tax,
-      form.corporate_factor_office,
-      form.corporate_factor_digital,
-      form.corporate_factor_refs,
-    ]
+    () => computeCorporatenessPreview(form, selectedCountries, selectedFeatured),
+    [form, selectedCountries, selectedFeatured]
   );
 
   function renderIdentity() {
@@ -578,55 +589,36 @@ export function FirmForm({
             </div>
             <div className="rounded-xl border border-[#D9A441]/25 bg-[#D9A441]/6 p-4">
               <p className="text-xs font-semibold text-[#1A1A1A]/70">
-                Kurumsallık Skoru (önizleme)
+                Kurumsallık — önizleme (kaydetmeden)
               </p>
               <p className="mt-2 text-3xl font-bold tabular-nums text-[#8B6914]">
-                {corporatenessPreview}
+                {corporatenessPreview.totalScore}
                 <span className="text-lg font-semibold text-[#1A1A1A]/50">/100</span>
               </p>
+              {mode === "edit" && savedCorporatenessScore !== null ? (
+                <p className="mt-2 text-xs font-medium tabular-nums text-[#1A1A1A]/70">
+                  Veritabanındaki skor (son kayıt):{" "}
+                  <span className="text-[#0B3C5D]">{savedCorporatenessScore}/100</span>
+                </p>
+              ) : null}
               <FieldHelp>
-                Firmanın kurumsal bilgi ve belge bütünlüğüne göre oluşan değerlendirme
-                puanıdır. Aşağıdaki faktör ağırlıklarıyla hesaplanır.
+                Önizleme tarayıcıda hesaplanır. Kayıtta skor sunucuda yeniden hesaplanır ve{" "}
+                <code className="rounded bg-black/[0.06] px-1 font-mono text-[11px]">
+                  corporateness_score
+                </code>{" "}
+                sütununa yazılır; liste ve firma sayfası bu değeri kullanır.
               </FieldHelp>
             </div>
           </div>
-          <div className="mt-6 space-y-4">
-            <p className={groupTitle}>Kurumsallık değerlendirme faktörleri</p>
-            <p className="text-xs text-[#1A1A1A]/50">
-              Her ekseni 0–100 arası işaretleyin; kayıtta Kurumsallık Skoru bu ağırlıklarla
-              hesaplanır.
+          <div className="mt-6">
+            <p className={groupTitle}>Kurumsallık — detaylı analiz</p>
+            <p className="mt-1 text-xs text-[#1A1A1A]/50">
+              Aşağıdaki tablolar ve bölümler yalnızca yönetim panelinde görünür; ziyaretçi
+              tarafında yalnızca toplam skor gösterilir.
             </p>
-            {(
-              [
-                ["corporate_factor_tax", "Vergi ve belge", 0.2],
-                ["corporate_factor_office", "Ofis ve fiziksel varlık", 0.25],
-                ["corporate_factor_digital", "Dijital varlık ve iletişim", 0.25],
-                ["corporate_factor_refs", "Referans ve süreç", 0.3],
-              ] as const
-            ).map(([key, lab, w]) => (
-              <label key={key} className={labelClass}>
-                {lab}{" "}
-                <span className="font-normal text-[#1A1A1A]/40">
-                  (ağırlık %{Math.round(w * 100)})
-                </span>
-                <div className="mt-1 flex items-center gap-3">
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={form[key]}
-                    onChange={(e) =>
-                      patch(key, Number(e.target.value))
-                    }
-                    className="min-w-0 flex-1 accent-[#D9A441]"
-                    aria-label={lab}
-                  />
-                  <span className="w-8 shrink-0 text-right text-sm font-semibold tabular-nums text-[#0B3C5D]">
-                    {form[key]}
-                  </span>
-                </div>
-              </label>
-            ))}
+            <div className="mt-4">
+              <CorporatenessScorePanel result={corporatenessPreview} variant="full" />
+            </div>
           </div>
         </div>
 
@@ -708,6 +700,83 @@ export function FirmForm({
         </div>
 
         <div className={subsection}>
+          <p className={groupTitle}>Yasal yapı ve operasyon (Kurumsallık skoru)</p>
+          <FieldHelp>
+            Bu alanlar listede ve firma sayfasında kullanılabilir; ayrıca Kurumsallık Skorunun
+            yasal ve operasyon bölümlerini besler.
+          </FieldHelp>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className={labelClass}>
+              Yasal şirket şekli
+              <select
+                value={form.company_type || ""}
+                onChange={(e) => patch("company_type", e.target.value)}
+                className={inputClass}
+              >
+                <option value="">Seçin…</option>
+                <option value="sahis">Şahıs</option>
+                <option value="ltd">Limited (Ltd)</option>
+                <option value="as">Anonim (A.Ş.)</option>
+                <option value="diger">Diğer</option>
+              </select>
+              <FieldHelp>Skorda şirket türüne göre puanlanır.</FieldHelp>
+            </label>
+            <label className={`${labelClass} flex flex-col justify-end`}>
+              <span className="mb-2 inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.has_tax_document}
+                  onChange={(e) => patch("has_tax_document", e.target.checked)}
+                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                />
+                Vergi / resmi belge beyanı
+              </span>
+            </label>
+            <label className={labelClass}>
+              Yetki / izin numarası
+              <input
+                value={form.permit_number}
+                onChange={(e) => patch("permit_number", e.target.value)}
+                className={inputClass}
+                maxLength={120}
+              />
+            </label>
+            <label className={`${labelClass} flex flex-col justify-end`}>
+              <span className="mb-2 inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.has_physical_office}
+                  onChange={(e) => patch("has_physical_office", e.target.checked)}
+                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                />
+                Fiziksel ofis
+              </span>
+            </label>
+            <label className={`${labelClass} flex flex-col justify-end`}>
+              <span className="mb-2 inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.has_corporate_email}
+                  onChange={(e) => patch("has_corporate_email", e.target.checked)}
+                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                />
+                Kurumsal e-posta kullanımı
+              </span>
+            </label>
+            <label className={labelClass}>
+              Çalışan sayısı (yaklaşık)
+              <input
+                value={form.employee_count}
+                onChange={(e) => patch("employee_count", e.target.value)}
+                inputMode="numeric"
+                placeholder="Örn. 5"
+                className={inputClass}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className={subsection}>
           <p className={groupTitle}>Konum</p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className={`${labelClass} sm:col-span-2`}>
@@ -750,6 +819,56 @@ export function FirmForm({
                 onChange={(e) => patch("working_hours", e.target.value)}
                 rows={2}
                 placeholder="Hafta içi 09:00–18:00"
+                className={inputClass}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>Web kalitesi ve sosyal metrikler (Kurumsallık)</p>
+          <FieldHelp>
+            Takipçi ve gönderi sayıları dış sosyal profilleriniz içindir; Hype Puanı ile
+            ilişkili değildir.
+          </FieldHelp>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className={`${labelClass} sm:col-span-2`}>
+              Web sitesi kalitesi
+              <select
+                value={form.website_quality_level}
+                onChange={(e) =>
+                  patch(
+                    "website_quality_level",
+                    e.target.value as FirmFormState["website_quality_level"]
+                  )
+                }
+                className={inputClass}
+              >
+                <option value="none">Yok / belirtilmedi</option>
+                <option value="basic">Temel (site var)</option>
+                <option value="professional">Profesyonel</option>
+              </select>
+              <FieldHelp>
+                Profesyonel seçildiğinde kayıtta profesyonel web sitesi bayrağı da güncellenir.
+              </FieldHelp>
+            </label>
+            <label className={labelClass}>
+              Toplam takipçi (tüm hesaplar)
+              <input
+                value={form.social_follower_count_total}
+                onChange={(e) => patch("social_follower_count_total", e.target.value)}
+                inputMode="numeric"
+                placeholder="0"
+                className={inputClass}
+              />
+            </label>
+            <label className={labelClass}>
+              Toplam gönderi (tüm hesaplar)
+              <input
+                value={form.social_post_count_total}
+                onChange={(e) => patch("social_post_count_total", e.target.value)}
+                inputMode="numeric"
+                placeholder="0"
                 className={inputClass}
               />
             </label>

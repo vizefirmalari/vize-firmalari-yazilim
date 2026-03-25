@@ -45,21 +45,7 @@ export function computeListingTrustScore(
   );
 }
 
-/** Kurumsallık faktörlerinden 0–100 skor (admin panel önizlemesi ile aynı) */
-export function computeCorporatenessFromFactors(f: {
-  tax: number;
-  office: number;
-  digital: number;
-  refs: number;
-}): number {
-  return Math.min(
-    100,
-    Math.round(
-      f.tax * 0.2 + f.office * 0.25 + f.digital * 0.25 + f.refs * 0.3
-    )
-  );
-}
-
+/** `corporateness_score` şemada yok — sunucuda hesaplanıp DB'ye yazılır (`lib/firms/corporateness-persist`). */
 const firmFormSchemaObject = z.object({
   name: z.string().min(2, "En az 2 karakter").max(200),
   slug: z.string().min(2).max(140).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
@@ -83,7 +69,6 @@ const firmFormSchemaObject = z.object({
   firm_category: z.string().max(120).optional().nullable(),
 
   raw_hype_score: z.coerce.number().int().min(0).max(100),
-  corporateness_score: z.coerce.number().int().min(0).max(100),
 
   phone: z.string().max(80).optional().nullable(),
   whatsapp: z.string().max(80).optional().nullable(),
@@ -131,6 +116,12 @@ const firmFormSchemaObject = z.object({
   has_corporate_email: z.boolean(),
   has_corporate_domain: z.boolean(),
   has_professional_website: z.boolean(),
+  website_quality_level: z
+    .enum(["none", "basic", "professional"])
+    .optional()
+    .default("none"),
+  social_follower_count_total: z.coerce.number().int().min(0).max(500000000).optional().default(0),
+  social_post_count_total: z.coerce.number().int().min(0).max(500000000).optional().default(0),
   social_media_activity: z
     .union([z.enum(["low", "medium", "high"]), z.literal("")])
     .optional()
@@ -145,10 +136,7 @@ const firmFormSchemaObject = z.object({
   multilingual_team: z.boolean(),
   international_expertise_level: z.coerce.number().int().min(0).max(100).optional().nullable(),
   profile_completeness: z.coerce.number().int().min(0).max(100).optional().nullable(),
-  corporate_score_factors: z
-    .record(z.string(), z.number())
-    .optional()
-    .default({}),
+  corporate_score_factors: z.record(z.string(), z.number()).optional().default({}),
 
   about_section: z.string().max(50000).optional().nullable(),
   service_process_text: z.string().max(50000).optional().nullable(),
@@ -211,6 +199,9 @@ const firmFormSchemaObject = z.object({
   custom_service_labels: z.array(z.string().max(80)).max(80).default([]),
   tags: z.array(z.string().max(120)).max(80).default([]),
 });
+
+/** Logo superRefine yok — sunucu yeniden hesaplama / toplu işler için */
+export const firmFormSchemaBase = firmFormSchemaObject;
 
 export const firmFormSchema = firmFormSchemaObject.superRefine((data, ctx) => {
   if (data.logo_url?.trim()) {

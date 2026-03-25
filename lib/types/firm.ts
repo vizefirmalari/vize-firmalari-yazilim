@@ -22,7 +22,7 @@ export type FirmRow = {
   description: string | null;
   /** Platform aktivitesi — Hype Puanı (0–100) */
   raw_hype_score: number;
-  /** Kurumsallık skoru — yönetilen faktörlerden (0–100) */
+  /** Kurumsallık skoru (0–100) — veritabanı; sunucu kayıtta hesaplanır */
   corporateness_score: number;
   short_badge?: string | null;
   countries: string[];

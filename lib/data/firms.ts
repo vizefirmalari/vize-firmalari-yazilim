@@ -64,7 +64,10 @@ function normalizeSort(sort: string | undefined): FirmSort {
   return "hype_desc";
 }
 
-/** DB geçişi: eski sütun adlarından okuma (migration öncesi/sonrası) */
+/**
+ * Public liste / detay — `corporateness_score` veritabanındaki değerdir (sunucuda kayıtta hesaplanır).
+ * DB geçişi: eski sütun adlarından okuma (migration öncesi/sonrası).
+ */
 export function normalizeFirmRow(r: Record<string, unknown>): FirmRow {
   const base = { ...r } as unknown as FirmRow;
   const raw = Number(r.raw_hype_score ?? r.hype_score ?? 0);

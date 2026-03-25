@@ -4,11 +4,15 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { logAdminActivity } from "@/lib/actions/activity";
 import { getAdminContext } from "@/lib/auth/admin";
+import { firmFormSchema, type FirmFormInput } from "@/lib/validations/firm";
+import { computePersistedCorporatenessFields } from "@/lib/firms/corporateness-persist";
 import {
-  computeListingTrustScore,
-  firmFormSchema,
-  type FirmFormInput,
-} from "@/lib/validations/firm";
+  recalculateCorporatenessScore,
+  recalculateCorporatenessScoreWithClient,
+} from "@/lib/firms/recalculate-corporateness";
+
+/** Yönetici paneli / cron — `WithClient` doğrudan `lib/firms/recalculate-corporateness` içinden import edin. */
+export { recalculateCorporatenessScore };
 
 type SupabaseAdmin = NonNullable<
   Awaited<ReturnType<typeof createSupabaseServerClient>>
@@ -20,11 +24,12 @@ function emptyToNull(s: string | null | undefined): string | null {
   return t.length ? t : null;
 }
 
+/**
+ * Firma satırı — Kurumsallık ve güven skoru her zaman `computePersistedCorporatenessFields`
+ * ile hesaplanır; istemciden gelen alanlar güvenilir değildir.
+ */
 function firmRowPayload(v: FirmFormInput) {
-  const trust_score = computeListingTrustScore(
-    v.raw_hype_score,
-    v.corporateness_score
-  );
+  const persisted = computePersistedCorporatenessFields(v);
   return {
     name: v.name,
     slug: v.slug,
@@ -53,8 +58,9 @@ function firmRowPayload(v: FirmFormInput) {
     status_summary: v.status_summary ?? null,
     firm_category: v.firm_category ?? null,
     raw_hype_score: v.raw_hype_score,
-    corporateness_score: v.corporateness_score,
-    trust_score,
+    corporateness_score: persisted.corporateness_score,
+    corporateness_score_breakdown: persisted.corporateness_score_breakdown,
+    trust_score: persisted.trust_score,
     phone: v.phone || null,
     whatsapp: v.whatsapp || null,
     email: v.email ?? null,
@@ -97,7 +103,11 @@ function firmRowPayload(v: FirmFormInput) {
     cities_served_count: v.cities_served_count ?? null,
     has_corporate_email: v.has_corporate_email,
     has_corporate_domain: v.has_corporate_domain,
-    has_professional_website: v.has_professional_website,
+    has_professional_website:
+      (v.website_quality_level ?? "none") === "professional",
+    website_quality_level: v.website_quality_level ?? "none",
+    social_follower_count_total: v.social_follower_count_total ?? 0,
+    social_post_count_total: v.social_post_count_total ?? 0,
     social_media_activity: v.social_media_activity || null,
     testimonials_level: v.testimonials_level || null,
     multilingual_team: v.multilingual_team,
@@ -246,6 +256,7 @@ export async function createFirmFromForm(
   const ctx = await getAdminContext();
   if (!ctx) return { ok: false, error: "Yetkisiz" };
 
+  /** Kurumsallık skoru `firmRowPayload` içinde sunucuda hesaplanır; gövdede gönderilmez. */
   const parsed = firmFormSchema.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Geçersiz form" };
@@ -293,6 +304,14 @@ export async function createFirmFromForm(
   await supabase.from("firm_service_types").delete().eq("firm_id", firmId);
 
   await syncFirmDenormalized(supabase, firmId);
+
+  const recalc = await recalculateCorporatenessScoreWithClient(supabase, firmId, {
+    revalidate: false,
+  });
+  if (!recalc.ok) {
+    console.error("[createFirmFromForm] recalculateCorporatenessScore:", recalc.error);
+  }
+
   await logAdminActivity(supabase, ctx.userId, "firm.created", "firm", firmId, {
     name: v.name,
   });
@@ -310,6 +329,7 @@ export async function updateFirmFromForm(
   const ctx = await getAdminContext();
   if (!ctx) return { ok: false, error: "Yetkisiz" };
 
+  /** Kurumsallık skoru `firmRowPayload` içinde sunucuda hesaplanır; gövdede gönderilmez. */
   const parsed = firmFormSchema.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Geçersiz form" };
@@ -351,6 +371,14 @@ export async function updateFirmFromForm(
   }
 
   await syncFirmDenormalized(supabase, firmId);
+
+  const recalc = await recalculateCorporatenessScoreWithClient(supabase, firmId, {
+    revalidate: false,
+  });
+  if (!recalc.ok) {
+    console.error("[updateFirmFromForm] recalculateCorporatenessScore:", recalc.error);
+  }
+
   await logAdminActivity(supabase, ctx.userId, "firm.updated", "firm", firmId, {
     name: v.name,
   });

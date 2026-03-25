@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
 
@@ -18,11 +19,15 @@ export type AdminFirmDetail = {
   private: FirmAdminPrivateRow | null;
 };
 
+/**
+ * @param supabaseClient — Verilmezse oturumlu sunucu istemcisi kullanılır (cron / servis rolü için).
+ */
 export async function getFirmForAdmin(
-  id: string
+  id: string,
+  supabaseClient?: SupabaseClient | null
 ): Promise<AdminFirmDetail | null> {
   if (!isSupabaseConfigured()) return null;
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseClient ?? (await createSupabaseServerClient());
   if (!supabase) return null;
 
   const { data: firm, error } = await supabase

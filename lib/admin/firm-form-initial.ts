@@ -1,6 +1,11 @@
 import type { FirmAdminPrivateRow } from "@/lib/data/admin-firm-detail";
 import { MAIN_SERVICE_CATEGORIES } from "@/lib/constants/firm-services-taxonomy";
-import { computeCorporatenessFromFactors } from "@/lib/validations/firm";
+import {
+  calculateCorporatenessScore,
+  mapFirmFormToCorporatenessInput,
+  type CorporatenessResult,
+} from "@/lib/scoring/corporateness";
+import { firmFormSchema } from "@/lib/validations/firm";
 
 export type FirmFormState = {
   name: string;
@@ -66,16 +71,16 @@ export type FirmFormState = {
   cities_served_count: string;
   has_corporate_email: boolean;
   has_corporate_domain: boolean;
-  has_professional_website: boolean;
+  /** Web sitesi kalite bandı — Kurumsallık skoru */
+  website_quality_level: "none" | "basic" | "professional";
+  /** Dış sosyal profillerde toplam (Kurumsallık skoru; Hype ile ilgili değil) */
+  social_follower_count_total: string;
+  social_post_count_total: string;
   social_media_activity: "" | "low" | "medium" | "high";
   testimonials_level: "" | "none" | "few" | "moderate" | "strong";
   multilingual_team: boolean;
   international_expertise_level: string;
   profile_completeness: string;
-  corporate_factor_tax: number;
-  corporate_factor_office: number;
-  corporate_factor_digital: number;
-  corporate_factor_refs: number;
   about_section: string;
   service_process_text: string;
   application_process_text: string;
@@ -166,22 +171,12 @@ function parseStatusHistory(raw: unknown): FirmFormState["status_history"] {
   return out;
 }
 
-function parseFactors(raw: unknown): {
-  tax: number;
-  office: number;
-  digital: number;
-  refs: number;
-} {
-  if (!raw || typeof raw !== "object") {
-    return { tax: 0, office: 0, digital: 0, refs: 0 };
-  }
-  const o = raw as Record<string, number>;
-  return {
-    tax: Number(o.tax_doc ?? 0) || 0,
-    office: Number(o.office ?? 0) || 0,
-    digital: Number(o.digital ?? 0) || 0,
-    refs: Number(o.refs ?? 0) || 0,
-  };
+function resolveWebsiteQualityLevel(i: Record<string, unknown>): FirmFormState["website_quality_level"] {
+  const w = i.website_quality_level as string | undefined;
+  if (w === "basic" || w === "professional" || w === "none") return w;
+  if (i.has_professional_website === true) return "professional";
+  if (String(i.website ?? "").trim().length > 0) return "basic";
+  return "none";
 }
 
 export function buildFirmFormState(
@@ -194,8 +189,6 @@ export function buildFirmFormState(
       (i as { hype_score?: number }).hype_score ??
       0
   );
-  const factors = parseFactors(i.corporate_score_factors);
-
   const mainFromDb = [...((i.main_services as string[]) ?? [])];
   const subFromDb = [...((i.sub_services as string[]) ?? [])];
   const customLabels = ((i.custom_services as string[]) ?? []) as string[];
@@ -287,16 +280,14 @@ export function buildFirmFormState(
     cities_served_count: numStr(i.cities_served_count),
     has_corporate_email: Boolean(i.has_corporate_email),
     has_corporate_domain: Boolean(i.has_corporate_domain),
-    has_professional_website: Boolean(i.has_professional_website),
+    website_quality_level: resolveWebsiteQualityLevel(i),
+    social_follower_count_total: numStr(i.social_follower_count_total),
+    social_post_count_total: numStr(i.social_post_count_total),
     social_media_activity: (i.social_media_activity as FirmFormState["social_media_activity"]) || "",
     testimonials_level: (i.testimonials_level as FirmFormState["testimonials_level"]) || "",
     multilingual_team: Boolean(i.multilingual_team),
     international_expertise_level: numStr(i.international_expertise_level),
     profile_completeness: numStr(i.profile_completeness),
-    corporate_factor_tax: factors.tax,
-    corporate_factor_office: factors.office,
-    corporate_factor_digital: factors.digital,
-    corporate_factor_refs: factors.refs,
     about_section: String(i.about_section ?? ""),
     service_process_text: String(i.service_process_text ?? ""),
     application_process_text: String(i.application_process_text ?? ""),
@@ -360,18 +351,6 @@ export function formStateToPayload(
   selectedCountries: string[],
   selectedFeatured: string[]
 ) {
-  const corpFactors = {
-    tax_doc: form.corporate_factor_tax,
-    office: form.corporate_factor_office,
-    digital: form.corporate_factor_digital,
-    refs: form.corporate_factor_refs,
-  };
-  const suggestedCorporate = computeCorporatenessFromFactors({
-    tax: form.corporate_factor_tax,
-    office: form.corporate_factor_office,
-    digital: form.corporate_factor_digital,
-    refs: form.corporate_factor_refs,
-  });
   return {
     name: form.name,
     slug: form.slug,
@@ -393,7 +372,6 @@ export function formStateToPayload(
     status_summary: form.status_summary || null,
     firm_category: form.firm_category || null,
     raw_hype_score: form.raw_hype_score,
-    corporateness_score: suggestedCorporate,
     phone: form.phone || null,
     whatsapp: form.whatsapp || null,
     email: form.email || null,
@@ -445,7 +423,16 @@ export function formStateToPayload(
     })(),
     has_corporate_email: form.has_corporate_email,
     has_corporate_domain: form.has_corporate_domain,
-    has_professional_website: form.has_professional_website,
+    has_professional_website: form.website_quality_level === "professional",
+    website_quality_level: form.website_quality_level,
+    social_follower_count_total: (() => {
+      const n = Number(form.social_follower_count_total);
+      return Number.isFinite(n) ? n : 0;
+    })(),
+    social_post_count_total: (() => {
+      const n = Number(form.social_post_count_total);
+      return Number.isFinite(n) ? n : 0;
+    })(),
     social_media_activity: form.social_media_activity || null,
     testimonials_level: form.testimonials_level || null,
     multilingual_team: form.multilingual_team,
@@ -457,7 +444,7 @@ export function formStateToPayload(
       const n = Number(form.profile_completeness);
       return Number.isFinite(n) ? n : null;
     })(),
-    corporate_score_factors: corpFactors,
+    corporate_score_factors: {},
     about_section: form.about_section || null,
     service_process_text: form.service_process_text || null,
     application_process_text: form.application_process_text || null,
@@ -513,6 +500,34 @@ export function formStateToPayload(
     sub_services: form.sub_services,
     custom_service_labels: form.custom_service_labels,
     tags: [...new Set(form.tags.map((t) => t.trim()).filter(Boolean))],
-    _suggested_corporate: suggestedCorporate,
   };
+}
+
+/** Kimlik sekmesinde Kurumsallık önizlemesi — kayıttaki motor ile aynı kurallar */
+export function computeCorporatenessPreview(
+  form: FirmFormState,
+  selectedCountries: string[],
+  selectedFeatured: string[]
+): CorporatenessResult {
+  const raw = formStateToPayload(form, selectedCountries, selectedFeatured);
+  const parsed = firmFormSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      totalScore: 0,
+      breakdown: { legal: 0, operations: 0, digital: 0, content: 0, services: 0 },
+      sections: [],
+      admin: {
+        summary:
+          "Önizleme için form doğrulanamadı. Zorunlu alanları doldurun veya sekmelerdeki hataları giderin.",
+        gaps: [],
+        nextSteps: [
+          "Form doğrulamasını geçtikten sonra Kurumsallık özeti otomatik güncellenir.",
+        ],
+        hints: [
+          "Kimlik, İletişim ve Hizmetler sekmelerindeki zorunlu alanları kontrol edin.",
+        ],
+      },
+    };
+  }
+  return calculateCorporatenessScore(mapFirmFormToCorporatenessInput(parsed.data));
 }
