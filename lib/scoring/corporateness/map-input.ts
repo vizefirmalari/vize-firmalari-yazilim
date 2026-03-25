@@ -1,10 +1,8 @@
 import type { FirmFormInput } from "@/lib/validations/firm";
-import type { CorporatenessInput, WebsiteQualityLevel } from "./types";
+import type { CorporatenessInput, LegalStructure, WebsiteQualityLevel } from "./types";
 
 /** DB / form metninden yasal şirket türünü normalize eder */
-export function normalizeLegalCompanyType(
-  raw: string | null | undefined
-): CorporatenessInput["company_type"] {
+export function normalizeLegalCompanyType(raw: string | null | undefined): LegalStructure {
   const s = (raw ?? "").toLowerCase().trim();
   if (!s) return "other";
 
@@ -53,19 +51,64 @@ function resolveWebsiteLevel(
   return "none";
 }
 
+function descriptionsScore(shortD: string | null | undefined, longD: string | null | undefined): number {
+  const sh = nonempty(shortD);
+  const lo = nonempty(longD);
+  if (sh && lo) return 5;
+  if (sh || lo) return 3;
+  return 0;
+}
+
+function seoScore(v: FirmFormInput): number {
+  let pts = 0;
+  if (nonempty(v.seo_title)) pts += 2;
+  if (nonempty(v.meta_description)) pts += 2;
+  const hasKeywordBundle =
+    nonempty(v.focus_keyword) ||
+    (v.tags?.length ?? 0) > 0 ||
+    nonempty(v.secondary_keywords) ||
+    nonempty(v.page_heading) ||
+    nonempty(v.page_subheading) ||
+    nonempty(v.og_title) ||
+    nonempty(v.og_description) ||
+    nonempty(v.og_image_url) ||
+    Boolean(v.has_blog);
+  if (hasKeywordBundle) pts += 1;
+  return Math.min(5, pts);
+}
+
+function logoScore(v: FirmFormInput): number {
+  if (!nonempty(v.logo_url)) return 0;
+  if (nonempty(v.logo_alt_text)) return 5;
+  return 3;
+}
+
+function specializationCount(v: FirmFormInput): number {
+  const flags = [
+    v.schengen_expert,
+    v.usa_visa_expert,
+    v.student_visa_support,
+    v.work_visa_support,
+    v.tourist_visa_support,
+    v.business_visa_support,
+    v.family_reunion_support,
+    v.appeal_support,
+  ];
+  return flags.filter(Boolean).length;
+}
+
 /**
- * Admin form / API doğrulamasından gelen `FirmFormInput` ile Kurumsallık girdisini üretir.
+ * Admin form doğrulamasından gelen `FirmFormInput` ile Kurumsallık girdisini üretir.
  */
 export function mapFirmFormToCorporatenessInput(v: FirmFormInput): CorporatenessInput {
-  const phone = nonempty(v.phone);
-  const whatsapp = nonempty(v.whatsapp);
-  const email = nonempty(v.email);
-  const address = nonempty(v.address);
-  const city = nonempty(v.city);
-  const maps = nonempty(v.maps_url);
+  const structureRaw = v.company_structure?.trim()
+    ? v.company_structure
+    : v.company_type;
+  const company_structure = normalizeLegalCompanyType(structureRaw);
 
-  const has_complete_contact_set =
-    phone && email && (address || city) && maps;
+  const has_tax_number = nonempty(v.tax_number);
+  const licenseStr = [v.license_number, v.permit_number].find((s) => nonempty(s));
+  const has_license_number = Boolean(licenseStr);
 
   const websiteLevel = resolveWebsiteLevel(
     v.website_quality_level as WebsiteQualityLevel | null | undefined,
@@ -73,48 +116,31 @@ export function mapFirmFormToCorporatenessInput(v: FirmFormInput): Corporateness
     v.website
   );
 
-  const country_count = (v.country_ids ?? []).length;
-  const main_service_count = (v.main_services ?? []).length;
+  const countries_served_count = (v.country_ids ?? []).length;
   const sub_service_count = (v.sub_services ?? []).length;
-  const custom_service_tag_count = (v.custom_service_labels ?? []).length;
 
   return {
-    has_tax_document: Boolean(v.has_tax_document),
-    company_type: normalizeLegalCompanyType(v.company_type),
-    has_permit_number: nonempty(v.permit_number),
+    company_structure,
+    has_tax_number,
+    has_license_number,
     has_physical_office: Boolean(v.has_physical_office),
     has_corporate_email: Boolean(v.has_corporate_email),
+    office_verified: Boolean(v.office_address_verified),
 
     employee_count: v.employee_count ?? 0,
-    has_working_hours: nonempty(v.working_hours),
-    has_phone: phone,
-    has_whatsapp: whatsapp,
-    has_maps_url: maps,
-    has_complete_contact_set,
+    consultant_count: v.consultant_count ?? 0,
+    office_count: v.office_count ?? 0,
 
     website_quality_level: websiteLevel,
-    has_instagram: nonempty(v.instagram),
-    has_facebook: nonempty(v.facebook),
-    has_linkedin: nonempty(v.linkedin),
-    has_twitter: nonempty(v.twitter),
     social_follower_count_total: v.social_follower_count_total ?? 0,
     social_post_count_total: v.social_post_count_total ?? 0,
 
-    has_logo: nonempty(v.logo_url),
-    has_logo_alt_text: nonempty(v.logo_alt_text),
-    has_short_description: nonempty(v.short_description),
-    has_long_description: nonempty(v.description),
-    has_page_heading: nonempty(v.page_heading),
-    has_page_subheading: nonempty(v.page_subheading),
-    has_seo_title: nonempty(v.seo_title),
-    has_meta_description: nonempty(v.meta_description),
-    has_tags: (v.tags ?? []).length > 0,
-    has_og_fields:
-      nonempty(v.og_title) || nonempty(v.og_description) || nonempty(v.og_image_url),
+    descriptions_score_0_5: descriptionsScore(v.short_description, v.description),
+    seo_score_0_5: seoScore(v),
+    logo_score_0_5: logoScore(v),
 
-    country_count,
-    main_service_count,
+    countries_served_count,
     sub_service_count,
-    custom_service_tag_count,
+    specialization_flag_count: specializationCount(v),
   };
 }

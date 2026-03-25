@@ -171,7 +171,7 @@ export function FilterSidebar({
                 onChange={() => setSort("hype_desc")}
                 className="h-4 w-4 border-[#0B3C5D]/25 text-[#328CC1] focus:ring-[#328CC1]"
               />
-              Hype Puanı (yüksek → düşük)
+              Önerilen sıra (önce güven, sonra aktivite)
             </label>
             <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F7F9FB]">
               <input
@@ -181,7 +181,7 @@ export function FilterSidebar({
                 onChange={() => setSort("hype_asc")}
                 className="h-4 w-4 border-[#0B3C5D]/25 text-[#328CC1] focus:ring-[#328CC1]"
               />
-              Hype Puanı (düşük → yüksek)
+              Aktivite puanı (düşük → yüksek)
             </label>
             <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F7F9FB]">
               <input
@@ -191,7 +191,7 @@ export function FilterSidebar({
                 onChange={() => setSort("corp_desc")}
                 className="h-4 w-4 border-[#0B3C5D]/25 text-[#328CC1] focus:ring-[#328CC1]"
               />
-              Kurumsallık Skoru (yüksek → düşük)
+              Güven Endeksi (yüksek → düşük)
             </label>
             <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F7F9FB]">
               <input
@@ -201,7 +201,7 @@ export function FilterSidebar({
                 onChange={() => setSort("corp_asc")}
                 className="h-4 w-4 border-[#0B3C5D]/25 text-[#328CC1] focus:ring-[#328CC1]"
               />
-              Kurumsallık Skoru (düşük → yüksek)
+              Güven Endeksi (düşük → yüksek)
             </label>
             <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F7F9FB]">
               <input

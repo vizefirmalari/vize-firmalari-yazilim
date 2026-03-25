@@ -34,14 +34,25 @@ const statusHistoryEntrySchema = z.object({
 
 const imageUrlArray = z.array(z.string().max(2000)).max(24).default([]);
 
+/**
+ * Birikimli hype (bigint) → güven formülü için 0–100 ölçek.
+ * Örn. 7200 → 72 (raw_hype 72 ile eşdeğer bant).
+ */
+export function normalizeHypeForTrust(hypeRaw: bigint | number): number {
+  const n = typeof hypeRaw === "bigint" ? Number(hypeRaw) : hypeRaw;
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(100, n / 100);
+}
+
 /** Liste / eski uyumluluk için birleşik skor (DB trust_score sütunu) */
 export function computeListingTrustScore(
-  rawHype: number,
+  hypeRaw: bigint | number,
   corporateness: number
 ): number {
+  const h = normalizeHypeForTrust(hypeRaw);
   return Math.min(
     100,
-    Math.max(0, Math.round(rawHype * 0.42 + corporateness * 0.58))
+    Math.max(0, Math.round(h * 0.42 + corporateness * 0.58))
   );
 }
 
@@ -68,7 +79,11 @@ const firmFormSchemaObject = z.object({
   status_summary: z.string().max(400).optional().nullable(),
   firm_category: z.string().max(120).optional().nullable(),
 
-  raw_hype_score: z.coerce.number().int().min(0).max(100),
+  brand_name: z.string().max(200).optional().nullable(),
+  card_highlight_text: z.string().max(200).optional().nullable(),
+  legal_company_name: z.string().max(300).optional().nullable(),
+  owner_name: z.string().max(120).optional().nullable(),
+  company_structure: z.string().max(80).optional().nullable(),
 
   phone: z.string().max(80).optional().nullable(),
   whatsapp: z.string().max(80).optional().nullable(),
@@ -84,11 +99,18 @@ const firmFormSchemaObject = z.object({
   city: z.string().max(120).optional().nullable(),
   district: z.string().max(120).optional().nullable(),
   hq_country: z.string().max(120).optional().nullable(),
+  postal_code: z.string().max(32).optional().nullable(),
   maps_url: optionalLooseUrl,
   working_hours: z.string().max(500).optional().nullable(),
   weekend_hours_note: z.string().max(300).optional().nullable(),
   contact_person_name: z.string().max(120).optional().nullable(),
   contact_person_role: z.string().max(120).optional().nullable(),
+  support_email: optionalEmail,
+  second_phone: z.string().max(80).optional().nullable(),
+  second_whatsapp: z.string().max(80).optional().nullable(),
+  has_landline: z.boolean(),
+  supported_languages: z.array(z.string().max(40)).max(24).default([]),
+  weekend_support: z.boolean(),
 
   show_phone: z.boolean(),
   show_whatsapp: z.boolean(),
@@ -104,15 +126,22 @@ const firmFormSchemaObject = z.object({
 
   company_type: z.string().max(80).optional().nullable(),
   has_tax_document: z.boolean(),
+  has_tax_certificate: z.boolean(),
   tax_number: z.string().max(80).optional().nullable(),
   tax_office: z.string().max(120).optional().nullable(),
   permit_number: z.string().max(120).optional().nullable(),
+  license_number: z.string().max(120).optional().nullable(),
+  license_description: z.string().max(2000).optional().nullable(),
   legal_authorization_note: z.string().max(2000).optional().nullable(),
   has_physical_office: z.boolean(),
   office_address_verified: z.boolean(),
   employee_count: z.coerce.number().int().min(0).max(500000).optional().nullable(),
+  consultant_count: z.coerce.number().int().min(0).max(500000).optional().nullable(),
+  support_staff_count: z.coerce.number().int().min(0).max(500000).optional().nullable(),
+  office_count: z.coerce.number().int().min(0).max(10000).optional().nullable(),
   founded_year: z.coerce.number().int().min(1800).max(2100).optional().nullable(),
   cities_served_count: z.coerce.number().int().min(0).max(10000).optional().nullable(),
+  has_blog: z.boolean(),
   has_corporate_email: z.boolean(),
   has_corporate_domain: z.boolean(),
   has_professional_website: z.boolean(),
@@ -122,6 +151,14 @@ const firmFormSchemaObject = z.object({
     .default("none"),
   social_follower_count_total: z.coerce.number().int().min(0).max(500000000).optional().default(0),
   social_post_count_total: z.coerce.number().int().min(0).max(500000000).optional().default(0),
+  schengen_expert: z.boolean(),
+  usa_visa_expert: z.boolean(),
+  student_visa_support: z.boolean(),
+  work_visa_support: z.boolean(),
+  tourist_visa_support: z.boolean(),
+  business_visa_support: z.boolean(),
+  family_reunion_support: z.boolean(),
+  appeal_support: z.boolean(),
   social_media_activity: z
     .union([z.enum(["low", "medium", "high"]), z.literal("")])
     .optional()
@@ -174,6 +211,8 @@ const firmFormSchemaObject = z.object({
   verified_badge: z.boolean(),
 
   seo_title: z.string().max(200).optional().nullable(),
+  focus_keyword: z.string().max(120).optional().nullable(),
+  secondary_keywords: z.string().max(500).optional().nullable(),
   meta_description: z.string().max(320).optional().nullable(),
   canonical_url: z.string().max(500).optional().nullable(),
   og_title: z.string().max(200).optional().nullable(),

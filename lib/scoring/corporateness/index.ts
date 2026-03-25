@@ -13,6 +13,7 @@ export type {
   CorporatenessAdminInsights,
   CorporatenessInput,
   CorporatenessResult,
+  LegalStructure,
   LineBreakdown,
   ScoringGap,
   SectionScore,

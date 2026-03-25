@@ -63,7 +63,7 @@ export async function generateMetadata({
     firm.meta_description?.trim() ||
     firm.short_description?.trim() ||
     firm.description?.slice(0, 155) ||
-    `${firm.name} — Hype ${firm.raw_hype_score}/100, Kurumsallık ${firm.corporateness_score}/100.`;
+    `${firm.name} — Güven / Kurumsallık ${firm.corporateness_score}/100.`;
   const ogTitle =
     firm.og_title?.trim() || firm.seo_title?.trim() || `${firm.name} | VizeFirmalari`;
   const ogDesc = firm.og_description?.trim() || desc;
@@ -147,15 +147,9 @@ export default async function FirmaPage({ params }: PageProps) {
                   <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
                     {firm.name}
                   </h1>
-                  <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/80">
+                  <p className="mt-2 text-sm text-white/80">
                     <span>
-                      Hype Puanı:{" "}
-                      <span className="font-semibold text-[#328CC1]">
-                        {firm.raw_hype_score}/100
-                      </span>
-                    </span>
-                    <span>
-                      Kurumsallık Skoru:{" "}
+                      Güven / Kurumsallık Skoru:{" "}
                       <span className="font-semibold text-[#D9A441]">
                         {firm.corporateness_score}/100
                       </span>

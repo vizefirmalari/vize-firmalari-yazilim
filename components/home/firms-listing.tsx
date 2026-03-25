@@ -100,9 +100,11 @@ export function FirmsListing({
         );
       })
       .sort((a, b) => {
+        const hype = (x: FirmRow) => x.hype_score ?? x.raw_hype_score * 100;
+        const mp = (x: FirmRow) => x.manual_priority ?? 0;
         switch (sort) {
           case "hype_asc":
-            return a.raw_hype_score - b.raw_hype_score;
+            return hype(a) - hype(b);
           case "corp_desc":
             return b.corporateness_score - a.corporateness_score;
           case "corp_asc":
@@ -116,7 +118,11 @@ export function FirmsListing({
             return a.name.localeCompare(b.name, "tr");
           case "hype_desc":
           default:
-            return b.raw_hype_score - a.raw_hype_score;
+            if (b.corporateness_score !== a.corporateness_score) {
+              return b.corporateness_score - a.corporateness_score;
+            }
+            if (hype(b) !== hype(a)) return hype(b) - hype(a);
+            return mp(b) - mp(a);
         }
       });
   }, [country, initialFirms, query, services, sort]);

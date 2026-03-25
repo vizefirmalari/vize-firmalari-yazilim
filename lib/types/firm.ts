@@ -20,10 +20,17 @@ export type FirmRow = {
   /** Kart ve liste önizlemesi için kısa metin */
   short_description?: string | null;
   description: string | null;
-  /** Platform aktivitesi — Hype Puanı (0–100) */
+  /**
+   * Birikimli platform hype (tam sayı). Liste sıralaması ve iç metrikler için.
+   * Kartta gösterilmez.
+   */
+  hype_score?: number;
+  /** 0–100 ölçek — eski raw_hype ile uyum (hype_score/100 ile türetilir) */
   raw_hype_score: number;
   /** Kurumsallık skoru (0–100) — veritabanı; sunucu kayıtta hesaplanır */
   corporateness_score: number;
+  /** Elle öncelik (sort_priority) */
+  manual_priority?: number;
   short_badge?: string | null;
   countries: string[];
   /** Öne çıkan ülke isimleri (varsa) */

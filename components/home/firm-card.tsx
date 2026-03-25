@@ -7,8 +7,6 @@ import type { FirmRow } from "@/lib/types/firm";
 import { ContactModal } from "@/components/home/contact-modal";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
 
-const HYPE_INFO =
-  "Firmanın platform üzerindeki aktiflik düzeyini gösterir. Paylaşımlar, kampanyalar ve güncellemeler arttıkça yükselir.";
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
 
@@ -18,14 +16,16 @@ type FirmCardProps = {
 
 export function FirmCard({ firm }: FirmCardProps) {
   const [contactOpen, setContactOpen] = useState(false);
-  const hype = firm.raw_hype_score;
   const corporate = firm.corporateness_score;
   const countryPool =
     firm.featured_countries && firm.featured_countries.length > 0
       ? firm.featured_countries
       : firm.countries;
-  const shown = countryPool.slice(0, 3);
-  const rest = Math.max(0, countryPool.length - shown.length);
+  const shownCountries = countryPool.slice(0, 3);
+  const restCountries = Math.max(0, countryPool.length - shownCountries.length);
+  const servicePool = firm.services ?? [];
+  const shownServices = servicePool.slice(0, 3);
+  const restServices = Math.max(0, servicePool.length - shownServices.length);
   const contactOk = firm.contact_popup_enabled !== false;
   const quickApplyOk = firm.quick_apply_enabled !== false;
   const socialOk = firm.social_buttons_enabled !== false;
@@ -66,31 +66,7 @@ export function FirmCard({ firm }: FirmCardProps) {
         <div>
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-[#1A1A1A]/60">
             <span className="inline-flex items-center">
-              Hype Puanı
-              <ScoreInfoButton label="Hype Puanı hakkında" text={HYPE_INFO} />
-            </span>
-            <span className="rounded-full bg-[#328CC1]/10 px-2 py-0.5 tabular-nums text-[#0B3C5D]">
-              {hype}/100
-            </span>
-          </div>
-          <div
-            className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#0B3C5D]/10"
-            role="progressbar"
-            aria-valuenow={hype}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`Hype puanı ${hype}`}
-          >
-            <div
-              className="h-full rounded-full bg-[#328CC1]"
-              style={{ width: `${hype}%` }}
-            />
-          </div>
-        </div>
-        <div>
-          <div className="flex items-center justify-between gap-2 text-xs font-medium text-[#1A1A1A]/60">
-            <span className="inline-flex items-center">
-              Kurumsallık Skoru
+              Güven / Kurumsallık
               <ScoreInfoButton
                 label="Kurumsallık Skoru hakkında"
                 text={CORP_INFO}
@@ -106,7 +82,7 @@ export function FirmCard({ firm }: FirmCardProps) {
             aria-valuenow={corporate}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label={`Kurumsallık Skoru ${corporate}`}
+            aria-label={`Kurumsallık skoru ${corporate}`}
           >
             <div
               className="h-full rounded-full bg-[#D9A441]"
@@ -123,7 +99,7 @@ export function FirmCard({ firm }: FirmCardProps) {
       </p>
 
       <div className="mt-4 flex flex-wrap justify-center gap-1.5">
-        {shown.map((c) => (
+        {shownCountries.map((c) => (
           <span
             key={c}
             className="rounded-lg bg-[#F7F9FB] px-2 py-1 text-xs font-medium text-[#0B3C5D]/90 ring-1 ring-[#0B3C5D]/10"
@@ -131,12 +107,30 @@ export function FirmCard({ firm }: FirmCardProps) {
             {c}
           </span>
         ))}
-        {rest > 0 ? (
+        {restCountries > 0 ? (
           <span className="rounded-lg bg-[#D9A441]/15 px-2 py-1 text-xs font-semibold text-[#1A1A1A]">
-            +{rest}
+            +{restCountries}
           </span>
         ) : null}
       </div>
+
+      {shownServices.length > 0 ? (
+        <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+          {shownServices.map((s) => (
+            <span
+              key={s}
+              className="rounded-lg border border-[#0B3C5D]/10 bg-white px-2 py-1 text-[11px] font-medium text-[#0B3C5D]/85"
+            >
+              {s}
+            </span>
+          ))}
+          {restServices > 0 ? (
+            <span className="rounded-lg bg-[#F7F9FB] px-2 py-1 text-[11px] font-semibold text-[#1A1A1A]/70">
+              +{restServices} hizmet
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="mt-5 grid grid-cols-2 gap-2">
         {contactOk ? (

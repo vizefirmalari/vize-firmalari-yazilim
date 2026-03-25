@@ -4,53 +4,52 @@ import { finalizeSection, scoringLine } from "../helpers";
 
 const MAX = 20;
 
-function employeePoints(n: number): number {
-  if (n <= 1) return 1;
-  if (n <= 5) return 4;
-  if (n <= 10) return 7;
-  if (n <= 20) return 9;
+/** 0–10: çalışan sayısına göre ölçekli */
+function employeeBandPoints(n: number): number {
+  const ec = Math.max(0, Math.floor(Number(n) || 0));
+  if (ec <= 0) return 0;
+  if (ec <= 2) return 2;
+  if (ec <= 5) return 4;
+  if (ec <= 15) return 7;
+  if (ec <= 40) return 9;
   return 10;
 }
 
-export function scoreOperationsSection(input: CorporatenessInput): SectionScore {
-  const ec = Math.max(0, Math.floor(Number(input.employee_count) || 0));
+function consultantPoints(n: number): number {
+  const c = Math.max(0, Math.floor(Number(n) || 0));
+  if (c <= 0) return 0;
+  if (c <= 2) return 2;
+  if (c <= 5) return 4;
+  return 5;
+}
 
+function officeCountPoints(n: number): number {
+  const o = Math.max(0, Math.floor(Number(n) || 0));
+  if (o <= 0) return 0;
+  if (o === 1) return 3;
+  if (o === 2) return 4;
+  return 5;
+}
+
+export function scoreOperationsSection(input: CorporatenessInput): SectionScore {
   const lines = [
     scoringLine(
       LINE_KEYS.operations.employees,
-      "Çalışan sayısı",
-      employeePoints(ec),
+      "Çalışan sayısı (ölçekli)",
+      employeeBandPoints(input.employee_count),
       10
     ),
     scoringLine(
-      LINE_KEYS.operations.workingHours,
-      "Çalışma saatleri",
-      input.has_working_hours ? 2 : 0,
-      2
+      LINE_KEYS.operations.consultants,
+      "Danışman sayısı",
+      consultantPoints(input.consultant_count),
+      5
     ),
     scoringLine(
-      LINE_KEYS.operations.phone,
-      "Telefon",
-      input.has_phone ? 2 : 0,
-      2
-    ),
-    scoringLine(
-      LINE_KEYS.operations.whatsapp,
-      "WhatsApp",
-      input.has_whatsapp ? 2 : 0,
-      2
-    ),
-    scoringLine(
-      LINE_KEYS.operations.mapsUrl,
-      "Harita bağlantısı",
-      input.has_maps_url ? 2 : 0,
-      2
-    ),
-    scoringLine(
-      LINE_KEYS.operations.completeContact,
-      "Tam iletişim seti (telefon, e-posta, adres, harita)",
-      input.has_complete_contact_set ? 2 : 0,
-      2
+      LINE_KEYS.operations.offices,
+      "Ofis sayısı",
+      officeCountPoints(input.office_count),
+      5
     ),
   ];
 

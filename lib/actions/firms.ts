@@ -6,6 +6,7 @@ import { logAdminActivity } from "@/lib/actions/activity";
 import { getAdminContext } from "@/lib/auth/admin";
 import { firmFormSchema, type FirmFormInput } from "@/lib/validations/firm";
 import { computePersistedCorporatenessFields } from "@/lib/firms/corporateness-persist";
+import { resolveHypeBigintFromRow } from "@/lib/firms/hype-resolve";
 import {
   recalculateCorporatenessScore,
   recalculateCorporatenessScoreWithClient,
@@ -28,8 +29,22 @@ function emptyToNull(s: string | null | undefined): string | null {
  * Firma satırı — Kurumsallık ve güven skoru her zaman `computePersistedCorporatenessFields`
  * ile hesaplanır; istemciden gelen alanlar güvenilir değildir.
  */
-function firmRowPayload(v: FirmFormInput) {
-  const persisted = computePersistedCorporatenessFields(v);
+function firmRowPayload(v: FirmFormInput, hypeForTrust: bigint) {
+  const persisted = computePersistedCorporatenessFields(v, { hypeForTrust });
+  const licenseVal = emptyToNull(v.license_number ?? v.permit_number ?? undefined);
+  const taxDoc = v.has_tax_document || v.has_tax_certificate;
+  const nz = (s: string | null | undefined) => Boolean(s && String(s).trim().length);
+  const profileHasSeo =
+    (nz(v.seo_title) && nz(v.meta_description)) ||
+    nz(v.focus_keyword) ||
+    (v.tags?.length ?? 0) > 0 ||
+    nz(v.secondary_keywords) ||
+    nz(v.page_heading) ||
+    nz(v.page_subheading) ||
+    nz(v.og_title) ||
+    nz(v.og_description) ||
+    nz(v.og_image_url) ||
+    Boolean(v.has_blog);
   return {
     name: v.name,
     slug: v.slug,
@@ -57,7 +72,11 @@ function firmRowPayload(v: FirmFormInput) {
     page_intro: v.page_intro ?? null,
     status_summary: v.status_summary ?? null,
     firm_category: v.firm_category ?? null,
-    raw_hype_score: v.raw_hype_score,
+    brand_name: emptyToNull(v.brand_name ?? undefined),
+    card_highlight_text: emptyToNull(v.card_highlight_text ?? undefined),
+    legal_company_name: emptyToNull(v.legal_company_name ?? undefined),
+    owner_name: emptyToNull(v.owner_name ?? undefined),
+    company_structure: emptyToNull(v.company_structure ?? undefined),
     corporateness_score: persisted.corporateness_score,
     corporateness_score_breakdown: persisted.corporateness_score_breakdown,
     trust_score: persisted.trust_score,
@@ -75,11 +94,18 @@ function firmRowPayload(v: FirmFormInput) {
     city: v.city || null,
     district: v.district || null,
     hq_country: v.hq_country || null,
+    postal_code: emptyToNull(v.postal_code ?? undefined),
     maps_url: emptyToNull(v.maps_url ?? undefined),
     working_hours: v.working_hours || null,
     weekend_hours_note: v.weekend_hours_note || null,
     contact_person_name: v.contact_person_name || null,
     contact_person_role: v.contact_person_role || null,
+    support_email: v.support_email ?? null,
+    second_phone: v.second_phone || null,
+    second_whatsapp: v.second_whatsapp || null,
+    has_landline: v.has_landline,
+    supported_languages: v.supported_languages ?? [],
+    weekend_support: v.weekend_support,
     show_phone: v.show_phone,
     show_whatsapp: v.show_whatsapp,
     show_email: v.show_email,
@@ -91,16 +117,23 @@ function firmRowPayload(v: FirmFormInput) {
     offers_remote_support: v.offers_remote_support,
     offers_multilingual_support: v.offers_multilingual_support,
     company_type: v.company_type || null,
-    has_tax_document: v.has_tax_document,
+    has_tax_document: taxDoc,
+    has_tax_certificate: v.has_tax_certificate,
     tax_number: v.tax_number || null,
     tax_office: v.tax_office || null,
-    permit_number: v.permit_number || null,
+    permit_number: licenseVal,
+    license_number: licenseVal,
+    license_description: v.license_description || null,
     legal_authorization_note: v.legal_authorization_note || null,
     has_physical_office: v.has_physical_office,
     office_address_verified: v.office_address_verified,
     employee_count: v.employee_count ?? null,
+    consultant_count: v.consultant_count ?? null,
+    support_staff_count: v.support_staff_count ?? null,
+    office_count: v.office_count ?? null,
     founded_year: v.founded_year ?? null,
     cities_served_count: v.cities_served_count ?? null,
+    has_blog: v.has_blog,
     has_corporate_email: v.has_corporate_email,
     has_corporate_domain: v.has_corporate_domain,
     has_professional_website:
@@ -108,12 +141,24 @@ function firmRowPayload(v: FirmFormInput) {
     website_quality_level: v.website_quality_level ?? "none",
     social_follower_count_total: v.social_follower_count_total ?? 0,
     social_post_count_total: v.social_post_count_total ?? 0,
+    schengen_expert: v.schengen_expert,
+    usa_visa_expert: v.usa_visa_expert,
+    student_visa_support: v.student_visa_support,
+    work_visa_support: v.work_visa_support,
+    tourist_visa_support: v.tourist_visa_support,
+    business_visa_support: v.business_visa_support,
+    family_reunion_support: v.family_reunion_support,
+    appeal_support: v.appeal_support,
     social_media_activity: v.social_media_activity || null,
     testimonials_level: v.testimonials_level || null,
     multilingual_team: v.multilingual_team,
     international_expertise_level: v.international_expertise_level ?? null,
     profile_completeness: v.profile_completeness ?? null,
     corporate_score_factors: v.corporate_score_factors ?? {},
+    profile_has_logo: Boolean(v.logo_url?.trim()),
+    profile_has_short_desc: Boolean(v.short_description?.trim()),
+    profile_has_long_desc: Boolean(v.description?.trim()),
+    profile_has_seo_fields: profileHasSeo,
     about_section: v.about_section || null,
     service_process_text: v.service_process_text || null,
     application_process_text: v.application_process_text || null,
@@ -147,6 +192,8 @@ function firmRowPayload(v: FirmFormInput) {
     premium_badge: v.premium_badge,
     verified_badge: v.verified_badge,
     seo_title: v.seo_title ?? null,
+    focus_keyword: emptyToNull(v.focus_keyword ?? undefined),
+    secondary_keywords: emptyToNull(v.secondary_keywords ?? undefined),
     meta_description: v.meta_description ?? null,
     canonical_url: v.canonical_url || null,
     og_title: v.og_title ?? null,
@@ -270,7 +317,7 @@ export async function createFirmFromForm(
   const slugOk = await assertSlugAvailable(supabase, v.slug);
   if (!slugOk.ok) return { ok: false, error: slugOk.error };
 
-  const payload = { ...firmRowPayload(v), updated_at: new Date().toISOString() };
+  const payload = { ...firmRowPayload(v, BigInt(0)), updated_at: new Date().toISOString() };
 
   const { data: inserted, error } = await supabase
     .from("firms")
@@ -343,7 +390,14 @@ export async function updateFirmFromForm(
   const slugOk = await assertSlugAvailable(supabase, v.slug, firmId);
   if (!slugOk.ok) return { ok: false, error: slugOk.error };
 
-  const payload = { ...firmRowPayload(v), updated_at: new Date().toISOString() };
+  const { data: priorHype } = await supabase
+    .from("firms")
+    .select("hype_score, raw_hype_score")
+    .eq("id", firmId)
+    .maybeSingle();
+
+  const hypeForTrust = resolveHypeBigintFromRow((priorHype ?? {}) as Record<string, unknown>);
+  const payload = { ...firmRowPayload(v, hypeForTrust), updated_at: new Date().toISOString() };
 
   const { error } = await supabase.from("firms").update(payload).eq("id", firmId);
 

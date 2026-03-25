@@ -11,8 +11,10 @@ const MOCK_FIRMS: FirmRow[] = [
     short_description: null,
     description:
       "Avrupa ve Schengen vize süreçlerinde deneyimli ekibiyle güvenilir danışmanlık sunan örnek bir firmadır.",
+    hype_score: 7200,
     raw_hype_score: 72,
     corporateness_score: 88,
+    manual_priority: 0,
     countries: ["Almanya", "Fransa", "İtalya"],
     services: ["Vize İşlemleri"],
     phone: "+90 212 555 01 01",
@@ -31,8 +33,10 @@ const MOCK_FIRMS: FirmRow[] = [
     short_description: null,
     description:
       "Kuzey Amerika oturum ve göç süreçlerinde uçtan uca destek sağlayan profesyonel bir danışmanlık firmasıdır.",
+    hype_score: 5500,
     raw_hype_score: 55,
     corporateness_score: 76,
+    manual_priority: 0,
     countries: ["Amerika", "Kanada"],
     services: ["Oturum"],
     phone: "+90 216 555 02 02",
@@ -68,14 +72,26 @@ function normalizeSort(sort: string | undefined): FirmSort {
  * Public liste / detay — `corporateness_score` veritabanındaki değerdir (sunucuda kayıtta hesaplanır).
  * DB geçişi: eski sütun adlarından okuma (migration öncesi/sonrası).
  */
+function numericHype(r: Record<string, unknown>): number {
+  const h = r.hype_score;
+  if (typeof h === "bigint") return Number(h);
+  if (typeof h === "number" && Number.isFinite(h)) return h;
+  if (typeof h === "string" && /^\d+(\.\d+)?$/.test(h)) return Number(h);
+  const legacy = Number(r.raw_hype_score ?? 0);
+  return Number.isFinite(legacy) && legacy > 0 ? legacy * 100 : 0;
+}
+
 export function normalizeFirmRow(r: Record<string, unknown>): FirmRow {
   const base = { ...r } as unknown as FirmRow;
-  const raw = Number(r.raw_hype_score ?? r.hype_score ?? 0);
+  const hypeNum = numericHype(r);
   const corp = Number(r.corporateness_score ?? r.corporate_score ?? 0);
+  const prio = Number(r.sort_priority ?? 0);
   return {
     ...base,
-    raw_hype_score: Number.isFinite(raw) ? raw : 0,
+    hype_score: Number.isFinite(hypeNum) ? hypeNum : 0,
+    raw_hype_score: Math.min(100, hypeNum > 0 ? hypeNum / 100 : 0),
     corporateness_score: Number.isFinite(corp) ? corp : 0,
+    manual_priority: Number.isFinite(prio) ? prio : 0,
   };
 }
 
@@ -140,9 +156,11 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
   }
 
   out.sort((a, b) => {
+    const hype = (x: FirmRow) => x.hype_score ?? x.raw_hype_score * 100;
+    const mp = (x: FirmRow) => x.manual_priority ?? 0;
     switch (f.sort) {
       case "hype_asc":
-        return a.raw_hype_score - b.raw_hype_score;
+        return hype(a) - hype(b);
       case "corp_desc":
         return b.corporateness_score - a.corporateness_score;
       case "corp_asc":
@@ -155,7 +173,11 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
         return a.name.localeCompare(b.name, "tr");
       case "hype_desc":
       default:
-        return b.raw_hype_score - a.raw_hype_score;
+        if (b.corporateness_score !== a.corporateness_score) {
+          return b.corporateness_score - a.corporateness_score;
+        }
+        if (hype(b) !== hype(a)) return hype(b) - hype(a);
+        return mp(b) - mp(a);
     }
   });
 
@@ -192,10 +214,13 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
 
   switch (filters.sort) {
     case "hype_desc":
-      query = query.order("raw_hype_score", { ascending: false });
+      query = query
+        .order("corporateness_score", { ascending: false })
+        .order("hype_score", { ascending: false })
+        .order("sort_priority", { ascending: false });
       break;
     case "hype_asc":
-      query = query.order("raw_hype_score", { ascending: true });
+      query = query.order("hype_score", { ascending: true });
       break;
     case "corp_desc":
       query = query.order("corporateness_score", { ascending: false });
@@ -210,7 +235,10 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
       query = query.order("name", { ascending: true });
       break;
     default:
-      query = query.order("raw_hype_score", { ascending: false });
+      query = query
+        .order("corporateness_score", { ascending: false })
+        .order("hype_score", { ascending: false })
+        .order("sort_priority", { ascending: false });
   }
 
   const { data, error } = await query;

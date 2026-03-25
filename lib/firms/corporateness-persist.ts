@@ -1,6 +1,6 @@
 /**
  * Kurumsallık skoru — yalnızca sunucuda hesaplanır ve veritabanına yazılır.
- * İstemci `corporateness_score` gönderemez; önizleme UI’da yerel hesap kullanılabilir.
+ * İstemci `corporateness_score` gönderemez; güven skoru için DB’deki `hype_score` kullanılır.
  */
 import {
   calculateCorporatenessScore,
@@ -16,12 +16,14 @@ export type PersistedCorporatenessColumns = {
 };
 
 export function computePersistedCorporatenessFields(
-  v: FirmFormInput
+  v: FirmFormInput,
+  options?: { hypeForTrust?: bigint | number }
 ): PersistedCorporatenessColumns {
   const corp = calculateCorporatenessScore(mapFirmFormToCorporatenessInput(v));
+  const hype = options?.hypeForTrust ?? BigInt(0);
   return {
     corporateness_score: corp.totalScore,
     corporateness_score_breakdown: corp,
-    trust_score: computeListingTrustScore(v.raw_hype_score, corp.totalScore),
+    trust_score: computeListingTrustScore(hype, corp.totalScore),
   };
 }

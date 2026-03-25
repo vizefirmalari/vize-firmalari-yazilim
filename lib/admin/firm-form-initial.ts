@@ -27,8 +27,13 @@ export type FirmFormState = {
   page_intro: string;
   status_summary: string;
   firm_category: string;
-  /** Sistem; panelde doğrudan yazılmaz */
-  raw_hype_score: number;
+  brand_name: string;
+  card_highlight_text: string;
+  legal_company_name: string;
+  owner_name: string;
+  company_structure: string;
+  /** Birikimli platform hype — salt okunur (kayıt güncellemez) */
+  hype_score_display: string;
   phone: string;
   whatsapp: string;
   email: string;
@@ -43,11 +48,18 @@ export type FirmFormState = {
   city: string;
   district: string;
   hq_country: string;
+  postal_code: string;
   maps_url: string;
   working_hours: string;
   weekend_hours_note: string;
   contact_person_name: string;
   contact_person_role: string;
+  support_email: string;
+  second_phone: string;
+  second_whatsapp: string;
+  has_landline: boolean;
+  supported_languages: string[];
+  weekend_support: boolean;
   show_phone: boolean;
   show_whatsapp: boolean;
   show_email: boolean;
@@ -60,15 +72,22 @@ export type FirmFormState = {
   offers_multilingual_support: boolean;
   company_type: string;
   has_tax_document: boolean;
+  has_tax_certificate: boolean;
   tax_number: string;
   tax_office: string;
   permit_number: string;
+  license_number: string;
+  license_description: string;
   legal_authorization_note: string;
   has_physical_office: boolean;
   office_address_verified: boolean;
   employee_count: string;
+  consultant_count: string;
+  support_staff_count: string;
+  office_count: string;
   founded_year: string;
   cities_served_count: string;
+  has_blog: boolean;
   has_corporate_email: boolean;
   has_corporate_domain: boolean;
   /** Web sitesi kalite bandı — Kurumsallık skoru */
@@ -76,6 +95,14 @@ export type FirmFormState = {
   /** Dış sosyal profillerde toplam (Kurumsallık skoru; Hype ile ilgili değil) */
   social_follower_count_total: string;
   social_post_count_total: string;
+  schengen_expert: boolean;
+  usa_visa_expert: boolean;
+  student_visa_support: boolean;
+  work_visa_support: boolean;
+  tourist_visa_support: boolean;
+  business_visa_support: boolean;
+  family_reunion_support: boolean;
+  appeal_support: boolean;
   social_media_activity: "" | "low" | "medium" | "high";
   testimonials_level: "" | "none" | "few" | "moderate" | "strong";
   multilingual_team: boolean;
@@ -114,6 +141,8 @@ export type FirmFormState = {
   premium_badge: boolean;
   verified_badge: boolean;
   seo_title: string;
+  focus_keyword: string;
+  secondary_keywords: string;
   meta_description: string;
   canonical_url: string;
   og_title: string;
@@ -154,6 +183,18 @@ function parseFaq(raw: unknown): { question: string; answer: string }[] {
   return out;
 }
 
+function formatHypeDisplay(row: Record<string, unknown>): string {
+  const hs = row.hype_score;
+  if (typeof hs === "bigint") return hs.toString();
+  if (typeof hs === "number" && Number.isFinite(hs) && hs > 0) {
+    return String(Math.round(hs));
+  }
+  if (typeof hs === "string" && /^\d+$/.test(hs)) return hs;
+  const raw = Number(row.raw_hype_score ?? 0);
+  if (Number.isFinite(raw) && raw > 0) return String(Math.round(raw * 100));
+  return "0";
+}
+
 function parseStatusHistory(raw: unknown): FirmFormState["status_history"] {
   if (!Array.isArray(raw)) return [];
   const out: FirmFormState["status_history"] = [];
@@ -184,10 +225,12 @@ export function buildFirmFormState(
   privateRow: FirmAdminPrivateRow | null | undefined
 ): FirmFormState {
   const i = initial ?? {};
-  const hype = Number(
-    (i as { raw_hype_score?: number }).raw_hype_score ??
-      (i as { hype_score?: number }).hype_score ??
-      0
+  const rec = i as Record<string, unknown>;
+  const hypeScoreDisplay = formatHypeDisplay(rec);
+  const licenseFromDb = String(
+    (i as { license_number?: string }).license_number ??
+      (i as { permit_number?: string }).permit_number ??
+      ""
   );
   const mainFromDb = [...((i.main_services as string[]) ?? [])];
   const subFromDb = [...((i.sub_services as string[]) ?? [])];
@@ -237,7 +280,12 @@ export function buildFirmFormState(
     page_intro: String(i.page_intro ?? ""),
     status_summary: String(i.status_summary ?? ""),
     firm_category: String(i.firm_category ?? ""),
-    raw_hype_score: Number.isFinite(hype) ? hype : 0,
+    brand_name: String((i as { brand_name?: string }).brand_name ?? ""),
+    card_highlight_text: String((i as { card_highlight_text?: string }).card_highlight_text ?? ""),
+    legal_company_name: String((i as { legal_company_name?: string }).legal_company_name ?? ""),
+    owner_name: String((i as { owner_name?: string }).owner_name ?? ""),
+    company_structure: String((i as { company_structure?: string }).company_structure ?? ""),
+    hype_score_display: hypeScoreDisplay,
     phone: String(i.phone ?? ""),
     whatsapp: String(i.whatsapp ?? ""),
     email: String(i.email ?? ""),
@@ -252,11 +300,20 @@ export function buildFirmFormState(
     city: String(i.city ?? ""),
     district: String(i.district ?? ""),
     hq_country: String(i.hq_country ?? ""),
+    postal_code: String((i as { postal_code?: string }).postal_code ?? ""),
     maps_url: String(i.maps_url ?? ""),
     working_hours: String(i.working_hours ?? ""),
     weekend_hours_note: String(i.weekend_hours_note ?? ""),
     contact_person_name: String(i.contact_person_name ?? ""),
     contact_person_role: String(i.contact_person_role ?? ""),
+    support_email: String((i as { support_email?: string }).support_email ?? ""),
+    second_phone: String((i as { second_phone?: string }).second_phone ?? ""),
+    second_whatsapp: String((i as { second_whatsapp?: string }).second_whatsapp ?? ""),
+    has_landline: Boolean((i as { has_landline?: boolean }).has_landline),
+    supported_languages: Array.isArray((i as { supported_languages?: string[] }).supported_languages)
+      ? [...((i as { supported_languages?: string[] }).supported_languages as string[])]
+      : [],
+    weekend_support: Boolean((i as { weekend_support?: boolean }).weekend_support),
     show_phone: i.show_phone !== false,
     show_whatsapp: i.show_whatsapp !== false,
     show_email: i.show_email !== false,
@@ -268,21 +325,38 @@ export function buildFirmFormState(
     offers_remote_support: Boolean(i.offers_remote_support),
     offers_multilingual_support: Boolean(i.offers_multilingual_support),
     company_type: String(i.company_type ?? ""),
-    has_tax_document: Boolean(i.has_tax_document),
+    has_tax_document: Boolean(i.has_tax_document ?? (i as { has_tax_certificate?: boolean }).has_tax_certificate),
+    has_tax_certificate: Boolean(
+      (i as { has_tax_certificate?: boolean }).has_tax_certificate ?? i.has_tax_document
+    ),
     tax_number: String(i.tax_number ?? ""),
     tax_office: String(i.tax_office ?? ""),
     permit_number: String(i.permit_number ?? ""),
+    license_number: licenseFromDb,
+    license_description: String((i as { license_description?: string }).license_description ?? ""),
     legal_authorization_note: String(i.legal_authorization_note ?? ""),
     has_physical_office: i.has_physical_office !== false,
     office_address_verified: Boolean(i.office_address_verified),
     employee_count: numStr(i.employee_count),
+    consultant_count: numStr((i as { consultant_count?: unknown }).consultant_count),
+    support_staff_count: numStr((i as { support_staff_count?: unknown }).support_staff_count),
+    office_count: numStr((i as { office_count?: unknown }).office_count),
     founded_year: numStr(i.founded_year),
     cities_served_count: numStr(i.cities_served_count),
+    has_blog: Boolean((i as { has_blog?: boolean }).has_blog),
     has_corporate_email: Boolean(i.has_corporate_email),
     has_corporate_domain: Boolean(i.has_corporate_domain),
     website_quality_level: resolveWebsiteQualityLevel(i),
     social_follower_count_total: numStr(i.social_follower_count_total),
     social_post_count_total: numStr(i.social_post_count_total),
+    schengen_expert: Boolean((i as { schengen_expert?: boolean }).schengen_expert),
+    usa_visa_expert: Boolean((i as { usa_visa_expert?: boolean }).usa_visa_expert),
+    student_visa_support: Boolean((i as { student_visa_support?: boolean }).student_visa_support),
+    work_visa_support: Boolean((i as { work_visa_support?: boolean }).work_visa_support),
+    tourist_visa_support: Boolean((i as { tourist_visa_support?: boolean }).tourist_visa_support),
+    business_visa_support: Boolean((i as { business_visa_support?: boolean }).business_visa_support),
+    family_reunion_support: Boolean((i as { family_reunion_support?: boolean }).family_reunion_support),
+    appeal_support: Boolean((i as { appeal_support?: boolean }).appeal_support),
     social_media_activity: (i.social_media_activity as FirmFormState["social_media_activity"]) || "",
     testimonials_level: (i.testimonials_level as FirmFormState["testimonials_level"]) || "",
     multilingual_team: Boolean(i.multilingual_team),
@@ -321,6 +395,8 @@ export function buildFirmFormState(
     premium_badge: Boolean(i.premium_badge),
     verified_badge: Boolean(i.verified_badge),
     seo_title: String(i.seo_title ?? ""),
+    focus_keyword: String((i as { focus_keyword?: string }).focus_keyword ?? ""),
+    secondary_keywords: String((i as { secondary_keywords?: string }).secondary_keywords ?? ""),
     meta_description: String(i.meta_description ?? ""),
     canonical_url: String(i.canonical_url ?? ""),
     og_title: String(i.og_title ?? ""),
@@ -371,7 +447,11 @@ export function formStateToPayload(
     page_intro: form.page_intro || null,
     status_summary: form.status_summary || null,
     firm_category: form.firm_category || null,
-    raw_hype_score: form.raw_hype_score,
+    brand_name: form.brand_name || null,
+    card_highlight_text: form.card_highlight_text || null,
+    legal_company_name: form.legal_company_name || null,
+    owner_name: form.owner_name || null,
+    company_structure: form.company_structure || null,
     phone: form.phone || null,
     whatsapp: form.whatsapp || null,
     email: form.email || null,
@@ -386,11 +466,18 @@ export function formStateToPayload(
     city: form.city || null,
     district: form.district || null,
     hq_country: form.hq_country || null,
+    postal_code: form.postal_code || null,
     maps_url: form.maps_url || null,
     working_hours: form.working_hours || null,
     weekend_hours_note: form.weekend_hours_note || null,
     contact_person_name: form.contact_person_name || null,
     contact_person_role: form.contact_person_role || null,
+    support_email: form.support_email || null,
+    second_phone: form.second_phone || null,
+    second_whatsapp: form.second_whatsapp || null,
+    has_landline: form.has_landline,
+    supported_languages: form.supported_languages ?? [],
+    weekend_support: form.weekend_support,
     show_phone: form.show_phone,
     show_whatsapp: form.show_whatsapp,
     show_email: form.show_email,
@@ -403,14 +490,29 @@ export function formStateToPayload(
     offers_multilingual_support: form.offers_multilingual_support,
     company_type: form.company_type || null,
     has_tax_document: form.has_tax_document,
+    has_tax_certificate: form.has_tax_certificate,
     tax_number: form.tax_number || null,
     tax_office: form.tax_office || null,
-    permit_number: form.permit_number || null,
+    permit_number: form.permit_number || form.license_number || null,
+    license_number: form.license_number || form.permit_number || null,
+    license_description: form.license_description || null,
     legal_authorization_note: form.legal_authorization_note || null,
     has_physical_office: form.has_physical_office,
     office_address_verified: form.office_address_verified,
     employee_count: (() => {
       const n = Number(form.employee_count);
+      return Number.isFinite(n) ? n : null;
+    })(),
+    consultant_count: (() => {
+      const n = Number(form.consultant_count);
+      return Number.isFinite(n) ? n : null;
+    })(),
+    support_staff_count: (() => {
+      const n = Number(form.support_staff_count);
+      return Number.isFinite(n) ? n : null;
+    })(),
+    office_count: (() => {
+      const n = Number(form.office_count);
       return Number.isFinite(n) ? n : null;
     })(),
     founded_year: (() => {
@@ -421,6 +523,7 @@ export function formStateToPayload(
       const n = Number(form.cities_served_count);
       return Number.isFinite(n) ? n : null;
     })(),
+    has_blog: form.has_blog,
     has_corporate_email: form.has_corporate_email,
     has_corporate_domain: form.has_corporate_domain,
     has_professional_website: form.website_quality_level === "professional",
@@ -433,6 +536,14 @@ export function formStateToPayload(
       const n = Number(form.social_post_count_total);
       return Number.isFinite(n) ? n : 0;
     })(),
+    schengen_expert: form.schengen_expert,
+    usa_visa_expert: form.usa_visa_expert,
+    student_visa_support: form.student_visa_support,
+    work_visa_support: form.work_visa_support,
+    tourist_visa_support: form.tourist_visa_support,
+    business_visa_support: form.business_visa_support,
+    family_reunion_support: form.family_reunion_support,
+    appeal_support: form.appeal_support,
     social_media_activity: form.social_media_activity || null,
     testimonials_level: form.testimonials_level || null,
     multilingual_team: form.multilingual_team,
@@ -478,6 +589,8 @@ export function formStateToPayload(
     premium_badge: form.premium_badge,
     verified_badge: form.verified_badge,
     seo_title: form.seo_title || null,
+    focus_keyword: form.focus_keyword || null,
+    secondary_keywords: form.secondary_keywords || null,
     meta_description: form.meta_description || null,
     canonical_url: form.canonical_url || null,
     og_title: form.og_title || null,

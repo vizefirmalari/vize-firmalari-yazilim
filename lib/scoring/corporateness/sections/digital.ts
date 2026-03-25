@@ -16,31 +16,24 @@ function websiteQualityPoints(level: CorporatenessInput["website_quality_level"]
 }
 
 function followerPoints(n: number): number {
-  if (n <= 0) return 0;
-  if (n < 1000) return 1;
-  if (n < 5000) return 2;
-  if (n < 10000) return 3;
-  if (n < 25000) return 4;
-  return 5;
+  const fc = Math.max(0, Math.floor(Number(n) || 0));
+  if (fc <= 0) return 0;
+  if (fc < 500) return 2;
+  if (fc < 2000) return 3;
+  if (fc < 10000) return 4;
+  if (fc < 50000) return 5;
+  return 6;
 }
 
 function postPoints(n: number): number {
-  if (n <= 0) return 0;
-  if (n < 20) return 1;
-  if (n < 100) return 2;
-  return 3;
+  const pc = Math.max(0, Math.floor(Number(n) || 0));
+  if (pc <= 0) return 0;
+  if (pc < 10) return 2;
+  if (pc < 50) return 4;
+  return 6;
 }
 
 export function scoreDigitalSection(input: CorporatenessInput): SectionScore {
-  const ig = input.has_instagram ? 1 : 0;
-  const fb = input.has_facebook ? 1 : 0;
-  const li = input.has_linkedin ? 1 : 0;
-  const tw = input.has_twitter ? 1 : 0;
-  const socialPresence = ig + fb + li + tw;
-
-  const fc = Math.max(0, Math.floor(Number(input.social_follower_count_total) || 0));
-  const pc = Math.max(0, Math.floor(Number(input.social_post_count_total) || 0));
-
   const lines = [
     scoringLine(
       LINE_KEYS.digital.websiteQuality,
@@ -49,22 +42,16 @@ export function scoreDigitalSection(input: CorporatenessInput): SectionScore {
       8
     ),
     scoringLine(
-      LINE_KEYS.digital.socialPresence,
-      "Sosyal hesap varlığı (Instagram, Facebook, LinkedIn, X)",
-      socialPresence,
-      4
-    ),
-    scoringLine(
       LINE_KEYS.digital.followers,
-      "Toplam takipçi (sosyal)",
-      followerPoints(fc),
-      5
+      "Toplam takipçi (dış profil)",
+      followerPoints(input.social_follower_count_total),
+      6
     ),
     scoringLine(
       LINE_KEYS.digital.posts,
-      "Toplam gönderi sayısı (sosyal)",
-      postPoints(pc),
-      3
+      "Toplam gönderi (dış profil)",
+      postPoints(input.social_post_count_total),
+      6
     ),
   ];
 
