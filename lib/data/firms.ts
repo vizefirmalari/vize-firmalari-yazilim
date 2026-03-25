@@ -11,7 +11,8 @@ const MOCK_FIRMS: FirmRow[] = [
     short_description: null,
     description:
       "Avrupa ve Schengen vize süreçlerinde deneyimli ekibiyle güvenilir danışmanlık sunan örnek bir firmadır.",
-    trust_score: 85,
+    raw_hype_score: 72,
+    corporateness_score: 88,
     countries: ["Almanya", "Fransa", "İtalya"],
     services: ["Vize İşlemleri"],
     phone: "+90 212 555 01 01",
@@ -30,7 +31,8 @@ const MOCK_FIRMS: FirmRow[] = [
     short_description: null,
     description:
       "Kuzey Amerika oturum ve göç süreçlerinde uçtan uca destek sağlayan profesyonel bir danışmanlık firmasıdır.",
-    trust_score: 72,
+    raw_hype_score: 55,
+    corporateness_score: 76,
     countries: ["Amerika", "Kanada"],
     services: ["Oturum"],
     phone: "+90 216 555 02 02",
@@ -44,7 +46,34 @@ const MOCK_FIRMS: FirmRow[] = [
 ];
 
 function normalizeSort(sort: string | undefined): FirmSort {
-  return sort === "trust_asc" ? "trust_asc" : "trust_desc";
+  if (!sort) return "hype_desc";
+  const legacy: Record<string, FirmSort> = {
+    trust_desc: "hype_desc",
+    trust_asc: "hype_asc",
+  };
+  if (legacy[sort]) return legacy[sort];
+  const allowed: FirmSort[] = [
+    "hype_desc",
+    "hype_asc",
+    "corp_desc",
+    "corp_asc",
+    "newest",
+    "name_asc",
+  ];
+  if (allowed.includes(sort as FirmSort)) return sort as FirmSort;
+  return "hype_desc";
+}
+
+/** DB geçişi: eski sütun adlarından okuma (migration öncesi/sonrası) */
+export function normalizeFirmRow(r: Record<string, unknown>): FirmRow {
+  const base = { ...r } as unknown as FirmRow;
+  const raw = Number(r.raw_hype_score ?? r.hype_score ?? 0);
+  const corp = Number(r.corporateness_score ?? r.corporate_score ?? 0);
+  return {
+    ...base,
+    raw_hype_score: Number.isFinite(raw) ? raw : 0,
+    corporateness_score: Number.isFinite(corp) ? corp : 0,
+  };
 }
 
 function parseList(param: string | string[] | undefined): string[] {
@@ -107,11 +136,25 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
     );
   }
 
-  out.sort((a, b) =>
-    f.sort === "trust_asc"
-      ? a.trust_score - b.trust_score
-      : b.trust_score - a.trust_score
-  );
+  out.sort((a, b) => {
+    switch (f.sort) {
+      case "hype_asc":
+        return a.raw_hype_score - b.raw_hype_score;
+      case "corp_desc":
+        return b.corporateness_score - a.corporateness_score;
+      case "corp_asc":
+        return a.corporateness_score - b.corporateness_score;
+      case "newest":
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      case "name_asc":
+        return a.name.localeCompare(b.name, "tr");
+      case "hype_desc":
+      default:
+        return b.raw_hype_score - a.raw_hype_score;
+    }
+  });
 
   return out;
 }
@@ -144,8 +187,28 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
     query = query.overlaps("services", filters.services);
   }
 
-  const ascending = filters.sort === "trust_asc";
-  query = query.order("trust_score", { ascending });
+  switch (filters.sort) {
+    case "hype_desc":
+      query = query.order("raw_hype_score", { ascending: false });
+      break;
+    case "hype_asc":
+      query = query.order("raw_hype_score", { ascending: true });
+      break;
+    case "corp_desc":
+      query = query.order("corporateness_score", { ascending: false });
+      break;
+    case "corp_asc":
+      query = query.order("corporateness_score", { ascending: true });
+      break;
+    case "newest":
+      query = query.order("created_at", { ascending: false });
+      break;
+    case "name_asc":
+      query = query.order("name", { ascending: true });
+      break;
+    default:
+      query = query.order("raw_hype_score", { ascending: false });
+  }
 
   const { data, error } = await query;
   if (error) {
@@ -153,7 +216,9 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
     return applyFilters(MOCK_FIRMS, filters);
   }
 
-  let rows = (data ?? []) as FirmRow[];
+  let rows = (data ?? []).map((row) =>
+    normalizeFirmRow(row as Record<string, unknown>)
+  );
 
   const { data: hs } = await supabase
     .from("homepage_settings")
@@ -198,7 +263,8 @@ export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {
     return MOCK_FIRMS.find((f) => f.slug === slug) ?? null;
   }
 
-  return (data as FirmRow | null) ?? null;
+  if (!data) return null;
+  return normalizeFirmRow(data as Record<string, unknown>);
 }
 
 export async function getAllFirmSlugs(): Promise<string[]> {

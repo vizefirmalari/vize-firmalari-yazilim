@@ -34,14 +34,29 @@ const statusHistoryEntrySchema = z.object({
 
 const imageUrlArray = z.array(z.string().max(2000)).max(24).default([]);
 
-/** Liste sıralaması için sunucuda hype/kurumsallıktan türetilir */
+/** Liste / eski uyumluluk için birleşik skor (DB trust_score sütunu) */
 export function computeListingTrustScore(
-  hype: number,
-  corporate: number
+  rawHype: number,
+  corporateness: number
 ): number {
   return Math.min(
     100,
-    Math.max(0, Math.round(hype * 0.42 + corporate * 0.58))
+    Math.max(0, Math.round(rawHype * 0.42 + corporateness * 0.58))
+  );
+}
+
+/** Kurumsallık faktörlerinden 0–100 skor (admin panel önizlemesi ile aynı) */
+export function computeCorporatenessFromFactors(f: {
+  tax: number;
+  office: number;
+  digital: number;
+  refs: number;
+}): number {
+  return Math.min(
+    100,
+    Math.round(
+      f.tax * 0.2 + f.office * 0.25 + f.digital * 0.25 + f.refs * 0.3
+    )
   );
 }
 
@@ -67,8 +82,8 @@ const firmFormSchemaObject = z.object({
   status_summary: z.string().max(400).optional().nullable(),
   firm_category: z.string().max(120).optional().nullable(),
 
-  hype_score: z.coerce.number().int().min(0).max(100),
-  corporate_score: z.coerce.number().int().min(0).max(100),
+  raw_hype_score: z.coerce.number().int().min(0).max(100),
+  corporateness_score: z.coerce.number().int().min(0).max(100),
 
   phone: z.string().max(80).optional().nullable(),
   whatsapp: z.string().max(80).optional().nullable(),

@@ -156,7 +156,7 @@ export function AdminFirmsTable({ initialRows }: Props) {
               </th>
               <th className="px-3 py-3">Logo</th>
               <th className="px-3 py-3">Firma</th>
-              <th className="px-3 py-3">Güven</th>
+              <th className="px-3 py-3">Hype / Kurumsallık</th>
               <th className="px-3 py-3">Ülkeler</th>
               <th className="px-3 py-3">Hizmetler</th>
               <th className="px-3 py-3">Durum</th>
@@ -196,8 +196,12 @@ export function AdminFirmsTable({ initialRows }: Props) {
                   <p className="font-semibold text-[#0B3C5D]">{r.name}</p>
                   <p className="text-xs text-[#1A1A1A]/45">{r.slug}</p>
                 </td>
-                <td className="px-3 py-3 align-middle font-medium">
-                  {r.trust_score}
+                <td className="px-3 py-3 align-middle font-medium tabular-nums">
+                  <span className="text-[#328CC1]">{r.raw_hype_score ?? "—"}</span>
+                  <span className="text-[#1A1A1A]/35"> / </span>
+                  <span className="text-[#8B6914]">
+                    {r.corporateness_score ?? "—"}
+                  </span>
                 </td>
                 <td className="px-3 py-3 align-middle">
                   <span className="line-clamp-2 text-xs text-[#1A1A1A]/70">

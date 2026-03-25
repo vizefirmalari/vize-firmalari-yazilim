@@ -1,5 +1,6 @@
 import type { FirmAdminPrivateRow } from "@/lib/data/admin-firm-detail";
 import { MAIN_SERVICE_CATEGORIES } from "@/lib/constants/firm-services-taxonomy";
+import { computeCorporatenessFromFactors } from "@/lib/validations/firm";
 
 export type FirmFormState = {
   name: string;
@@ -21,8 +22,8 @@ export type FirmFormState = {
   page_intro: string;
   status_summary: string;
   firm_category: string;
-  hype_score: number;
-  corporate_score: number;
+  /** Sistem; panelde doğrudan yazılmaz */
+  raw_hype_score: number;
   phone: string;
   whatsapp: string;
   email: string;
@@ -188,9 +189,11 @@ export function buildFirmFormState(
   privateRow: FirmAdminPrivateRow | null | undefined
 ): FirmFormState {
   const i = initial ?? {};
-  const trust = Number(i.trust_score ?? 0);
-  const hype = Number(i.hype_score ?? trust);
-  const corp = Number(i.corporate_score ?? trust);
+  const hype = Number(
+    (i as { raw_hype_score?: number }).raw_hype_score ??
+      (i as { hype_score?: number }).hype_score ??
+      0
+  );
   const factors = parseFactors(i.corporate_score_factors);
 
   const mainFromDb = [...((i.main_services as string[]) ?? [])];
@@ -241,8 +244,7 @@ export function buildFirmFormState(
     page_intro: String(i.page_intro ?? ""),
     status_summary: String(i.status_summary ?? ""),
     firm_category: String(i.firm_category ?? ""),
-    hype_score: Number.isFinite(hype) ? hype : 0,
-    corporate_score: Number.isFinite(corp) ? corp : 0,
+    raw_hype_score: Number.isFinite(hype) ? hype : 0,
     phone: String(i.phone ?? ""),
     whatsapp: String(i.whatsapp ?? ""),
     email: String(i.email ?? ""),
@@ -364,15 +366,12 @@ export function formStateToPayload(
     digital: form.corporate_factor_digital,
     refs: form.corporate_factor_refs,
   };
-  const suggestedCorporate = Math.min(
-    100,
-    Math.round(
-      form.corporate_factor_tax * 0.2 +
-        form.corporate_factor_office * 0.25 +
-        form.corporate_factor_digital * 0.25 +
-        form.corporate_factor_refs * 0.3
-    )
-  );
+  const suggestedCorporate = computeCorporatenessFromFactors({
+    tax: form.corporate_factor_tax,
+    office: form.corporate_factor_office,
+    digital: form.corporate_factor_digital,
+    refs: form.corporate_factor_refs,
+  });
   return {
     name: form.name,
     slug: form.slug,
@@ -393,8 +392,8 @@ export function formStateToPayload(
     page_intro: form.page_intro || null,
     status_summary: form.status_summary || null,
     firm_category: form.firm_category || null,
-    hype_score: form.hype_score,
-    corporate_score: form.corporate_score,
+    raw_hype_score: form.raw_hype_score,
+    corporateness_score: suggestedCorporate,
     phone: form.phone || null,
     whatsapp: form.whatsapp || null,
     email: form.email || null,

@@ -11,7 +11,10 @@ import {
 } from "@/lib/admin/firm-form-initial";
 import type { FirmAdminPrivateRow } from "@/lib/data/admin-firm-detail";
 import { slugify } from "@/lib/slug";
-import { firmFormSchema } from "@/lib/validations/firm";
+import {
+  firmFormSchema,
+  computeCorporatenessFromFactors,
+} from "@/lib/validations/firm";
 import {
   MAIN_SERVICE_CATEGORIES,
   SUB_SERVICE_CATALOG,
@@ -257,6 +260,22 @@ export function FirmForm({
     });
   }, [subServiceQ, form.sub_services]);
 
+  const corporatenessPreview = useMemo(
+    () =>
+      computeCorporatenessFromFactors({
+        tax: form.corporate_factor_tax,
+        office: form.corporate_factor_office,
+        digital: form.corporate_factor_digital,
+        refs: form.corporate_factor_refs,
+      }),
+    [
+      form.corporate_factor_tax,
+      form.corporate_factor_office,
+      form.corporate_factor_digital,
+      form.corporate_factor_refs,
+    ]
+  );
+
   function renderIdentity() {
     return (
       <div className={`${panel} space-y-8`}>
@@ -428,31 +447,71 @@ export function FirmForm({
 
         <div className={subsection}>
           <p className={groupTitle}>Skorlar</p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F8FAFC] p-4">
-              <p className="text-xs font-medium text-[#1A1A1A]/50">Hype puanı</p>
+              <p className="text-xs font-semibold text-[#0B3C5D]">Hype Puanı</p>
               <p className="mt-2 text-3xl font-bold tabular-nums text-[#0B3C5D]">
-                {form.hype_score}
+                {form.raw_hype_score}
               </p>
-              <p className="mt-2 text-xs leading-relaxed text-[#1A1A1A]/50">
-                Aktiflik ve platform sinyalleriyle güncellenir; bu panelden değiştirilmez.
+              <FieldHelp>
+                Firmanın platform üzerindeki aktiflik düzeyini gösterir.
+              </FieldHelp>
+              <p className="mt-2 text-xs leading-relaxed text-[#1A1A1A]/45">
+                Sistem tarafından güncellenir; yeni firmada varsayılan 0. Bu alanı doğrudan
+                düzenleyemezsiniz.
               </p>
             </div>
             <div className="rounded-xl border border-[#D9A441]/25 bg-[#D9A441]/6 p-4">
-              <p className="text-xs font-medium text-[#1A1A1A]/50">Kurumsallık skoru</p>
-              <p className="mt-2 text-3xl font-bold tabular-nums text-[#8B6914]">
-                {form.corporate_score}
+              <p className="text-xs font-semibold text-[#1A1A1A]/70">
+                Kurumsallık Skoru (önizleme)
               </p>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={form.corporate_score}
-                onChange={(e) => patch("corporate_score", Number(e.target.value))}
-                className="mt-4 w-full accent-[#D9A441]"
-                aria-label="Kurumsallık skoru"
-              />
+              <p className="mt-2 text-3xl font-bold tabular-nums text-[#8B6914]">
+                {corporatenessPreview}
+                <span className="text-lg font-semibold text-[#1A1A1A]/50">/100</span>
+              </p>
+              <FieldHelp>
+                Firmanın kurumsal bilgi ve belge bütünlüğüne göre oluşan değerlendirme
+                puanıdır. Aşağıdaki faktör ağırlıklarıyla hesaplanır.
+              </FieldHelp>
             </div>
+          </div>
+          <div className="mt-6 space-y-4">
+            <p className={groupTitle}>Kurumsallık değerlendirme faktörleri</p>
+            <p className="text-xs text-[#1A1A1A]/50">
+              Her ekseni 0–100 arası işaretleyin; kayıtta Kurumsallık Skoru bu ağırlıklarla
+              hesaplanır.
+            </p>
+            {(
+              [
+                ["corporate_factor_tax", "Vergi ve belge", 0.2],
+                ["corporate_factor_office", "Ofis ve fiziksel varlık", 0.25],
+                ["corporate_factor_digital", "Dijital varlık ve iletişim", 0.25],
+                ["corporate_factor_refs", "Referans ve süreç", 0.3],
+              ] as const
+            ).map(([key, lab, w]) => (
+              <label key={key} className={labelClass}>
+                {lab}{" "}
+                <span className="font-normal text-[#1A1A1A]/40">
+                  (ağırlık %{Math.round(w * 100)})
+                </span>
+                <div className="mt-1 flex items-center gap-3">
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={form[key]}
+                    onChange={(e) =>
+                      patch(key, Number(e.target.value))
+                    }
+                    className="min-w-0 flex-1 accent-[#D9A441]"
+                    aria-label={lab}
+                  />
+                  <span className="w-8 shrink-0 text-right text-sm font-semibold tabular-nums text-[#0B3C5D]">
+                    {form[key]}
+                  </span>
+                </div>
+              </label>
+            ))}
           </div>
         </div>
 

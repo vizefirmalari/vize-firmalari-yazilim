@@ -6,7 +6,8 @@ export type AdminFirmListRow = {
   name: string;
   slug: string;
   logo_url: string | null;
-  trust_score: number;
+  raw_hype_score: number;
+  corporateness_score: number;
   countries: string[];
   services: string[];
   status: string;
@@ -43,8 +44,14 @@ export async function getAdminFirmsList(params: {
 
   const sort = params.sort ?? "created_desc";
   if (sort === "name_asc") query = query.order("name", { ascending: true });
-  else if (sort === "trust_desc") query = query.order("trust_score", { ascending: false });
-  else if (sort === "trust_asc") query = query.order("trust_score", { ascending: true });
+  else if (sort === "hype_desc")
+    query = query.order("raw_hype_score", { ascending: false });
+  else if (sort === "hype_asc")
+    query = query.order("raw_hype_score", { ascending: true });
+  else if (sort === "corp_desc")
+    query = query.order("corporateness_score", { ascending: false });
+  else if (sort === "corp_asc")
+    query = query.order("corporateness_score", { ascending: true });
   else if (sort === "created_asc") query = query.order("created_at", { ascending: true });
   else query = query.order("created_at", { ascending: false });
 
@@ -54,5 +61,14 @@ export async function getAdminFirmsList(params: {
     return [];
   }
 
-  return (data ?? []) as AdminFirmListRow[];
+  return (data ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      ...(row as unknown as AdminFirmListRow),
+      raw_hype_score: Number(r.raw_hype_score ?? r.hype_score ?? 0),
+      corporateness_score: Number(
+        r.corporateness_score ?? r.corporate_score ?? 0
+      ),
+    };
+  });
 }

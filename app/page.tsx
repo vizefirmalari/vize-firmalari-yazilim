@@ -20,7 +20,7 @@ const siteUrl = getSiteUrl();
 export const metadata: Metadata = {
   title: "Vize danışmanlık firmalarını karşılaştırın",
   description:
-    "Güvenilir vize danışmanlık firmalarını inceleyin, güven endeksine göre karşılaştırın ve başvurunuzu güvenle başlatın.",
+    "Vize danışmanlık firmalarını Hype Puanı ve Kurumsallık Skoru ile karşılaştırın; iletişim ve hizmet bilgileri tek yerde.",
   alternates: { canonical: siteUrl },
   openGraph: {
     title: "VizeFirmalari — Vize danışmanlık firmalarını karşılaştırın",
@@ -49,10 +49,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const filters = parseFirmFilters(sp);
 
   const listingFirms = await getFirms({
-    q: "",
-    countries: [],
-    services: [],
-    sort: "trust_desc",
+    q: filters.q,
+    countries: filters.countries,
+    services: filters.services,
+    sort: filters.sort,
   });
 
   const cms = await getHomepageSettings();
@@ -89,7 +89,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   if (filters.services.length) {
     hiddenParams.services = filters.services.join(",");
   }
-  if (filters.sort !== "trust_desc") {
+  if (filters.sort !== "hype_desc") {
     hiddenParams.sort = filters.sort;
   }
 

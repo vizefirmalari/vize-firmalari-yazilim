@@ -30,13 +30,18 @@ export default async function AdminDashboardPage() {
         <StatCard label="Pasif" value={stats.inactiveFirms} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Ortalama güven endeksi"
-          value={stats.avgTrust ?? "—"}
+          label="Ortalama Hype Puanı"
+          value={stats.avgHype ?? "—"}
           hint="Tüm kayıtlar üzerinden"
         />
-        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] lg:col-span-2">
+        <StatCard
+          label="Ortalama Kurumsallık Skoru"
+          value={stats.avgCorporateness ?? "—"}
+          hint="Tüm kayıtlar üzerinden"
+        />
+        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] sm:col-span-2 lg:col-span-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/50">
             En çok hizmet verilen ülkeler
           </p>

@@ -93,8 +93,10 @@ export default async function AdminFirmsPage({ searchParams }: PageProps) {
           >
             <option value="created_desc">Yeni → eski</option>
             <option value="created_asc">Eski → yeni</option>
-            <option value="trust_desc">Güven yüksek</option>
-            <option value="trust_asc">Güven düşük</option>
+            <option value="hype_desc">Hype Puanı (yüksek)</option>
+            <option value="hype_asc">Hype Puanı (düşük)</option>
+            <option value="corp_desc">Kurumsallık (yüksek)</option>
+            <option value="corp_asc">Kurumsallık (düşük)</option>
             <option value="name_asc">A → Z</option>
           </select>
         </label>

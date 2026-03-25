@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s | VizeFirmalari",
   },
   description:
-    "Vize danışmanlık firmalarını karşılaştırın; güven endeksi, hizmetler ve iletişim bilgileri tek yerde.",
+    "Vize danışmanlık firmalarını karşılaştırın; Hype Puanı, Kurumsallık Skoru, hizmetler ve iletişim tek yerde.",
   applicationName: "VizeFirmalari",
   formatDetection: { telephone: true, email: true, address: true },
 };

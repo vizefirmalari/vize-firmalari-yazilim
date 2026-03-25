@@ -20,11 +20,10 @@ export type FirmRow = {
   /** Kart ve liste önizlemesi için kısa metin */
   short_description?: string | null;
   description: string | null;
-  trust_score: number;
-  /** Aktiflik / görünürlük skoru (panel) */
-  hype_score?: number | null;
-  /** Kurumsallık değerlendirmesi (panel) */
-  corporate_score?: number | null;
+  /** Platform aktivitesi — Hype Puanı (0–100) */
+  raw_hype_score: number;
+  /** Kurumsallık skoru — yönetilen faktörlerden (0–100) */
+  corporateness_score: number;
   short_badge?: string | null;
   countries: string[];
   /** Öne çıkan ülke isimleri (varsa) */
@@ -48,7 +47,13 @@ export type FirmRow = {
   social_buttons_enabled?: boolean | null;
 };
 
-export type FirmSort = "trust_desc" | "trust_asc";
+export type FirmSort =
+  | "hype_desc"
+  | "hype_asc"
+  | "corp_desc"
+  | "corp_asc"
+  | "newest"
+  | "name_asc";
 
 export type FirmFilters = {
   q: string;

@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -10,13 +8,14 @@ import {
 } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { isSupabaseConfigured } from "@/lib/env";
-import type { FirmRow } from "@/lib/types/firm";
+import type { FirmRow, FirmSort } from "@/lib/types/firm";
+import { FirmCard } from "@/components/home/firm-card";
 
 type Props = {
   initialFirms: FirmRow[];
   initialCountry?: string;
   initialServices?: string[];
-  initialSort?: "trust_desc" | "trust_asc";
+  initialSort?: FirmSort;
   query?: string;
   countryList?: string[];
   serviceOptions?: string[];
@@ -24,203 +23,11 @@ type Props = {
   featuredSubtitle?: string;
 };
 
-function scoreColor(score: number) {
-  if (score >= 80) return "bg-emerald-500";
-  if (score >= 60) return "bg-amber-500";
-  return "bg-rose-500";
-}
-
-function ContactModal({
-  firm,
-  onClose,
-}: {
-  firm: FirmRow;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <button
-        type="button"
-        className="absolute inset-0 cursor-default"
-        aria-label="Kapat"
-        onClick={onClose}
-      />
-      <div className="premium-card relative z-10 w-full max-w-md p-6">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-lg font-semibold text-primary">
-            {firm.name} — İletişim
-          </h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg px-2 py-1 text-sm hover:bg-background"
-          >
-            Kapat
-          </button>
-        </div>
-        <div className="mt-5 space-y-3 text-sm text-foreground">
-          <p>
-            <span className="font-medium">Telefon:</span> {firm.phone ?? "—"}
-          </p>
-          <p>
-            <span className="font-medium">WhatsApp:</span>{" "}
-            {firm.whatsapp ?? "—"}
-          </p>
-          <p>
-            <span className="font-medium">E-posta:</span> {firm.email ?? "—"}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FirmCard({ firm }: { firm: FirmRow }) {
-  const [showContact, setShowContact] = useState(false);
-  const visibleCountries = firm.countries.slice(0, 3);
-  const remainingCountryCount = Math.max(
-    0,
-    firm.countries.length - visibleCountries.length
-  );
-  const preview =
-    firm.short_description?.trim() ||
-    firm.description?.trim() ||
-    "Detay için firma sayfasına gidin.";
-
-  return (
-    <>
-      <article className="premium-card p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-background text-sm font-bold text-primary">
-              {firm.logo_url ? (
-                <Image
-                  src={firm.logo_url}
-                  alt={`${firm.name} logosu`}
-                  fill
-                  className="object-contain p-1"
-                  sizes="48px"
-                />
-              ) : (
-                <span aria-hidden>
-                  {firm.name.slice(0, 2).toUpperCase()}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0">
-              <h3 className="truncate text-lg font-semibold text-primary">
-                {firm.name}
-              </h3>
-              <p className="truncate text-xs text-foreground/70">
-                {firm.services.join(", ")}
-              </p>
-            </div>
-          </div>
-          <span className="shrink-0 rounded-lg bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-            Güven {firm.trust_score}
-          </span>
-        </div>
-
-        <div className="mt-4">
-          <div className="h-2 w-full overflow-hidden rounded-full bg-background">
-            <div
-              className={`h-full ${scoreColor(firm.trust_score)}`}
-              style={{
-                width: `${Math.min(100, Math.max(0, firm.trust_score))}%`,
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-          {visibleCountries.map((country) => (
-            <span
-              key={country}
-              className="rounded-full border border-border px-2 py-1"
-            >
-              {country}
-            </span>
-          ))}
-          {remainingCountryCount > 0 ? (
-            <span className="rounded-full border border-border px-2 py-1">
-              +{remainingCountryCount}
-            </span>
-          ) : null}
-        </div>
-
-        <div className="mt-5 grid gap-2 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => setShowContact(true)}
-            className="rounded-xl border border-border px-3 py-2 text-sm font-medium hover:bg-background"
-          >
-            İletişim
-          </button>
-          <Link
-            href={`/firma/${firm.slug}#basvuru`}
-            className="rounded-xl bg-accent px-3 py-2 text-center text-sm font-semibold text-primary shadow-sm transition hover:brightness-95"
-          >
-            Hızlı Başvur
-          </Link>
-          <details className="group rounded-xl border border-border px-3 py-2 text-sm open:bg-background">
-            <summary className="cursor-pointer list-none font-medium marker:content-none [&::-webkit-details-marker]:hidden">
-              Hakkında
-            </summary>
-            <p className="mt-2 text-xs leading-relaxed text-foreground/80">
-              {preview}
-            </p>
-          </details>
-          <Link
-            href={`/firma/${firm.slug}`}
-            className="rounded-xl border border-border px-3 py-2 text-center text-sm font-medium hover:bg-background"
-          >
-            Firma Sayfası
-          </Link>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-3 text-xs">
-          {firm.instagram ? (
-            <a
-              href={firm.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-secondary hover:underline"
-            >
-              Instagram
-            </a>
-          ) : null}
-          {firm.website ? (
-            <a
-              href={firm.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-secondary hover:underline"
-            >
-              Website
-            </a>
-          ) : null}
-        </div>
-      </article>
-      {showContact ? (
-        <ContactModal firm={firm} onClose={() => setShowContact(false)} />
-      ) : null}
-    </>
-  );
-}
-
 export function FirmsListing({
   initialFirms,
   initialCountry,
   initialServices = [],
-  initialSort = "trust_desc",
+  initialSort = "hype_desc",
   query = "",
   countryList,
   serviceOptions,
@@ -230,7 +37,7 @@ export function FirmsListing({
   const router = useRouter();
   const [country, setCountry] = useState(initialCountry ?? "");
   const [services, setServices] = useState<string[]>(initialServices ?? []);
-  const [sort, setSort] = useState<"trust_desc" | "trust_asc">(initialSort);
+  const [sort, setSort] = useState<FirmSort>(initialSort);
   const [showAllCountries, setShowAllCountries] = useState(false);
 
   useEffect(() => {
@@ -292,11 +99,26 @@ export function FirmsListing({
           firm.countries.some((item) => item.toLowerCase().includes(n))
         );
       })
-      .sort((a, b) =>
-        sort === "trust_desc"
-          ? b.trust_score - a.trust_score
-          : a.trust_score - b.trust_score
-      );
+      .sort((a, b) => {
+        switch (sort) {
+          case "hype_asc":
+            return a.raw_hype_score - b.raw_hype_score;
+          case "corp_desc":
+            return b.corporateness_score - a.corporateness_score;
+          case "corp_asc":
+            return a.corporateness_score - b.corporateness_score;
+          case "newest":
+            return (
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
+            );
+          case "name_asc":
+            return a.name.localeCompare(b.name, "tr");
+          case "hype_desc":
+          default:
+            return b.raw_hype_score - a.raw_hype_score;
+        }
+      });
   }, [country, initialFirms, query, services, sort]);
 
   const toggleService = (service: string, checked: boolean) => {
@@ -377,16 +199,20 @@ export function FirmsListing({
             <select
               value={sort}
               onChange={(event) =>
-                setSort(event.target.value as "trust_desc" | "trust_asc")
+                setSort(event.target.value as FirmSort)
               }
               className="mt-2 h-10 w-full rounded-xl border border-border bg-background px-3 text-sm"
             >
-              <option value="trust_desc">
-                Güven Endeksi (yüksek → düşük)
+              <option value="hype_desc">Hype Puanı (yüksek → düşük)</option>
+              <option value="hype_asc">Hype Puanı (düşük → yüksek)</option>
+              <option value="corp_desc">
+                Kurumsallık Skoru (yüksek → düşük)
               </option>
-              <option value="trust_asc">
-                Güven Endeksi (düşük → yüksek)
+              <option value="corp_asc">
+                Kurumsallık Skoru (düşük → yüksek)
               </option>
+              <option value="newest">En yeni</option>
+              <option value="name_asc">A → Z</option>
             </select>
           </div>
         </aside>

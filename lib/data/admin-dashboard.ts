@@ -6,7 +6,8 @@ export type DashboardStats = {
   publishedFirms: number;
   draftFirms: number;
   inactiveFirms: number;
-  avgTrust: number | null;
+  avgHype: number | null;
+  avgCorporateness: number | null;
   topCountries: { name: string; count: number }[];
   recentCreated: {
     id: string;
@@ -39,7 +40,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     publishedFirms: 0,
     draftFirms: 0,
     inactiveFirms: 0,
-    avgTrust: null,
+    avgHype: null,
+    avgCorporateness: null,
     topCountries: [],
     recentCreated: [],
     recentUpdated: [],
@@ -71,15 +73,32 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   const { data: avgRow } = await supabase
     .from("firms")
-    .select("trust_score")
+    .select("raw_hype_score, corporateness_score")
     .limit(5000);
 
-  const scores = (avgRow ?? []).map((r) => r.trust_score as number);
-  const avgTrust =
-    scores.length > 0
-      ? Math.round(
-          scores.reduce((a, b) => a + b, 0) / scores.length
-        )
+  const hypeVals = (avgRow ?? []).map(
+    (r) =>
+      Number(
+        (r as { raw_hype_score?: number }).raw_hype_score ??
+          (r as { hype_score?: number }).hype_score ??
+          0
+      )
+  );
+  const corpVals = (avgRow ?? []).map(
+    (r) =>
+      Number(
+        (r as { corporateness_score?: number }).corporateness_score ??
+          (r as { corporate_score?: number }).corporate_score ??
+          0
+      )
+  );
+  const avgHype =
+    hypeVals.length > 0
+      ? Math.round(hypeVals.reduce((a, b) => a + b, 0) / hypeVals.length)
+      : null;
+  const avgCorp =
+    corpVals.length > 0
+      ? Math.round(corpVals.reduce((a, b) => a + b, 0) / corpVals.length)
       : null;
 
   const { data: fc } = await supabase.from("firm_countries").select(`
@@ -115,7 +134,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     publishedFirms: publishedFirms ?? 0,
     draftFirms: draftFirms ?? 0,
     inactiveFirms: inactiveFirms ?? 0,
-    avgTrust,
+    avgHype,
+    avgCorporateness: avgCorp,
     topCountries,
     recentCreated: (recentCreated ?? []) as DashboardStats["recentCreated"],
     recentUpdated: (recentUpdated ?? []) as DashboardStats["recentUpdated"],

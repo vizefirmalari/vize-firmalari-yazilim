@@ -48,7 +48,7 @@ export function FilterSidebar({
     () => parseCsv(searchParams.get("services")),
     [searchParams]
   );
-  const sort = (searchParams.get("sort") as FirmSort | null) ?? "trust_desc";
+  const sort = (searchParams.get("sort") as FirmSort | null) ?? "hype_desc";
 
   const pushParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -86,7 +86,7 @@ export function FilterSidebar({
   };
 
   const setSort = (next: FirmSort) => {
-    pushParams({ sort: next === "trust_desc" ? null : next, q: q || null });
+    pushParams({ sort: next === "hype_desc" ? null : next, q: q || null });
   };
 
   const topList =
@@ -167,21 +167,61 @@ export function FilterSidebar({
               <input
                 type="radio"
                 name="sort"
-                checked={sort === "trust_desc"}
-                onChange={() => setSort("trust_desc")}
+                checked={sort === "hype_desc"}
+                onChange={() => setSort("hype_desc")}
                 className="h-4 w-4 border-[#0B3C5D]/25 text-[#328CC1] focus:ring-[#328CC1]"
               />
-              Güven Endeksi (yüksek → düşük)
+              Hype Puanı (yüksek → düşük)
             </label>
             <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F7F9FB]">
               <input
                 type="radio"
                 name="sort"
-                checked={sort === "trust_asc"}
-                onChange={() => setSort("trust_asc")}
+                checked={sort === "hype_asc"}
+                onChange={() => setSort("hype_asc")}
                 className="h-4 w-4 border-[#0B3C5D]/25 text-[#328CC1] focus:ring-[#328CC1]"
               />
-              Güven Endeksi (düşük → yüksek)
+              Hype Puanı (düşük → yüksek)
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F7F9FB]">
+              <input
+                type="radio"
+                name="sort"
+                checked={sort === "corp_desc"}
+                onChange={() => setSort("corp_desc")}
+                className="h-4 w-4 border-[#0B3C5D]/25 text-[#328CC1] focus:ring-[#328CC1]"
+              />
+              Kurumsallık Skoru (yüksek → düşük)
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F7F9FB]">
+              <input
+                type="radio"
+                name="sort"
+                checked={sort === "corp_asc"}
+                onChange={() => setSort("corp_asc")}
+                className="h-4 w-4 border-[#0B3C5D]/25 text-[#328CC1] focus:ring-[#328CC1]"
+              />
+              Kurumsallık Skoru (düşük → yüksek)
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F7F9FB]">
+              <input
+                type="radio"
+                name="sort"
+                checked={sort === "newest"}
+                onChange={() => setSort("newest")}
+                className="h-4 w-4 border-[#0B3C5D]/25 text-[#328CC1] focus:ring-[#328CC1]"
+              />
+              En yeni
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-sm text-[#1A1A1A] hover:bg-[#F7F9FB]">
+              <input
+                type="radio"
+                name="sort"
+                checked={sort === "name_asc"}
+                onChange={() => setSort("name_asc")}
+                className="h-4 w-4 border-[#0B3C5D]/25 text-[#328CC1] focus:ring-[#328CC1]"
+              />
+              A → Z
             </label>
           </fieldset>
         </div>

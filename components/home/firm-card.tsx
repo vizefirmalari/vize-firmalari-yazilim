@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useState } from "react";
 import type { FirmRow } from "@/lib/types/firm";
 import { ContactModal } from "@/components/home/contact-modal";
+import { ScoreInfoButton } from "@/components/home/score-info-button";
+
+const HYPE_INFO =
+  "Firmanın platform üzerindeki aktiflik düzeyini gösterir. Paylaşımlar, kampanyalar ve güncellemeler arttıkça yükselir.";
+const CORP_INFO =
+  "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
 
 type FirmCardProps = {
   firm: FirmRow;
@@ -12,8 +18,8 @@ type FirmCardProps = {
 
 export function FirmCard({ firm }: FirmCardProps) {
   const [contactOpen, setContactOpen] = useState(false);
-  const hype = firm.hype_score ?? firm.trust_score;
-  const corporate = firm.corporate_score ?? firm.trust_score;
+  const hype = firm.raw_hype_score;
+  const corporate = firm.corporateness_score;
   const countryPool =
     firm.featured_countries && firm.featured_countries.length > 0
       ? firm.featured_countries
@@ -59,8 +65,11 @@ export function FirmCard({ firm }: FirmCardProps) {
       <div className="mt-4 space-y-3">
         <div>
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-[#1A1A1A]/60">
-            <span>Hype puanı</span>
-            <span className="rounded-full bg-[#328CC1]/10 px-2 py-0.5 text-[#0B3C5D]">
+            <span className="inline-flex items-center">
+              Hype Puanı
+              <ScoreInfoButton label="Hype Puanı hakkında" text={HYPE_INFO} />
+            </span>
+            <span className="rounded-full bg-[#328CC1]/10 px-2 py-0.5 tabular-nums text-[#0B3C5D]">
               {hype}/100
             </span>
           </div>
@@ -80,8 +89,14 @@ export function FirmCard({ firm }: FirmCardProps) {
         </div>
         <div>
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-[#1A1A1A]/60">
-            <span>Kurumsallık</span>
-            <span className="rounded-full bg-[#D9A441]/15 px-2 py-0.5 text-[#1A1A1A]">
+            <span className="inline-flex items-center">
+              Kurumsallık Skoru
+              <ScoreInfoButton
+                label="Kurumsallık Skoru hakkında"
+                text={CORP_INFO}
+              />
+            </span>
+            <span className="rounded-full bg-[#D9A441]/15 px-2 py-0.5 tabular-nums text-[#1A1A1A]">
               {corporate}/100
             </span>
           </div>
@@ -91,7 +106,7 @@ export function FirmCard({ firm }: FirmCardProps) {
             aria-valuenow={corporate}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label={`Kurumsallık skoru ${corporate}`}
+            aria-label={`Kurumsallık Skoru ${corporate}`}
           >
             <div
               className="h-full rounded-full bg-[#D9A441]"

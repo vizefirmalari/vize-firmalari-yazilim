@@ -21,7 +21,10 @@ function emptyToNull(s: string | null | undefined): string | null {
 }
 
 function firmRowPayload(v: FirmFormInput) {
-  const trust_score = computeListingTrustScore(v.hype_score, v.corporate_score);
+  const trust_score = computeListingTrustScore(
+    v.raw_hype_score,
+    v.corporateness_score
+  );
   return {
     name: v.name,
     slug: v.slug,
@@ -49,8 +52,8 @@ function firmRowPayload(v: FirmFormInput) {
     page_intro: v.page_intro ?? null,
     status_summary: v.status_summary ?? null,
     firm_category: v.firm_category ?? null,
-    hype_score: v.hype_score,
-    corporate_score: v.corporate_score,
+    raw_hype_score: v.raw_hype_score,
+    corporateness_score: v.corporateness_score,
     trust_score,
     phone: v.phone || null,
     whatsapp: v.whatsapp || null,

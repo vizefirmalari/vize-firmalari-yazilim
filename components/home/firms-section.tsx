@@ -17,7 +17,7 @@ export function FirmsSection({
     sectionTitle?.trim() || "Öne Çıkan Vize Firmaları";
   const subtitle =
     sectionSubtitle?.trim() ||
-    "Güven endeksine göre sıralanmış, doğrulanmış danışmanlık firmaları";
+    "Hype Puanı ve Kurumsallık Skoru ile öne çıkan danışmanlık firmaları";
 
   return (
     <section id="firmalar" className="scroll-mt-28">
