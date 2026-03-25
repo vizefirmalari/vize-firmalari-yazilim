@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
 
 import { HeaderSearchForm } from "@/components/layout/header-search-form";
@@ -91,6 +92,8 @@ async function SiteHeaderAsync({
   defaultQuery = "",
   hiddenParams = {},
 }: SiteHeaderProps) {
+  noStore();
+
   const searchValue = query ?? defaultQuery;
 
   const supabase = await createSupabaseServerClient();
