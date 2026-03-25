@@ -7,7 +7,14 @@ export type FirmRow = {
   short_description?: string | null;
   description: string | null;
   trust_score: number;
+  /** Aktiflik / görünürlük skoru (panel) */
+  hype_score?: number | null;
+  /** Kurumsallık değerlendirmesi (panel) */
+  corporate_score?: number | null;
+  short_badge?: string | null;
   countries: string[];
+  /** Öne çıkan ülke isimleri (varsa) */
+  featured_countries?: string[] | null;
   services: string[];
   phone: string | null;
   whatsapp: string | null;
@@ -19,6 +26,12 @@ export type FirmRow = {
   linkedin?: string | null;
   status?: string;
   created_at: string;
+  show_phone?: boolean | null;
+  show_whatsapp?: boolean | null;
+  show_email?: boolean | null;
+  contact_popup_enabled?: boolean | null;
+  quick_apply_enabled?: boolean | null;
+  social_buttons_enabled?: boolean | null;
 };
 
 export type FirmSort = "trust_desc" | "trust_asc";

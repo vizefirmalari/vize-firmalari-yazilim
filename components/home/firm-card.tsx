@@ -12,8 +12,17 @@ type FirmCardProps = {
 
 export function FirmCard({ firm }: FirmCardProps) {
   const [contactOpen, setContactOpen] = useState(false);
-  const shown = firm.countries.slice(0, 3);
-  const rest = Math.max(0, firm.countries.length - shown.length);
+  const hype = firm.hype_score ?? firm.trust_score;
+  const corporate = firm.corporate_score ?? firm.trust_score;
+  const countryPool =
+    firm.featured_countries && firm.featured_countries.length > 0
+      ? firm.featured_countries
+      : firm.countries;
+  const shown = countryPool.slice(0, 3);
+  const rest = Math.max(0, countryPool.length - shown.length);
+  const contactOk = firm.contact_popup_enabled !== false;
+  const quickApplyOk = firm.quick_apply_enabled !== false;
+  const socialOk = firm.social_buttons_enabled !== false;
 
   return (
     <article className="flex h-full flex-col rounded-xl border border-[#0B3C5D]/10 bg-white p-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)]">
@@ -37,27 +46,55 @@ export function FirmCard({ firm }: FirmCardProps) {
         <h3 className="mt-4 text-lg font-semibold text-[#0B3C5D]">
           {firm.name}
         </h3>
+        {firm.short_badge ? (
+          <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-[#D9A441]">
+            {firm.short_badge}
+          </p>
+        ) : null}
       </div>
 
-      <div className="mt-4">
-        <div className="flex items-center justify-between gap-2 text-xs font-medium text-[#1A1A1A]/60">
-          <span>Güven Endeksi</span>
-          <span className="rounded-full bg-[#328CC1]/10 px-2 py-0.5 text-[#0B3C5D]">
-            {firm.trust_score}/100
-          </span>
-        </div>
-        <div
-          className="mt-2 h-2 overflow-hidden rounded-full bg-[#0B3C5D]/10"
-          role="progressbar"
-          aria-valuenow={firm.trust_score}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label={`Güven endeksi ${firm.trust_score}`}
-        >
+      <div className="mt-4 space-y-3">
+        <div>
+          <div className="flex items-center justify-between gap-2 text-xs font-medium text-[#1A1A1A]/60">
+            <span>Hype puanı</span>
+            <span className="rounded-full bg-[#328CC1]/10 px-2 py-0.5 text-[#0B3C5D]">
+              {hype}/100
+            </span>
+          </div>
           <div
-            className="h-full rounded-full bg-[#328CC1]"
-            style={{ width: `${firm.trust_score}%` }}
-          />
+            className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#0B3C5D]/10"
+            role="progressbar"
+            aria-valuenow={hype}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Hype puanı ${hype}`}
+          >
+            <div
+              className="h-full rounded-full bg-[#328CC1]"
+              style={{ width: `${hype}%` }}
+            />
+          </div>
+        </div>
+        <div>
+          <div className="flex items-center justify-between gap-2 text-xs font-medium text-[#1A1A1A]/60">
+            <span>Kurumsallık</span>
+            <span className="rounded-full bg-[#D9A441]/15 px-2 py-0.5 text-[#1A1A1A]">
+              {corporate}/100
+            </span>
+          </div>
+          <div
+            className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#0B3C5D]/10"
+            role="progressbar"
+            aria-valuenow={corporate}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Kurumsallık skoru ${corporate}`}
+          >
+            <div
+              className="h-full rounded-full bg-[#D9A441]"
+              style={{ width: `${corporate}%` }}
+            />
+          </div>
         </div>
       </div>
 
@@ -84,19 +121,31 @@ export function FirmCard({ firm }: FirmCardProps) {
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => setContactOpen(true)}
-          className="rounded-xl border border-[#0B3C5D]/15 bg-white py-2.5 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
-        >
-          İletişim
-        </button>
-        <Link
-          href={`/firma/${firm.slug}#basvuru`}
-          className="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
-        >
-          Hızlı Başvur
-        </Link>
+        {contactOk ? (
+          <button
+            type="button"
+            onClick={() => setContactOpen(true)}
+            className="rounded-xl border border-[#0B3C5D]/15 bg-white py-2.5 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
+          >
+            İletişim
+          </button>
+        ) : (
+          <span className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/80 py-2.5 text-center text-xs text-[#1A1A1A]/45">
+            İletişim kapalı
+          </span>
+        )}
+        {quickApplyOk ? (
+          <Link
+            href={`/firma/${firm.slug}#basvuru`}
+            className="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
+          >
+            Hızlı Başvur
+          </Link>
+        ) : (
+          <span className="flex items-center justify-center rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/80 py-2.5 text-center text-xs text-[#1A1A1A]/45">
+            Başvuru kapalı
+          </span>
+        )}
       </div>
 
       <details className="group mt-3 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/60 px-3 py-2 text-left">
@@ -120,35 +169,37 @@ export function FirmCard({ firm }: FirmCardProps) {
         >
           Firma Sayfası
         </Link>
-        <div className="flex items-center gap-2">
-          {firm.instagram ? (
-            <a
-              href={firm.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg p-2 text-[#0B3C5D]/60 transition hover:bg-[#F7F9FB] hover:text-[#0B3C5D]"
-              aria-label="Instagram"
-            >
-              <InstagramIcon />
-            </a>
-          ) : null}
-          {firm.website ? (
-            <a
-              href={firm.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg p-2 text-[#0B3C5D]/60 transition hover:bg-[#F7F9FB] hover:text-[#0B3C5D]"
-              aria-label="Web sitesi"
-            >
-              <GlobeIcon />
-            </a>
-          ) : null}
-        </div>
+        {socialOk ? (
+          <div className="flex items-center gap-2">
+            {firm.instagram ? (
+              <a
+                href={firm.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg p-2 text-[#0B3C5D]/60 transition hover:bg-[#F7F9FB] hover:text-[#0B3C5D]"
+                aria-label="Instagram"
+              >
+                <InstagramIcon />
+              </a>
+            ) : null}
+            {firm.website ? (
+              <a
+                href={firm.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg p-2 text-[#0B3C5D]/60 transition hover:bg-[#F7F9FB] hover:text-[#0B3C5D]"
+                aria-label="Web sitesi"
+              >
+                <GlobeIcon />
+              </a>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <ContactModal
         firm={firm}
-        open={contactOpen}
+        open={contactOk && contactOpen}
         onClose={() => setContactOpen(false)}
       />
     </article>

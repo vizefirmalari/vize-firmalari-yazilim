@@ -35,7 +35,9 @@ export default async function EditFirmPage({ params }: PageProps) {
         mode="edit"
         firmId={id}
         initial={detail.firm}
+        privateInitial={detail.private}
         countryIds={detail.country_ids}
+        featuredCountryIds={detail.featured_country_ids}
         serviceTypeIds={detail.service_type_ids}
         countries={countries}
         serviceTypes={serviceTypes}

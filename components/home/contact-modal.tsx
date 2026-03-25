@@ -60,7 +60,7 @@ export function ContactModal({ firm, open, onClose }: ContactModalProps) {
         </div>
 
         <ul className="mt-6 space-y-4">
-          {firm.phone ? (
+          {firm.phone && firm.show_phone !== false ? (
             <li>
               <p className="text-xs font-medium uppercase tracking-wide text-[#1A1A1A]/50">
                 Telefon
@@ -73,7 +73,7 @@ export function ContactModal({ firm, open, onClose }: ContactModalProps) {
               </a>
             </li>
           ) : null}
-          {firm.whatsapp ? (
+          {firm.whatsapp && firm.show_whatsapp !== false ? (
             <li>
               <p className="text-xs font-medium uppercase tracking-wide text-[#1A1A1A]/50">
                 WhatsApp
@@ -88,7 +88,7 @@ export function ContactModal({ firm, open, onClose }: ContactModalProps) {
               </a>
             </li>
           ) : null}
-          {firm.email ? (
+          {firm.email && firm.show_email !== false ? (
             <li>
               <p className="text-xs font-medium uppercase tracking-wide text-[#1A1A1A]/50">
                 E-posta
@@ -101,9 +101,13 @@ export function ContactModal({ firm, open, onClose }: ContactModalProps) {
               </a>
             </li>
           ) : null}
-          {!firm.phone && !firm.whatsapp && !firm.email ? (
+          {!(
+            (firm.phone && firm.show_phone !== false) ||
+            (firm.whatsapp && firm.show_whatsapp !== false) ||
+            (firm.email && firm.show_email !== false)
+          ) ? (
             <li className="text-sm text-[#1A1A1A]/70">
-              Bu firma için iletişim bilgisi henüz eklenmedi.
+              Bu firma için gösterilebilir iletişim bilgisi yok.
             </li>
           ) : null}
         </ul>
