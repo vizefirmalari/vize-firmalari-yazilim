@@ -352,14 +352,12 @@ export default async function FirmaPage({ params }: PageProps) {
               {(hasCountries ||
                 hasServices ||
                 hasSpecialization ||
-                hasSubServices ||
-                hasCustomServices) ? (
+                hasSubServices) ? (
                 <SectionReveal delayMs={60}>
                   <FirmServiceScope
                     countries={countries}
                     mainServices={serviceItems}
                     subServices={subServices}
-                    customTags={customServices}
                     specializationLabels={specializationFlags}
                   />
                 </SectionReveal>
@@ -497,6 +495,26 @@ export default async function FirmaPage({ params }: PageProps) {
                     </div>
                   </div>
                   </section>
+                </SectionReveal>
+              ) : null}
+
+              {hasCustomServices ? (
+                <SectionReveal delayMs={132}>
+                  <div className="pt-2">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-[#0B3C5D]/70">
+                      Ek bilgiler
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {customServices.map((t) => (
+                        <span
+                          key={t}
+                          className="rounded-lg bg-[#EEF1F4] px-2 py-1 text-[11px] font-medium text-[#1A1A1A]/65"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </SectionReveal>
               ) : null}
 

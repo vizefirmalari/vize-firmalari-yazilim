@@ -1,8 +1,8 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { ReactNode } from "react";
-import { countryFlagEmoji } from "@/lib/firma/country-flag";
+import { getCountryFlagFromName } from "@/lib/firma/country-flag";
 
 const MAX_COUNTRIES_VISIBLE = 6;
 const MAX_MAIN_SERVICES_VISIBLE = 4;
@@ -12,7 +12,6 @@ type FirmServiceScopeProps = {
   countries: string[];
   mainServices: string[];
   subServices: string[];
-  customTags: string[];
   specializationLabels: string[];
 };
 
@@ -20,7 +19,6 @@ export function FirmServiceScope({
   countries,
   mainServices,
   subServices,
-  customTags,
   specializationLabels,
 }: FirmServiceScopeProps) {
   const [countriesOpen, setCountriesOpen] = useState(false);
@@ -49,15 +47,13 @@ export function FirmServiceScope({
   const hasCountries = countries.length > 0;
   const hasMain = mainServices.length > 0;
   const hasSpec = specializationLabels.length > 0;
-  const hasDetailsContent = subServices.length > 0 || customTags.length > 0;
+  // "Tüm hizmet detayları" etkileşimi yalnızca alt hizmet detayları (süreç/alt kalemler) için gösterilir.
+  const hasDetailsContent = subServices.length > 0;
   const hasSummaryAboveDetails = hasCountries || hasMain || hasSpec;
 
   const detailSummaryParts: string[] = [];
   if (subServices.length > 0) {
     detailSummaryParts.push(`${subServices.length} alt kalem`);
-  }
-  if (customTags.length > 0) {
-    detailSummaryParts.push(`${customTags.length} etiket`);
   }
   const detailSummaryText = detailSummaryParts.join(" · ");
 
@@ -70,13 +66,10 @@ export function FirmServiceScope({
           <h3 className="text-sm font-semibold text-[#0B3C5D]">Ülkeler</h3>
           <ul className="mt-3 flex flex-wrap gap-2">
             {shownCountries.map((c) => {
-              const flag = countryFlagEmoji(c);
               return (
                 <li key={c}>
                   <span className="inline-flex items-center gap-1.5 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 py-1 text-xs font-medium text-[#0B3C5D]/85">
-                    <span className="text-[13px] leading-none" aria-hidden>
-                      {flag ?? "🌍"}
-                    </span>
+                    <CountryFlag countryName={c} />
                     {c}
                   </span>
                 </li>
@@ -192,13 +185,10 @@ export function FirmServiceScope({
       >
         <ul className="flex flex-wrap gap-2">
           {countries.map((c) => {
-            const flag = countryFlagEmoji(c);
             return (
               <li key={c}>
                 <span className="inline-flex items-center gap-1.5 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 py-1 text-xs font-medium text-[#0B3C5D]/85">
-                  <span className="text-[13px]" aria-hidden>
-                    {flag ?? "🌍"}
-                  </span>
+                  <CountryFlag countryName={c} />
                   {c}
                 </span>
               </li>
@@ -253,14 +243,60 @@ export function FirmServiceScope({
         open={detailsOpen}
         onClose={() => setDetailsOpen(false)}
         titleId={detailsTitleId}
-        title="Hizmet detayları"
+        title="Tüm Hizmet Detayları"
       >
         <div className="space-y-8">
+          {mainServices.length > 0 ? (
+            <DetailGroup
+              title="Vize Türleri"
+              icon={<ServiceIcon />}
+              divider={false}
+            >
+              <div className="mt-3 flex flex-wrap gap-2">
+                {mainServices.map((s) => (
+                  <span
+                    key={s}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#F7F9FB] px-3 py-1.5 text-xs font-medium text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10"
+                  >
+                    <span
+                      className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#328CC1]/10 text-[#0B3C5D]"
+                      aria-hidden
+                    >
+                      <ServiceIcon />
+                    </span>
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </DetailGroup>
+          ) : null}
+
+          {countries.length > 0 ? (
+            <DetailGroup
+              title="Ülke Bazlı Hizmetler"
+              icon={<WorldIcon />}
+              divider={mainServices.length > 0}
+            >
+              <div className="mt-3 flex flex-wrap gap-2">
+                {countries.map((c) => (
+                  <span
+                    key={c}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#FAFBFC] px-3 py-1.5 text-xs font-medium text-[#0B3C5D]/85 ring-1 ring-[#0B3C5D]/10"
+                  >
+                    <CountryFlag countryName={c} />
+                    {c}
+                  </span>
+                ))}
+              </div>
+            </DetailGroup>
+          ) : null}
+
           {subServices.length > 0 ? (
-            <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wide text-[#0B3C5D]/70">
-                Alt hizmet detayları
-              </h4>
+            <DetailGroup
+              title="Süreç Hizmetleri"
+              icon={<ServiceIcon />}
+              divider={countries.length > 0 || mainServices.length > 0}
+            >
               <ul className="mt-3 space-y-2">
                 {subServices.map((s) => (
                   <li
@@ -277,29 +313,86 @@ export function FirmServiceScope({
                   </li>
                 ))}
               </ul>
-            </div>
-          ) : null}
-
-          {customTags.length > 0 ? (
-            <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wide text-[#0B3C5D]/70">
-                Özel etiketler
-              </h4>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {customTags.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-md bg-[#EEF1F4] px-2 py-1 text-[11px] font-medium text-[#1A1A1A]/65"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
+            </DetailGroup>
           ) : null}
         </div>
       </ModalShell>
     </section>
+  );
+}
+
+function DetailGroup({
+  title,
+  icon,
+  divider,
+  children,
+}: {
+  title: string;
+  icon: ReactNode;
+  divider: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      {divider ? <div className="mb-6 border-t border-[#0B3C5D]/10 pt-6" /> : null}
+      <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#0B3C5D]/70">
+        <span className="inline-flex h-5 w-5 items-center justify-center text-[#0B3C5D]">
+          {icon}
+        </span>
+        {title}
+      </h4>
+      {children}
+    </div>
+  );
+}
+
+function CountryFlag({ countryName }: { countryName: string }) {
+  const flag = getCountryFlagFromName(countryName);
+  if (!flag) {
+    return (
+      <span
+        className="inline-flex h-[10px] w-[20px] items-center justify-center rounded-[3px] bg-[#F7F9FB] ring-1 ring-[#0B3C5D]/10"
+        aria-hidden
+      >
+        <WorldIcon />
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={flag.src}
+      alt={flag.alt}
+      width={20}
+      height={10}
+      className="w-[20px] aspect-2/1 rounded-[3px] object-cover"
+      loading="lazy"
+    />
+  );
+}
+
+function WorldIcon() {
+  return (
+    <svg
+      className="h-4 w-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M3.5 12h17M12 3.5c2.8 3.2 4.3 6.4 4.3 8.5S14.8 17.3 12 20.5c-2.8-3.2-4.3-6.4-4.3-8.5S9.2 6.7 12 3.5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -316,24 +409,53 @@ function ModalShell({
   titleId: string;
   children: ReactNode;
 }) {
-  if (!open) return null;
+  const [mounted, setMounted] = useState(open);
+  const [visible, setVisible] = useState(open);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      // Trigger CSS transition on next frame.
+      requestAnimationFrame(() => setVisible(true));
+      return;
+    }
+
+    setVisible(false);
+    const t = window.setTimeout(() => setMounted(false), 200);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
+  if (!mounted) return null;
 
   return (
     <div className="fixed inset-0 z-50">
       <div
-        className="absolute inset-0 bg-black/40"
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
+          visible ? "opacity-100" : "opacity-0"
+        }`}
         onClick={onClose}
         aria-hidden
       />
       <div className="relative mx-auto flex h-full w-full max-w-lg items-end justify-center p-3 sm:items-center">
         <div
-          className="w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)]"
+          className={`w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 ${
+            visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+          }`}
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between gap-3 border-b border-[#0B3C5D]/10 px-4 py-3">
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#0B3C5D]/10 bg-white px-4 py-3">
             <h3 id={titleId} className="text-sm font-semibold text-[#0B3C5D]">
               {title}
             </h3>
