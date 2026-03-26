@@ -881,8 +881,28 @@ export default async function FirmaPage({ params }: PageProps) {
                       </a>
                     ) : null}
                     {firm.has_blog ? (
-                      <span className="inline-flex items-center rounded-lg bg-[#D9A441]/15 px-3 py-2 text-sm font-semibold text-[#1A1A1A]">
-                        Blog
+                      <span className="inline-flex items-center gap-2 rounded-lg bg-[#D9A441]/15 px-2 py-1.5 text-xs font-semibold text-[#1A1A1A]/85 ring-1 ring-[#D9A441]/20">
+                        <svg
+                          className="h-4 w-4 text-[#1A1A1A]/70"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          aria-hidden
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M7 4h10a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M9 9h6M9 13h6"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        İçerik üretimi mevcut
                       </span>
                     ) : null}
                   </div>
