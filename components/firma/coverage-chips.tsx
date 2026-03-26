@@ -62,7 +62,8 @@ export function CountryChip({
           width={24}
           height={16}
           className={flagImgClass}
-          loading="lazy"
+          loading="eager"
+          decoding="async"
           onError={() => setImgOk(false)}
         />
       ) : null}
@@ -134,7 +135,8 @@ export function RegionChip({
           width={24}
           height={16}
           className={flagImgClass}
-          loading="lazy"
+          loading="eager"
+          decoding="async"
           onError={() => setEuOk(false)}
         />
       ) : (

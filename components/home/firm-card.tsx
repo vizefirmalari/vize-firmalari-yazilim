@@ -8,6 +8,10 @@ import { ContactModal } from "@/components/home/contact-modal";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
 import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
 import {
+  ServiceSummaryChip,
+  SummaryMoreButton,
+} from "@/components/firma/card-summary-chips";
+import {
   CountryChip,
   CoverageChip,
   RegionChip,
@@ -91,9 +95,6 @@ export function FirmCard({ firm }: FirmCardProps) {
   // Fallback: older data may only have the merged `services` array.
   const effectiveMainCategories =
     mainCategories.length > 0 ? mainCategories : servicePool;
-
-  const serviceCellCount =
-    shownServices.length + (restServices > 0 ? 1 : 0);
 
   return (
     <article className="flex h-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-[#0B3C5D]/10 bg-white p-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)]">
@@ -179,21 +180,15 @@ export function FirmCard({ firm }: FirmCardProps) {
         <div className="mt-4 w-full min-w-0">
           <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
             {shownCountries.map((c, idx) => (
-              <CoverageChip
-                key={`${c}-${idx}`}
-                label={c}
-                variant="cardSummary"
-              />
+              <CoverageChip key={`${c}-${idx}`} label={c} />
             ))}
             {restCountries > 0 ? (
-              <button
-                type="button"
+              <SummaryMoreButton
+                variant="country"
+                count={restCountries}
                 onClick={() => setCountriesModalOpen(true)}
-                className="shrink-0 rounded-lg bg-[#D9A441]/15 px-2.5 py-1.5 text-xs font-semibold text-[#1A1A1A] sm:py-1"
-                aria-label="Tüm ülkeleri görüntüle"
-              >
-                +{restCountries}
-              </button>
+                ariaLabel="Tüm ülkeleri görüntüle"
+              />
             ) : null}
           </div>
         </div>
@@ -201,63 +196,19 @@ export function FirmCard({ firm }: FirmCardProps) {
 
       {serviceSummaryList.length > 0 ? (
         <div className="mt-3 w-full min-w-0">
-          {serviceCellCount === 1 ? (
-            <div className="flex justify-center">
-              <span
-                className="inline-flex min-h-7 min-w-0 max-w-[min(100%,14rem)] items-center rounded-lg border border-[#0B3C5D]/10 bg-white px-2.5 py-1 text-[11px] font-medium text-[#0B3C5D]/85"
-                title={shownServices[0]}
-              >
-                <span className="min-w-0 truncate">{shownServices[0]}</span>
-              </span>
-            </div>
-          ) : (
-            <>
-              {/* Mobile: 2 sütun — üst satır 2 chip, alt satır 3. chip + +X */}
-              <div className="grid grid-cols-2 gap-1.5 md:hidden">
-                {shownServices.map((s, idx) => (
-                  <span
-                    key={`${s}-${idx}`}
-                    className="inline-flex min-h-7 min-w-0 items-center justify-center rounded-lg border border-[#0B3C5D]/10 bg-white px-2.5 py-1 text-[11px] font-medium text-[#0B3C5D]/85"
-                    title={s}
-                  >
-                    <span className="min-w-0 truncate">{s}</span>
-                  </span>
-                ))}
-                {restServices > 0 ? (
-                  <button
-                    type="button"
-                    onClick={() => setServicesModalOpen(true)}
-                    className="inline-flex min-h-7 min-w-0 items-center justify-center rounded-lg bg-[#F7F9FB] px-2.5 py-1 text-[11px] font-semibold text-[#1A1A1A]/70"
-                    aria-label="Tüm hizmetleri görüntüle"
-                  >
-                    +{restServices} hizmet
-                  </button>
-                ) : null}
-              </div>
-              {/* Tablet / masaüstü: yatay, gerekirse satır kırar */}
-              <div className="hidden flex-wrap items-center justify-center gap-1.5 md:flex md:gap-2">
-                {shownServices.map((s, idx) => (
-                  <span
-                    key={`svc-md-${s}-${idx}`}
-                    className="inline-flex min-h-7 min-w-0 max-w-[min(100%,11rem)] items-center rounded-lg border border-[#0B3C5D]/10 bg-white px-2.5 py-1 text-[11px] font-medium text-[#0B3C5D]/85"
-                    title={s}
-                  >
-                    <span className="min-w-0 truncate">{s}</span>
-                  </span>
-                ))}
-                {restServices > 0 ? (
-                  <button
-                    type="button"
-                    onClick={() => setServicesModalOpen(true)}
-                    className="shrink-0 rounded-lg bg-[#F7F9FB] px-2.5 py-1 text-[11px] font-semibold text-[#1A1A1A]/70"
-                    aria-label="Tüm hizmetleri görüntüle"
-                  >
-                    +{restServices} hizmet
-                  </button>
-                ) : null}
-              </div>
-            </>
-          )}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+            {shownServices.map((s, idx) => (
+              <ServiceSummaryChip key={`${s}-${idx}`} label={s} />
+            ))}
+            {restServices > 0 ? (
+              <SummaryMoreButton
+                variant="services"
+                count={restServices}
+                onClick={() => setServicesModalOpen(true)}
+                ariaLabel="Tüm hizmetleri görüntüle"
+              />
+            ) : null}
+          </div>
         </div>
       ) : null}
 

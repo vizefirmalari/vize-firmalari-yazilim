@@ -10,9 +10,11 @@ export function flagUrlForIso(iso: string): string {
 }
 
 function normalizeCountryName(input: string): string {
-  return input
+  const trimmed = input
     .trim()
-    .toLowerCase()
+    .replace(/[\u200B-\u200D\uFEFF]/g, "");
+  const lower = trimmed.toLocaleLowerCase("tr").normalize("NFC");
+  return lower
     .replace(/[ç]/g, "c")
     .replace(/[ğ]/g, "g")
     .replace(/[ı]/g, "i")
@@ -190,6 +192,7 @@ export function getCountryFlagCodeFromName(countryName: string): string | null {
 
     us: "us",
     usa: "us",
+    abd: "us",
     america: "us",
     amerika: "us",
     amerikabirlesikdevletleri: "us",
