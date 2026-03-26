@@ -1372,7 +1372,7 @@ export function FirmForm({
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {(
               [
-                ["schengen_expert", "Schengen uzmanı"],
+                ["schengen_expert", "Schengen vizesi"],
                 ["usa_visa_expert", "ABD vizesi uzmanı"],
                 ["student_visa_support", "Öğrenci vizesi"],
                 ["work_visa_support", "Çalışma vizesi"],
@@ -1806,7 +1806,7 @@ export function FirmForm({
               value={form.short_badge}
               onChange={(e) => patch("short_badge", e.target.value)}
               maxLength={80}
-              placeholder="Örn. Schengen uzmanı"
+              placeholder="Örn. Schengen vizesi"
               className={inputClass}
             />
             <FieldHelp>Liste kartında firma adının altında görünen kısa vurgu.</FieldHelp>

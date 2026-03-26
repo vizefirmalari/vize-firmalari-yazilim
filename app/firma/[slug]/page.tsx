@@ -127,7 +127,7 @@ export default async function FirmaPage({ params }: PageProps) {
   const customServices = Array.isArray(firm.custom_services) ? firm.custom_services : [];
 
   const specializationLabels: { key: string; label: string }[] = [
-    { key: "schengen_expert", label: "Schengen Uzmanı" },
+    { key: "schengen_expert", label: "Schengen Vizesi" },
     { key: "usa_visa_expert", label: "ABD Vize Uzmanı" },
     { key: "student_visa_support", label: "Öğrenci Desteği" },
     { key: "work_visa_support", label: "Çalışma Vizesi" },

@@ -39,7 +39,7 @@ export const SUB_SERVICE_CATALOG = [
   "Yatırımcı vizesi",
   "Startup vizesi",
   "Dijital göçmenlik vizesi",
-  "Schengen uzmanı",
+  "Schengen vizesi",
   "İtiraz ve hukuki danışmanlık",
   "Çeviri ve apostil",
   "Sağlık sigortası danışmanlığı",
