@@ -1,4 +1,5 @@
 import type { FirmFilters, FirmRow, FirmSort } from "@/lib/types/firm";
+import { collectAllServiceLabelsFromFirm } from "@/lib/firma/listing-filter-options";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/env";
 
@@ -154,9 +155,10 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
   }
 
   if (f.services.length > 0) {
-    out = out.filter((r) =>
-      f.services.some((s) => r.services.includes(s))
-    );
+    out = out.filter((r) => {
+      const labels = new Set(collectAllServiceLabelsFromFirm(r));
+      return f.services.some((s) => labels.has(s));
+    });
   }
 
   out.sort((a, b) => {
@@ -236,10 +238,6 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
     query = query.overlaps("countries", filters.countries);
   }
 
-  if (filters.services.length > 0) {
-    query = query.overlaps("services", filters.services);
-  }
-
   switch (filters.sort) {
     case "hype_desc":
       query = query
@@ -290,6 +288,13 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
   let rows = (data ?? []).map((row) =>
     normalizeFirmRow(row as Record<string, unknown>)
   );
+
+  if (filters.services.length > 0) {
+    rows = rows.filter((r) => {
+      const labels = new Set(collectAllServiceLabelsFromFirm(r));
+      return filters.services.some((s) => labels.has(s));
+    });
+  }
 
   const { data: hs } = await supabase
     .from("homepage_settings")

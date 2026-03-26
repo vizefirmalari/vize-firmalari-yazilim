@@ -12,6 +12,10 @@ import {
   CoverageChip,
   RegionChip,
 } from "@/components/firma/coverage-chips";
+import {
+  effectiveFirmCategoryLabel,
+  orderedServiceLabelsForCardSummary,
+} from "@/lib/firma/listing-filter-options";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -32,11 +36,18 @@ export function FirmCard({ firm }: FirmCardProps) {
   const countryCoverage = splitRegionsAndCountries(countryPool);
   const servedCountries = countryCoverage.countries;
   const servedRegions = countryCoverage.regions;
-  const shownCountries = countryPool.slice(0, 3);
+  const SUMMARY_VISIBLE = 3;
+  const shownCountries = countryPool.slice(0, SUMMARY_VISIBLE);
   const restCountries = Math.max(0, countryPool.length - shownCountries.length);
+
+  const serviceSummaryList = useMemo(
+    () => orderedServiceLabelsForCardSummary(firm),
+    [firm]
+  );
+  const shownServices = serviceSummaryList.slice(0, SUMMARY_VISIBLE);
+  const restServices = Math.max(0, serviceSummaryList.length - shownServices.length);
+
   const servicePool = Array.isArray(firm.services) ? firm.services : [];
-  const shownServices = servicePool.slice(0, 3);
-  const restServices = Math.max(0, servicePool.length - shownServices.length);
   const contactOk = firm.contact_popup_enabled !== false;
   const quickApplyOk = firm.quick_apply_enabled !== false;
   const socialOk = firm.social_buttons_enabled !== false;
@@ -60,19 +71,18 @@ export function FirmCard({ firm }: FirmCardProps) {
   }, [firm]);
 
   /**
-   * Firma türü · kuruluş yılı — admin’deki “Firma türü” (`company_structure`, yoksa `company_type`)
-   * ve `founded_year` (kuruluş yılı). En az biri doluysa tek satırda gösterilir.
+   * Kimlik > Sınıflandırma: `firm_category` (Firma türü) · `founded_year` (Kuruluş yılı).
+   * Eski kayıtlar için yalnızca `company_type` dolu olabilir.
    */
   const firmTypeAndYearLine = useMemo(() => {
-    const type =
-      firm.company_structure?.trim() || firm.company_type?.trim() || "";
+    const type = effectiveFirmCategoryLabel(firm);
     const year =
       typeof firm.founded_year === "number" && Number.isFinite(firm.founded_year)
         ? String(firm.founded_year)
         : "";
     if (!type && !year) return null;
     return [type, year].filter(Boolean).join(" · ");
-  }, [firm.company_structure, firm.company_type, firm.founded_year]);
+  }, [firm.firm_category, firm.company_type, firm.founded_year]);
 
   const mainCategories = Array.isArray(firm.main_services) ? firm.main_services : [];
   const subProcessAndSupport = Array.isArray(firm.sub_services) ? firm.sub_services : [];
@@ -162,42 +172,57 @@ export function FirmCard({ firm }: FirmCardProps) {
         {descriptionText}
       </button>
 
-      <div className="mt-4 flex flex-wrap justify-center gap-1.5">
-        {shownCountries.map((c) => (
-          <CoverageChip key={c} label={c} />
-        ))}
-        {restCountries > 0 ? (
-          <button
-            type="button"
-            onClick={() => setCountriesModalOpen(true)}
-            className="rounded-lg bg-[#D9A441]/15 px-2 py-1 text-xs font-semibold text-[#1A1A1A]"
-            aria-label="Tüm ülkeleri görüntüle"
-          >
-            +{restCountries}
-          </button>
-        ) : null}
-      </div>
+      {shownCountries.length > 0 || restCountries > 0 ? (
+        <div className="mt-4 w-full min-w-0">
+          <div className="flex w-full min-w-0 justify-center">
+            <div className="flex max-w-full min-w-0 flex-nowrap items-center justify-center gap-1.5 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {shownCountries.map((c, idx) => (
+                <CoverageChip
+                  key={`${c}-${idx}`}
+                  label={c}
+                  variant="cardSummary"
+                />
+              ))}
+              {restCountries > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setCountriesModalOpen(true)}
+                  className="shrink-0 whitespace-nowrap rounded-lg bg-[#D9A441]/15 px-2 py-1 text-xs font-semibold text-[#1A1A1A]"
+                  aria-label="Tüm ülkeleri görüntüle"
+                >
+                  +{restCountries}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
-      {shownServices.length > 0 ? (
-        <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-          {shownServices.map((s) => (
-            <span
-              key={s}
-              className="rounded-lg border border-[#0B3C5D]/10 bg-white px-2 py-1 text-[11px] font-medium text-[#0B3C5D]/85"
-            >
-              {s}
-            </span>
-          ))}
-          {restServices > 0 ? (
-            <button
-              type="button"
-              onClick={() => setServicesModalOpen(true)}
-              className="rounded-lg bg-[#F7F9FB] px-2 py-1 text-[11px] font-semibold text-[#1A1A1A]/70"
-              aria-label="Tüm hizmetleri görüntüle"
-            >
-              +{restServices} hizmet
-            </button>
-          ) : null}
+      {serviceSummaryList.length > 0 ? (
+        <div className="mt-3 w-full min-w-0">
+          <div className="flex w-full min-w-0 justify-center">
+            <div className="flex max-w-full min-w-0 flex-nowrap items-center justify-center gap-1.5 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {shownServices.map((s, idx) => (
+                <span
+                  key={`${s}-${idx}`}
+                  className="inline-flex min-h-6 min-w-0 max-w-[9rem] shrink-0 items-center rounded-lg border border-[#0B3C5D]/10 bg-white px-2 py-0.5 text-[11px] font-medium text-[#0B3C5D]/85"
+                  title={s}
+                >
+                  <span className="min-w-0 truncate">{s}</span>
+                </span>
+              ))}
+              {restServices > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setServicesModalOpen(true)}
+                  className="shrink-0 whitespace-nowrap rounded-lg bg-[#F7F9FB] px-2 py-1 text-[11px] font-semibold text-[#1A1A1A]/70"
+                  aria-label="Tüm hizmetleri görüntüle"
+                >
+                  +{restServices} hizmet
+                </button>
+              ) : null}
+            </div>
+          </div>
         </div>
       ) : null}
 

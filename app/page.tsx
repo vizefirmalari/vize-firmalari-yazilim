@@ -9,6 +9,11 @@ import {
   SERVICE_OPTIONS,
 } from "@/lib/constants";
 import {
+  mergeCompanyTypeFilterOptions,
+  mergeCountryFilterOptionsFromFirms,
+  mergeServiceFilterOptionsWithFirms,
+} from "@/lib/firma/listing-filter-options";
+import {
   getHomepageSettings,
   getPublicFilterCompanyTypes,
   getPublicFilterCountries,
@@ -60,41 +65,21 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const dbCountries = await getPublicFilterCountries();
   const dbServices = await getPublicFilterServiceTypes();
 
-  let countryTop: string[] | undefined;
-  let countryAll: string[] | undefined;
-
-  if (dbCountries.length) {
-    const sorted = [...dbCountries].sort(
-      (a, b) => a.sort_order - b.sort_order
-    );
-    countryAll = sorted.map((c) => c.name);
-    const first = sorted.filter((c) => c.show_in_first_list);
-    const topSource = first.length ? first : sorted;
-    countryTop = topSource.slice(0, 8).map((c) => c.name);
-  }
-
   const serviceNamesFromDb = dbServices.length
     ? [...dbServices]
         .sort((a, b) => a.sort_order - b.sort_order)
         .map((s) => s.name)
     : [];
-  const serviceNames = mergePublicServiceFilterOptions(
-    serviceNamesFromDb,
-    SERVICE_OPTIONS
+  const serviceNames = mergeServiceFilterOptionsWithFirms(
+    mergePublicServiceFilterOptions(serviceNamesFromDb, SERVICE_OPTIONS),
+    listingFirms
   );
 
   const dbCompanyTypes = await getPublicFilterCompanyTypes();
-  const companyTypeNames = dbCompanyTypes.map((c) => c.name);
-  const companyTypesFromFirms = Array.from(
-    new Set(
-      listingFirms
-        .map((f) => f.company_type?.trim())
-        .filter((x): x is string => Boolean(x))
-    )
+  const companyTypeOptions = mergeCompanyTypeFilterOptions(
+    dbCompanyTypes.map((c) => c.name),
+    listingFirms
   );
-  const companyTypeOptions = Array.from(
-    new Set([...companyTypeNames, ...companyTypesFromFirms])
-  ).sort((a, b) => a.localeCompare(b, "tr"));
 
   const hiddenParams: Record<string, string> = {};
   if (filters.countries.length) {
@@ -107,7 +92,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     hiddenParams.sort = filters.sort;
   }
 
-  const countryListForListing = countryAll ?? countryTop;
+  const countryListForListing = mergeCountryFilterOptionsFromFirms(
+    dbCountries,
+    listingFirms
+  );
 
   return (
     <>

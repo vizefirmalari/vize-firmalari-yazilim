@@ -60,6 +60,8 @@ export type FirmRow = {
   legal_company_name?: string | null;
   owner_name?: string | null;
   company_structure?: string | null;
+  /** Kimlik > Sınıflandırma > Firma türü (admin picklist + özel değerler) */
+  firm_category?: string | null;
   company_type?: string | null;
 
   // Corporate proof inputs (legal + trust)

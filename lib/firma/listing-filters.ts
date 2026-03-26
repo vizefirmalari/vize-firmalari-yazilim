@@ -1,5 +1,9 @@
 import type { FirmRow, FirmSort } from "@/lib/types/firm";
 import { firmMatchesCoverageSelection } from "@/lib/firma/coverage-catalog";
+import {
+  collectAllServiceLabelsFromFirm,
+  effectiveFirmCategoryLabel,
+} from "@/lib/firma/listing-filter-options";
 
 export function hypeValue(f: FirmRow): number {
   return f.hype_score ?? f.raw_hype_score * 100;
@@ -163,14 +167,12 @@ export function applyListingFilters(
   return firms.filter((firm) => {
     if (!firmMatchesCoverageSelection(firm, f.coverage)) return false;
 
-    if (
-      f.services.length > 0 &&
-      !f.services.some((s) => firm.services.includes(s))
-    ) {
-      return false;
+    if (f.services.length > 0) {
+      const labels = new Set(collectAllServiceLabelsFromFirm(firm));
+      if (!f.services.some((s) => labels.has(s))) return false;
     }
     if (f.companyTypes.length > 0) {
-      const ct = firm.company_type?.trim();
+      const ct = effectiveFirmCategoryLabel(firm);
       if (!ct || !f.companyTypes.includes(ct)) return false;
     }
     if (!passesTrust(firm, f.trust)) return false;

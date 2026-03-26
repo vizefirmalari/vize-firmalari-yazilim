@@ -13,15 +13,27 @@ import {
 const CHIP_BASE =
   "inline-flex h-7 max-w-full items-center gap-2 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 text-xs font-medium text-[#0B3C5D]/85";
 
+/** Anasayfa kartı tek satır özeti: `max-w-full` yok — flex satırında bayrak + metin taşmadan kalır */
+const CHIP_CARD_SUMMARY =
+  "inline-flex h-6 min-h-6 min-w-0 max-w-[9rem] shrink-0 items-center gap-1.5 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2 py-0.5 text-[11px] font-medium text-[#0B3C5D]/85";
+
+type ChipVariant = "default" | "cardSummary";
+
 type ChipProps = {
   className?: string;
   onClick?: () => void;
+  variant?: ChipVariant;
 };
+
+function chipBaseClass(variant: ChipVariant | undefined): string {
+  return variant === "cardSummary" ? CHIP_CARD_SUMMARY : CHIP_BASE;
+}
 
 export function CountryChip({
   countryName,
   onClick,
   className = "",
+  variant,
 }: ChipProps & { countryName: string }) {
   const code = getCountryFlagCodeFromName(countryName);
   const [imgOk, setImgOk] = useState(true);
@@ -35,7 +47,11 @@ export function CountryChip({
   }
 
   const showFlag = Boolean(code) && imgOk;
-  const cls = `${CHIP_BASE} ${onClick ? "cursor-pointer" : ""} ${className}`.trim();
+  const cls = `${chipBaseClass(variant)} ${onClick ? "cursor-pointer" : ""} ${className}`.trim();
+  const flagImgClass =
+    variant === "cardSummary"
+      ? "h-3.5 w-auto shrink-0 rounded-[3px] object-cover"
+      : "h-4 w-auto shrink-0 rounded-[3px] object-cover";
 
   const inner = (
     <>
@@ -45,12 +61,12 @@ export function CountryChip({
           alt=""
           width={24}
           height={16}
-          className="h-4 w-auto shrink-0 rounded-[3px] object-cover"
+          className={flagImgClass}
           loading="lazy"
           onError={() => setImgOk(false)}
         />
       ) : null}
-      <span className="truncate whitespace-nowrap">{countryName}</span>
+      <span className="min-w-0 truncate">{countryName}</span>
     </>
   );
 
@@ -65,10 +81,10 @@ export function CountryChip({
   return <span className={cls}>{inner}</span>;
 }
 
-function RegionPinIcon() {
+function RegionPinIcon({ compact }: { compact?: boolean }) {
   return (
     <svg
-      className="h-4 w-4 shrink-0 text-[#328CC1]"
+      className={`${compact ? "h-3.5 w-3.5" : "h-4 w-4"} shrink-0 text-[#328CC1]`}
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden
@@ -93,6 +109,7 @@ export function RegionChip({
   regionLabel,
   onClick,
   className = "",
+  variant,
 }: ChipProps & { regionLabel: string }) {
   const useEu = regionUsesEuFlag(regionLabel);
   const [euOk, setEuOk] = useState(true);
@@ -102,7 +119,11 @@ export function RegionChip({
   }, [regionLabel]);
 
   const showEuFlag = useEu && euOk;
-  const cls = `${CHIP_BASE} ${onClick ? "cursor-pointer" : ""} ${className}`.trim();
+  const cls = `${chipBaseClass(variant)} ${onClick ? "cursor-pointer" : ""} ${className}`.trim();
+  const flagImgClass =
+    variant === "cardSummary"
+      ? "h-3.5 w-auto shrink-0 rounded-[3px] object-cover"
+      : "h-4 w-auto shrink-0 rounded-[3px] object-cover";
 
   const inner = (
     <>
@@ -112,14 +133,14 @@ export function RegionChip({
           alt=""
           width={24}
           height={16}
-          className="h-4 w-auto shrink-0 rounded-[3px] object-cover"
+          className={flagImgClass}
           loading="lazy"
           onError={() => setEuOk(false)}
         />
       ) : (
-        <RegionPinIcon />
+        <RegionPinIcon compact={variant === "cardSummary"} />
       )}
-      <span className="truncate whitespace-nowrap">{regionLabel}</span>
+      <span className="min-w-0 truncate">{regionLabel}</span>
     </>
   );
 
@@ -141,13 +162,24 @@ export function CoverageChip({
   label,
   onClick,
   className,
+  variant,
 }: ChipProps & { label: string }) {
   if (isRegionCoverageLabel(label)) {
     return (
-      <RegionChip regionLabel={label} onClick={onClick} className={className} />
+      <RegionChip
+        regionLabel={label}
+        onClick={onClick}
+        className={className}
+        variant={variant}
+      />
     );
   }
   return (
-    <CountryChip countryName={label} onClick={onClick} className={className} />
+    <CountryChip
+      countryName={label}
+      onClick={onClick}
+      className={className}
+      variant={variant}
+    />
   );
 }
