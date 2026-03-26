@@ -2,10 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FirmRow } from "@/lib/types/firm";
 import { ContactModal } from "@/components/home/contact-modal";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
+import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
+import { getCountryFlagCodeFromName } from "@/lib/firma/country-flag";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -23,6 +25,9 @@ export function FirmCard({ firm }: FirmCardProps) {
   const corporate = firm.corporateness_score;
   const hype = typeof firm.hype_score === "number" && Number.isFinite(firm.hype_score) ? firm.hype_score : 0;
   const countryPool = Array.isArray(firm.countries) ? firm.countries : [];
+  const countryCoverage = splitRegionsAndCountries(countryPool);
+  const servedCountries = countryCoverage.countries;
+  const servedRegions = countryCoverage.regions;
   const shownCountries = countryPool.slice(0, 3);
   const restCountries = Math.max(0, countryPool.length - shownCountries.length);
   const servicePool = Array.isArray(firm.services) ? firm.services : [];
@@ -34,6 +39,29 @@ export function FirmCard({ firm }: FirmCardProps) {
 
   const descriptionText =
     firm.short_description ?? firm.description ?? "Bu firma için açıklama yakında eklenecek.";
+
+  const specializationLabels = useMemo(() => {
+    const f = firm as unknown as Record<string, unknown>;
+    const pairs: Array<[string, string]> = [
+      ["schengen_expert", "Schengen Vizesi"],
+      ["usa_visa_expert", "ABD Vize Uzmanı"],
+      ["student_visa_support", "Öğrenci Desteği"],
+      ["work_visa_support", "Çalışma Vizesi"],
+      ["tourist_visa_support", "Turistik Vize"],
+      ["business_visa_support", "İş / Ticari Vize"],
+      ["family_reunion_support", "Aile Birleşimi"],
+      ["appeal_support", "İtiraz / Red Sonrası"],
+    ];
+    return pairs.filter(([key]) => Boolean(f[key])).map(([, label]) => label);
+  }, [firm]);
+
+  const mainCategories = Array.isArray(firm.main_services) ? firm.main_services : [];
+  const subProcessAndSupport = Array.isArray(firm.sub_services) ? firm.sub_services : [];
+  const labelTags = Array.isArray(firm.custom_services) ? firm.custom_services : [];
+
+  // Fallback: older data may only have the merged `services` array.
+  const effectiveMainCategories =
+    mainCategories.length > 0 ? mainCategories : servicePool;
 
   return (
     <article className="flex h-full flex-col rounded-xl border border-[#0B3C5D]/10 bg-white p-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)]">
@@ -205,28 +233,73 @@ export function FirmCard({ firm }: FirmCardProps) {
         </Link>
         {socialOk ? (
           <div className="flex items-center gap-2">
-            {firm.instagram ? (
-              <a
-                href={firm.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg p-2 text-[#0B3C5D]/60 transition hover:bg-[#F7F9FB] hover:text-[#0B3C5D]"
-                aria-label="Instagram"
-              >
-                <InstagramIcon />
-              </a>
-            ) : null}
-            {firm.website ? (
-              <a
-                href={firm.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg p-2 text-[#0B3C5D]/60 transition hover:bg-[#F7F9FB] hover:text-[#0B3C5D]"
-                aria-label="Web sitesi"
-              >
-                <GlobeIcon />
-              </a>
-            ) : null}
+            {(() => {
+              const links: Array<{
+                key: string;
+                href: string;
+                label: string;
+                icon: React.ReactNode;
+              }> = [];
+
+              if (firm.website) {
+                links.push({
+                  key: "website",
+                  href: firm.website,
+                  label: "Web sitesi",
+                  icon: <GlobeIcon />,
+                });
+              }
+              if (firm.instagram) {
+                links.push({
+                  key: "instagram",
+                  href: firm.instagram,
+                  label: "Instagram",
+                  icon: <InstagramIcon />,
+                });
+              }
+              if (firm.facebook) {
+                links.push({
+                  key: "facebook",
+                  href: firm.facebook,
+                  label: "Facebook",
+                  icon: <FacebookIcon />,
+                });
+              }
+              if (firm.youtube) {
+                links.push({
+                  key: "youtube",
+                  href: firm.youtube,
+                  label: "YouTube",
+                  icon: <YouTubeIcon />,
+                });
+              }
+
+              const visible = links.slice(0, 4);
+              const extra = Math.max(0, links.length - visible.length);
+
+              return (
+                <>
+                  {visible.map((l) => (
+                    <a
+                      key={l.key}
+                      href={l.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg p-2 text-[#0B3C5D]/60 transition hover:bg-[#F7F9FB] hover:text-[#0B3C5D]"
+                      aria-label={l.label}
+                      title={l.label}
+                    >
+                      {l.icon}
+                    </a>
+                  ))}
+                  {extra > 0 ? (
+                    <span className="rounded-lg bg-[#F7F9FB] px-2 py-1 text-xs font-semibold text-[#1A1A1A]/60 ring-1 ring-[#0B3C5D]/10">
+                      +{extra}
+                    </span>
+                  ) : null}
+                </>
+              );
+            })()}
           </div>
         ) : null}
       </div>
@@ -237,17 +310,21 @@ export function FirmCard({ firm }: FirmCardProps) {
         onClose={() => setContactOpen(false)}
       />
 
-      <ChipsModal
+      <CountriesRegionsModal
         open={countriesModalOpen}
-        title="Hizmet Verilen Ülkeler"
-        items={countryPool}
         onClose={() => setCountriesModalOpen(false)}
+        countries={servedCountries}
+        regions={servedRegions}
+        title="Hizmet verilen kapsam"
       />
-      <ChipsModal
+      <ServicesCoverageModal
         open={servicesModalOpen}
-        title="Sunulan Hizmetler"
-        items={servicePool}
         onClose={() => setServicesModalOpen(false)}
+        title="Sunulan hizmetler"
+        mainCategories={effectiveMainCategories}
+        specialization={specializationLabels}
+        processSupport={subProcessAndSupport}
+        tags={labelTags}
       />
       <TextModal
         open={aboutTextModalOpen}
@@ -320,36 +397,90 @@ function GlobeIcon() {
   );
 }
 
-function ChipsModal({
+function FacebookIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M14 8h2V5h-2c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h2.1l.9-3H13V9c0-.6.4-1 1-1Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function YouTubeIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M21.5 7.3c.2.9.2 2.2.2 4.7s0 3.8-.2 4.7c-.2 1-1 1.8-2 2-1.2.2-4 .3-7.5.3s-6.3-.1-7.5-.3c-1-.2-1.8-1-2-2-.2-.9-.2-2.2-.2-4.7s0-3.8.2-4.7c.2-1 1-1.8 2-2C5.2 5 8 4.9 11.5 4.9s6.3.1 7.5.3c1 .2 1.8 1 2 2Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10.2 9.2v5.6l5.1-2.8-5.1-2.8Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function CountriesRegionsModal({
   open,
-  title,
-  items,
   onClose,
+  countries,
+  regions,
+  title,
 }: {
   open: boolean;
-  title: string;
-  items: string[];
   onClose: () => void;
+  countries: string[];
+  regions: string[];
+  title: string;
 }) {
-  if (!open) return null;
-  const chipClass =
-    "rounded-lg bg-[#F7F9FB] px-2 py-1 text-xs font-medium text-[#0B3C5D]/90 ring-1 ring-[#0B3C5D]/10";
+  const [mounted, setMounted] = useState(open);
+  const [visible, setVisible] = useState(open);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      requestAnimationFrame(() => setVisible(true));
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+
+    setVisible(false);
+    const t = window.setTimeout(() => setMounted(false), 200);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
+  if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-[9999]">
       <div
-        className="absolute inset-0 bg-black/40"
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
+          visible ? "opacity-100" : "opacity-0"
+        }`}
         onClick={onClose}
         aria-hidden
       />
-      <div className="relative mx-auto flex h-full w-full max-w-lg items-end p-3 sm:items-center">
+
+      <div className="relative mx-auto flex h-full w-full items-end p-3 sm:items-center">
         <div
-          className="w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)]"
+          className={`w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 ${
+            visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+          } max-w-2xl`}
           role="dialog"
           aria-modal="true"
           aria-label={title}
         >
-          <div className="flex items-center justify-between gap-3 border-b border-[#0B3C5D]/10 px-4 py-3">
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#0B3C5D]/10 bg-white px-4 py-3">
             <h3 className="text-sm font-semibold text-[#0B3C5D]">{title}</h3>
             <button
               type="button"
@@ -360,22 +491,257 @@ function ChipsModal({
               Kapat
             </button>
           </div>
-          <div className="max-h-[70vh] overflow-y-auto px-4 py-4">
-            {items.length ? (
-              <div className="flex flex-wrap gap-2">
-                {items.map((x) => (
-                  <span key={x} className={chipClass}>
-                    {x}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-[#1A1A1A]/55">Liste boş.</p>
-            )}
+
+          <div className="max-h-[78vh] overflow-y-auto px-4 py-5">
+            {regions.length > 0 ? (
+              <>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1A1A]/45">
+                  Hizmet verilen bölgeler
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {regions.map((r) => (
+                    <RegionChip key={r} label={r} />
+                  ))}
+                </div>
+                {countries.length > 0 ? (
+                  <div className="mt-6 border-t border-[#0B3C5D]/10" />
+                ) : null}
+              </>
+            ) : null}
+
+            {countries.length > 0 ? (
+              <>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1A1A]/45">
+                  Hizmet verilen ülkeler
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {countries.map((c) => (
+                    <CountryChip key={c} countryName={c} />
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            {countries.length === 0 && regions.length === 0 ? (
+              <p className="mt-3 text-sm text-[#1A1A1A]/55">Liste boş.</p>
+            ) : null}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function ServicesCoverageModal({
+  open,
+  onClose,
+  title,
+  mainCategories,
+  specialization,
+  processSupport,
+  tags,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  mainCategories: string[];
+  specialization: string[];
+  processSupport: string[];
+  tags: string[];
+}) {
+  const [mounted, setMounted] = useState(open);
+  const [visible, setVisible] = useState(open);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      requestAnimationFrame(() => setVisible(true));
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+
+    setVisible(false);
+    const t = window.setTimeout(() => setMounted(false), 200);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
+  if (!mounted) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999]">
+      <div
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
+          visible ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={onClose}
+        aria-hidden
+      />
+
+      <div className="relative mx-auto flex h-full w-full items-end p-3 sm:items-center">
+        <div
+          className={`w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 ${
+            visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+          } max-w-4xl`}
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+        >
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#0B3C5D]/10 bg-white px-4 py-3">
+            <h3 className="text-sm font-semibold text-[#0B3C5D]">{title}</h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-[#0B3C5D]/15 bg-white px-3 py-1 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
+              aria-label="Kapat"
+            >
+              Kapat
+            </button>
+          </div>
+
+          <div className="max-h-[78vh] overflow-y-auto px-4 py-5">
+            <ServiceGroup
+              title="Ana Hizmet Kategorileri"
+              variant="primary"
+              items={mainCategories}
+            />
+
+            {specialization.length > 0 ? (
+              <>
+                <div className="mt-7 border-t border-[#0B3C5D]/10 pt-7" />
+                <ServiceGroup
+                  title="Uzmanlık Alanları"
+                  variant="highlight"
+                  items={specialization}
+                />
+              </>
+            ) : null}
+
+            {processSupport.length > 0 ? (
+              <>
+                <div className="mt-7 border-t border-[#0B3C5D]/10 pt-7" />
+                <ServiceGroup
+                  title="Süreç ve Destek Hizmetleri"
+                  variant="secondary"
+                  items={processSupport}
+                />
+              </>
+            ) : null}
+
+            {tags.length > 0 ? (
+              <>
+                <div className="mt-7 border-t border-[#0B3C5D]/10 pt-7" />
+                <ServiceGroup
+                  title="Etiketler"
+                  variant="muted"
+                  items={tags}
+                />
+              </>
+            ) : null}
+
+            {mainCategories.length === 0 &&
+            specialization.length === 0 &&
+            processSupport.length === 0 &&
+            tags.length === 0 ? (
+              <p className="text-sm text-[#1A1A1A]/55">Liste boş.</p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ServiceGroup({
+  title,
+  variant,
+  items,
+}: {
+  title: string;
+  variant: "primary" | "highlight" | "secondary" | "muted";
+  items: string[];
+}) {
+  const filtered = items.filter(Boolean);
+  if (!filtered.length) return null;
+
+  const chipBase =
+    "inline-flex items-center rounded-full whitespace-nowrap text-[11.5px] font-semibold";
+  const chips =
+    variant === "primary"
+      ? `${chipBase} bg-[#F7F9FB] px-3 py-1 text-[#0B3C5D]/90 ring-1 ring-[#0B3C5D]/10`
+      : variant === "highlight"
+        ? `${chipBase} bg-[#D9A441]/15 px-3 py-1 text-[#1A1A1A] ring-1 ring-[#D9A441]/25`
+        : variant === "secondary"
+          ? `${chipBase} bg-white px-3 py-1 text-[#0B3C5D]/80 ring-1 ring-[#0B3C5D]/10`
+          : `${chipBase} bg-[#EEF1F4] px-2 py-1 text-[#1A1A1A]/60 ring-1 ring-[#0B3C5D]/0`;
+
+  return (
+    <div>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1A1A]/45">
+        {title}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {filtered.map((x) => (
+          <span key={x} className={chips}>
+            {x}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CountryChip({ countryName }: { countryName: string }) {
+  const code = getCountryFlagCodeFromName(countryName);
+  const [imgOk, setImgOk] = useState(true);
+  const showFlag = Boolean(code) && imgOk;
+
+  useEffect(() => setImgOk(true), [countryName]);
+
+  return (
+    <span className="inline-flex h-7 max-w-full items-center gap-2 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 text-xs font-medium text-[#0B3C5D]/85">
+      {showFlag ? (
+        <img
+          src={`https://flagcdn.com/w40/${code}.png`}
+          alt=""
+          width={24}
+          height={16}
+          className="h-4 w-auto shrink-0 rounded-[3px] object-cover"
+          loading="lazy"
+          onError={() => setImgOk(false)}
+        />
+      ) : null}
+      <span className="truncate whitespace-nowrap">{countryName}</span>
+    </span>
+  );
+}
+
+function RegionChip({ label }: { label: string }) {
+  return (
+    <span className="inline-flex h-7 max-w-full items-center gap-2 rounded-md border border-[#0B3C5D]/10 bg-[#F7F9FB] px-2.5 text-xs font-medium text-[#0B3C5D]/85">
+      <svg
+        className="h-4 w-4 text-[#328CC1]"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        />
+      </svg>
+      <span className="truncate whitespace-nowrap">{label}</span>
+    </span>
   );
 }
 
