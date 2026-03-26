@@ -62,6 +62,8 @@ function normalizeSort(sort: string | undefined): FirmSort {
     "hype_score_desc",
     "corp_desc",
     "corp_asc",
+    "founded_year_desc",
+    "founded_year_asc",
     "newest",
     "oldest",
     "name_asc",
@@ -177,6 +179,24 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
         );
       case "hype_score_desc":
         return hype(b) - hype(a);
+      case "founded_year_desc": {
+        const fa = a.founded_year;
+        const fb = b.founded_year;
+        const na =
+          typeof fa === "number" && Number.isFinite(fa) ? fa : -Infinity;
+        const nb =
+          typeof fb === "number" && Number.isFinite(fb) ? fb : -Infinity;
+        return nb - na;
+      }
+      case "founded_year_asc": {
+        const fa = a.founded_year;
+        const fb = b.founded_year;
+        const na =
+          typeof fa === "number" && Number.isFinite(fa) ? fa : Infinity;
+        const nb =
+          typeof fb === "number" && Number.isFinite(fb) ? fb : Infinity;
+        return na - nb;
+      }
       case "name_asc":
         return a.name.localeCompare(b.name, "tr");
       case "hype_desc":
@@ -232,6 +252,12 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
       break;
     case "hype_score_desc":
       query = query.order("hype_score", { ascending: false });
+      break;
+    case "founded_year_desc":
+      query = query.order("founded_year", { ascending: false });
+      break;
+    case "founded_year_asc":
+      query = query.order("founded_year", { ascending: true });
       break;
     case "corp_desc":
       query = query.order("corporateness_score", { ascending: false });

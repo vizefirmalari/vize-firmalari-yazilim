@@ -36,15 +36,36 @@ function buildApplied(
   services: string[]
 ): AppliedListingFilters {
   return {
-    countries: [...countries],
+    coverage: {
+      popularIds: [],
+      regionIds: [],
+      countries: [...countries],
+    },
     services: [...services],
     companyTypes: [],
+    trust: {
+      requireTaxCertificate: false,
+      requireLicense: false,
+      requirePhysicalOffice: false,
+      requireOfficeVerified: false,
+    },
+    serviceMode: {
+      onlineConsulting: false,
+      officeFaceToFace: false,
+      remoteSupport: false,
+      weekendSupport: false,
+    },
+    languagePro: {
+      multilingualSupport: false,
+      corporateDomain: false,
+    },
     corpMin: bounds.corp.min,
     corpMax: bounds.corp.max,
     hypeMin: bounds.hype.min,
     hypeMax: bounds.hype.max,
     yearMin: bounds.year.min,
     yearMax: bounds.year.max,
+    yearPreset: null,
   };
 }
 

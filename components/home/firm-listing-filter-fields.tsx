@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import type { AppliedListingFilters } from "@/lib/firma/listing-filters";
 import type { ListingRangeBounds } from "@/lib/firma/listing-filters";
+import { POPULAR_DESTINATIONS, REGIONS } from "@/lib/firma/coverage-catalog";
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -112,7 +113,6 @@ type FilterFieldsProps = {
   countryOptions: string[];
   serviceOptions: string[];
   companyTypeOptions: string[];
-  /** Collapsible sections (mobile sheet); plain sections on desktop */
   collapsible?: boolean;
 };
 
@@ -128,30 +128,109 @@ export function FirmListingFilterFields({
   const patch = (partial: Partial<AppliedListingFilters>) =>
     onChange({ ...draft, ...partial });
 
-  const countryBlock = (
-    <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
-      {countryOptions.map((c) => (
-        <label
-          key={c}
-          className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
-        >
-          <input
-            type="checkbox"
-            checked={draft.countries.includes(c)}
-            onChange={(e) =>
-              patch({
-                countries: toggleListItem(
-                  draft.countries,
-                  c,
-                  e.target.checked
-                ),
-              })
-            }
-            className="accent-primary"
-          />
-          <span className="truncate">{c}</span>
-        </label>
-      ))}
+  const coverageGroup = (
+    <div className="space-y-4">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
+          Popüler Ülkeler
+        </p>
+        <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
+          {POPULAR_DESTINATIONS.map((p) => (
+            <label
+              key={p.id}
+              className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+            >
+              <input
+                type="checkbox"
+                checked={draft.coverage.popularIds.includes(p.id)}
+                onChange={(e) =>
+                  patch({
+                    coverage: {
+                      ...draft.coverage,
+                      popularIds: toggleListItem(
+                        draft.coverage.popularIds,
+                        p.id,
+                        e.target.checked
+                      ),
+                    },
+                  })
+                }
+                className="accent-primary"
+              />
+              <span className="leading-snug">{p.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
+          Bölgeler
+        </p>
+        <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
+          {REGIONS.map((r) => (
+            <label
+              key={r.id}
+              className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+            >
+              <input
+                type="checkbox"
+                checked={draft.coverage.regionIds.includes(r.id)}
+                onChange={(e) =>
+                  patch({
+                    coverage: {
+                      ...draft.coverage,
+                      regionIds: toggleListItem(
+                        draft.coverage.regionIds,
+                        r.id,
+                        e.target.checked
+                      ),
+                    },
+                  })
+                }
+                className="accent-primary"
+              />
+              <span>{r.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
+          Ülke (liste)
+        </p>
+        <p className="mt-1 text-[11px] text-foreground/50">
+          Yönetimdeki ülke adlarıyla eşleşir; birden fazla seçebilirsiniz.
+        </p>
+        <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
+          {countryOptions.map((c) => (
+            <label
+              key={c}
+              className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+            >
+              <input
+                type="checkbox"
+                checked={draft.coverage.countries.includes(c)}
+                onChange={(e) =>
+                  patch({
+                    coverage: {
+                      ...draft.coverage,
+                      countries: toggleListItem(
+                        draft.coverage.countries,
+                        c,
+                        e.target.checked
+                      ),
+                    },
+                  })
+                }
+                className="accent-primary"
+              />
+              <span className="truncate">{c}</span>
+            </label>
+          ))}
+        </div>
+      </div>
     </div>
   );
 
@@ -212,48 +291,202 @@ export function FirmListingFilterFields({
       </div>
     );
 
-  const corpRange = (
-    <RangePair
-      minBound={bounds.corp.min}
-      maxBound={bounds.corp.max}
-      low={draft.corpMin}
-      high={draft.corpMax}
-      onLowChange={(v) => patch({ corpMin: Math.min(v, draft.corpMax) })}
-      onHighChange={(v) => patch({ corpMax: Math.max(v, draft.corpMin) })}
-    />
+  const trustBlock = (
+    <div className="space-y-2">
+      {(
+        [
+          ["requireTaxCertificate", "Vergi levhası mevcut"] as const,
+          ["requireLicense", "Lisans / yetki numarası var"] as const,
+          ["requirePhysicalOffice", "Fiziksel ofis var"] as const,
+          ["requireOfficeVerified", "Doğrulanmış ofis adresi"] as const,
+        ] as const
+      ).map(([key, label]) => (
+        <label
+          key={key}
+          className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+        >
+          <input
+            type="checkbox"
+            checked={draft.trust[key]}
+            onChange={(e) =>
+              patch({
+                trust: { ...draft.trust, [key]: e.target.checked },
+              })
+            }
+            className="accent-primary"
+          />
+          <span>{label}</span>
+        </label>
+      ))}
+    </div>
   );
 
-  const hypeRange = (
-    <RangePair
-      minBound={bounds.hype.min}
-      maxBound={bounds.hype.max}
-      low={draft.hypeMin}
-      high={draft.hypeMax}
-      onLowChange={(v) => patch({ hypeMin: Math.min(v, draft.hypeMax) })}
-      onHighChange={(v) => patch({ hypeMax: Math.max(v, draft.hypeMin) })}
-    />
+  const serviceModeBlock = (
+    <div className="space-y-2">
+      {(
+        [
+          ["onlineConsulting", "Çevrimiçi danışmanlık (web + kalite)"] as const,
+          ["officeFaceToFace", "Ofiste / yüz yüze"] as const,
+          ["remoteSupport", "Uzaktan destek (fiziksel ofis yok)"] as const,
+          ["weekendSupport", "Hafta sonu desteği"] as const,
+        ] as const
+      ).map(([key, label]) => (
+        <label
+          key={key}
+          className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+        >
+          <input
+            type="checkbox"
+            checked={draft.serviceMode[key]}
+            onChange={(e) =>
+              patch({
+                serviceMode: {
+                  ...draft.serviceMode,
+                  [key]: e.target.checked,
+                },
+              })
+            }
+            className="accent-primary"
+          />
+          <span className="leading-snug">{label}</span>
+        </label>
+      ))}
+    </div>
   );
 
-  const yearRange = (
-    <RangePair
-      minBound={bounds.year.min}
-      maxBound={bounds.year.max}
-      low={draft.yearMin}
-      high={draft.yearMax}
-      onLowChange={(v) => patch({ yearMin: Math.min(v, draft.yearMax) })}
-      onHighChange={(v) => patch({ yearMax: Math.max(v, draft.yearMin) })}
-    />
+  const langBlock = (
+    <div className="space-y-2">
+      <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90">
+        <input
+          type="checkbox"
+          checked={draft.languagePro.multilingualSupport}
+          onChange={(e) =>
+            patch({
+              languagePro: {
+                ...draft.languagePro,
+                multilingualSupport: e.target.checked,
+              },
+            })
+          }
+          className="accent-primary"
+        />
+        <span>Çok dilli destek (2+ dil)</span>
+      </label>
+      <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90">
+        <input
+          type="checkbox"
+          checked={draft.languagePro.corporateDomain}
+          onChange={(e) =>
+            patch({
+              languagePro: {
+                ...draft.languagePro,
+                corporateDomain: e.target.checked,
+              },
+            })
+          }
+          className="accent-primary"
+        />
+        <span>Kurumsal domain kullanımı</span>
+      </label>
+    </div>
+  );
+
+  const scoresBlock = (
+    <div className="space-y-5">
+      <div>
+        <p className="text-xs font-medium text-foreground/60">Kurumsallık Skoru</p>
+        <RangePair
+          minBound={bounds.corp.min}
+          maxBound={bounds.corp.max}
+          low={draft.corpMin}
+          high={draft.corpMax}
+          onLowChange={(v) => patch({ corpMin: Math.min(v, draft.corpMax) })}
+          onHighChange={(v) => patch({ corpMax: Math.max(v, draft.corpMin) })}
+        />
+      </div>
+      <div>
+        <p className="text-xs font-medium text-foreground/60">Hype Puanı</p>
+        <RangePair
+          minBound={bounds.hype.min}
+          maxBound={bounds.hype.max}
+          low={draft.hypeMin}
+          high={draft.hypeMax}
+          onLowChange={(v) => patch({ hypeMin: Math.min(v, draft.hypeMax) })}
+          onHighChange={(v) => patch({ hypeMax: Math.max(v, draft.hypeMin) })}
+        />
+      </div>
+    </div>
+  );
+
+  const yearBlock = (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() =>
+            patch({
+              yearPreset: draft.yearPreset === "recent" ? null : "recent",
+            })
+          }
+          className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+            draft.yearPreset === "recent"
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border text-foreground/75 hover:bg-primary/5"
+          }`}
+        >
+          En yeni (~10 yıl)
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            patch({
+              yearPreset: draft.yearPreset === "vintage" ? null : "vintage",
+            })
+          }
+          className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+            draft.yearPreset === "vintage"
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border text-foreground/75 hover:bg-primary/5"
+          }`}
+        >
+          En eski (ilk 25 yıl)
+        </button>
+      </div>
+      <p className="text-[11px] text-foreground/50">
+        İsterseniz aşağıdan tam yıl aralığını da daraltabilirsiniz.
+      </p>
+      <RangePair
+        minBound={bounds.year.min}
+        maxBound={bounds.year.max}
+        low={draft.yearMin}
+        high={draft.yearMax}
+        onLowChange={(v) =>
+          patch({
+            yearMin: Math.min(v, draft.yearMax),
+            yearPreset: null,
+          })
+        }
+        onHighChange={(v) =>
+          patch({
+            yearMax: Math.max(v, draft.yearMin),
+            yearPreset: null,
+          })
+        }
+      />
+    </div>
   );
 
   if (collapsible) {
     return (
       <>
-        <Collapsible title="Ülke">{countryBlock}</Collapsible>
+        <Collapsible title="Ülke / Bölge Seçimi">{coverageGroup}</Collapsible>
         <Collapsible title="Hizmet Türü">{serviceBlock}</Collapsible>
         <Collapsible title="Firma Türü">{companyBlock}</Collapsible>
-        <Collapsible title="Kurumsallık Skoru">{corpRange}</Collapsible>
-        <Collapsible title="Hype Puanı">{hypeRange}</Collapsible>
-        <Collapsible title="Kuruluş Yılı">{yearRange}</Collapsible>
+        <Collapsible title="Kurumsallık & Yasal Yapı">{trustBlock}</Collapsible>
+        <Collapsible title="Hizmet Biçimi">{serviceModeBlock}</Collapsible>
+        <Collapsible title="Dil & Profesyonellik">{langBlock}</Collapsible>
+        <Collapsible title="Kurumsallık & Hype Skoru">{scoresBlock}</Collapsible>
+        <Collapsible title="Kuruluş Yılı">{yearBlock}</Collapsible>
       </>
     );
   }
@@ -261,56 +494,15 @@ export function FirmListingFilterFields({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold text-foreground">Ülke</p>
-        <div className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1">
-          {countryOptions.map((c) => (
-            <label
-              key={c}
-              className="flex cursor-pointer items-center gap-2 text-sm"
-            >
-              <input
-                type="checkbox"
-                checked={draft.countries.includes(c)}
-                onChange={(e) =>
-                  patch({
-                    countries: toggleListItem(
-                      draft.countries,
-                      c,
-                      e.target.checked
-                    ),
-                  })
-                }
-                className="accent-primary"
-              />
-              {c}
-            </label>
-          ))}
-        </div>
+        <p className="text-sm font-semibold text-foreground">
+          Ülke / Bölge Seçimi
+        </p>
+        <div className="mt-3">{coverageGroup}</div>
       </div>
 
       <div>
         <p className="text-sm font-semibold text-foreground">Hizmet Türü</p>
-        <div className="mt-3 space-y-2">
-          {serviceOptions.map((s) => (
-            <label key={s} className="flex cursor-pointer items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={draft.services.includes(s)}
-                onChange={(e) =>
-                  patch({
-                    services: toggleListItem(
-                      draft.services,
-                      s,
-                      e.target.checked
-                    ),
-                  })
-                }
-                className="accent-primary"
-              />
-              {s}
-            </label>
-          ))}
-        </div>
+        <div className="mt-3">{serviceBlock}</div>
       </div>
 
       <div>
@@ -320,19 +512,33 @@ export function FirmListingFilterFields({
 
       <div>
         <p className="text-sm font-semibold text-foreground">
-          Kurumsallık Skoru
+          Kurumsallık & Yasal Yapı
         </p>
-        <div className="mt-3">{corpRange}</div>
+        <div className="mt-3">{trustBlock}</div>
       </div>
 
       <div>
-        <p className="text-sm font-semibold text-foreground">Hype Puanı</p>
-        <div className="mt-3">{hypeRange}</div>
+        <p className="text-sm font-semibold text-foreground">Hizmet Biçimi</p>
+        <div className="mt-3">{serviceModeBlock}</div>
+      </div>
+
+      <div>
+        <p className="text-sm font-semibold text-foreground">
+          Dil & Profesyonellik
+        </p>
+        <div className="mt-3">{langBlock}</div>
+      </div>
+
+      <div>
+        <p className="text-sm font-semibold text-foreground">
+          Kurumsallık & Hype Skoru
+        </p>
+        <div className="mt-3">{scoresBlock}</div>
       </div>
 
       <div>
         <p className="text-sm font-semibold text-foreground">Kuruluş Yılı</p>
-        <div className="mt-3">{yearRange}</div>
+        <div className="mt-3">{yearBlock}</div>
       </div>
     </div>
   );

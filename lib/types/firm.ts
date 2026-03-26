@@ -139,6 +139,8 @@ export type FirmSort =
   | "hype_score_desc"
   | "corp_desc"
   | "corp_asc"
+  | "founded_year_desc"
+  | "founded_year_asc"
   | "newest"
   | "oldest"
   | "name_asc";
