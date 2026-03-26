@@ -21,6 +21,7 @@ export function FirmCard({ firm }: FirmCardProps) {
   const [aboutTextModalOpen, setAboutTextModalOpen] = useState(false);
 
   const corporate = firm.corporateness_score;
+  const hype = typeof firm.hype_score === "number" && Number.isFinite(firm.hype_score) ? firm.hype_score : 0;
   const countryPool = Array.isArray(firm.countries) ? firm.countries : [];
   const shownCountries = countryPool.slice(0, 3);
   const restCountries = Math.max(0, countryPool.length - shownCountries.length);
@@ -66,11 +67,11 @@ export function FirmCard({ firm }: FirmCardProps) {
         ) : null}
       </div>
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 space-y-4">
         <div>
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-[#1A1A1A]/60">
             <span className="inline-flex items-center">
-              Güven / Kurumsallık
+              Kurumsallık Skoru
               <ScoreInfoButton
                 label="Kurumsallık Skoru hakkında"
                 text={CORP_INFO}
@@ -81,7 +82,7 @@ export function FirmCard({ firm }: FirmCardProps) {
             </span>
           </div>
           <div
-            className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#0B3C5D]/10"
+            className="mt-1.5 h-1 overflow-hidden rounded-full bg-[#0B3C5D]/10"
             role="progressbar"
             aria-valuenow={corporate}
             aria-valuemin={0}
@@ -94,12 +95,16 @@ export function FirmCard({ firm }: FirmCardProps) {
             />
           </div>
         </div>
+
+        <div className="text-xs font-semibold text-[#1A1A1A]/60">
+          Hype Puanı: <span className="tabular-nums text-[#1A1A1A]">{hype}</span>
+        </div>
       </div>
 
       <button
         type="button"
         onClick={() => setAboutTextModalOpen(true)}
-        className="mt-4 line-clamp-2 cursor-pointer text-left text-sm leading-relaxed text-[#1A1A1A]/75"
+        className="mt-5 line-clamp-2 cursor-pointer text-left text-sm leading-relaxed text-[#1A1A1A]/75"
         aria-label="Açıklamayı tam olarak görüntüle"
       >
         {descriptionText}

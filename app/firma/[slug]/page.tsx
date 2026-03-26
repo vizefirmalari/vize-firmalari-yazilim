@@ -9,6 +9,7 @@ import { getSiteUrl } from "@/lib/env";
 import type { FirmRow } from "@/lib/types/firm";
 import { FirmServiceScope } from "@/components/firma/firm-service-scope";
 import { SectionReveal } from "@/components/home/section-reveal";
+import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -21,11 +22,22 @@ function whatsappHref(raw: string): string {
 
 function jsonLd(firm: FirmRow, url: string) {
   const ogOrLogo = firm.og_image_url?.trim() || firm.logo_url || undefined;
-  const tags = Array.isArray(firm.tags)
-    ? firm.tags.filter(Boolean)
-    : [];
-  const keywords = tags.length ? tags.join(", ") : undefined;
-  const countries = Array.isArray(firm.countries) ? firm.countries : [];
+  const tags = Array.isArray(firm.tags) ? firm.tags.filter(Boolean) : [];
+  const allCoverage = Array.isArray(firm.countries) ? firm.countries : [];
+  const { regions, countries } = splitRegionsAndCountries(allCoverage);
+  const coverageAll = [...regions, ...countries];
+
+  const keywordSet = new Set<string>();
+  for (const k of tags) {
+    const s = String(k).trim();
+    if (s) keywordSet.add(s);
+  }
+  for (const c of coverageAll) {
+    const s = String(c).trim();
+    if (s) keywordSet.add(s);
+  }
+  const keywords = keywordSet.size ? Array.from(keywordSet).join(", ") : undefined;
+
   return {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
@@ -35,7 +47,7 @@ function jsonLd(firm: FirmRow, url: string) {
     telephone: firm.phone ?? undefined,
     email: firm.email ?? undefined,
     keywords,
-    areaServed: countries.map((c) => ({
+    areaServed: coverageAll.map((c) => ({
       "@type": "Place",
       name: c,
     })),
@@ -105,7 +117,8 @@ export default async function FirmaPage({ params }: PageProps) {
   const firm = await getFirmBySlug(slug);
   if (!firm) notFound();
 
-  const countries = Array.isArray(firm.countries) ? firm.countries : [];
+  const allCoverage = Array.isArray(firm.countries) ? firm.countries : [];
+  const { regions, countries } = splitRegionsAndCountries(allCoverage);
   const cityText = [firm.city, firm.district].filter(Boolean).join(" / ");
   const locationText = [cityText, firm.hq_country].filter((x) => x && String(x).trim()).join(" · ");
   const foundedText =
@@ -143,6 +156,7 @@ export default async function FirmaPage({ params }: PageProps) {
 
   const hasAbout = Boolean(aboutText);
   const hasCountries = countries.length > 0;
+  const hasRegions = regions.length > 0;
   const hasServices = Array.isArray(serviceItems) && serviceItems.length > 0;
   const hasSubServices = subServices.length > 0;
   const hasCustomServices = customServices.length > 0;
@@ -269,7 +283,7 @@ export default async function FirmaPage({ params }: PageProps) {
                   </h1>
                   <p className="mt-2 text-sm text-white/80">
                     <span>
-                      Güven / Kurumsallık Skoru:{" "}
+                      Kurumsallık Skoru:{" "}
                       <span className="font-semibold text-[#D9A441]">
                         {firm.corporateness_score}/100
                       </span>
@@ -350,11 +364,13 @@ export default async function FirmaPage({ params }: PageProps) {
               ) : null}
 
               {(hasCountries ||
+                hasRegions ||
                 hasServices ||
                 hasSpecialization ||
                 hasSubServices) ? (
                 <SectionReveal delayMs={60}>
                   <FirmServiceScope
+                    regions={regions}
                     countries={countries}
                     mainServices={serviceItems}
                     subServices={subServices}

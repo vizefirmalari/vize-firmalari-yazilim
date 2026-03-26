@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { getCountryFlagCodeFromName } from "@/lib/firma/country-flag";
 
 const MAX_COUNTRIES_VISIBLE = 6;
@@ -9,6 +10,7 @@ const MAX_MAIN_SERVICES_VISIBLE = 4;
 const MAX_SPECIALIZATION_VISIBLE = 4;
 
 type FirmServiceScopeProps = {
+  regions: string[];
   countries: string[];
   mainServices: string[];
   subServices: string[];
@@ -16,15 +18,30 @@ type FirmServiceScopeProps = {
 };
 
 export function FirmServiceScope({
+  regions,
   countries,
   mainServices,
   subServices,
   specializationLabels,
 }: FirmServiceScopeProps) {
   const [countriesOpen, setCountriesOpen] = useState(false);
+  const [regionsOpen, setRegionsOpen] = useState(false);
   const [mainServicesOpen, setMainServicesOpen] = useState(false);
   const [specOpen, setSpecOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const anyModalOpen =
+    countriesOpen || regionsOpen || mainServicesOpen || specOpen || detailsOpen;
+
+  // Prevent background scroll while any modal is open.
+  useEffect(() => {
+    if (!anyModalOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [anyModalOpen]);
 
   const idBase = useId();
   const countriesTitleId = `${idBase}-countries`;
@@ -34,6 +51,9 @@ export function FirmServiceScope({
 
   const shownCountries = countries.slice(0, MAX_COUNTRIES_VISIBLE);
   const restCountryCount = Math.max(0, countries.length - shownCountries.length);
+
+  const shownRegions = regions.slice(0, MAX_COUNTRIES_VISIBLE);
+  const restRegionCount = Math.max(0, regions.length - shownRegions.length);
 
   const shownMain = mainServices.slice(0, MAX_MAIN_SERVICES_VISIBLE);
   const restMainCount = Math.max(0, mainServices.length - shownMain.length);
@@ -45,11 +65,12 @@ export function FirmServiceScope({
   );
 
   const hasCountries = countries.length > 0;
+  const hasRegions = regions.length > 0;
   const hasMain = mainServices.length > 0;
   const hasSpec = specializationLabels.length > 0;
   // "Tüm hizmet detayları" etkileşimi yalnızca alt hizmet detayları (süreç/alt kalemler) için gösterilir.
   const hasDetailsContent = subServices.length > 0;
-  const hasSummaryAboveDetails = hasCountries || hasMain || hasSpec;
+  const hasSummaryAboveDetails = hasRegions || hasCountries || hasMain || hasSpec;
 
   const detailSummaryParts: string[] = [];
   if (subServices.length > 0) {
@@ -61,9 +82,34 @@ export function FirmServiceScope({
     <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold text-[#0B3C5D]">Hizmet kapsamı</h2>
 
+      {hasRegions ? (
+        <div className="mt-7">
+          <h3 className="text-sm font-semibold text-[#0B3C5D]">Hizmet verilen bölgeler</h3>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {shownRegions.map((r) => (
+              <li key={r}>
+                <RegionChip regionLabel={r} />
+              </li>
+            ))}
+            {restRegionCount > 0 ? (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setRegionsOpen(true)}
+                  className="rounded-md border border-[#D9A441]/35 bg-[#FFFBF5] px-2.5 py-1 text-xs font-semibold text-[#1A1A1A] transition hover:bg-[#FFF6E8]"
+                  aria-label={`Tüm bölgeleri görüntüle, ${restRegionCount} ek`}
+                >
+                  +{restRegionCount} bölge
+                </button>
+              </li>
+            ) : null}
+          </ul>
+        </div>
+      ) : null}
+
       {hasCountries ? (
         <div className="mt-7">
-          <h3 className="text-sm font-semibold text-[#0B3C5D]">Ülkeler</h3>
+          <h3 className="text-sm font-semibold text-[#0B3C5D]">Hizmet verilen ülkeler</h3>
           <ul className="mt-3 flex flex-wrap gap-2">
             {shownCountries.map((c) => {
               return (
@@ -192,6 +238,19 @@ export function FirmServiceScope({
       </ModalShell>
 
       <ModalShell
+        open={regionsOpen}
+        onClose={() => setRegionsOpen(false)}
+        titleId={`${idBase}-regions`}
+        title="Hizmet verilen bölgeler"
+      >
+        <div className="flex flex-wrap gap-2">
+          {regions.map((r) => (
+            <RegionChip key={r} regionLabel={r} />
+          ))}
+        </div>
+      </ModalShell>
+
+      <ModalShell
         open={mainServicesOpen}
         onClose={() => setMainServicesOpen(false)}
         titleId={mainTitleId}
@@ -238,6 +297,7 @@ export function FirmServiceScope({
         onClose={() => setDetailsOpen(false)}
         titleId={detailsTitleId}
         title="Tüm Hizmet Detayları"
+        size="wide"
       >
         <div className="space-y-8">
           {mainServices.length > 0 ? (
@@ -271,11 +331,31 @@ export function FirmServiceScope({
               icon={<WorldIcon />}
               divider={mainServices.length > 0}
             >
-              <div className="mt-3 flex flex-wrap gap-2">
-                {countries.map((c) => (
-                  <CountryChip key={c} countryName={c} />
-                ))}
-              </div>
+              {regions.length > 0 ? (
+                <div className="mt-2">
+                  <h5 className="text-xs font-semibold uppercase tracking-wide text-[#0B3C5D]/70">
+                    Bölgeler
+                  </h5>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {regions.map((r) => (
+                      <RegionChip key={r} regionLabel={r} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {countries.length > 0 ? (
+                <div className={regions.length > 0 ? "mt-6" : "mt-3"}>
+                  <h5 className="text-xs font-semibold uppercase tracking-wide text-[#0B3C5D]/70">
+                    Ülkeler
+                  </h5>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {countries.map((c) => (
+                      <CountryChip key={c} countryName={c} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </DetailGroup>
           ) : null}
 
@@ -283,7 +363,7 @@ export function FirmServiceScope({
             <DetailGroup
               title="Süreç Hizmetleri"
               icon={<ServiceIcon />}
-              divider={countries.length > 0 || mainServices.length > 0}
+              divider={countries.length > 0 || regions.length > 0 || mainServices.length > 0}
             >
               <ul className="mt-3 space-y-2">
                 {subServices.map((s) => (
@@ -331,6 +411,14 @@ function DetailGroup({
       </h4>
       {children}
     </div>
+  );
+}
+
+function RegionChip({ regionLabel }: { regionLabel: string }) {
+  return (
+    <span className="inline-flex h-7 max-w-full items-center gap-2 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 text-xs font-medium text-[#0B3C5D]/85">
+      <span className="truncate whitespace-nowrap">{regionLabel}</span>
+    </span>
   );
 }
 
@@ -390,12 +478,14 @@ function ModalShell({
   onClose,
   title,
   titleId,
+  size = "default",
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   titleId: string;
+  size?: "default" | "wide";
   children: ReactNode;
 }) {
   const [mounted, setMounted] = useState(open);
@@ -425,8 +515,17 @@ function ModalShell({
 
   if (!mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50">
+  const portalRoot =
+    typeof document !== "undefined" ? document.body : null;
+  if (!portalRoot) return null;
+
+  const maxWidthClass =
+    size === "wide"
+      ? "max-w-4xl sm:max-w-3xl lg:max-w-5xl"
+      : "max-w-lg";
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999]">
       <div
         className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
           visible ? "opacity-100" : "opacity-0"
@@ -434,9 +533,9 @@ function ModalShell({
         onClick={onClose}
         aria-hidden
       />
-      <div className="relative mx-auto flex h-full w-full max-w-lg items-end justify-center p-3 sm:items-center">
+      <div className={`relative mx-auto flex h-full w-full items-end justify-center p-3 sm:items-center ${maxWidthClass}`}>
         <div
-          className={`w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 ${
+          className={`relative z-[10001] w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 ${
             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
           }`}
           role="dialog"
@@ -444,7 +543,7 @@ function ModalShell({
           aria-labelledby={titleId}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#0B3C5D]/10 bg-white px-4 py-3">
+          <div className="sticky top-0 z-[10002] flex items-center justify-between gap-3 border-b border-[#0B3C5D]/10 bg-white px-4 py-3">
             <h3 id={titleId} className="text-sm font-semibold text-[#0B3C5D]">
               {title}
             </h3>
@@ -456,12 +555,13 @@ function ModalShell({
               Kapat
             </button>
           </div>
-          <div className="max-h-[min(70vh,560px)] overflow-y-auto px-4 py-4">
+          <div className="max-h-[min(70vh,620px)] overflow-y-auto px-4 py-5">
             {children}
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    portalRoot
   );
 }
 
