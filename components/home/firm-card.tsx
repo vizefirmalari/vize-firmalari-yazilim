@@ -16,24 +16,28 @@ type FirmCardProps = {
 
 export function FirmCard({ firm }: FirmCardProps) {
   const [contactOpen, setContactOpen] = useState(false);
+  const [countriesModalOpen, setCountriesModalOpen] = useState(false);
+  const [servicesModalOpen, setServicesModalOpen] = useState(false);
+  const [aboutTextModalOpen, setAboutTextModalOpen] = useState(false);
+
   const corporate = firm.corporateness_score;
-  const countryPool =
-    firm.featured_countries && firm.featured_countries.length > 0
-      ? firm.featured_countries
-      : firm.countries;
+  const countryPool = Array.isArray(firm.countries) ? firm.countries : [];
   const shownCountries = countryPool.slice(0, 3);
   const restCountries = Math.max(0, countryPool.length - shownCountries.length);
-  const servicePool = firm.services ?? [];
+  const servicePool = Array.isArray(firm.services) ? firm.services : [];
   const shownServices = servicePool.slice(0, 3);
   const restServices = Math.max(0, servicePool.length - shownServices.length);
   const contactOk = firm.contact_popup_enabled !== false;
   const quickApplyOk = firm.quick_apply_enabled !== false;
   const socialOk = firm.social_buttons_enabled !== false;
 
+  const descriptionText =
+    firm.short_description ?? firm.description ?? "Bu firma için açıklama yakında eklenecek.";
+
   return (
     <article className="flex h-full flex-col rounded-xl border border-[#0B3C5D]/10 bg-white p-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)]">
       <div className="flex flex-col items-center text-center">
-        <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-[#F7F9FB] ring-1 ring-[#0B3C5D]/10">
+        <div className="relative flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-xl bg-[#F7F9FB] ring-1 ring-[#0B3C5D]/10">
           {firm.logo_url ? (
             <Image
               src={firm.logo_url}
@@ -41,8 +45,8 @@ export function FirmCard({ firm }: FirmCardProps) {
                 firm.logo_alt_text?.trim() ||
                 `${firm.name} logosu`
               }
-              width={64}
-              height={64}
+              width={72}
+              height={72}
               className="h-full w-full object-contain"
               loading="lazy"
             />
@@ -52,7 +56,7 @@ export function FirmCard({ firm }: FirmCardProps) {
             </span>
           )}
         </div>
-        <h3 className="mt-4 text-lg font-semibold text-[#0B3C5D]">
+        <h3 className="mt-3 text-lg font-semibold text-[#0B3C5D]">
           {firm.name}
         </h3>
         {firm.short_badge ? (
@@ -92,11 +96,14 @@ export function FirmCard({ firm }: FirmCardProps) {
         </div>
       </div>
 
-      <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-[#1A1A1A]/75">
-        {firm.short_description ??
-          firm.description ??
-          "Bu firma için açıklama yakında eklenecek."}
-      </p>
+      <button
+        type="button"
+        onClick={() => setAboutTextModalOpen(true)}
+        className="mt-4 line-clamp-2 cursor-pointer text-left text-sm leading-relaxed text-[#1A1A1A]/75"
+        aria-label="Açıklamayı tam olarak görüntüle"
+      >
+        {descriptionText}
+      </button>
 
       <div className="mt-4 flex flex-wrap justify-center gap-1.5">
         {shownCountries.map((c) => (
@@ -108,9 +115,14 @@ export function FirmCard({ firm }: FirmCardProps) {
           </span>
         ))}
         {restCountries > 0 ? (
-          <span className="rounded-lg bg-[#D9A441]/15 px-2 py-1 text-xs font-semibold text-[#1A1A1A]">
+          <button
+            type="button"
+            onClick={() => setCountriesModalOpen(true)}
+            className="rounded-lg bg-[#D9A441]/15 px-2 py-1 text-xs font-semibold text-[#1A1A1A]"
+            aria-label="Tüm ülkeleri görüntüle"
+          >
             +{restCountries}
-          </span>
+          </button>
         ) : null}
       </div>
 
@@ -125,9 +137,14 @@ export function FirmCard({ firm }: FirmCardProps) {
             </span>
           ))}
           {restServices > 0 ? (
-            <span className="rounded-lg bg-[#F7F9FB] px-2 py-1 text-[11px] font-semibold text-[#1A1A1A]/70">
+            <button
+              type="button"
+              onClick={() => setServicesModalOpen(true)}
+              className="rounded-lg bg-[#F7F9FB] px-2 py-1 text-[11px] font-semibold text-[#1A1A1A]/70"
+              aria-label="Tüm hizmetleri görüntüle"
+            >
               +{restServices} hizmet
-            </span>
+            </button>
           ) : null}
         </div>
       ) : null}
@@ -214,6 +231,25 @@ export function FirmCard({ firm }: FirmCardProps) {
         open={contactOk && contactOpen}
         onClose={() => setContactOpen(false)}
       />
+
+      <ChipsModal
+        open={countriesModalOpen}
+        title="Hizmet Verilen Ülkeler"
+        items={countryPool}
+        onClose={() => setCountriesModalOpen(false)}
+      />
+      <ChipsModal
+        open={servicesModalOpen}
+        title="Sunulan Hizmetler"
+        items={servicePool}
+        onClose={() => setServicesModalOpen(false)}
+      />
+      <TextModal
+        open={aboutTextModalOpen}
+        title="Açıklama"
+        text={descriptionText}
+        onClose={() => setAboutTextModalOpen(false)}
+      />
     </article>
   );
 }
@@ -276,5 +312,113 @@ function GlobeIcon() {
         strokeWidth="1.5"
       />
     </svg>
+  );
+}
+
+function ChipsModal({
+  open,
+  title,
+  items,
+  onClose,
+}: {
+  open: boolean;
+  title: string;
+  items: string[];
+  onClose: () => void;
+}) {
+  if (!open) return null;
+  const chipClass =
+    "rounded-lg bg-[#F7F9FB] px-2 py-1 text-xs font-medium text-[#0B3C5D]/90 ring-1 ring-[#0B3C5D]/10";
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <div
+        className="absolute inset-0 bg-black/40"
+        onClick={onClose}
+        aria-hidden
+      />
+      <div className="relative mx-auto flex h-full w-full max-w-lg items-end p-3 sm:items-center">
+        <div
+          className="w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)]"
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-[#0B3C5D]/10 px-4 py-3">
+            <h3 className="text-sm font-semibold text-[#0B3C5D]">{title}</h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-[#0B3C5D]/15 bg-white px-3 py-1 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
+              aria-label="Kapat"
+            >
+              Kapat
+            </button>
+          </div>
+          <div className="max-h-[70vh] overflow-y-auto px-4 py-4">
+            {items.length ? (
+              <div className="flex flex-wrap gap-2">
+                {items.map((x) => (
+                  <span key={x} className={chipClass}>
+                    {x}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-[#1A1A1A]/55">Liste boş.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TextModal({
+  open,
+  title,
+  text,
+  onClose,
+}: {
+  open: boolean;
+  title: string;
+  text: string;
+  onClose: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <div
+        className="absolute inset-0 bg-black/40"
+        onClick={onClose}
+        aria-hidden
+      />
+      <div className="relative mx-auto flex h-full w-full max-w-2xl items-end p-3 sm:items-center">
+        <div
+          className="w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)]"
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-[#0B3C5D]/10 px-4 py-3">
+            <h3 className="text-sm font-semibold text-[#0B3C5D]">{title}</h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-[#0B3C5D]/15 bg-white px-3 py-1 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
+              aria-label="Kapat"
+            >
+              Kapat
+            </button>
+          </div>
+          <div className="max-h-[70vh] overflow-y-auto px-4 py-4">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#1A1A1A]/75">
+              {text}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -19,8 +19,11 @@ function whatsappHref(raw: string): string {
 
 function jsonLd(firm: FirmRow, url: string) {
   const ogOrLogo = firm.og_image_url?.trim() || firm.logo_url || undefined;
-  const keywords =
-    firm.tags?.filter(Boolean).length ? firm.tags?.join(", ") : undefined;
+  const tags = Array.isArray(firm.tags)
+    ? firm.tags.filter(Boolean)
+    : [];
+  const keywords = tags.length ? tags.join(", ") : undefined;
+  const countries = Array.isArray(firm.countries) ? firm.countries : [];
   return {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
@@ -30,7 +33,7 @@ function jsonLd(firm: FirmRow, url: string) {
     telephone: firm.phone ?? undefined,
     email: firm.email ?? undefined,
     keywords,
-    areaServed: firm.countries.map((c) => ({
+    areaServed: countries.map((c) => ({
       "@type": "Place",
       name: c,
     })),
@@ -99,6 +102,8 @@ export default async function FirmaPage({ params }: PageProps) {
   const { slug } = await params;
   const firm = await getFirmBySlug(slug);
   if (!firm) notFound();
+
+  const countries = Array.isArray(firm.countries) ? firm.countries : [];
 
   const siteUrl = getSiteUrl();
   const pageUrl = `${siteUrl}/firma/${firm.slug}`;
@@ -185,7 +190,7 @@ export default async function FirmaPage({ params }: PageProps) {
                   Hizmet verilen ülkeler
                 </h2>
                 <ul className="mt-4 flex flex-wrap gap-2">
-                  {firm.countries.map((c) => (
+                  {countries.map((c) => (
                     <li key={c}>
                       <span className="inline-flex rounded-lg bg-[#F7F9FB] px-3 py-1 text-sm font-medium text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10">
                         {c}
