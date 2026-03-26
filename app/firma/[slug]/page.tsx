@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { getAllFirmSlugs, getFirmBySlug } from "@/lib/data/firms";
 import { getSiteUrl } from "@/lib/env";
 import type { FirmRow } from "@/lib/types/firm";
+import { FirmServiceScope } from "@/components/firma/firm-service-scope";
 import { SectionReveal } from "@/components/home/section-reveal";
 
 type PageProps = {
@@ -16,53 +17,6 @@ type PageProps = {
 function whatsappHref(raw: string): string {
   const digits = raw.replace(/\D/g, "");
   return `https://wa.me/${digits}`;
-}
-
-function countryFlagEmoji(countryName: string): string | null {
-  const s = countryName.trim().toLowerCase();
-  const map: Record<string, string> = {
-    türkiye: "🇹🇷",
-    türki̇ye: "🇹🇷",
-    turkey: "🇹🇷",
-
-    almanya: "🇩🇪",
-    fransa: "🇫🇷",
-    italya: "🇮🇹",
-    ispanya: "🇪🇸",
-    i̇spanya: "🇪🇸",
-    hollanda: "🇳🇱",
-    polonya: "🇵🇱",
-    avusturya: "🇦🇹",
-    çekya: "🇨🇿",
-    çek: "🇨🇿",
-    çin: "🇨🇳",
-    japonya: "🇯🇵",
-    birleşik: "🇬🇧",
-    birleşikkrallık: "🇬🇧",
-    uk: "🇬🇧",
-    ingiltere: "🇬🇧",
-    ingliltere: "🇬🇧",
-    britanya: "🇬🇧",
-    brit: "🇬🇧",
-    amerika: "🇺🇸",
-    usa: "🇺🇸",
-    birleşikdevletler: "🇺🇸",
-    kanada: "🇨🇦",
-    birleşmiş: "🇺🇸",
-
-    schengen: "🇪🇺",
-    avrupa: "🇪🇺",
-  };
-  return map[s] ?? null;
-}
-
-function chipClass(
-  variant: "neutral" | "gold" = "neutral"
-): string {
-  if (variant === "gold") {
-    return "rounded-lg bg-[#D9A441]/15 px-3 py-1 text-sm font-semibold text-[#1A1A1A]";
-  }
-  return "rounded-lg bg-[#F7F9FB] px-3 py-1 text-sm font-medium text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10";
 }
 
 function jsonLd(firm: FirmRow, url: string) {
@@ -395,114 +349,19 @@ export default async function FirmaPage({ params }: PageProps) {
                 </SectionReveal>
               ) : null}
 
-              {(hasCountries || hasServices || hasSpecialization || hasSubServices || hasCustomServices) ? (
+              {(hasCountries ||
+                hasServices ||
+                hasSpecialization ||
+                hasSubServices ||
+                hasCustomServices) ? (
                 <SectionReveal delayMs={60}>
-                  <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
-                  <h2 className="text-lg font-semibold text-[#0B3C5D]">
-                    Hizmet kapsamı
-                  </h2>
-
-                  {hasCountries ? (
-                    <>
-                      <h3 className="mt-5 text-sm font-semibold text-[#0B3C5D]">
-                        Ülkeler
-                      </h3>
-                      <ul className="mt-3 flex flex-wrap gap-2">
-                        {countries.map((c) => {
-                          const flag = countryFlagEmoji(c);
-                          return (
-                            <li key={c}>
-                              <span className={chipClass()}>
-                                <span className="mr-2" aria-hidden>
-                                  {flag ?? "🌍"}
-                                </span>
-                                {c}
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </>
-                  ) : null}
-
-                  {hasServices ? (
-                    <>
-                      <h3 className="mt-6 text-sm font-semibold text-[#0B3C5D]">
-                        Sunulan hizmetler
-                      </h3>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {serviceItems.map((s) => (
-                          <span
-                            key={s}
-                            className={`${chipClass("neutral")} inline-flex items-center gap-2`}
-                          >
-                            <span
-                              className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-[#328CC1]/10"
-                              aria-hidden
-                            >
-                              <ServiceIcon />
-                            </span>
-                            <span>{s}</span>
-                          </span>
-                        ))}
-                      </div>
-                    </>
-                  ) : null}
-
-                  {hasSubServices ? (
-                    <>
-                      <h3 className="mt-6 text-sm font-semibold text-[#0B3C5D]">
-                        Alt hizmet detayları
-                      </h3>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {subServices.map((s) => (
-                          <span
-                            key={s}
-                            className={`${chipClass("neutral")} inline-flex items-center gap-2`}
-                          >
-                            <span
-                              className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-[#328CC1]/10"
-                              aria-hidden
-                            >
-                              <ServiceIcon />
-                            </span>
-                            <span>{s}</span>
-                          </span>
-                        ))}
-                      </div>
-                    </>
-                  ) : null}
-
-                  {hasCustomServices ? (
-                    <>
-                      <h3 className="mt-6 text-sm font-semibold text-[#0B3C5D]">
-                        Özel etiketler
-                      </h3>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {customServices.map((s) => (
-                          <span key={s} className={chipClass("gold")}>
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </>
-                  ) : null}
-
-                  {hasSpecialization ? (
-                    <>
-                      <h3 className="mt-6 text-sm font-semibold text-[#0B3C5D]">
-                        Uzmanlık vurgusu
-                      </h3>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {specializationFlags.map((s) => (
-                          <span key={s} className={chipClass("gold")}>
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </>
-                  ) : null}
-                  </section>
+                  <FirmServiceScope
+                    countries={countries}
+                    mainServices={serviceItems}
+                    subServices={subServices}
+                    customTags={customServices}
+                    specializationLabels={specializationFlags}
+                  />
                 </SectionReveal>
               ) : null}
 
@@ -1031,33 +890,3 @@ function initials(name: string): string {
   return (parts[0]![0]! + parts[1]![0]!).toUpperCase();
 }
 
-function ServiceIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M9 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-      />
-      <path
-        d="M5 9V7a2 2 0 0 1 2-2h2"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      <path
-        d="M9.5 12h7"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
