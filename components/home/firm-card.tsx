@@ -55,6 +55,17 @@ export function FirmCard({ firm }: FirmCardProps) {
     return pairs.filter(([key]) => Boolean(f[key])).map(([, label]) => label);
   }, [firm]);
 
+  /** Firma türü (company_type) · kuruluş yılı (founded_year); yalnızca en az biri doluysa. */
+  const firmTypeAndYearLine = useMemo(() => {
+    const type = firm.company_type?.trim();
+    const year =
+      typeof firm.founded_year === "number" && Number.isFinite(firm.founded_year)
+        ? String(firm.founded_year)
+        : "";
+    if (!type && !year) return null;
+    return [type, year].filter(Boolean).join(" · ");
+  }, [firm.company_type, firm.founded_year]);
+
   const mainCategories = Array.isArray(firm.main_services) ? firm.main_services : [];
   const subProcessAndSupport = Array.isArray(firm.sub_services) ? firm.sub_services : [];
   const labelTags = Array.isArray(firm.custom_services) ? firm.custom_services : [];
@@ -91,6 +102,11 @@ export function FirmCard({ firm }: FirmCardProps) {
         {firm.short_badge ? (
           <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-[#D9A441]">
             {firm.short_badge}
+          </p>
+        ) : null}
+        {firmTypeAndYearLine ? (
+          <p className="mt-1 max-w-full truncate px-1 text-[10px] leading-tight text-[#1A1A1A]/45">
+            {firmTypeAndYearLine}
           </p>
         ) : null}
       </div>
