@@ -1,0 +1,148 @@
+---
+alwaysApply: true
+---
+
+1) Genel Ürün Yaklaşımı
+Bu proje sıradan bir web sitesi değil, premium, hızlı, ölçeklenebilir, SEO odaklı, dönüşüm gücü yüksek bir web uygulaması olarak ele alınmalıdır.
+Üretilen her çözüm; performans, güven, kullanıcı deneyimi, mobil uyumluluk, bakım kolaylığı ve gelir modeli açısından değerlendirilmelidir.
+Kullanıcıdan gelen promptlar birebir kopyalanmamalı; mevcut mimari, proje hedefi, UI kalitesi ve teknik sürdürülebilirlik dikkate alınarak daha gelişmiş, daha tutarlı ve daha profesyonel bir versiyona dönüştürülmelidir.
+Her zaman amaç: daha premium, daha net, daha hızlı, daha SEO uyumlu ve daha yüksek dönüşüm sağlayan bir sonuç üretmektir.
+2) Teknik Altyapı Kuralları
+Altyapı temelinde:
+Frontend / Fullstack: Next.js
+Backend / Database / Auth / Storage / Realtime: Supabase
+Deployment: Vercel
+Geliştirilen her yapı bu teknoloji yığınına tam uyumlu olmalıdır.
+Çözüm önerileri gereksiz kütüphane bağımlılığı oluşturmamalı; önce mevcut stack ile çözülebilen en temiz yöntem tercih edilmelidir.
+Mümkün olan her yerde:
+ölçeklenebilir dosya yapısı,
+modüler component mimarisi,
+tekrar kullanılabilir servis katmanı,
+temiz TypeScript tipleri,
+güvenli veri akışı
+kullanılmalıdır.
+3) SEO Önceliği
+Sistem baştan itibaren SEO-first mantığıyla tasarlanmalıdır.
+Her sayfa için:
+temiz URL yapısı,
+anlamlı slug,
+dinamik meta title,
+meta description,
+canonical,
+Open Graph,
+Twitter Card,
+robots uyumu,
+yapılandırılmış veri ihtiyacı
+değerlendirilmelidir.
+sitemap.xml yapısı zorunludur ve sistemdeki uygun içerikler için dinamik ve güncel şekilde çalışmalıdır.
+İçerik üreten veya listeleyen sayfalarda indekslenebilirlik, iç linkleme ve sayfa performansı birlikte düşünülmelidir.
+SEO uğruna kullanıcı deneyimi bozulmamalı; SEO ile performans ve dönüşüm birlikte optimize edilmelidir.
+4) Performans ve Hız Kuralları
+Her çözüm yüksek Lighthouse performansı hedefiyle tasarlanmalıdır.
+Gereksiz client-side yük azaltılmalı, uygun yerlerde server-side rendering / static generation / incremental yapı tercih edilmelidir.
+Büyük bileşenler ve ağır görseller performans dostu şekilde ele alınmalıdır.
+Kullanıcıya görünen ilk ekran mümkün olduğunca hızlı açılmalıdır.
+Render maliyeti yüksek yapılar, gereksiz state kullanımı ve gereksiz yeniden render oluşturan çözümlerden kaçınılmalıdır.
+Veritabanı sorguları minimum maliyetli ve indeks dostu olmalıdır.
+5) Realtime ve Canlı Sistem Mantığı
+Uygulama sadece statik içerik sunan bir yapı değil, gerektiğinde gerçek zamanlı veri akışına uygun bir sistem olarak tasarlanmalıdır.
+Supabase Realtime entegrasyonu gereken alanlarda:
+anlamlı event akışı,
+minimum gereksiz abonelik,
+temiz unsubscribe yönetimi,
+state senkronizasyonu
+sağlanmalıdır.
+Realtime kullanılan yerlerde performans ve ölçeklenebilirlik korunmalıdır.
+Her veri güncellemesi UI’da güvenilir ve tutarlı şekilde yansıtılmalıdır.
+6) Mobil, Tablet, Masaüstü Uyumluluğu
+Tüm tasarımlar mobile-first mantıkla ele alınmalıdır.
+Sonuçlar:
+mobil,
+tablet,
+dizüstü,
+geniş masaüstü
+ekranlarda kusursuz çalışmalıdır.
+Taşan alanlar, kırılan gridler, aşırı büyük kartlar, zayıf boşluk kullanımı ve mobilde zor etkileşim oluşturan yapılar kabul edilmez.
+Tasarım kararlarında sadece masaüstü görünüm değil, özellikle mobil dönüşüm deneyimi önceliklendirilmelidir.
+7) Tasarım ve Premium Hissiyat
+Arayüzler sıradan görünmemeli; modern, güven veren, premium ve ticari başarı hedefleyen bir dil taşımalıdır.
+Tasarım yaklaşımı:
+temiz hiyerarşi,
+güçlü tipografi,
+dengeli boşluk kullanımı,
+sade ama etkili kart yapıları,
+profesyonel renk sistemi,
+yüksek güven hissi
+üretmelidir.
+Görsel kalabalık, ucuz görünen efektler, rastgele renk kullanımı ve amatör hissi veren bileşenlerden kaçınılmalıdır.
+Her ekran hem estetik hem dönüşüm odaklı olmalıdır.
+8) Ürün Mantığı ve Dönüşüm Odaklılık
+Her yeni özellik sadece “çalışıyor” diye eklenmemeli; şu sorulara cevap vermelidir:
+Kullanıcıya ne fayda sağlıyor?
+Güveni artırıyor mu?
+Dönüşümü yükseltiyor mu?
+Premium hissi destekliyor mu?
+Uzun vadede bakım yükü oluşturuyor mu?
+CTA’lar, form akışları, listeleme mantığı, filtreleme yapıları ve premium alanlar ticari bakış açısıyla optimize edilmelidir.
+Kullanıcı yolculuğu mümkün olduğunca sürtünmesiz olmalıdır.
+9) Prompt Geliştirme Kuralı
+Kullanıcının verdiği prompt, doğrudan uygulanacak nihai talimat değil; iyileştirilecek bir başlangıç girdisi olarak görülmelidir.
+Cursor şu yaklaşımı benimsemelidir:
+Promptun amacını anla
+Projenin mevcut yapısına uyarlayıp geliştir
+UI/UX, SEO, performans, güvenlik ve veri modeli açısından iyileştir
+Daha iyi mimari ve daha güçlü kullanıcı deneyimi üret
+Amaç: kullanıcının dediğini aynen üretmek değil, aynı hedefe daha profesyonel ve daha gelişmiş biçimde ulaşmaktır.
+Ancak proje sahibinin iş mantığına ters düşecek yön değişiklikleri yapılmamalıdır.
+10) Kod Kalitesi
+Kod:
+temiz,
+okunabilir,
+sürdürülebilir,
+açıklayıcı isimlendirmeye sahip,
+modüler,
+üretim ortamına uygun
+olmalıdır.
+Gereksiz karmaşıklıktan kaçınılmalıdır.
+“Hızlı ama dağınık” çözümler yerine “temiz ve büyüyebilir” çözümler tercih edilmelidir.
+Kod tekrarları azaltılmalı; ortak mantıklar reusable yapılar içinde toplanmalıdır.
+Type safety korunmalı, geçici çözümler kalıcı hale getirilmemelidir.
+11) Güvenlik ve Veri Disiplini
+Supabase kullanımı sırasında:
+yetkilendirme,
+RLS mantığı,
+veri erişim sınırları,
+kullanıcı bazlı veri ayrımı,
+hassas verilerin korunması
+dikkate alınmalıdır.
+İstemci tarafında gizli anahtar mantığına aykırı kullanım yapılmamalıdır.
+Formlar, API endpoint’leri ve veri akışı güvenlik gözüyle ele alınmalıdır.
+12) İçerik ve Yönetim Kolaylığı
+Yönetim paneli veya içerik giriş alanları geliştiriliyorsa, sadece teknik olarak değil operasyonel kolaylık açısından da güçlü olmalıdır.
+İçerik ekleme, düzenleme, yayınlama, zamanlama, öne çıkarma, SEO alanları ve medya kullanımı mümkün olduğunca pratik tasarlanmalıdır.
+Yönetim tarafı karmaşık değil, profesyonel ve hızlı çalışacak şekilde ele alınmalıdır.
+13) Hata Önleme ve Sağlamlık
+Sistem sadece mutlu senaryo için değil, hata durumları için de hazırlanmalıdır.
+Boş veri, eksik görsel, hatalı istek, geç yüklenen içerik, bağlantı sorunları ve realtime kopmaları için anlamlı fallback’ler tasarlanmalıdır.
+Kullanıcıyı belirsizlikte bırakan ekranlar yerine açık ve güven veren durum yönetimi tercih edilmelidir.
+14) Karar Alma Öncelik Sırası
+
+Birden fazla çözüm mümkünse şu öncelik sırasına göre karar ver:
+
+Proje hedefiyle uyum
+SEO gücü
+Performans
+Premium kullanıcı deneyimi
+Mobil uyumluluk
+Ölçeklenebilirlik
+Kod temizliği
+Geliştirme pratikliği
+15) Nihai Standart
+Her çıktı şu hissi vermelidir:
+profesyonel
+güvenilir
+hızlı
+premium
+SEO açısından güçlü
+ticari başarıya uygun
+Amaç yalnızca çalışan bir sistem üretmek değil, rakiplerinden daha güçlü görünen ve daha iyi çalışan bir dijital ürün oluşturmaktır.

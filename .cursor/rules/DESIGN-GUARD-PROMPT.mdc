@@ -1,0 +1,174 @@
+---
+alwaysApply: true
+---
+
+You are working on a production-level web application.
+
+This project already has an established design system.
+Your primary responsibility is to PRESERVE and RESPECT this design system.
+
+Do NOT redesign anything.
+Do NOT introduce new styles unless explicitly requested.
+
+==================================================
+CORE DESIGN PRINCIPLE
+==================================================
+
+Consistency over creativity.
+
+Every UI change must feel like it already belongs to the product.
+
+==================================================
+COLOR SYSTEM RULES
+==================================================
+
+- NEVER introduce new colors.
+- ONLY use existing color tokens (primary, secondary, neutral, border, muted, background).
+
+- Do NOT:
+  - randomly use Tailwind colors (like blue-500, red-600, etc.)
+  - add gradients unless already used
+  - use brand colors (Facebook blue, YouTube red, etc.)
+
+- All UI elements must follow the existing color hierarchy:
+  - Primary = CTA (e.g. "Hızlı Başvur")
+  - Neutral = background, cards
+  - Muted = secondary text, labels
+  - Border = subtle separation
+
+==================================================
+TYPOGRAPHY RULES
+==================================================
+
+- Do NOT introduce new fonts.
+- Use ONLY the existing font family.
+
+- Maintain typography scale:
+  - Title
+  - Subtitle
+  - Body
+  - Caption
+
+- Do NOT:
+  - randomly change font sizes
+  - mix inconsistent font weights
+  - create visual imbalance
+
+==================================================
+SPACING & LAYOUT RULES
+==================================================
+
+- Follow existing spacing system (padding, margin, gap)
+- Keep alignment consistent
+
+- Do NOT:
+  - compress UI too much
+  - create crowded layouts
+  - introduce inconsistent spacing
+
+- All components must feel:
+  - breathable
+  - balanced
+  - aligned
+
+==================================================
+COMPONENT CONSISTENCY
+==================================================
+
+- Reuse existing components whenever possible:
+  - buttons
+  - chips
+  - badges
+  - cards
+  - modals
+
+- Do NOT create new component styles unless absolutely necessary
+
+- If a new component is required:
+  - it must visually match existing components
+  - same border radius
+  - same shadow system
+  - same interaction style
+
+==================================================
+BUTTON RULES
+==================================================
+
+- Primary button style must remain dominant
+- Secondary buttons must stay visually lighter
+
+- Do NOT:
+  - create new button colors
+  - mix button styles randomly
+  - break CTA hierarchy
+
+==================================================
+ICON RULES
+==================================================
+
+- Icons must be:
+  - consistent style
+  - same stroke / size
+
+- Do NOT:
+  - use colored icons (unless system already uses)
+  - mix icon libraries
+
+==================================================
+VISUAL HIERARCHY
+==================================================
+
+- Important elements must stand out:
+  - CTA buttons
+  - Titles
+  - Scores (Kurumsallık Skoru)
+
+- Secondary elements must stay subtle:
+  - labels
+  - tags
+  - metadata
+
+==================================================
+MOBILE / RESPONSIVE RULES
+==================================================
+
+- UI must remain clean on:
+  - mobile
+  - tablet
+  - desktop
+
+- Do NOT:
+  - stack elements poorly
+  - create overflow issues
+  - break readability
+
+==================================================
+WHAT YOU MUST ALWAYS DO
+==================================================
+
+Before implementing any UI change, ask:
+
+1) Does this match existing design language?
+2) Does this introduce inconsistency?
+3) Would a user notice this as “different”?
+
+If YES → DO NOT IMPLEMENT
+
+==================================================
+WHAT YOU MUST NEVER DO
+==================================================
+
+- Do NOT redesign components
+- Do NOT experiment visually
+- Do NOT add “cool” but inconsistent UI
+- Do NOT break design consistency
+
+==================================================
+FINAL GOAL
+==================================================
+
+Every new UI element must feel like:
+“It was always part of this product.”
+
+Not:
+“This was added later.”
