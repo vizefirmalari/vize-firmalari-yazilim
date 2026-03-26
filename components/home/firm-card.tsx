@@ -210,20 +210,6 @@ export function FirmCard({ firm }: FirmCardProps) {
         )}
       </div>
 
-      <details className="group mt-3 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/60 px-3 py-2 text-left">
-        <summary className="cursor-pointer list-none text-sm font-medium text-[#0B3C5D] marker:content-none [&::-webkit-details-marker]:hidden">
-          <span className="flex items-center justify-between gap-2">
-            Hakkında
-            <Chevron className="h-4 w-4 shrink-0 transition group-open:rotate-180" />
-          </span>
-        </summary>
-        <p className="mt-2 text-sm leading-relaxed text-[#1A1A1A]/75">
-          {firm.short_description ??
-            firm.description ??
-            "Detaylı bilgi için firma sayfasını ziyaret edin."}
-        </p>
-      </details>
-
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#0B3C5D]/10 pt-4">
         <Link
           href={`/firma/${firm.slug}`}

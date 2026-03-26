@@ -361,19 +361,10 @@ export default async function FirmaPage({ params }: PageProps) {
                     </p>
                   ) : null}
 
-                  {aboutDetailedText ? (
-                    <details className="group mt-3 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/40 px-4 py-3">
-                      <summary className="cursor-pointer list-none text-sm font-semibold text-[#0B3C5D] marker:content-none [&::-webkit-details-marker]:hidden">
-                        <span className="group-open:hidden">Devamını oku</span>
-                        <span className="hidden group-open:inline">Daha az göster</span>
-                      </summary>
-                      <p className="mt-2 line-clamp-5 whitespace-pre-wrap text-sm leading-relaxed text-[#1A1A1A]/75 group-open:hidden">
-                        {aboutDetailedText}
-                      </p>
-                      <p className="hidden mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[#1A1A1A]/75 group-open:block">
-                        {aboutDetailedText}
-                      </p>
-                    </details>
+                  {aboutDetailedText && aboutDetailedText !== aboutShortText ? (
+                    <p className="mt-4 text-[#1A1A1A]/80 leading-relaxed whitespace-pre-wrap">
+                      {aboutDetailedText}
+                    </p>
                   ) : null}
                   </section>
                 </SectionReveal>
