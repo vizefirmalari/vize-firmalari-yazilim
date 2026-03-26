@@ -12,24 +12,20 @@ export type ListingRangeBounds = {
 };
 
 export function computeRangeBounds(firms: FirmRow[]): ListingRangeBounds {
-  let hypeMin = Infinity;
-  let hypeMax = -Infinity;
+  let hypeMaxData = 0;
   let yearMin = Infinity;
   let yearMax = -Infinity;
   for (const f of firms) {
     const h = hypeValue(f);
-    if (h < hypeMin) hypeMin = h;
-    if (h > hypeMax) hypeMax = h;
+    if (Number.isFinite(h) && h > hypeMaxData) hypeMaxData = h;
     const y = f.founded_year;
     if (typeof y === "number" && Number.isFinite(y)) {
       if (y < yearMin) yearMin = y;
       if (y > yearMax) yearMax = y;
     }
   }
-  if (!Number.isFinite(hypeMin) || hypeMin === hypeMax) {
-    hypeMin = 0;
-    hypeMax = 10_000;
-  }
+  let hypeUpper = hypeMaxData > 0 ? Math.ceil(hypeMaxData) : 100;
+  if (hypeUpper < 1) hypeUpper = 100;
   if (!Number.isFinite(yearMin) || yearMin === yearMax) {
     const y = new Date().getFullYear();
     yearMin = 1990;
@@ -37,13 +33,12 @@ export function computeRangeBounds(firms: FirmRow[]): ListingRangeBounds {
   }
   return {
     corp: { min: 0, max: 100 },
-    hype: { min: Math.floor(hypeMin), max: Math.ceil(hypeMax) },
+    hype: { min: 0, max: hypeUpper },
     year: { min: yearMin, max: yearMax },
   };
 }
 
 export type CoverageSelection = {
-  popularIds: string[];
   regionIds: string[];
   countries: string[];
 };

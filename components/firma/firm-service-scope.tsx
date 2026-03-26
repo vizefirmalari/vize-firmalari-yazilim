@@ -3,7 +3,10 @@
 import { useEffect, useId, useState } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { getCountryFlagCodeFromName } from "@/lib/firma/country-flag";
+import {
+  CountryChip,
+  RegionChip,
+} from "@/components/firma/coverage-chips";
 
 const MAX_COUNTRIES_VISIBLE = 6;
 const MAX_MAIN_SERVICES_VISIBLE = 4;
@@ -411,40 +414,6 @@ function DetailGroup({
       </h4>
       {children}
     </div>
-  );
-}
-
-function RegionChip({ regionLabel }: { regionLabel: string }) {
-  return (
-    <span className="inline-flex h-7 max-w-full items-center gap-2 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 text-xs font-medium text-[#0B3C5D]/85">
-      <span className="truncate whitespace-nowrap">{regionLabel}</span>
-    </span>
-  );
-}
-
-function CountryChip({ countryName }: { countryName: string }) {
-  const code = getCountryFlagCodeFromName(countryName);
-  const [imgOk, setImgOk] = useState(true);
-  const showFlag = Boolean(code) && imgOk;
-
-  // When country changes, allow image again.
-  useEffect(() => setImgOk(true), [countryName]);
-
-  return (
-    <span className="inline-flex h-7 max-w-full items-center gap-2 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 text-xs font-medium text-[#0B3C5D]/85">
-      {showFlag ? (
-        <img
-          src={`https://flagcdn.com/w40/${code}.png`}
-          alt=""
-          width={24}
-          height={16}
-          className="h-4 w-auto shrink-0 rounded-[3px] object-cover"
-          loading="lazy"
-          onError={() => setImgOk(false)}
-        />
-      ) : null}
-      <span className="truncate whitespace-nowrap">{countryName}</span>
-    </span>
   );
 }
 

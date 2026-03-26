@@ -7,7 +7,11 @@ import type { FirmRow } from "@/lib/types/firm";
 import { ContactModal } from "@/components/home/contact-modal";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
 import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
-import { getCountryFlagCodeFromName } from "@/lib/firma/country-flag";
+import {
+  CountryChip,
+  CoverageChip,
+  RegionChip,
+} from "@/components/firma/coverage-chips";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -156,12 +160,7 @@ export function FirmCard({ firm }: FirmCardProps) {
 
       <div className="mt-4 flex flex-wrap justify-center gap-1.5">
         {shownCountries.map((c) => (
-          <span
-            key={c}
-            className="rounded-lg bg-[#F7F9FB] px-2 py-1 text-xs font-medium text-[#0B3C5D]/90 ring-1 ring-[#0B3C5D]/10"
-          >
-            {c}
-          </span>
+          <CoverageChip key={c} label={c} />
         ))}
         {restCountries > 0 ? (
           <button
@@ -315,14 +314,16 @@ export function FirmCard({ firm }: FirmCardProps) {
       <CountriesRegionsModal
         open={countriesModalOpen}
         onClose={() => setCountriesModalOpen(false)}
+        firmName={firm.name}
         countries={servedCountries}
         regions={servedRegions}
-        title="Hizmet verilen kapsam"
+        subtitle="Hizmet verilen kapsam"
       />
       <ServicesCoverageModal
         open={servicesModalOpen}
         onClose={() => setServicesModalOpen(false)}
-        title="Sunulan hizmetler"
+        firmName={firm.name}
+        subtitle="Sunulan hizmetler"
         mainCategories={effectiveMainCategories}
         specialization={specializationLabels}
         processSupport={subProcessAndSupport}
@@ -429,18 +430,49 @@ function YouTubeIcon() {
   );
 }
 
+function CardContextModalHeader({
+  firmName,
+  subtitle,
+  onClose,
+}: {
+  firmName: string;
+  subtitle: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-[#0B3C5D]/10 bg-white px-4 py-3">
+      <div className="min-w-0 flex-1 pr-2 text-left">
+        <p className="text-lg font-semibold leading-snug text-[#0B3C5D]">
+          {firmName}
+        </p>
+        <p className="mt-0.5 text-xs font-medium text-[#1A1A1A]/55">{subtitle}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        className="shrink-0 rounded-lg border border-[#0B3C5D]/15 bg-white px-3 py-1 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
+        aria-label="Kapat"
+      >
+        Kapat
+      </button>
+    </div>
+  );
+}
+
 function CountriesRegionsModal({
   open,
   onClose,
+  firmName,
   countries,
   regions,
-  title,
+  subtitle,
 }: {
   open: boolean;
   onClose: () => void;
+  firmName: string;
   countries: string[];
   regions: string[];
-  title: string;
+  subtitle: string;
 }) {
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(open);
@@ -473,26 +505,20 @@ function CountriesRegionsModal({
         aria-hidden
       />
 
-      <div className="relative mx-auto flex h-full w-full items-end p-3 sm:items-center">
+      <div className="relative flex h-full w-full items-end justify-center p-3 sm:items-center">
         <div
-          className={`w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 ${
+          className={`w-full max-w-2xl overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 ${
             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-          } max-w-2xl`}
+          }`}
           role="dialog"
           aria-modal="true"
-          aria-label={title}
+          aria-label={`${firmName} — ${subtitle}`}
         >
-          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#0B3C5D]/10 bg-white px-4 py-3">
-            <h3 className="text-sm font-semibold text-[#0B3C5D]">{title}</h3>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-[#0B3C5D]/15 bg-white px-3 py-1 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
-              aria-label="Kapat"
-            >
-              Kapat
-            </button>
-          </div>
+          <CardContextModalHeader
+            firmName={firmName}
+            subtitle={subtitle}
+            onClose={onClose}
+          />
 
           <div className="max-h-[78vh] overflow-y-auto px-4 py-5">
             {regions.length > 0 ? (
@@ -502,7 +528,7 @@ function CountriesRegionsModal({
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {regions.map((r) => (
-                    <RegionChip key={r} label={r} />
+                    <RegionChip key={r} regionLabel={r} />
                   ))}
                 </div>
                 {countries.length > 0 ? (
@@ -537,7 +563,8 @@ function CountriesRegionsModal({
 function ServicesCoverageModal({
   open,
   onClose,
-  title,
+  firmName,
+  subtitle,
   mainCategories,
   specialization,
   processSupport,
@@ -545,7 +572,8 @@ function ServicesCoverageModal({
 }: {
   open: boolean;
   onClose: () => void;
-  title: string;
+  firmName: string;
+  subtitle: string;
   mainCategories: string[];
   specialization: string[];
   processSupport: string[];
@@ -582,26 +610,20 @@ function ServicesCoverageModal({
         aria-hidden
       />
 
-      <div className="relative mx-auto flex h-full w-full items-end p-3 sm:items-center">
+      <div className="relative flex h-full w-full items-end justify-center p-3 sm:items-center">
         <div
-          className={`w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 ${
+          className={`w-full max-w-4xl overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 ${
             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-          } max-w-4xl`}
+          }`}
           role="dialog"
           aria-modal="true"
-          aria-label={title}
+          aria-label={`${firmName} — ${subtitle}`}
         >
-          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#0B3C5D]/10 bg-white px-4 py-3">
-            <h3 className="text-sm font-semibold text-[#0B3C5D]">{title}</h3>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-[#0B3C5D]/15 bg-white px-3 py-1 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
-              aria-label="Kapat"
-            >
-              Kapat
-            </button>
-          </div>
+          <CardContextModalHeader
+            firmName={firmName}
+            subtitle={subtitle}
+            onClose={onClose}
+          />
 
           <div className="max-h-[78vh] overflow-y-auto px-4 py-5">
             <ServiceGroup
@@ -692,58 +714,6 @@ function ServiceGroup({
         ))}
       </div>
     </div>
-  );
-}
-
-function CountryChip({ countryName }: { countryName: string }) {
-  const code = getCountryFlagCodeFromName(countryName);
-  const [imgOk, setImgOk] = useState(true);
-  const showFlag = Boolean(code) && imgOk;
-
-  useEffect(() => setImgOk(true), [countryName]);
-
-  return (
-    <span className="inline-flex h-7 max-w-full items-center gap-2 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 text-xs font-medium text-[#0B3C5D]/85">
-      {showFlag ? (
-        <img
-          src={`https://flagcdn.com/w40/${code}.png`}
-          alt=""
-          width={24}
-          height={16}
-          className="h-4 w-auto shrink-0 rounded-[3px] object-cover"
-          loading="lazy"
-          onError={() => setImgOk(false)}
-        />
-      ) : null}
-      <span className="truncate whitespace-nowrap">{countryName}</span>
-    </span>
-  );
-}
-
-function RegionChip({ label }: { label: string }) {
-  return (
-    <span className="inline-flex h-7 max-w-full items-center gap-2 rounded-md border border-[#0B3C5D]/10 bg-[#F7F9FB] px-2.5 text-xs font-medium text-[#0B3C5D]/85">
-      <svg
-        className="h-4 w-4 text-[#328CC1]"
-        viewBox="0 0 24 24"
-        fill="none"
-        aria-hidden
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-        />
-      </svg>
-      <span className="truncate whitespace-nowrap">{label}</span>
-    </span>
   );
 }
 

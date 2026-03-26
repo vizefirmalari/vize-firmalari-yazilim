@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { AppliedListingFilters } from "@/lib/firma/listing-filters";
 import type { ListingRangeBounds } from "@/lib/firma/listing-filters";
-import { POPULAR_DESTINATIONS, REGIONS } from "@/lib/firma/coverage-catalog";
+import {
+  normalizeCountryKey,
+  REGIONS,
+  resolvePopularCountryRows,
+} from "@/lib/firma/coverage-catalog";
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -23,11 +27,13 @@ function Chevron({ open }: { open: boolean }) {
 function Collapsible({
   title,
   children,
+  defaultOpen = false,
 }: {
   title: string;
   children: ReactNode;
+  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border-b border-border last:border-b-0">
       <button
@@ -106,6 +112,141 @@ function toggleListItem(list: string[], item: string, checked: boolean) {
   return list.filter((x) => x !== item);
 }
 
+function PopularCountriesBlock({
+  draft,
+  countryOptions,
+  patch,
+}: {
+  draft: AppliedListingFilters;
+  countryOptions: string[];
+  patch: (partial: Partial<AppliedListingFilters>) => void;
+}) {
+  const popularRows = useMemo(
+    () => resolvePopularCountryRows(countryOptions),
+    [countryOptions]
+  );
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
+        Popüler Ülkeler
+      </p>
+      <div className="mt-2 space-y-2">
+        {popularRows.map((row) => (
+          <label
+            key={row.value}
+            className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+          >
+            <input
+              type="checkbox"
+              checked={draft.coverage.countries.includes(row.value)}
+              onChange={(e) =>
+                patch({
+                  coverage: {
+                    ...draft.coverage,
+                    countries: toggleListItem(
+                      draft.coverage.countries,
+                      row.value,
+                      e.target.checked
+                    ),
+                  },
+                })
+              }
+              className="accent-primary"
+            />
+            <span>{row.label}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CountryFullListBlock({
+  draft,
+  countryOptions,
+  patch,
+}: {
+  draft: AppliedListingFilters;
+  countryOptions: string[];
+  patch: (partial: Partial<AppliedListingFilters>) => void;
+}) {
+  const [q, setQ] = useState("");
+
+  const popularRows = useMemo(
+    () => resolvePopularCountryRows(countryOptions),
+    [countryOptions]
+  );
+  const popularValues = useMemo(
+    () => new Set(popularRows.map((r) => r.value)),
+    [popularRows]
+  );
+
+  const sortedAtoZ = useMemo(
+    () => [...countryOptions].sort((a, b) => a.localeCompare(b, "tr")),
+    [countryOptions]
+  );
+
+  const listForScroll = useMemo(() => {
+    const needle = normalizeCountryKey(q);
+    return sortedAtoZ.filter((c) => {
+      if (popularValues.has(c)) return false;
+      if (!needle) return true;
+      return normalizeCountryKey(c).includes(needle);
+    });
+  }, [sortedAtoZ, popularValues, q]);
+
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
+        Ülke Seçimi
+      </p>
+      <input
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Ülke ara…"
+        className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-foreground/40"
+        autoComplete="off"
+        enterKeyHint="search"
+      />
+      <div
+        className="mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]"
+        role="listbox"
+        aria-label="Ülkeler"
+      >
+        {listForScroll.length === 0 ? (
+          <p className="py-2 text-xs text-foreground/55">Eşleşen ülke yok.</p>
+        ) : null}
+        {listForScroll.map((c) => (
+          <label
+            key={c}
+            className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+          >
+            <input
+              type="checkbox"
+              checked={draft.coverage.countries.includes(c)}
+              onChange={(e) =>
+                patch({
+                  coverage: {
+                    ...draft.coverage,
+                    countries: toggleListItem(
+                      draft.coverage.countries,
+                      c,
+                      e.target.checked
+                    ),
+                  },
+                })
+              }
+              className="accent-primary"
+            />
+            <span className="min-w-0 wrap-break-word leading-snug">{c}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 type FilterFieldsProps = {
   draft: AppliedListingFilters;
   onChange: (next: AppliedListingFilters) => void;
@@ -130,44 +271,23 @@ export function FirmListingFilterFields({
 
   const coverageGroup = (
     <div className="space-y-4">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
-          Popüler Ülkeler
-        </p>
-        <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
-          {POPULAR_DESTINATIONS.map((p) => (
-            <label
-              key={p.id}
-              className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
-            >
-              <input
-                type="checkbox"
-                checked={draft.coverage.popularIds.includes(p.id)}
-                onChange={(e) =>
-                  patch({
-                    coverage: {
-                      ...draft.coverage,
-                      popularIds: toggleListItem(
-                        draft.coverage.popularIds,
-                        p.id,
-                        e.target.checked
-                      ),
-                    },
-                  })
-                }
-                className="accent-primary"
-              />
-              <span className="leading-snug">{p.label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <PopularCountriesBlock
+        draft={draft}
+        countryOptions={countryOptions}
+        patch={patch}
+      />
+
+      <CountryFullListBlock
+        draft={draft}
+        countryOptions={countryOptions}
+        patch={patch}
+      />
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
           Bölgeler
         </p>
-        <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
+        <div className="mt-2 max-h-[min(240px,40vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
           {REGIONS.map((r) => (
             <label
               key={r.id}
@@ -191,42 +311,6 @@ export function FirmListingFilterFields({
                 className="accent-primary"
               />
               <span>{r.label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
-          Ülke (liste)
-        </p>
-        <p className="mt-1 text-[11px] text-foreground/50">
-          Yönetimdeki ülke adlarıyla eşleşir; birden fazla seçebilirsiniz.
-        </p>
-        <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
-          {countryOptions.map((c) => (
-            <label
-              key={c}
-              className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
-            >
-              <input
-                type="checkbox"
-                checked={draft.coverage.countries.includes(c)}
-                onChange={(e) =>
-                  patch({
-                    coverage: {
-                      ...draft.coverage,
-                      countries: toggleListItem(
-                        draft.coverage.countries,
-                        c,
-                        e.target.checked
-                      ),
-                    },
-                  })
-                }
-                className="accent-primary"
-              />
-              <span className="truncate">{c}</span>
             </label>
           ))}
         </div>
@@ -325,9 +409,9 @@ export function FirmListingFilterFields({
     <div className="space-y-2">
       {(
         [
-          ["onlineConsulting", "Çevrimiçi danışmanlık (web + kalite)"] as const,
+          ["onlineConsulting", "Çevrimiçi danışmanlık"] as const,
           ["officeFaceToFace", "Ofiste / yüz yüze"] as const,
-          ["remoteSupport", "Uzaktan destek (fiziksel ofis yok)"] as const,
+          ["remoteSupport", "Uzaktan destek"] as const,
           ["weekendSupport", "Hafta sonu desteği"] as const,
         ] as const
       ).map(([key, label]) => (
@@ -370,7 +454,7 @@ export function FirmListingFilterFields({
           }
           className="accent-primary"
         />
-        <span>Çok dilli destek (2+ dil)</span>
+        <span>Çok dilli destek</span>
       </label>
       <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90">
         <input
@@ -386,18 +470,20 @@ export function FirmListingFilterFields({
           }
           className="accent-primary"
         />
-        <span>Kurumsal domain kullanımı</span>
+        <span>Kurumsal domain</span>
       </label>
     </div>
   );
 
   const scoresBlock = (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
-        <p className="text-xs font-medium text-foreground/60">Kurumsallık Skoru</p>
+        <p className="text-xs font-medium text-foreground/60">
+          Kurumsallık Skoru (0–100)
+        </p>
         <RangePair
-          minBound={bounds.corp.min}
-          maxBound={bounds.corp.max}
+          minBound={0}
+          maxBound={100}
           low={draft.corpMin}
           high={draft.corpMax}
           onLowChange={(v) => patch({ corpMin: Math.min(v, draft.corpMax) })}
@@ -407,7 +493,7 @@ export function FirmListingFilterFields({
       <div>
         <p className="text-xs font-medium text-foreground/60">Hype Puanı</p>
         <RangePair
-          minBound={bounds.hype.min}
+          minBound={0}
           maxBound={bounds.hype.max}
           low={draft.hypeMin}
           high={draft.hypeMax}
@@ -452,9 +538,6 @@ export function FirmListingFilterFields({
           En eski (ilk 25 yıl)
         </button>
       </div>
-      <p className="text-[11px] text-foreground/50">
-        İsterseniz aşağıdan tam yıl aralığını da daraltabilirsiniz.
-      </p>
       <RangePair
         minBound={bounds.year.min}
         maxBound={bounds.year.max}
@@ -485,7 +568,9 @@ export function FirmListingFilterFields({
         <Collapsible title="Kurumsallık & Yasal Yapı">{trustBlock}</Collapsible>
         <Collapsible title="Hizmet Biçimi">{serviceModeBlock}</Collapsible>
         <Collapsible title="Dil & Profesyonellik">{langBlock}</Collapsible>
-        <Collapsible title="Kurumsallık & Hype Skoru">{scoresBlock}</Collapsible>
+        <Collapsible title="Kurumsallık & Hype Skoru" defaultOpen>
+          {scoresBlock}
+        </Collapsible>
         <Collapsible title="Kuruluş Yılı">{yearBlock}</Collapsible>
       </>
     );

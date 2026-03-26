@@ -50,53 +50,72 @@ export const SCHENGEN_COUNTRY_KEYS = new Set<string>([
   "yunanistan",
 ]);
 
-export const POPULAR_DESTINATIONS: {
-  id: string;
-  label: string;
-  aliases: string[];
-}[] = [
+/** Popüler satırlar — admin ülke listesindeki tam adla eşleştirilir */
+export type PopularCountryRow = { label: string; value: string };
+
+type PopularRowDef = { label: string; match: (n: string) => boolean };
+
+const POPULAR_ROW_DEFS: PopularRowDef[] = [
   {
-    id: "abd",
-    label: "Amerika Birleşik Devletleri (ABD)",
-    aliases: [
-      "amerika birlesik devletleri",
-      "abd",
-      "amerika",
-      "united states",
-      "usa",
-    ],
+    label: "ABD",
+    match: (n) =>
+      (n.includes("amerika") && n.includes("birlesik")) ||
+      n.includes("abd") ||
+      n === "usa",
   },
   {
-    id: "uk",
     label: "İngiltere",
-    aliases: ["ingiltere", "birlesik krallik", "uk", "great britain"],
+    match: (n) => n.includes("ingiltere") || n.includes("birlesik krallik"),
   },
-  { id: "canada", label: "Kanada", aliases: ["kanada", "canada"] },
-  { id: "germany", label: "Almanya", aliases: ["almanya", "germany"] },
-  { id: "france", label: "Fransa", aliases: ["fransa", "france"] },
-  { id: "italy", label: "İtalya", aliases: ["italya", "italy"] },
-  { id: "russia", label: "Rusya", aliases: ["rusya", "russia"] },
-  { id: "china", label: "Çin", aliases: ["cin", "china", "cinhalk cumhuriyeti"] },
-  { id: "japan", label: "Japonya", aliases: ["japonya", "japan"] },
-  { id: "brazil", label: "Brezilya", aliases: ["brezilya", "brazil"] },
-  { id: "qatar", label: "Katar", aliases: ["katar", "qatar"] },
+  { label: "Kanada", match: (n) => n.includes("kanada") },
+  { label: "Almanya", match: (n) => n.includes("almanya") },
+  { label: "Fransa", match: (n) => n.includes("fransa") },
+  { label: "İtalya", match: (n) => n.includes("italya") },
+  { label: "Avustralya", match: (n) => n.includes("avustralya") },
+  { label: "Rusya", match: (n) => n.includes("rusya") },
   {
-    id: "uae",
-    label: "Dubai (BAE)",
-    aliases: [
-      "birlesik arap emirlikleri",
-      "bae",
-      "dubai",
-      "abu dabi",
-      "uae",
-    ],
+    label: "Çin",
+    match: (n) =>
+      (n.includes("cin") && !n.includes("guney") && !n.includes("kuzey")) ||
+      n.includes("china"),
   },
+  { label: "Japonya", match: (n) => n.includes("japonya") },
+  { label: "Brezilya", match: (n) => n.includes("brezilya") },
+  { label: "Katar", match: (n) => n.includes("katar") },
   {
-    id: "australia",
-    label: "Avustralya",
-    aliases: ["avustralya", "australia"],
+    label: "BAE (Dubai)",
+    match: (n) =>
+      n.includes("arap emirlik") ||
+      n.includes("birlesik arap") ||
+      n.includes("dubai") ||
+      n === "bae",
   },
 ];
+
+/**
+ * Admin panelindeki ülke adlarıyla birebir eşleşen popüler seçenekler (sıra sabit).
+ */
+export function resolvePopularCountryRows(
+  countryOptions: string[]
+): PopularCountryRow[] {
+  const sorted = [...countryOptions].sort((a, b) =>
+    a.localeCompare(b, "tr")
+  );
+  const used = new Set<string>();
+  const out: PopularCountryRow[] = [];
+  for (const def of POPULAR_ROW_DEFS) {
+    const found = sorted.find((c) => {
+      if (used.has(c)) return false;
+      const n = normalizeCountryKey(c);
+      return def.match(n);
+    });
+    if (found) {
+      used.add(found);
+      out.push({ label: def.label, value: found });
+    }
+  }
+  return out;
+}
 
 export type RegionDef = {
   id: string;
@@ -219,29 +238,6 @@ function firmCountryKeys(firm: FirmRow): Set<string> {
   return set;
 }
 
-function aliasKeysForPopular(id: string): Set<string> {
-  const p = POPULAR_DESTINATIONS.find((x) => x.id === id);
-  if (!p) return new Set();
-  const keys = new Set<string>();
-  for (const a of [p.label, ...p.aliases]) {
-    const k = normalizeCountryKey(a);
-    if (k) keys.add(k);
-  }
-  return keys;
-}
-
-/** Firma satırındaki ülke metni popüler hedefle eşleşiyor mu */
-export function firmMatchesPopular(firm: FirmRow, popularId: string): boolean {
-  const keys = firmCountryKeys(firm);
-  const want = aliasKeysForPopular(popularId);
-  for (const k of keys) {
-    for (const w of want) {
-      if (k.includes(w) || w.includes(k)) return true;
-    }
-  }
-  return false;
-}
-
 /**
  * Schengen: bölge etiketi, uzmanlık bayrağı veya birden fazla Schengen ülkesi.
  */
@@ -293,25 +289,18 @@ export function firmMatchesRegion(firm: FirmRow, regionId: string): boolean {
   return firmMatchesRegionCountries(firm, r.countries);
 }
 
-/** Bölge + ülke + popüler seçimlerinin birleşimi (OR) */
+/** Bölge + ülke seçimlerinin birleşimi (OR) */
 export function firmMatchesCoverageSelection(
   firm: FirmRow,
   selection: {
-    popularIds: string[];
     regionIds: string[];
     countries: string[];
   }
 ): boolean {
-  const { popularIds, regionIds, countries } = selection;
-  const hasAny =
-    popularIds.length > 0 ||
-    regionIds.length > 0 ||
-    countries.length > 0;
+  const { regionIds, countries } = selection;
+  const hasAny = regionIds.length > 0 || countries.length > 0;
   if (!hasAny) return true;
 
-  for (const id of popularIds) {
-    if (firmMatchesPopular(firm, id)) return true;
-  }
   for (const id of regionIds) {
     if (firmMatchesRegion(firm, id)) return true;
   }

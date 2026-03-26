@@ -1,8 +1,18 @@
+/**
+ * Ülke adı → ISO 3166-1 alpha-2 → flagcdn.com görseli.
+ * https://flagcdn.com/w40/{code}.png
+ */
+
+export const FLAGCDN_WIDTH = 40;
+
+export function flagUrlForIso(iso: string): string {
+  return `https://flagcdn.com/w${FLAGCDN_WIDTH}/${iso.toLowerCase()}.png`;
+}
+
 function normalizeCountryName(input: string): string {
   return input
     .trim()
     .toLowerCase()
-    // Remove Turkish-specific diacritics for matching.
     .replace(/[ç]/g, "c")
     .replace(/[ğ]/g, "g")
     .replace(/[ı]/g, "i")
@@ -12,106 +22,422 @@ function normalizeCountryName(input: string): string {
     .replace(/\s+/g, "");
 }
 
+const warnedMissing = new Set<string>();
+
+export function logMissingCountryMapping(countryName: string): void {
+  if (process.env.NODE_ENV !== "production") {
+    if (warnedMissing.has(countryName)) return;
+    warnedMissing.add(countryName);
+    console.warn(
+      `[country-flag] Eksik ülke eşlemesi (ISO): "${countryName}" — lib/firma/country-flag.ts içine ekleyin.`
+    );
+  }
+}
+
+/** Schengen / AB bölgeleri için EU bayrağı (flagcdn `eu`) */
+export function regionUsesEuFlag(regionLabel: string): boolean {
+  const n = normalizeCountryName(regionLabel);
+  if (!n) return false;
+  if (n.includes("schengen")) return true;
+  if (n === "ab") return true;
+  if (n.includes("avrupabirligi")) return true;
+  if (n.includes("avrupa") && n.includes("birligi")) return true;
+  if (n === "avrupabirligi") return true;
+  return false;
+}
+
+export function euFlagUrl(): string {
+  return flagUrlForIso("eu");
+}
+
+/**
+ * Yaygın Türkçe / İngilizce ülke adlarından ISO kodu.
+ */
 export function getCountryFlagCodeFromName(countryName: string): string | null {
   const key = normalizeCountryName(countryName);
+  if (!key) return null;
 
-  // Strict mapping for the key countries we care about on this product.
-  // Source expected by UI: https://flagcdn.com/w40/{code}.png
   const map: Record<string, string> = {
+    de: "de",
     germany: "de",
     almanya: "de",
-    de: "de",
 
+    gb: "gb",
     uk: "gb",
     unitedkingdom: "gb",
     england: "gb",
     ingiltere: "gb",
     britain: "gb",
     greatbritain: "gb",
-    gb: "gb",
 
+    fr: "fr",
     france: "fr",
     fransa: "fr",
-    fr: "fr",
 
+    it: "it",
     italy: "it",
     italya: "it",
-    it: "it",
 
+    nl: "nl",
     netherlands: "nl",
     holland: "nl",
     hollanda: "nl",
-    nl: "nl",
 
+    ch: "ch",
     switzerland: "ch",
     isvicre: "ch",
-    isviçre: "ch",
-    ch: "ch",
 
+    au: "au",
     australia: "au",
     avustralya: "au",
-    au: "au",
 
+    at: "at",
     austria: "at",
     avusturya: "at",
-    at: "at",
 
+    be: "be",
     belgium: "be",
     belcika: "be",
-    belçika: "be",
-    be: "be",
 
+    dk: "dk",
     denmark: "dk",
     danimarka: "dk",
-    dk: "dk",
 
+    ee: "ee",
+    estonia: "ee",
+    estonya: "ee",
+
+    fi: "fi",
     finland: "fi",
     finlandiya: "fi",
-    fi: "fi",
 
-    spain: "es",
-    espana: "es",
-    ispanya: "es",
     es: "es",
+    spain: "es",
+    ispanya: "es",
 
+    se: "se",
     sweden: "se",
     isvec: "se",
-    isveç: "se",
-    se: "se",
 
+    lv: "lv",
     latvia: "lv",
     letonya: "lv",
-    lv: "lv",
 
+    lt: "lt",
+    lithuania: "lt",
+    litvanya: "lt",
+
+    lu: "lu",
+    luxembourg: "lu",
+    luksemburg: "lu",
+
+    mt: "mt",
+    malta: "mt",
+
+    no: "no",
     norway: "no",
     norvec: "no",
-    norveç: "no",
-    no: "no",
 
+    pl: "pl",
     poland: "pl",
     polonya: "pl",
-    pl: "pl",
 
+    pt: "pt",
     portugal: "pt",
     portekiz: "pt",
-    pt: "pt",
 
+    sk: "sk",
+    slovakia: "sk",
+    slovakya: "sk",
+
+    si: "si",
     slovenia: "si",
     slovenya: "si",
-    si: "si",
 
+    gr: "gr",
     greece: "gr",
     yunanistan: "gr",
-    gr: "gr",
 
+    hu: "hu",
     hungary: "hu",
     macaristan: "hu",
-    hu: "hu",
 
+    is: "is",
     iceland: "is",
     izlanda: "is",
-    is: "is",
+
+    bg: "bg",
+    bulgaria: "bg",
+    bulgaristan: "bg",
+
+    cz: "cz",
+    czechia: "cz",
+    czechrepublic: "cz",
+    cekya: "cz",
+    cekcumhuriyeti: "cz",
+
+    hr: "hr",
+    croatia: "hr",
+    hirvatistan: "hr",
+
+    ro: "ro",
+    romania: "ro",
+    romanya: "ro",
+
+    li: "li",
+    liechtenstein: "li",
+    lihtenstayn: "li",
+
+    us: "us",
+    usa: "us",
+    america: "us",
+    amerika: "us",
+    amerikabirlesikdevletleri: "us",
+    unitedstates: "us",
+    unitedstatesofamerica: "us",
+
+    ca: "ca",
+    canada: "ca",
+    kanada: "ca",
+
+    ru: "ru",
+    russia: "ru",
+    rusya: "ru",
+
+    cn: "cn",
+    china: "cn",
+    cin: "cn",
+
+    jp: "jp",
+    japan: "jp",
+    japonya: "jp",
+
+    br: "br",
+    brazil: "br",
+    brezilya: "br",
+
+    ar: "ar",
+    argentina: "ar",
+    arjantin: "ar",
+
+    qa: "qa",
+    qatar: "qa",
+    katar: "qa",
+
+    ae: "ae",
+    uae: "ae",
+    unitedarabemirates: "ae",
+    birlesikarapemirlikleri: "ae",
+    birlesikarap: "ae",
+    dubai: "ae",
+    bae: "ae",
+
+    tr: "tr",
+    turkey: "tr",
+    turkiye: "tr",
+
+    ua: "ua",
+    ukraine: "ua",
+    ukrayna: "ua",
+
+    mx: "mx",
+    mexico: "mx",
+    meksika: "mx",
+
+    za: "za",
+    southafrica: "za",
+    guneyafrika: "za",
+
+    eg: "eg",
+    egypt: "eg",
+    misir: "eg",
+
+    ma: "ma",
+    morocco: "ma",
+    fas: "ma",
+
+    ng: "ng",
+    nigeria: "ng",
+    nijerya: "ng",
+
+    ke: "ke",
+    kenya: "ke",
+
+    dz: "dz",
+    algeria: "dz",
+    cezayir: "dz",
+
+    tn: "tn",
+    tunisia: "tn",
+    tunus: "tn",
+
+    sa: "sa",
+    saudiarabia: "sa",
+    suudiarabistan: "sa",
+
+    jo: "jo",
+    jordan: "jo",
+    urdun: "jo",
+
+    lb: "lb",
+    lebanon: "lb",
+    lubnan: "lb",
+
+    iq: "iq",
+    iraq: "iq",
+    irak: "iq",
+
+    ir: "ir",
+    iran: "ir",
+
+    il: "il",
+    israel: "il",
+    israil: "il",
+
+    kw: "kw",
+    kuwait: "kw",
+    kuveyt: "kw",
+
+    om: "om",
+    oman: "om",
+    umman: "om",
+
+    bh: "bh",
+    bahrain: "bh",
+    bahreyn: "bh",
+
+    ye: "ye",
+    yemen: "ye",
+
+    kr: "kr",
+    southkorea: "kr",
+    kore: "kr",
+    guneykore: "kr",
+
+    th: "th",
+    thailand: "th",
+    tayland: "th",
+
+    vn: "vn",
+    vietnam: "vn",
+
+    sg: "sg",
+    singapore: "sg",
+    singapur: "sg",
+
+    my: "my",
+    malaysia: "my",
+    malezya: "my",
+
+    id: "id",
+    indonesia: "id",
+    endonezya: "id",
+
+    ph: "ph",
+    philippines: "ph",
+    filipinler: "ph",
+
+    in: "in",
+    india: "in",
+    hindistan: "in",
+
+    pk: "pk",
+    pakistan: "pk",
+
+    by: "by",
+    belarus: "by",
+    belarusya: "by",
+
+    rs: "rs",
+    serbia: "rs",
+    sirbistan: "rs",
+
+    al: "al",
+    albania: "al",
+    arnavutluk: "al",
+
+    mk: "mk",
+    northmacedonia: "mk",
+    kuzeymakedonya: "mk",
+
+    ba: "ba",
+    bosnia: "ba",
+    bosnahersek: "ba",
+
+    ge: "ge",
+    georgia: "ge",
+    gurcistan: "ge",
+
+    az: "az",
+    azerbaijan: "az",
+    azerbaycan: "az",
+
+    kz: "kz",
+    kazakhstan: "kz",
+    kazakistan: "kz",
+
+    uz: "uz",
+    uzbekistan: "uz",
+    ozbekistan: "uz",
+
+    md: "md",
+    moldova: "md",
+    moldovya: "md",
+
+    cy: "cy",
+    cyprus: "cy",
+    kibris: "cy",
+
+    ie: "ie",
+    ireland: "ie",
+    irlanda: "ie",
+
+    nz: "nz",
+    newzealand: "nz",
+    yenizelanda: "nz",
+
+    cl: "cl",
+    chile: "cl",
+    sili: "cl",
+
+    co: "co",
+    colombia: "co",
+    kolombiya: "co",
+
+    pe: "pe",
+    peru: "pe",
+
+    cu: "cu",
+    cuba: "cu",
+    kuba: "cu",
+
+    ve: "ve",
+    venezuela: "ve",
+
+    uy: "uy",
+    uruguay: "uy",
+
+    ec: "ec",
+    ecuador: "ec",
+    ekvador: "ec",
+
+    gt: "gt",
+    guatemala: "gt",
+
+    pa: "pa",
+    panama: "pa",
+
+    cr: "cr",
+    costarica: "cr",
+    kostarika: "cr",
   };
 
-  return map[key] ?? null;
+  const code = map[key];
+  if (code) return code;
+
+  if (key.length === 2 && /^[a-z]{2}$/.test(key)) {
+    return key;
+  }
+
+  return null;
 }

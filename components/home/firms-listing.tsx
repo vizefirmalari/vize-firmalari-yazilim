@@ -37,7 +37,6 @@ function buildApplied(
 ): AppliedListingFilters {
   return {
     coverage: {
-      popularIds: [],
       regionIds: [],
       countries: [...countries],
     },
@@ -91,7 +90,6 @@ export function FirmsListing({
     () => buildApplied(bounds, initialCountries, initialServices)
   );
   const [sort, setSort] = useState<FirmSort>(initialSort);
-  const [showAllCountries, setShowAllCountries] = useState(false);
 
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [sortSheetOpen, setSortSheetOpen] = useState(false);
@@ -139,10 +137,6 @@ export function FirmsListing({
     serviceOptions && serviceOptions.length > 0
       ? serviceOptions
       : [...SERVICE_OPTIONS];
-
-  const visibleCountries = showAllCountries
-    ? countriesSource
-    : countriesSource.slice(0, 8);
 
   const filtered = useMemo(
     () =>
@@ -197,7 +191,7 @@ export function FirmsListing({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-6 lg:mt-0 lg:grid-cols-[280px_1fr]">
+      <div className="mt-4 grid gap-6 lg:mt-0 lg:grid-cols-[minmax(280px,360px)_1fr]">
         <aside className="premium-card hidden h-fit p-4 lg:sticky lg:top-24 lg:block">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-base font-semibold text-primary">Filtrele</h2>
@@ -217,35 +211,35 @@ export function FirmsListing({
               draft={appliedFilters}
               onChange={setAppliedFilters}
               bounds={bounds}
-              countryOptions={visibleCountries}
+              countryOptions={countriesSource}
               serviceOptions={servicesSource}
               companyTypeOptions={companyTypeOptions}
             />
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setShowAllCountries((prev) => !prev)}
-                className="text-xs font-semibold text-secondary"
-              >
-                {showAllCountries ? "Daha Az Göster" : "Tümünü Göster"}
-              </button>
-            </div>
           </div>
 
-          <div className="mt-6 border-t border-border pt-6">
-            <p className="text-sm font-semibold text-foreground">Sıralama</p>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as FirmSort)}
-              className="mt-2 h-10 w-full rounded-xl border border-border bg-background px-3 text-sm"
-            >
+          <fieldset className="mt-6 border-t border-border pt-6">
+            <legend className="text-sm font-semibold text-foreground">
+              Sıralama
+            </legend>
+            <div className="mt-3 flex flex-col gap-2.5">
               {LISTING_SORT_OPTIONS.map(({ value, label }) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
+                <label
+                  key={value}
+                  className="flex cursor-pointer items-center gap-2.5 text-sm text-foreground/90"
+                >
+                  <input
+                    type="radio"
+                    name="listing-sort"
+                    value={value}
+                    checked={sort === value}
+                    onChange={() => setSort(value)}
+                    className="accent-primary"
+                  />
+                  <span>{label}</span>
+                </label>
               ))}
-            </select>
-          </div>
+            </div>
+          </fieldset>
         </aside>
 
         <div>

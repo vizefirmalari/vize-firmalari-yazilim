@@ -12,6 +12,14 @@ function normalizeCoverageLabel(input: string): string {
     .replace(/\s+/g, "");
 }
 
+export function isRegionCoverageLabel(raw: string): boolean {
+  const label = raw?.trim();
+  if (!label) return false;
+  const normalized = normalizeCoverageLabel(label);
+  if (!normalized) return false;
+  return isRegionLabel(normalized);
+}
+
 function isRegionLabel(normalized: string): boolean {
   // Region examples: Schengen Bölgesi, Avrupa Birliği.
   // We keep this intentionally strict to avoid misclassifying real country names.
