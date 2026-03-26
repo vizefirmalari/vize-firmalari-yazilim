@@ -1,8 +1,3 @@
-export type CountryFlag = {
-  src: string;
-  alt: string;
-};
-
 function normalizeCountryName(input: string): string {
   return input
     .trim()
@@ -17,56 +12,106 @@ function normalizeCountryName(input: string): string {
     .replace(/\s+/g, "");
 }
 
-/**
- * Returns a real, sharp flag SVG from flagcdn.com for known inputs.
- * For unknown inputs returns `null` (UI uses a safe fallback).
- */
-export function getCountryFlagFromName(
-  countryName: string
-): CountryFlag | null {
+export function getCountryFlagCodeFromName(countryName: string): string | null {
   const key = normalizeCountryName(countryName);
 
-  const mapToIsoCode: Record<string, string> = {
-    turkiye: "tr",
-    turkey: "tr",
-    // normalized keys won't include diacritics, so we only map ASCII here.
-
+  // Strict mapping for the key countries we care about on this product.
+  // Source expected by UI: https://flagcdn.com/w40/{code}.png
+  const map: Record<string, string> = {
+    germany: "de",
     almanya: "de",
-    fransa: "fr",
-    italya: "it",
-    ispanya: "es",
-    hollanda: "nl",
-    polonya: "pl",
-    avusturya: "at",
-    cekya: "cz",
-    cek: "cz",
-    cin: "cn",
-    japonya: "jp",
+    de: "de",
 
-    ingiltere: "gb",
-    ingliltere: "gb",
-    britanya: "gb",
-    birlesik: "gb",
-    birlesikkrallik: "gb",
     uk: "gb",
+    unitedkingdom: "gb",
+    england: "gb",
+    ingiltere: "gb",
+    britain: "gb",
+    greatbritain: "gb",
+    gb: "gb",
 
-    amerika: "us",
-    abd: "us",
-    usa: "us",
-    birlesikdevletler: "us",
+    france: "fr",
+    fransa: "fr",
+    fr: "fr",
 
-    kanada: "ca",
-    schengen: "eu",
-    avrupa: "eu",
+    italy: "it",
+    italya: "it",
+    it: "it",
+
+    netherlands: "nl",
+    holland: "nl",
+    hollanda: "nl",
+    nl: "nl",
+
+    switzerland: "ch",
+    isvicre: "ch",
+    isviçre: "ch",
+    ch: "ch",
+
+    australia: "au",
+    avustralya: "au",
+    au: "au",
+
+    austria: "at",
+    avusturya: "at",
+    at: "at",
+
+    belgium: "be",
+    belcika: "be",
+    belçika: "be",
+    be: "be",
+
+    denmark: "dk",
+    danimarka: "dk",
+    dk: "dk",
+
+    finland: "fi",
+    finlandiya: "fi",
+    fi: "fi",
+
+    spain: "es",
+    espana: "es",
+    ispanya: "es",
+    es: "es",
+
+    sweden: "se",
+    isvec: "se",
+    isveç: "se",
+    se: "se",
+
+    latvia: "lv",
+    letonya: "lv",
+    lv: "lv",
+
+    norway: "no",
+    norvec: "no",
+    norveç: "no",
+    no: "no",
+
+    poland: "pl",
+    polonya: "pl",
+    pl: "pl",
+
+    portugal: "pt",
+    portekiz: "pt",
+    pt: "pt",
+
+    slovenia: "si",
+    slovenya: "si",
+    si: "si",
+
+    greece: "gr",
+    yunanistan: "gr",
+    gr: "gr",
+
+    hungary: "hu",
+    macaristan: "hu",
+    hu: "hu",
+
+    iceland: "is",
+    izlanda: "is",
+    is: "is",
   };
 
-  const iso = mapToIsoCode[key] ?? null;
-  if (!iso) return null;
-
-  // flagcdn provides compact flag SVGs with predictable paths.
-  const src = `https://flagcdn.com/w20/${iso}.svg`;
-  return {
-    src,
-    alt: `${countryName.trim()} bayrağı`,
-  };
+  return map[key] ?? null;
 }

@@ -500,15 +500,12 @@ export default async function FirmaPage({ params }: PageProps) {
 
               {hasCustomServices ? (
                 <SectionReveal delayMs={132}>
-                  <div className="pt-2">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-[#0B3C5D]/70">
-                      Ek bilgiler
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="pt-1">
+                    <div className="flex flex-wrap gap-2">
                       {customServices.map((t) => (
                         <span
                           key={t}
-                          className="rounded-lg bg-[#EEF1F4] px-2 py-1 text-[11px] font-medium text-[#1A1A1A]/65"
+                          className="rounded-md bg-[#F3F5F7] px-2 py-1 text-[10.5px] font-medium text-[#1A1A1A]/55 ring-1 ring-[#0B3C5D]/5"
                         >
                           {t}
                         </span>

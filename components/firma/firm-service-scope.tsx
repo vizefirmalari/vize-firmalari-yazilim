@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import type { ReactNode } from "react";
-import { getCountryFlagFromName } from "@/lib/firma/country-flag";
+import { getCountryFlagCodeFromName } from "@/lib/firma/country-flag";
 
 const MAX_COUNTRIES_VISIBLE = 6;
 const MAX_MAIN_SERVICES_VISIBLE = 4;
@@ -68,10 +68,7 @@ export function FirmServiceScope({
             {shownCountries.map((c) => {
               return (
                 <li key={c}>
-                  <span className="inline-flex items-center gap-1.5 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 py-1 text-xs font-medium text-[#0B3C5D]/85">
-                    <CountryFlag countryName={c} />
-                    {c}
-                  </span>
+                  <CountryChip countryName={c} />
                 </li>
               );
             })}
@@ -187,10 +184,7 @@ export function FirmServiceScope({
           {countries.map((c) => {
             return (
               <li key={c}>
-                <span className="inline-flex items-center gap-1.5 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 py-1 text-xs font-medium text-[#0B3C5D]/85">
-                  <CountryFlag countryName={c} />
-                  {c}
-                </span>
+                <CountryChip countryName={c} />
               </li>
             );
           })}
@@ -279,13 +273,7 @@ export function FirmServiceScope({
             >
               <div className="mt-3 flex flex-wrap gap-2">
                 {countries.map((c) => (
-                  <span
-                    key={c}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#FAFBFC] px-3 py-1.5 text-xs font-medium text-[#0B3C5D]/85 ring-1 ring-[#0B3C5D]/10"
-                  >
-                    <CountryFlag countryName={c} />
-                    {c}
-                  </span>
+                  <CountryChip key={c} countryName={c} />
                 ))}
               </div>
             </DetailGroup>
@@ -346,28 +334,29 @@ function DetailGroup({
   );
 }
 
-function CountryFlag({ countryName }: { countryName: string }) {
-  const flag = getCountryFlagFromName(countryName);
-  if (!flag) {
-    return (
-      <span
-        className="inline-flex h-[10px] w-[20px] items-center justify-center rounded-[3px] bg-[#F7F9FB] ring-1 ring-[#0B3C5D]/10"
-        aria-hidden
-      >
-        <WorldIcon />
-      </span>
-    );
-  }
+function CountryChip({ countryName }: { countryName: string }) {
+  const code = getCountryFlagCodeFromName(countryName);
+  const [imgOk, setImgOk] = useState(true);
+  const showFlag = Boolean(code) && imgOk;
+
+  // When country changes, allow image again.
+  useEffect(() => setImgOk(true), [countryName]);
 
   return (
-    <img
-      src={flag.src}
-      alt={flag.alt}
-      width={20}
-      height={10}
-      className="w-[20px] aspect-2/1 rounded-[3px] object-cover"
-      loading="lazy"
-    />
+    <span className="inline-flex h-7 max-w-full items-center gap-2 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 text-xs font-medium text-[#0B3C5D]/85">
+      {showFlag ? (
+        <img
+          src={`https://flagcdn.com/w40/${code}.png`}
+          alt=""
+          width={24}
+          height={16}
+          className="h-4 w-auto shrink-0 rounded-[3px] object-cover"
+          loading="lazy"
+          onError={() => setImgOk(false)}
+        />
+      ) : null}
+      <span className="truncate whitespace-nowrap">{countryName}</span>
+    </span>
   );
 }
 
