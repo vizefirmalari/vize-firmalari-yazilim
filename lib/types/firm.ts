@@ -44,11 +44,90 @@ export type FirmRow = {
   facebook?: string | null;
   twitter?: string | null;
   linkedin?: string | null;
+  youtube?: string | null;
+  telegram?: string | null;
   status?: string;
   created_at: string;
+
+  // Identity / location
+  city?: string | null;
+  district?: string | null;
+  hq_country?: string | null;
+  founded_year?: number | null;
+  brand_name?: string | null;
+  slogan?: string | null;
+  card_highlight_text?: string | null;
+  legal_company_name?: string | null;
+  owner_name?: string | null;
+  company_structure?: string | null;
+  company_type?: string | null;
+
+  // Corporate proof inputs (legal + trust)
+  has_physical_office?: boolean | null;
+  office_address_verified?: boolean | null;
+  has_landline?: boolean | null;
+  supported_languages?: string[] | null;
+  weekend_support?: boolean | null;
+  has_corporate_email?: boolean | null;
+  has_corporate_domain?: boolean | null;
+  website_quality_level?: "none" | "basic" | "professional" | null;
+  has_tax_certificate?: boolean | null;
+  tax_number?: string | null;
+  tax_office?: string | null;
+  license_number?: string | null;
+  license_description?: string | null;
+  has_blog?: boolean | null;
+
+  // Team / operations
+  employee_count?: number | null;
+  consultant_count?: number | null;
+  support_staff_count?: number | null;
+  office_count?: number | null;
+  countries_served_count?: number | null;
+
+  // Address / contact extras
+  address?: string | null;
+  postal_code?: string | null;
+  maps_url?: string | null;
+  working_hours?: string | null;
+  weekend_hours_note?: string | null;
+  support_email?: string | null;
+  second_phone?: string | null;
+  second_whatsapp?: string | null;
+  contact_person_name?: string | null;
+  contact_person_role?: string | null;
+
+  // Service depth + specialization
+  main_services?: string[] | null;
+  sub_services?: string[] | null;
+  custom_services?: string[] | null;
+  schengen_expert?: boolean | null;
+  usa_visa_expert?: boolean | null;
+  student_visa_support?: boolean | null;
+  work_visa_support?: boolean | null;
+  tourist_visa_support?: boolean | null;
+  business_visa_support?: boolean | null;
+  family_reunion_support?: boolean | null;
+  appeal_support?: boolean | null;
+
+  // Process / credibility
+  about_section?: string | null;
+  service_process_text?: string | null;
+  application_process_text?: string | null;
+  documents_process_text?: string | null;
+  appointment_process_text?: string | null;
+  visa_fees_note?: string | null;
+  why_this_firm?: string | null;
+  corporate_summary_box?: string | null;
+  disclaimer_notice?: string | null;
+  faq_json?: { question: string; answer: string }[] | null;
+  service_process_steps?: string[] | null;
   show_phone?: boolean | null;
   show_whatsapp?: boolean | null;
   show_email?: boolean | null;
+  show_website?: boolean | null;
+  show_address?: boolean | null;
+  show_working_hours?: boolean | null;
   contact_popup_enabled?: boolean | null;
   quick_apply_enabled?: boolean | null;
   social_buttons_enabled?: boolean | null;

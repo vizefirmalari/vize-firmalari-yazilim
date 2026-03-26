@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { getAllFirmSlugs, getFirmBySlug } from "@/lib/data/firms";
 import { getSiteUrl } from "@/lib/env";
 import type { FirmRow } from "@/lib/types/firm";
+import { SectionReveal } from "@/components/home/section-reveal";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -15,6 +16,53 @@ type PageProps = {
 function whatsappHref(raw: string): string {
   const digits = raw.replace(/\D/g, "");
   return `https://wa.me/${digits}`;
+}
+
+function countryFlagEmoji(countryName: string): string | null {
+  const s = countryName.trim().toLowerCase();
+  const map: Record<string, string> = {
+    türkiye: "🇹🇷",
+    türki̇ye: "🇹🇷",
+    turkey: "🇹🇷",
+
+    almanya: "🇩🇪",
+    fransa: "🇫🇷",
+    italya: "🇮🇹",
+    ispanya: "🇪🇸",
+    i̇spanya: "🇪🇸",
+    hollanda: "🇳🇱",
+    polonya: "🇵🇱",
+    avusturya: "🇦🇹",
+    çekya: "🇨🇿",
+    çek: "🇨🇿",
+    çin: "🇨🇳",
+    japonya: "🇯🇵",
+    birleşik: "🇬🇧",
+    birleşikkrallık: "🇬🇧",
+    uk: "🇬🇧",
+    ingiltere: "🇬🇧",
+    ingliltere: "🇬🇧",
+    britanya: "🇬🇧",
+    brit: "🇬🇧",
+    amerika: "🇺🇸",
+    usa: "🇺🇸",
+    birleşikdevletler: "🇺🇸",
+    kanada: "🇨🇦",
+    birleşmiş: "🇺🇸",
+
+    schengen: "🇪🇺",
+    avrupa: "🇪🇺",
+  };
+  return map[s] ?? null;
+}
+
+function chipClass(
+  variant: "neutral" | "gold" = "neutral"
+): string {
+  if (variant === "gold") {
+    return "rounded-lg bg-[#D9A441]/15 px-3 py-1 text-sm font-semibold text-[#1A1A1A]";
+  }
+  return "rounded-lg bg-[#F7F9FB] px-3 py-1 text-sm font-medium text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10";
 }
 
 function jsonLd(firm: FirmRow, url: string) {
@@ -104,6 +152,119 @@ export default async function FirmaPage({ params }: PageProps) {
   if (!firm) notFound();
 
   const countries = Array.isArray(firm.countries) ? firm.countries : [];
+  const cityText = [firm.city, firm.district].filter(Boolean).join(" / ");
+  const locationText = [cityText, firm.hq_country].filter((x) => x && String(x).trim()).join(" · ");
+  const foundedText =
+    typeof firm.founded_year === "number" && Number.isFinite(firm.founded_year)
+      ? String(firm.founded_year)
+      : "";
+
+  const aboutText =
+    firm.about_section?.trim() ||
+    firm.short_description?.trim() ||
+    firm.description?.trim() ||
+    "";
+
+  const serviceItems =
+    (Array.isArray(firm.main_services) && firm.main_services.length
+      ? firm.main_services
+      : firm.services) ?? [];
+  const subServices = Array.isArray(firm.sub_services) ? firm.sub_services : [];
+  const customServices = Array.isArray(firm.custom_services) ? firm.custom_services : [];
+
+  const specializationLabels: { key: string; label: string }[] = [
+    { key: "schengen_expert", label: "Schengen Uzmanı" },
+    { key: "usa_visa_expert", label: "ABD Vize Uzmanı" },
+    { key: "student_visa_support", label: "Öğrenci Desteği" },
+    { key: "work_visa_support", label: "Çalışma Vizesi" },
+    { key: "tourist_visa_support", label: "Turistik Vize" },
+    { key: "business_visa_support", label: "İş / Ticari Vize" },
+    { key: "family_reunion_support", label: "Aile Birleşimi" },
+    { key: "appeal_support", label: "İtiraz / Red Sonrası" },
+  ];
+
+  const specializationFlags = specializationLabels
+    .filter((s) => Boolean((firm as unknown as Record<string, unknown>)[s.key]))
+    .map((s) => s.label);
+
+  const hasAbout = Boolean(aboutText);
+  const hasCountries = countries.length > 0;
+  const hasServices = Array.isArray(serviceItems) && serviceItems.length > 0;
+  const hasSubServices = subServices.length > 0;
+  const hasCustomServices = customServices.length > 0;
+  const hasSpecialization = specializationFlags.length > 0;
+
+  const hasProcess =
+    Boolean(firm.service_process_text?.trim()) ||
+    Boolean(firm.application_process_text?.trim()) ||
+    Boolean(firm.documents_process_text?.trim()) ||
+    Boolean(firm.appointment_process_text?.trim()) ||
+    Boolean(firm.visa_fees_note?.trim());
+
+  const hasFaq = Array.isArray(firm.faq_json) && firm.faq_json.length > 0;
+
+  const hasTeam =
+    Boolean(firm.contact_person_name?.trim()) ||
+    (typeof firm.consultant_count === "number" && firm.consultant_count > 0) ||
+    (typeof firm.employee_count === "number" && firm.employee_count > 0) ||
+    (typeof firm.support_staff_count === "number" && firm.support_staff_count > 0) ||
+    (typeof firm.office_count === "number" && firm.office_count > 0);
+
+  const hasLegal =
+    Boolean(firm.company_structure?.trim()) ||
+    Boolean(firm.tax_number?.trim()) ||
+    Boolean(firm.tax_office?.trim()) ||
+    Boolean(firm.license_number?.trim()) ||
+    Boolean(firm.license_description?.trim()) ||
+    firm.has_tax_certificate === true;
+
+  const hasCorporateProof =
+    typeof firm.has_corporate_email === "boolean" ||
+    firm.has_physical_office === true ||
+    firm.has_corporate_domain === true ||
+    Boolean(firm.website_quality_level) ||
+    (typeof firm.employee_count === "number" && firm.employee_count > 0) ||
+    (typeof firm.consultant_count === "number" && firm.consultant_count > 0);
+
+  const hasDigital =
+    Boolean(firm.website?.trim()) ||
+    Boolean(firm.instagram?.trim()) ||
+    Boolean(firm.facebook?.trim()) ||
+    Boolean(firm.linkedin?.trim()) ||
+    Boolean(firm.youtube?.trim()) ||
+    Boolean(firm.has_blog) ||
+    Boolean(firm.twitter?.trim());
+
+  const showPhone = firm.show_phone !== false;
+  const showWhatsapp = firm.show_whatsapp !== false;
+  const showEmail = firm.show_email !== false;
+  const showWebsite = firm.show_website !== false;
+  const showAddress = firm.show_address !== false;
+  const showWorkingHours = firm.show_working_hours !== false;
+
+  const hasContactCard =
+    (showPhone && Boolean(firm.phone)) ||
+    (showWhatsapp && Boolean(firm.whatsapp)) ||
+    (showEmail && Boolean(firm.email)) ||
+    (showWebsite && Boolean(firm.website)) ||
+    (showAddress &&
+      Boolean(
+        firm.address?.trim() ||
+          firm.postal_code?.trim() ||
+          firm.maps_url?.trim()
+      )) ||
+    (showWorkingHours &&
+      Boolean(
+        firm.working_hours?.trim() || firm.weekend_hours_note?.trim()
+      ));
+
+  // Header korunur; bu blok sadece ek kimlik bilgileri varsa gösterilir.
+  const hasIdentity =
+    Boolean(firm.short_badge?.trim()) ||
+    Boolean(firm.brand_name?.trim()) ||
+    Boolean(firm.slogan?.trim()) ||
+    Boolean(locationText?.trim()) ||
+    Boolean(foundedText?.trim());
 
   const siteUrl = getSiteUrl();
   const pageUrl = `${siteUrl}/firma/${firm.slug}`;
@@ -175,30 +336,360 @@ export default async function FirmaPage({ params }: PageProps) {
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-[1fr_340px] lg:items-start">
             <div className="space-y-8">
-              <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-[#0B3C5D]">
-                  Hakkında
-                </h2>
-                <p className="mt-3 text-[#1A1A1A]/80 leading-relaxed">
-                  {firm.description ??
-                    "Bu firma için açıklama yakında güncellenecek."}
-                </p>
-              </section>
+              {hasIdentity ? (
+                <SectionReveal delayMs={15}>
+                  <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
+                    <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                      Temel bilgiler
+                    </h2>
 
-              <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-[#0B3C5D]">
-                  Hizmet verilen ülkeler
-                </h2>
-                <ul className="mt-4 flex flex-wrap gap-2">
-                  {countries.map((c) => (
-                    <li key={c}>
-                      <span className="inline-flex rounded-lg bg-[#F7F9FB] px-3 py-1 text-sm font-medium text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10">
-                        {c}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+                    <div className="mt-4 space-y-3">
+                      {firm.short_badge?.trim() ? (
+                        <div className="text-xs font-semibold uppercase tracking-wide text-[#D9A441]">
+                          {firm.short_badge}
+                        </div>
+                      ) : null}
+
+                      {firm.brand_name?.trim() ? (
+                        <div className="text-sm text-[#1A1A1A]/80">
+                          <span className="font-semibold text-[#0B3C5D]">Marka:</span>{" "}
+                          {firm.brand_name}
+                        </div>
+                      ) : null}
+
+                      {firm.slogan?.trim() ? (
+                        <div className="text-sm text-[#1A1A1A]/80">
+                          <span className="font-semibold text-[#0B3C5D]">Slogan:</span>{" "}
+                          {firm.slogan}
+                        </div>
+                      ) : null}
+
+                      {locationText?.trim() ? (
+                        <div className="text-sm text-[#1A1A1A]/80">
+                          <span className="font-semibold text-[#0B3C5D]">Konum:</span>{" "}
+                          {locationText}
+                        </div>
+                      ) : null}
+
+                      {foundedText?.trim() ? (
+                        <div className="text-sm text-[#1A1A1A]/80">
+                          <span className="font-semibold text-[#0B3C5D]">Kuruluş:</span>{" "}
+                          {foundedText}
+                        </div>
+                      ) : null}
+                    </div>
+                  </section>
+                </SectionReveal>
+              ) : null}
+
+              {hasAbout ? (
+                <SectionReveal delayMs={30}>
+                  <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
+                  <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                    Hakkında
+                  </h2>
+                  <p className="mt-3 text-[#1A1A1A]/80 leading-relaxed whitespace-pre-wrap">
+                    {aboutText}
+                  </p>
+                  </section>
+                </SectionReveal>
+              ) : null}
+
+              {(hasCountries || hasServices || hasSpecialization || hasSubServices || hasCustomServices) ? (
+                <SectionReveal delayMs={60}>
+                  <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
+                  <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                    Hizmet kapsamı
+                  </h2>
+
+                  {hasCountries ? (
+                    <>
+                      <h3 className="mt-5 text-sm font-semibold text-[#0B3C5D]">
+                        Ülkeler
+                      </h3>
+                      <ul className="mt-3 flex flex-wrap gap-2">
+                        {countries.map((c) => {
+                          const flag = countryFlagEmoji(c);
+                          return (
+                            <li key={c}>
+                              <span className={chipClass()}>
+                                <span className="mr-2" aria-hidden>
+                                  {flag ?? "🌍"}
+                                </span>
+                                {c}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </>
+                  ) : null}
+
+                  {hasServices ? (
+                    <>
+                      <h3 className="mt-6 text-sm font-semibold text-[#0B3C5D]">
+                        Sunulan hizmetler
+                      </h3>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {serviceItems.map((s) => (
+                          <span
+                            key={s}
+                            className={`${chipClass("neutral")} inline-flex items-center gap-2`}
+                          >
+                            <span
+                              className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-[#328CC1]/10"
+                              aria-hidden
+                            >
+                              <ServiceIcon />
+                            </span>
+                            <span>{s}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+
+                  {hasSubServices ? (
+                    <>
+                      <h3 className="mt-6 text-sm font-semibold text-[#0B3C5D]">
+                        Alt hizmet detayları
+                      </h3>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {subServices.map((s) => (
+                          <span
+                            key={s}
+                            className={`${chipClass("neutral")} inline-flex items-center gap-2`}
+                          >
+                            <span
+                              className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-[#328CC1]/10"
+                              aria-hidden
+                            >
+                              <ServiceIcon />
+                            </span>
+                            <span>{s}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+
+                  {hasCustomServices ? (
+                    <>
+                      <h3 className="mt-6 text-sm font-semibold text-[#0B3C5D]">
+                        Özel etiketler
+                      </h3>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {customServices.map((s) => (
+                          <span key={s} className={chipClass("gold")}>
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+
+                  {hasSpecialization ? (
+                    <>
+                      <h3 className="mt-6 text-sm font-semibold text-[#0B3C5D]">
+                        Uzmanlık vurgusu
+                      </h3>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {specializationFlags.map((s) => (
+                          <span key={s} className={chipClass("gold")}>
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+                  </section>
+                </SectionReveal>
+              ) : null}
+
+              {hasProcess ? (
+                <SectionReveal delayMs={90}>
+                  <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
+                  <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                    Süreç nasıl ilerler?
+                  </h2>
+
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    {firm.application_process_text?.trim() ? (
+                      <div>
+                        <h3 className="text-sm font-semibold text-[#0B3C5D]">
+                          Firma ne yapar?
+                        </h3>
+                        <p className="mt-2 text-sm text-[#1A1A1A]/80 leading-relaxed whitespace-pre-wrap">
+                          {firm.application_process_text}
+                        </p>
+                      </div>
+                    ) : null}
+                    {firm.service_process_text?.trim() ? (
+                      <div>
+                        <h3 className="text-sm font-semibold text-[#0B3C5D]">
+                          Süreç adımları
+                        </h3>
+                        <p className="mt-2 text-sm text-[#1A1A1A]/80 leading-relaxed whitespace-pre-wrap">
+                          {firm.service_process_text}
+                        </p>
+                      </div>
+                    ) : null}
+                    {firm.documents_process_text?.trim() ? (
+                      <div>
+                        <h3 className="text-sm font-semibold text-[#0B3C5D]">
+                          Evrak doğruluğu
+                        </h3>
+                        <p className="mt-2 text-sm text-[#1A1A1A]/80 leading-relaxed whitespace-pre-wrap">
+                          {firm.documents_process_text}
+                        </p>
+                      </div>
+                    ) : null}
+                    {firm.appointment_process_text?.trim() ? (
+                      <div>
+                        <h3 className="text-sm font-semibold text-[#0B3C5D]">
+                          Randevu ve takip
+                        </h3>
+                        <p className="mt-2 text-sm text-[#1A1A1A]/80 leading-relaxed whitespace-pre-wrap">
+                          {firm.appointment_process_text}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {firm.visa_fees_note?.trim() ? (
+                    <p className="mt-4 text-sm text-[#1A1A1A]/70 leading-relaxed whitespace-pre-wrap">
+                      {firm.visa_fees_note}
+                    </p>
+                  ) : null}
+                  </section>
+                </SectionReveal>
+              ) : null}
+
+              {hasTeam ? (
+                <SectionReveal delayMs={120}>
+                  <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
+                  <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                    Ekip & uzmanlık
+                  </h2>
+
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    {firm.contact_person_name?.trim() ? (
+                      <div>
+                        <h3 className="text-sm font-semibold text-[#0B3C5D]">
+                          Yetkili kişi
+                        </h3>
+                        <p className="mt-2 text-sm font-semibold text-[#1A1A1A]">
+                          {firm.contact_person_name}
+                        </p>
+                        {firm.contact_person_role?.trim() ? (
+                          <p className="mt-1 text-sm text-[#1A1A1A]/70">
+                            {firm.contact_person_role}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-[#0B3C5D]">
+                        Ekip gücü
+                      </h3>
+                      <div className="mt-3 grid grid-cols-2 gap-3">
+                        {typeof firm.employee_count === "number" && firm.employee_count > 0 ? (
+                          <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-3">
+                            <div className="text-xs font-semibold text-[#0B3C5D]/70">
+                              Çalışan
+                            </div>
+                            <div className="mt-1 text-xl font-bold text-[#0B3C5D]">
+                              {firm.employee_count}
+                            </div>
+                          </div>
+                        ) : null}
+                        {typeof firm.consultant_count === "number" && firm.consultant_count > 0 ? (
+                          <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-3">
+                            <div className="text-xs font-semibold text-[#0B3C5D]/70">
+                              Danışman
+                            </div>
+                            <div className="mt-1 text-xl font-bold text-[#0B3C5D]">
+                              {firm.consultant_count}
+                            </div>
+                          </div>
+                        ) : null}
+                        {typeof firm.support_staff_count === "number" && firm.support_staff_count > 0 ? (
+                          <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-3">
+                            <div className="text-xs font-semibold text-[#0B3C5D]/70">
+                              Destek
+                            </div>
+                            <div className="mt-1 text-xl font-bold text-[#0B3C5D]">
+                              {firm.support_staff_count}
+                            </div>
+                          </div>
+                        ) : null}
+                        {typeof firm.office_count === "number" && firm.office_count > 0 ? (
+                          <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-3">
+                            <div className="text-xs font-semibold text-[#0B3C5D]/70">
+                              Ofis
+                            </div>
+                            <div className="mt-1 text-xl font-bold text-[#0B3C5D]">
+                              {firm.office_count}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                  </section>
+                </SectionReveal>
+              ) : null}
+
+              {firm.why_this_firm?.trim() || firm.corporate_summary_box?.trim() || firm.disclaimer_notice?.trim() ? (
+                <SectionReveal delayMs={150}>
+                  <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
+                  <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                    Neden bu firma?
+                  </h2>
+                  {firm.why_this_firm?.trim() ? (
+                    <p className="mt-3 text-sm text-[#1A1A1A]/80 leading-relaxed whitespace-pre-wrap">
+                      {firm.why_this_firm}
+                    </p>
+                  ) : null}
+                  {firm.corporate_summary_box?.trim() ? (
+                    <p className="mt-4 text-sm text-[#1A1A1A]/80 leading-relaxed whitespace-pre-wrap">
+                      {firm.corporate_summary_box}
+                    </p>
+                  ) : null}
+                  {firm.disclaimer_notice?.trim() ? (
+                    <p className="mt-4 text-xs text-[#1A1A1A]/60 leading-relaxed whitespace-pre-wrap">
+                      {firm.disclaimer_notice}
+                    </p>
+                  ) : null}
+                  </section>
+                </SectionReveal>
+              ) : null}
+
+              {hasFaq ? (
+                <SectionReveal delayMs={180}>
+                  <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
+                  <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                    Sık sorulan sorular
+                  </h2>
+                  <div className="mt-4 space-y-3">
+                    {firm.faq_json?.map((f) => (
+                      <details
+                        key={`${f.question}-${f.answer}`}
+                        className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] px-4 py-3"
+                      >
+                        <summary className="cursor-pointer text-sm font-semibold text-[#0B3C5D]">
+                          {f.question}
+                        </summary>
+                        <p className="mt-2 text-sm leading-relaxed text-[#1A1A1A]/75 whitespace-pre-wrap">
+                          {f.answer}
+                        </p>
+                      </details>
+                    ))}
+                  </div>
+                  </section>
+                </SectionReveal>
+              ) : null}
             </div>
 
             <aside className="space-y-6 lg:sticky lg:top-24">
@@ -221,15 +712,17 @@ export default async function FirmaPage({ params }: PageProps) {
                 </Link>
               </div>
 
-              <div
-                id="iletisim"
-                className="scroll-mt-28 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-6"
-              >
-                <h2 className="text-lg font-semibold text-[#0B3C5D]">
-                  İletişim
-                </h2>
-                <ul className="mt-4 space-y-3 text-sm">
-                  {firm.phone ? (
+              {hasContactCard ? (
+                <SectionReveal delayMs={210}>
+                  <div
+                    id="iletisim"
+                    className="scroll-mt-28 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-6"
+                  >
+                  <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                    İletişim
+                  </h2>
+                  <ul className="mt-4 space-y-3 text-sm">
+                  {showPhone && firm.phone ? (
                     <li>
                       <span className="font-medium text-[#1A1A1A]/55">
                         Telefon
@@ -242,7 +735,7 @@ export default async function FirmaPage({ params }: PageProps) {
                       </a>
                     </li>
                   ) : null}
-                  {firm.whatsapp ? (
+                  {showWhatsapp && firm.whatsapp ? (
                     <li>
                       <span className="font-medium text-[#1A1A1A]/55">
                         WhatsApp
@@ -257,7 +750,7 @@ export default async function FirmaPage({ params }: PageProps) {
                       </a>
                     </li>
                   ) : null}
-                  {firm.email ? (
+                  {showEmail && firm.email ? (
                     <li>
                       <span className="font-medium text-[#1A1A1A]/55">
                         E-posta
@@ -270,7 +763,7 @@ export default async function FirmaPage({ params }: PageProps) {
                       </a>
                     </li>
                   ) : null}
-                  {firm.website ? (
+                  {showWebsite && firm.website ? (
                     <li>
                       <span className="font-medium text-[#1A1A1A]/55">
                         Web
@@ -285,8 +778,243 @@ export default async function FirmaPage({ params }: PageProps) {
                       </a>
                     </li>
                   ) : null}
-                </ul>
-              </div>
+
+                  {showAddress && (firm.address?.trim() || firm.postal_code?.trim() || firm.maps_url?.trim()) ? (
+                    <li>
+                      <span className="font-medium text-[#1A1A1A]/55">
+                        Adres
+                      </span>
+                      {firm.address?.trim() ? (
+                        <div className="mt-1 text-[#1A1A1A]">
+                          {firm.address}
+                        </div>
+                      ) : null}
+                      {firm.postal_code?.trim() ? (
+                        <div className="mt-1 text-sm text-[#1A1A1A]/70">
+                          {firm.postal_code}
+                        </div>
+                      ) : null}
+                      {firm.maps_url?.trim() ? (
+                        <a
+                          href={firm.maps_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex text-sm font-semibold text-[#328CC1] hover:underline"
+                        >
+                          Haritada görüntüle
+                        </a>
+                      ) : null}
+                    </li>
+                  ) : null}
+
+                  {showWorkingHours && (firm.working_hours?.trim() || firm.weekend_hours_note?.trim()) ? (
+                    <li>
+                      <span className="font-medium text-[#1A1A1A]/55">
+                        Çalışma saatleri
+                      </span>
+                      {firm.working_hours?.trim() ? (
+                        <div className="mt-1 text-[#1A1A1A]">{firm.working_hours}</div>
+                      ) : null}
+                      {firm.weekend_hours_note?.trim() ? (
+                        <div className="mt-1 text-sm text-[#1A1A1A]/70">
+                          {firm.weekend_hours_note}
+                        </div>
+                      ) : null}
+                    </li>
+                  ) : null}
+                  </ul>
+                  </div>
+                </SectionReveal>
+              ) : null}
+
+              {hasCorporateProof ? (
+                <SectionReveal delayMs={240}>
+                  <div className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
+                  <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                    Kurumsallık ve güven
+                  </h2>
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-xs font-semibold text-[#0B3C5D]/70">
+                          Kurumsallık Skoru
+                        </div>
+                        <div className="mt-1 text-2xl font-bold text-[#0B3C5D]">
+                          {firm.corporateness_score}/100
+                        </div>
+                      </div>
+                      <div className="w-24">
+                        <div
+                          className="h-2.5 overflow-hidden rounded-full bg-[#0B3C5D]/10"
+                          role="progressbar"
+                          aria-valuenow={firm.corporateness_score}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                        >
+                          <div
+                            className="h-full rounded-full bg-[#D9A441]"
+                            style={{ width: `${firm.corporateness_score}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      {firm.has_physical_office === true ? (
+                        <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-3">
+                          <div className="text-xs font-semibold text-[#0B3C5D]/70">Fiziksel ofis</div>
+                          <div className="mt-1 text-sm font-semibold text-[#0B3C5D]">Var</div>
+                          {firm.office_address_verified === true ? (
+                            <div className="mt-1 text-xs text-[#1A1A1A]/60">Doğrulandı</div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                      {firm.has_corporate_email === true ? (
+                        <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-3">
+                          <div className="text-xs font-semibold text-[#0B3C5D]/70">Kurumsal e-posta</div>
+                          <div className="mt-1 text-sm font-semibold text-[#0B3C5D]">Var</div>
+                        </div>
+                      ) : null}
+                      {firm.website_quality_level && firm.website_quality_level !== "none" ? (
+                        <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-3">
+                          <div className="text-xs font-semibold text-[#0B3C5D]/70">Web sitesi kalitesi</div>
+                          <div className="mt-1 text-sm font-semibold text-[#0B3C5D]">
+                            {firm.website_quality_level === "professional" ? "Profesyonel" : "Temel"}
+                          </div>
+                        </div>
+                      ) : null}
+                      {typeof firm.consultant_count === "number" && firm.consultant_count > 0 ? (
+                        <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-3">
+                          <div className="text-xs font-semibold text-[#0B3C5D]/70">Danışman sayısı</div>
+                          <div className="mt-1 text-sm font-semibold text-[#0B3C5D]">
+                            {firm.consultant_count}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  </div>
+                </SectionReveal>
+              ) : null}
+
+              {hasLegal ? (
+                <SectionReveal delayMs={270}>
+                  <div className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
+                  <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                    Yasal ve resmi bilgiler
+                  </h2>
+                  <div className="mt-4 space-y-3">
+                    {firm.company_structure?.trim() || firm.company_type?.trim() ? (
+                      <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-3">
+                        <div className="text-xs font-semibold text-[#0B3C5D]/70">Şirket türü</div>
+                        <div className="mt-1 text-sm font-semibold text-[#0B3C5D]">
+                          {(firm.company_structure?.trim() || firm.company_type?.trim()) ?? ""}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {firm.has_tax_certificate === true || firm.tax_number?.trim() ? (
+                      <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-3">
+                        <div className="text-xs font-semibold text-[#0B3C5D]/70">Vergi bilgisi</div>
+                        <div className="mt-1 text-sm font-semibold text-[#0B3C5D]">
+                          {firm.tax_number?.trim() ? firm.tax_number : "Beyan edilmiş"}
+                        </div>
+                        {firm.tax_office?.trim() ? (
+                          <div className="mt-1 text-xs text-[#1A1A1A]/60">
+                            {firm.tax_office}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    {firm.license_number?.trim() || firm.license_description?.trim() ? (
+                      <div className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-3">
+                        <div className="text-xs font-semibold text-[#0B3C5D]/70">Lisans / yetki</div>
+                        <div className="mt-1 text-sm font-semibold text-[#0B3C5D]">
+                          {firm.license_number?.trim() || "Beyan edilmiş"}
+                        </div>
+                        {firm.license_description?.trim() ? (
+                          <div className="mt-1 text-xs text-[#1A1A1A]/60">
+                            {firm.license_description}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    <p className="text-xs text-[#1A1A1A]/60 leading-relaxed">
+                      Bu platform resmi devlet kurumu değildir; bilgiler firma beyanı ve yönetim
+                      doğrulamasına göre gösterilir.
+                    </p>
+                  </div>
+                  </div>
+                </SectionReveal>
+              ) : null}
+
+              {hasDigital ? (
+                <SectionReveal delayMs={300}>
+                  <div className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
+                  <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                    Dijital varlıklar
+                  </h2>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {firm.website && showWebsite ? (
+                      <a
+                        href={firm.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center rounded-lg bg-[#F7F9FB] px-3 py-2 text-sm font-semibold text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10 hover:bg-[#F0F6FA]"
+                      >
+                        Web sitesi
+                      </a>
+                    ) : null}
+                    {firm.instagram ? (
+                      <a
+                        href={firm.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center rounded-lg bg-[#F7F9FB] px-3 py-2 text-sm font-semibold text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10 hover:bg-[#F0F6FA]"
+                      >
+                        Instagram
+                      </a>
+                    ) : null}
+                    {firm.facebook ? (
+                      <a
+                        href={firm.facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center rounded-lg bg-[#F7F9FB] px-3 py-2 text-sm font-semibold text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10 hover:bg-[#F0F6FA]"
+                      >
+                        Facebook
+                      </a>
+                    ) : null}
+                    {firm.linkedin ? (
+                      <a
+                        href={firm.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center rounded-lg bg-[#F7F9FB] px-3 py-2 text-sm font-semibold text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10 hover:bg-[#F0F6FA]"
+                      >
+                        LinkedIn
+                      </a>
+                    ) : null}
+                    {firm.youtube ? (
+                      <a
+                        href={firm.youtube}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center rounded-lg bg-[#F7F9FB] px-3 py-2 text-sm font-semibold text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10 hover:bg-[#F0F6FA]"
+                      >
+                        YouTube
+                      </a>
+                    ) : null}
+                    {firm.has_blog ? (
+                      <span className="inline-flex items-center rounded-lg bg-[#D9A441]/15 px-3 py-2 text-sm font-semibold text-[#1A1A1A]">
+                        Blog
+                      </span>
+                    ) : null}
+                  </div>
+                  </div>
+                </SectionReveal>
+              ) : null}
             </aside>
           </div>
         </div>
@@ -301,4 +1029,35 @@ function initials(name: string): string {
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
   return (parts[0]![0]! + parts[1]![0]!).toUpperCase();
+}
+
+function ServiceIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M5 9V7a2 2 0 0 1 2-2h2"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <path
+        d="M9.5 12h7"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
 }
