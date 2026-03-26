@@ -119,3 +119,26 @@ export async function getPublicFilterServiceTypes(): Promise<FilterServiceRow[]>
 
   return (data ?? []) as FilterServiceRow[];
 }
+
+export type FilterCompanyTypeRow = {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+};
+
+export async function getPublicFilterCompanyTypes(): Promise<
+  FilterCompanyTypeRow[]
+> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = createSupabasePublicClient();
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from("company_types")
+    .select("id, name, slug, sort_order")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
+  return (data ?? []) as FilterCompanyTypeRow[];
+}

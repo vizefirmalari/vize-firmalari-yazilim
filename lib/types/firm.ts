@@ -136,9 +136,11 @@ export type FirmRow = {
 export type FirmSort =
   | "hype_desc"
   | "hype_asc"
+  | "hype_score_desc"
   | "corp_desc"
   | "corp_asc"
   | "newest"
+  | "oldest"
   | "name_asc";
 
 export type FirmFilters = {

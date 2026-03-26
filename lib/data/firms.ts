@@ -59,9 +59,11 @@ function normalizeSort(sort: string | undefined): FirmSort {
   const allowed: FirmSort[] = [
     "hype_desc",
     "hype_asc",
+    "hype_score_desc",
     "corp_desc",
     "corp_asc",
     "newest",
+    "oldest",
     "name_asc",
   ];
   if (allowed.includes(sort as FirmSort)) return sort as FirmSort;
@@ -169,6 +171,12 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
         return (
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
+      case "oldest":
+        return (
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      case "hype_score_desc":
+        return hype(b) - hype(a);
       case "name_asc":
         return a.name.localeCompare(b.name, "tr");
       case "hype_desc":
@@ -222,6 +230,9 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
     case "hype_asc":
       query = query.order("hype_score", { ascending: true });
       break;
+    case "hype_score_desc":
+      query = query.order("hype_score", { ascending: false });
+      break;
     case "corp_desc":
       query = query.order("corporateness_score", { ascending: false });
       break;
@@ -230,6 +241,9 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
       break;
     case "newest":
       query = query.order("created_at", { ascending: false });
+      break;
+    case "oldest":
+      query = query.order("created_at", { ascending: true });
       break;
     case "name_asc":
       query = query.order("name", { ascending: true });

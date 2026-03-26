@@ -10,6 +10,7 @@ import {
 } from "@/lib/constants";
 import {
   getHomepageSettings,
+  getPublicFilterCompanyTypes,
   getPublicFilterCountries,
   getPublicFilterServiceTypes,
 } from "@/lib/data/public-cms";
@@ -82,6 +83,19 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     SERVICE_OPTIONS
   );
 
+  const dbCompanyTypes = await getPublicFilterCompanyTypes();
+  const companyTypeNames = dbCompanyTypes.map((c) => c.name);
+  const companyTypesFromFirms = Array.from(
+    new Set(
+      listingFirms
+        .map((f) => f.company_type?.trim())
+        .filter((x): x is string => Boolean(x))
+    )
+  );
+  const companyTypeOptions = Array.from(
+    new Set([...companyTypeNames, ...companyTypesFromFirms])
+  ).sort((a, b) => a.localeCompare(b, "tr"));
+
   const hiddenParams: Record<string, string> = {};
   if (filters.countries.length) {
     hiddenParams.countries = filters.countries.join(",");
@@ -118,12 +132,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <main className="flex-1 bg-background">
         <FirmsListing
           initialFirms={listingFirms}
-          initialCountry={filters.countries[0] ?? ""}
+          initialCountries={filters.countries}
           initialServices={filters.services}
           initialSort={filters.sort}
           query={filters.q}
           countryList={countryListForListing}
           serviceOptions={serviceNames}
+          companyTypeOptions={companyTypeOptions}
           featuredTitle={
             cms?.featured_section_title?.trim() || undefined
           }

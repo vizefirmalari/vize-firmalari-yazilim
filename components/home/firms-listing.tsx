@@ -2,49 +2,94 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { DEFAULT_COUNTRIES, SERVICE_OPTIONS } from "@/lib/constants";
 import {
-  DEFAULT_COUNTRIES,
-  SERVICE_OPTIONS,
-} from "@/lib/constants";
+  applyListingFilters,
+  computeRangeBounds,
+  LISTING_SORT_OPTIONS,
+  sortFirms,
+  type AppliedListingFilters,
+} from "@/lib/firma/listing-filters";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { isSupabaseConfigured } from "@/lib/env";
 import type { FirmRow, FirmSort } from "@/lib/types/firm";
 import { FirmCard } from "@/components/home/firm-card";
+import { FirmFilterBottomSheet, FirmSortBottomSheet } from "@/components/home/firm-listing-sheets";
+import { FirmListingFilterFields } from "@/components/home/firm-listing-filter-fields";
 
 type Props = {
   initialFirms: FirmRow[];
-  initialCountry?: string;
+  initialCountries?: string[];
   initialServices?: string[];
   initialSort?: FirmSort;
   query?: string;
   countryList?: string[];
   serviceOptions?: string[];
+  companyTypeOptions?: string[];
   featuredTitle?: string;
   featuredSubtitle?: string;
 };
 
+function buildApplied(
+  bounds: ReturnType<typeof computeRangeBounds>,
+  countries: string[],
+  services: string[]
+): AppliedListingFilters {
+  return {
+    countries: [...countries],
+    services: [...services],
+    companyTypes: [],
+    corpMin: bounds.corp.min,
+    corpMax: bounds.corp.max,
+    hypeMin: bounds.hype.min,
+    hypeMax: bounds.hype.max,
+    yearMin: bounds.year.min,
+    yearMax: bounds.year.max,
+  };
+}
+
 export function FirmsListing({
   initialFirms,
-  initialCountry,
+  initialCountries = [],
   initialServices = [],
   initialSort = "hype_desc",
   query = "",
   countryList,
   serviceOptions,
+  companyTypeOptions = [],
   featuredTitle = "Öne Çıkan Vize Firmaları",
   featuredSubtitle = "Doğrulanmış firmaları karşılaştırın, iletişime geçin ve güvenle başvurun.",
 }: Props) {
   const router = useRouter();
-  const [country, setCountry] = useState(initialCountry ?? "");
-  const [services, setServices] = useState<string[]>(initialServices ?? []);
+  const bounds = useMemo(
+    () => computeRangeBounds(initialFirms),
+    [initialFirms]
+  );
+
+  const [appliedFilters, setAppliedFilters] = useState<AppliedListingFilters>(
+    () => buildApplied(bounds, initialCountries, initialServices)
+  );
   const [sort, setSort] = useState<FirmSort>(initialSort);
   const [showAllCountries, setShowAllCountries] = useState(false);
 
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [sortSheetOpen, setSortSheetOpen] = useState(false);
+  const [filterDraft, setFilterDraft] = useState<AppliedListingFilters>(
+    () => buildApplied(bounds, initialCountries, initialServices)
+  );
+
+  const urlKey = useMemo(
+    () =>
+      `${initialCountries.join(",")}|${initialServices.join(",")}|${initialSort}`,
+    [initialCountries, initialServices, initialSort]
+  );
+
   useEffect(() => {
-    setCountry(initialCountry ?? "");
-    setServices(initialServices ?? []);
+    setAppliedFilters(buildApplied(bounds, initialCountries, initialServices));
     setSort(initialSort);
-  }, [initialCountry, initialServices, initialSort]);
+    // Yalnızca URL / sunucu filtre senkronu; firms realtime ile bounds değişince sıfırlanmaz.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bounds, initialCountries, initialServices, initialSort: urlKey ile birlikte güncellenir
+  }, [urlKey]);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
@@ -78,88 +123,83 @@ export function FirmsListing({
     ? countriesSource
     : countriesSource.slice(0, 8);
 
-  const filtered = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    return initialFirms
-      .filter((firm) =>
-        country ? firm.countries.includes(country) : true
-      )
-      .filter((firm) =>
-        services.length > 0
-          ? services.every((service) => firm.services.includes(service))
-          : true
-      )
-      .filter((firm) => {
-        if (!normalizedQuery) return true;
-        const n = normalizedQuery;
-        return (
-          firm.name.toLowerCase().includes(n) ||
-          (firm.description?.toLowerCase().includes(n) ?? false) ||
-          (firm.short_description?.toLowerCase().includes(n) ?? false) ||
-          firm.countries.some((item) => item.toLowerCase().includes(n))
-        );
-      })
-      .sort((a, b) => {
-        const hype = (x: FirmRow) => x.hype_score ?? x.raw_hype_score * 100;
-        const mp = (x: FirmRow) => x.manual_priority ?? 0;
-        switch (sort) {
-          case "hype_asc":
-            return hype(a) - hype(b);
-          case "corp_desc":
-            return b.corporateness_score - a.corporateness_score;
-          case "corp_asc":
-            return a.corporateness_score - b.corporateness_score;
-          case "newest":
-            return (
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()
-            );
-          case "name_asc":
-            return a.name.localeCompare(b.name, "tr");
-          case "hype_desc":
-          default:
-            if (b.corporateness_score !== a.corporateness_score) {
-              return b.corporateness_score - a.corporateness_score;
-            }
-            if (hype(b) !== hype(a)) return hype(b) - hype(a);
-            return mp(b) - mp(a);
-        }
-      });
-  }, [country, initialFirms, query, services, sort]);
+  const filtered = useMemo(
+    () =>
+      applyListingFilters(initialFirms, appliedFilters, bounds, query),
+    [initialFirms, appliedFilters, bounds, query]
+  );
 
-  const toggleService = (service: string, checked: boolean) => {
-    setServices((prev) =>
-      checked ? [...prev, service] : prev.filter((item) => item !== service)
-    );
+  const sorted = useMemo(
+    () => sortFirms(filtered, sort),
+    [filtered, sort]
+  );
+
+  const previewCount = useMemo(
+    () =>
+      applyListingFilters(initialFirms, filterDraft, bounds, query).length,
+    [initialFirms, filterDraft, bounds, query]
+  );
+
+  const clearFilterDraft = () => {
+    setFilterDraft(buildApplied(bounds, [], []));
   };
+
+  const applyFilterSheet = () => {
+    setAppliedFilters(filterDraft);
+    setFilterSheetOpen(false);
+  };
+
+  const sortLabel =
+    LISTING_SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "Önerilen";
 
   return (
     <section id="firmalar" className="container-shell scroll-mt-28 pb-14">
-      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-        <aside className="premium-card h-fit p-4 lg:sticky lg:top-24">
-          <h2 className="text-base font-semibold text-primary">Filtrele</h2>
+      <div className="lg:hidden">
+        <div className="flex gap-2 pt-2">
+          <button
+            type="button"
+            onClick={() => {
+              setFilterDraft(appliedFilters);
+              setFilterSheetOpen(true);
+            }}
+            className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold text-foreground/75 shadow-sm transition hover:bg-primary/5"
+          >
+            Filtrele
+          </button>
+          <button
+            type="button"
+            onClick={() => setSortSheetOpen(true)}
+            className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold text-foreground/75 shadow-sm transition hover:bg-primary/5"
+          >
+            Sırala
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-6 lg:mt-0 lg:grid-cols-[280px_1fr]">
+        <aside className="premium-card hidden h-fit p-4 lg:sticky lg:top-24 lg:block">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-base font-semibold text-primary">Filtrele</h2>
+            <button
+              type="button"
+              onClick={() =>
+                setAppliedFilters(buildApplied(bounds, [], []))
+              }
+              className="text-xs font-semibold text-secondary"
+            >
+              Temizle
+            </button>
+          </div>
 
           <div className="mt-5">
-            <p className="text-sm font-semibold text-foreground">
-              Ülke Seçimi
-            </p>
-            <div
-              className={
-                showAllCountries ? "mt-3 max-h-56 space-y-2 overflow-y-auto pr-1" : "mt-3 space-y-2"
-              }
-            >
-              {visibleCountries.map((item) => (
-                <label key={item} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="radio"
-                    name="country"
-                    checked={country === item}
-                    onChange={() => setCountry(item)}
-                  />
-                  {item}
-                </label>
-              ))}
-            </div>
+            <FirmListingFilterFields
+              draft={appliedFilters}
+              onChange={setAppliedFilters}
+              bounds={bounds}
+              countryOptions={visibleCountries}
+              serviceOptions={servicesSource}
+              companyTypeOptions={companyTypeOptions}
+            />
             <div className="mt-2 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -168,57 +208,21 @@ export function FirmsListing({
               >
                 {showAllCountries ? "Daha Az Göster" : "Tümünü Göster"}
               </button>
-              {country ? (
-                <button
-                  type="button"
-                  onClick={() => setCountry("")}
-                  className="text-xs text-foreground/60"
-                >
-                  Temizle
-                </button>
-              ) : null}
             </div>
           </div>
 
-          <div className="mt-6">
-            <p className="text-sm font-semibold text-foreground">
-              İşlem Türü
-            </p>
-            <div className="mt-3 space-y-2">
-              {servicesSource.map((item) => (
-                <label key={item} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={services.includes(item)}
-                    onChange={(event) =>
-                      toggleService(item, event.target.checked)
-                    }
-                  />
-                  {item}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6">
+          <div className="mt-6 border-t border-border pt-6">
             <p className="text-sm font-semibold text-foreground">Sıralama</p>
             <select
               value={sort}
-              onChange={(event) =>
-                setSort(event.target.value as FirmSort)
-              }
+              onChange={(e) => setSort(e.target.value as FirmSort)}
               className="mt-2 h-10 w-full rounded-xl border border-border bg-background px-3 text-sm"
             >
-              <option value="hype_desc">Hype Puanı (yüksek → düşük)</option>
-              <option value="hype_asc">Hype Puanı (düşük → yüksek)</option>
-              <option value="corp_desc">
-                Kurumsallık Skoru (yüksek → düşük)
-              </option>
-              <option value="corp_asc">
-                Kurumsallık Skoru (düşük → yüksek)
-              </option>
-              <option value="newest">En yeni</option>
-              <option value="name_asc">A → Z</option>
+              {LISTING_SORT_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
           </div>
         </aside>
@@ -226,18 +230,45 @@ export function FirmsListing({
         <div>
           <h2 className="text-2xl font-bold text-primary">{featuredTitle}</h2>
           <p className="mt-1 text-sm text-foreground/70">{featuredSubtitle}</p>
+          <p className="mt-2 text-xs text-foreground/55 lg:hidden">
+            Sıralama: <span className="font-medium text-foreground/80">{sortLabel}</span>
+          </p>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            {filtered.map((firm) => (
+            {sorted.map((firm) => (
               <FirmCard key={firm.id} firm={firm} />
             ))}
           </div>
-          {filtered.length === 0 ? (
+          {sorted.length === 0 ? (
             <div className="premium-card mt-4 p-8 text-center text-sm text-foreground/70">
               Seçili filtrelere uygun firma bulunamadı.
             </div>
           ) : null}
         </div>
       </div>
+
+      <FirmFilterBottomSheet
+        open={filterSheetOpen}
+        onClose={() => setFilterSheetOpen(false)}
+        draft={filterDraft}
+        onChange={setFilterDraft}
+        bounds={bounds}
+        countryOptions={countriesSource}
+        serviceOptions={servicesSource}
+        companyTypeOptions={companyTypeOptions}
+        resultCount={previewCount}
+        onApply={applyFilterSheet}
+        onClear={clearFilterDraft}
+      />
+
+      <FirmSortBottomSheet
+        open={sortSheetOpen}
+        onClose={() => setSortSheetOpen(false)}
+        activeSort={sort}
+        onSelect={(next) => {
+          setSort(next);
+          setSortSheetOpen(false);
+        }}
+      />
     </section>
   );
 }
