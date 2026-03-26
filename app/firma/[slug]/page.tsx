@@ -126,11 +126,10 @@ export default async function FirmaPage({ params }: PageProps) {
       ? String(firm.founded_year)
       : "";
 
-  const aboutText =
-    firm.about_section?.trim() ||
-    firm.short_description?.trim() ||
-    firm.description?.trim() ||
-    "";
+  // "Hakkında": kısa metin (short_description) ve detay metin (description/about_section) ayrı tutulur.
+  const aboutShortText = firm.short_description?.trim() || "";
+  const aboutDetailedText =
+    firm.description?.trim() || firm.about_section?.trim() || "";
 
   const serviceItems =
     (Array.isArray(firm.main_services) && firm.main_services.length
@@ -154,7 +153,7 @@ export default async function FirmaPage({ params }: PageProps) {
     .filter((s) => Boolean((firm as unknown as Record<string, unknown>)[s.key]))
     .map((s) => s.label);
 
-  const hasAbout = Boolean(aboutText);
+  const hasAbout = Boolean(aboutShortText) || Boolean(aboutDetailedText);
   const hasCountries = countries.length > 0;
   const hasRegions = regions.length > 0;
   const hasServices = Array.isArray(serviceItems) && serviceItems.length > 0;
@@ -356,9 +355,26 @@ export default async function FirmaPage({ params }: PageProps) {
                   <h2 className="text-lg font-semibold text-[#0B3C5D]">
                     Hakkında
                   </h2>
-                  <p className="mt-3 text-[#1A1A1A]/80 leading-relaxed whitespace-pre-wrap">
-                    {aboutText}
-                  </p>
+                  {aboutShortText ? (
+                    <p className="mt-3 text-[#1A1A1A]/80 leading-relaxed whitespace-pre-wrap">
+                      {aboutShortText}
+                    </p>
+                  ) : null}
+
+                  {aboutDetailedText ? (
+                    <details className="group mt-3 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/40 px-4 py-3">
+                      <summary className="cursor-pointer list-none text-sm font-semibold text-[#0B3C5D] marker:content-none [&::-webkit-details-marker]:hidden">
+                        <span className="group-open:hidden">Devamını oku</span>
+                        <span className="hidden group-open:inline">Daha az göster</span>
+                      </summary>
+                      <p className="mt-2 line-clamp-5 whitespace-pre-wrap text-sm leading-relaxed text-[#1A1A1A]/75 group-open:hidden">
+                        {aboutDetailedText}
+                      </p>
+                      <p className="hidden mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[#1A1A1A]/75 group-open:block">
+                        {aboutDetailedText}
+                      </p>
+                    </details>
+                  ) : null}
                   </section>
                 </SectionReveal>
               ) : null}
