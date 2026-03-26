@@ -92,8 +92,11 @@ export function FirmCard({ firm }: FirmCardProps) {
   const effectiveMainCategories =
     mainCategories.length > 0 ? mainCategories : servicePool;
 
+  const serviceCellCount =
+    shownServices.length + (restServices > 0 ? 1 : 0);
+
   return (
-    <article className="flex h-full flex-col rounded-xl border border-[#0B3C5D]/10 bg-white p-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)]">
+    <article className="flex h-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-[#0B3C5D]/10 bg-white p-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)]">
       <div className="flex flex-col items-center text-center">
         <div className="relative flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-xl bg-[#F7F9FB] ring-1 ring-[#0B3C5D]/10">
           {firm.logo_url ? (
@@ -174,55 +177,87 @@ export function FirmCard({ firm }: FirmCardProps) {
 
       {shownCountries.length > 0 || restCountries > 0 ? (
         <div className="mt-4 w-full min-w-0">
-          <div className="flex w-full min-w-0 justify-center">
-            <div className="flex max-w-full min-w-0 flex-nowrap items-center justify-center gap-1.5 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {shownCountries.map((c, idx) => (
-                <CoverageChip
-                  key={`${c}-${idx}`}
-                  label={c}
-                  variant="cardSummary"
-                />
-              ))}
-              {restCountries > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => setCountriesModalOpen(true)}
-                  className="shrink-0 whitespace-nowrap rounded-lg bg-[#D9A441]/15 px-2 py-1 text-xs font-semibold text-[#1A1A1A]"
-                  aria-label="Tüm ülkeleri görüntüle"
-                >
-                  +{restCountries}
-                </button>
-              ) : null}
-            </div>
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+            {shownCountries.map((c, idx) => (
+              <CoverageChip
+                key={`${c}-${idx}`}
+                label={c}
+                variant="cardSummary"
+              />
+            ))}
+            {restCountries > 0 ? (
+              <button
+                type="button"
+                onClick={() => setCountriesModalOpen(true)}
+                className="shrink-0 rounded-lg bg-[#D9A441]/15 px-2.5 py-1.5 text-xs font-semibold text-[#1A1A1A] sm:py-1"
+                aria-label="Tüm ülkeleri görüntüle"
+              >
+                +{restCountries}
+              </button>
+            ) : null}
           </div>
         </div>
       ) : null}
 
       {serviceSummaryList.length > 0 ? (
         <div className="mt-3 w-full min-w-0">
-          <div className="flex w-full min-w-0 justify-center">
-            <div className="flex max-w-full min-w-0 flex-nowrap items-center justify-center gap-1.5 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {shownServices.map((s, idx) => (
-                <span
-                  key={`${s}-${idx}`}
-                  className="inline-flex min-h-6 min-w-0 max-w-[9rem] shrink-0 items-center rounded-lg border border-[#0B3C5D]/10 bg-white px-2 py-0.5 text-[11px] font-medium text-[#0B3C5D]/85"
-                  title={s}
-                >
-                  <span className="min-w-0 truncate">{s}</span>
-                </span>
-              ))}
-              {restServices > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => setServicesModalOpen(true)}
-                  className="shrink-0 whitespace-nowrap rounded-lg bg-[#F7F9FB] px-2 py-1 text-[11px] font-semibold text-[#1A1A1A]/70"
-                  aria-label="Tüm hizmetleri görüntüle"
-                >
-                  +{restServices} hizmet
-                </button>
-              ) : null}
+          {serviceCellCount === 1 ? (
+            <div className="flex justify-center">
+              <span
+                className="inline-flex min-h-7 min-w-0 max-w-[min(100%,14rem)] items-center rounded-lg border border-[#0B3C5D]/10 bg-white px-2.5 py-1 text-[11px] font-medium text-[#0B3C5D]/85"
+                title={shownServices[0]}
+              >
+                <span className="min-w-0 truncate">{shownServices[0]}</span>
+              </span>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Mobile: 2 sütun — üst satır 2 chip, alt satır 3. chip + +X */}
+              <div className="grid grid-cols-2 gap-1.5 md:hidden">
+                {shownServices.map((s, idx) => (
+                  <span
+                    key={`${s}-${idx}`}
+                    className="inline-flex min-h-7 min-w-0 items-center justify-center rounded-lg border border-[#0B3C5D]/10 bg-white px-2.5 py-1 text-[11px] font-medium text-[#0B3C5D]/85"
+                    title={s}
+                  >
+                    <span className="min-w-0 truncate">{s}</span>
+                  </span>
+                ))}
+                {restServices > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setServicesModalOpen(true)}
+                    className="inline-flex min-h-7 min-w-0 items-center justify-center rounded-lg bg-[#F7F9FB] px-2.5 py-1 text-[11px] font-semibold text-[#1A1A1A]/70"
+                    aria-label="Tüm hizmetleri görüntüle"
+                  >
+                    +{restServices} hizmet
+                  </button>
+                ) : null}
+              </div>
+              {/* Tablet / masaüstü: yatay, gerekirse satır kırar */}
+              <div className="hidden flex-wrap items-center justify-center gap-1.5 md:flex md:gap-2">
+                {shownServices.map((s, idx) => (
+                  <span
+                    key={`svc-md-${s}-${idx}`}
+                    className="inline-flex min-h-7 min-w-0 max-w-[min(100%,11rem)] items-center rounded-lg border border-[#0B3C5D]/10 bg-white px-2.5 py-1 text-[11px] font-medium text-[#0B3C5D]/85"
+                    title={s}
+                  >
+                    <span className="min-w-0 truncate">{s}</span>
+                  </span>
+                ))}
+                {restServices > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setServicesModalOpen(true)}
+                    className="shrink-0 rounded-lg bg-[#F7F9FB] px-2.5 py-1 text-[11px] font-semibold text-[#1A1A1A]/70"
+                    aria-label="Tüm hizmetleri görüntüle"
+                  >
+                    +{restServices} hizmet
+                  </button>
+                ) : null}
+              </div>
+            </>
+          )}
         </div>
       ) : null}
 
