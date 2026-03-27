@@ -40,16 +40,20 @@ export function FirmCard({ firm }: FirmCardProps) {
   const countryCoverage = splitRegionsAndCountries(countryPool);
   const servedCountries = countryCoverage.countries;
   const servedRegions = countryCoverage.regions;
-  const SUMMARY_VISIBLE = 3;
-  const shownCountries = countryPool.slice(0, SUMMARY_VISIBLE);
+  /** Kart özeti: en fazla 2 ülke/bölge + dinamik +X */
+  const CARD_SUMMARY_VISIBLE = 2;
+  const shownCountries = countryPool.slice(0, CARD_SUMMARY_VISIBLE);
   const restCountries = Math.max(0, countryPool.length - shownCountries.length);
 
   const serviceSummaryList = useMemo(
     () => orderedServiceLabelsForCardSummary(firm),
     [firm]
   );
-  const shownServices = serviceSummaryList.slice(0, SUMMARY_VISIBLE);
+  const shownServices = serviceSummaryList.slice(0, CARD_SUMMARY_VISIBLE);
   const restServices = Math.max(0, serviceSummaryList.length - shownServices.length);
+
+  const singleCountryOnly = shownCountries.length === 1 && restCountries === 0;
+  const singleServiceOnly = shownServices.length === 1 && restServices === 0;
 
   const servicePool = Array.isArray(firm.services) ? firm.services : [];
   const contactOk = firm.contact_popup_enabled !== false;
@@ -97,7 +101,7 @@ export function FirmCard({ firm }: FirmCardProps) {
     mainCategories.length > 0 ? mainCategories : servicePool;
 
   return (
-    <article className="flex h-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-[#0B3C5D]/10 bg-white p-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)]">
+    <article className="flex h-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-[#0B3C5D]/10 bg-white px-4 py-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)] sm:px-5">
       <div className="flex flex-col items-center text-center">
         <div className="relative flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-xl bg-[#F7F9FB] ring-1 ring-[#0B3C5D]/10">
           {firm.logo_url ? (
@@ -167,50 +171,80 @@ export function FirmCard({ firm }: FirmCardProps) {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setAboutTextModalOpen(true)}
-        className="mt-5 line-clamp-2 cursor-pointer text-left text-sm leading-relaxed text-[#1A1A1A]/75"
-        aria-label="Açıklamayı tam olarak görüntüle"
-      >
-        {descriptionText}
-      </button>
+      <div className="mt-5 w-full min-w-0">
+        <button
+          type="button"
+          onClick={() => setAboutTextModalOpen(true)}
+          className="w-full cursor-pointer text-left text-sm leading-relaxed text-[#1A1A1A]/75 line-clamp-2 sm:text-[0.9375rem]"
+          aria-label="Açıklamayı tam olarak görüntüle"
+        >
+          {descriptionText}
+        </button>
 
-      {shownCountries.length > 0 || restCountries > 0 ? (
-        <div className="mt-4 w-full min-w-0">
-          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-            {shownCountries.map((c, idx) => (
-              <CoverageChip key={`${c}-${idx}`} label={c} />
-            ))}
-            {restCountries > 0 ? (
-              <SummaryMoreButton
-                variant="country"
-                count={restCountries}
-                onClick={() => setCountriesModalOpen(true)}
-                ariaLabel="Tüm ülkeleri görüntüle"
-              />
-            ) : null}
+        {shownCountries.length > 0 || restCountries > 0 ? (
+          <div className="mt-4 w-full min-w-0">
+            <div className="flex w-full min-w-0 flex-nowrap items-center gap-1.5 sm:gap-2">
+              {shownCountries.map((c, idx) => (
+                <div
+                  key={`${c}-${idx}`}
+                  className={
+                    singleCountryOnly
+                      ? "min-w-0 w-auto max-w-full"
+                      : "min-w-0 flex-1 basis-0 sm:max-w-[12.5rem]"
+                  }
+                >
+                  <CoverageChip
+                    label={c}
+                    className={
+                      singleCountryOnly
+                        ? "min-w-0 justify-start"
+                        : "w-full min-w-0 justify-start"
+                    }
+                  />
+                </div>
+              ))}
+              {restCountries > 0 ? (
+                <SummaryMoreButton
+                  variant="country"
+                  count={restCountries}
+                  onClick={() => setCountriesModalOpen(true)}
+                  ariaLabel="Tüm ülkeleri görüntüle"
+                />
+              ) : null}
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      {serviceSummaryList.length > 0 ? (
-        <div className="mt-3 w-full min-w-0">
-          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-            {shownServices.map((s, idx) => (
-              <ServiceSummaryChip key={`${s}-${idx}`} label={s} />
-            ))}
-            {restServices > 0 ? (
-              <SummaryMoreButton
-                variant="services"
-                count={restServices}
-                onClick={() => setServicesModalOpen(true)}
-                ariaLabel="Tüm hizmetleri görüntüle"
-              />
-            ) : null}
+        {serviceSummaryList.length > 0 ? (
+          <div className="mt-3 w-full min-w-0">
+            <div className="flex w-full min-w-0 flex-nowrap items-center gap-1.5 sm:gap-2">
+              {shownServices.map((s, idx) => (
+                <div
+                  key={`${s}-${idx}`}
+                  className={
+                    singleServiceOnly
+                      ? "min-w-0 w-auto max-w-full"
+                      : "min-w-0 flex-1 basis-0 sm:max-w-[12.5rem]"
+                  }
+                >
+                  <ServiceSummaryChip
+                    label={s}
+                    className={singleServiceOnly ? "w-auto" : "w-full"}
+                  />
+                </div>
+              ))}
+              {restServices > 0 ? (
+                <SummaryMoreButton
+                  variant="services"
+                  count={restServices}
+                  onClick={() => setServicesModalOpen(true)}
+                  ariaLabel="Tüm hizmetleri görüntüle"
+                />
+              ) : null}
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       <div className="mt-5 grid grid-cols-2 gap-2">
         {contactOk ? (
