@@ -152,7 +152,7 @@ async function ensureUniqueName(
     name: normalized,
   });
 
-  revalidatePath("/admin/firms/new");
+  /** `/admin/firms/new` revalidate edilmez: client formu canlı tutar; inline ekleme sonrası sayfa yenilenince tüm alanlar sıfırlanıyordu. */
   revalidatePath("/admin/firms");
   revalidatePath("/admin/filters/countries");
   revalidatePath("/admin/filters/services");

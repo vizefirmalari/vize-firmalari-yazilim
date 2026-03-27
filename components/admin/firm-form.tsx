@@ -264,7 +264,10 @@ export function FirmForm({
   >(null);
 
   useEffect(() => {
-    setForm(buildFirmFormState(initial, privateInitial ?? null));
+    /** Yalnız düzenleme: sunucu verisiyle senkron. Yeni oluşturma modunda `picklist` değişince formu sıfırlama (inline ülke/tür vb. eklerken kayıp olmasın). */
+    if (mode === "edit") {
+      setForm(buildFirmFormState(initial, privateInitial ?? null));
+    }
     setSelectedCountries(countryIds);
     setSelectedFeatured(featuredCountryIds);
     setCountryOptions(countries);
@@ -272,6 +275,7 @@ export function FirmForm({
     setMainServiceOptions(mainServiceCategories);
     setSubServiceOptions(subServices);
   }, [
+    mode,
     initial,
     privateInitial,
     countryIds,
