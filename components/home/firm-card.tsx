@@ -315,14 +315,6 @@ export function FirmCard({ firm }: FirmCardProps) {
                   icon: <FacebookIcon />,
                 });
               }
-              if (firm.youtube) {
-                links.push({
-                  key: "youtube",
-                  href: firm.youtube,
-                  label: "YouTube",
-                  icon: <YouTubeIcon />,
-                });
-              }
               if (firm.linkedin?.trim()) {
                 links.push({
                   key: "linkedin",
@@ -331,8 +323,17 @@ export function FirmCard({ firm }: FirmCardProps) {
                   icon: <LinkedInIcon />,
                 });
               }
+              if (firm.youtube) {
+                links.push({
+                  key: "youtube",
+                  href: firm.youtube,
+                  label: "YouTube",
+                  icon: <YouTubeIcon />,
+                });
+              }
 
-              const visible = links.slice(0, 4);
+              /** Web + 4 sosyal; LinkedIn YouTube’dan önce — beşinci sıraya düşüp +1 olmasın */
+              const visible = links.slice(0, 5);
               const extra = Math.max(0, links.length - visible.length);
 
               return (
