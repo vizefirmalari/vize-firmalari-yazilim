@@ -1,9 +1,8 @@
-import { PublicDocumentPage } from "@/components/seo/public-document-page";
+import { CerezPolitikasiPage } from "@/components/content/cerez-politikasi-page";
 import { buildPublicDocumentMetadata } from "@/lib/seo/public-document-metadata";
-import { PUBLIC_DOCUMENT_PAGES } from "@/lib/seo/public-routes";
 
 export const metadata = buildPublicDocumentMetadata("cerez-politikasi");
 
 export default function Page() {
-  return <PublicDocumentPage page={PUBLIC_DOCUMENT_PAGES["cerez-politikasi"]} />;
+  return <CerezPolitikasiPage />;
 }

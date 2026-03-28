@@ -21,21 +21,61 @@ export const PUBLIC_DOCUMENT_PAGES = {
     path: "/hakkimizda",
     title: "Hakkımızda",
     description:
-      "Vize Firmaları; vize danışmanlık firmalarını karşılaştırmanıza yardımcı olan bağımsız bir bilgi ve listeleme platformudur.",
+      "Vize Firmaları hakkında: vize danışmanlık firmaları listeleme, vize firması karşılaştırma ve vize rehberi. Aracı platform; vize başvurusu danışmanlığı sunmaz. Şeffaf ve karşılaştırılabilir bilgi, bilinçli karar; Edirne merkezli iletişim.",
     heading: "Hakkımızda",
-    body: "Vize Firmaları, başvuru süreçlerinde doğru danışmanlık firmasını bulmanızı kolaylaştırmak için kurulmuştur. Platform üzerinde yer alan firmaların bilgileri, yönetim doğrulaması ve firma beyanları doğrultusunda sunulur; resmi bir devlet kurumu değiliz.",
+    body: "Vize Firmaları yalnızca aracı platformdur; şeffaf ve karşılaştırılabilir bilgilerle kullanıcıların bilinçli karar vermesine yardımcı olur. Firma hizmetleri ve sonuçlar listelenen işyerlerine aittir.",
     changeFrequency: "monthly",
     priority: 0.75,
+  },
+  "kurumsal-site": {
+    path: "/kurumsal-site",
+    title: "Kurumsal Site",
+    description:
+      "Vize Firmaları kurumsal: vize danışmanlık platformu, vize firmaları listesi ve vize karşılaştırma sistemi. Misyon, vizyon, değerler; aracı model ve güven odaklı vize başvuru rehberi yaklaşımı.",
+    heading: "Kurumsal Site",
+    body: "Tarafsız ve karşılaştırılabilir bilgiler; kullanıcıların bilinçli karar vermesine yardımcı olur. Vize Firmaları yalnızca aracı platformdur.",
+    changeFrequency: "monthly",
+    priority: 0.7,
+  },
+  kariyer: {
+    path: "/kariyer",
+    title: "Kariyer",
+    description:
+      "Vize Firmaları kariyer: yenilikçi platformda dijital ürün geliştirme, dinamik ve gelişime açık yapı. Başvuru ve iletişim; Edirne merkezli aracı listeleme teknolojisi ekibi.",
+    heading: "Kariyer",
+    body: "Büyüyen bir dijital platformda yeteneklerinizi konuşturun. Açık pozisyon olmasa da özgeçmiş gönderebilirsiniz.",
+    changeFrequency: "monthly",
+    priority: 0.55,
   },
   iletisim: {
     path: "/iletisim",
     title: "İletişim",
     description:
-      "Vize Firmaları platformu ile iletişim kurun; öneri, iş birliği ve destek talepleri için iletişim kanallarımız.",
+      "Vize Firmaları iletişim: teknik destek, hesap ve platform soruları için e-posta. Aracı platform; vize danışmanlığı sunmaz — vize hizmeti için firmalarla doğrudan iletişime geçin. iletisim@vizefirmalari.com",
     heading: "İletişim",
-    body: "Platform ile ilgili sorularınız, önerileriniz veya iş birliği talepleriniz için iletişim formu veya e-posta üzerinden bize ulaşabilirsiniz. Firma başvuruları ve liste görünürlüğü için sitedeki ilgili akışları kullanın.",
+    body: "Platform yalnızca listeleme sunar; mesleki hizmette platform hizmet sağlamaz. Doğru kanal: site sorunları bize, vize işlemleri seçtiğiniz firmaya.",
     changeFrequency: "monthly",
     priority: 0.7,
+  },
+  "is-ortagimiz-olun": {
+    path: "/is-ortagimiz-olun",
+    title: "İş Ortağımız Olun",
+    description:
+      "Vize danışmanlık firmaları için Vize Firmaları: görünürlük, hedefli trafik, profesyonel profil ve doğrudan müşteri iletişimi. Aracı listeleme platformu; firma kaydı ve iş birliği fırsatları.",
+    heading: "İş Ortağımız Olun",
+    body: "Görünürlüğünüzü artırın; vize arayan kullanıcılarla buluşun. Platform yalnızca aracıdır — müşteri ilişkisini siz yönetirsiniz.",
+    changeFrequency: "monthly",
+    priority: 0.72,
+  },
+  "uye-is-yerimiz-olun": {
+    path: "/uye-is-yerimiz-olun",
+    title: "Üye İş Yerimiz Olun",
+    description:
+      "Vize Firmalarına üye iş yeri olun: profil oluşturun, görünürlük ve doğrudan kullanıcı iletişimi. Müşteri edinimi kanalı; aracı platform, danışmanlık sunmaz.",
+    heading: "Üye İş Yerimiz Olun",
+    body: "Vize danışmanlık firmaları için kayıt, profesyonel sayfa ve talep akışı. Vize Firmaları yalnızca aracı platformdur.",
+    changeFrequency: "monthly",
+    priority: 0.73,
   },
   "yardim-merkezi": {
     path: "/yardim-merkezi",
@@ -51,9 +91,29 @@ export const PUBLIC_DOCUMENT_PAGES = {
     path: "/kullanim-kosullari",
     title: "Kullanım Koşulları",
     description:
-      "Vize Firmaları web sitesi ve hizmetlerinin kullanımına ilişkin koşullar ve kurallar.",
+      "Vize Firmaları kullanım koşulları: vize danışmanlık platformu ve vize firmaları listeleme hizmetinin kapsamı, kullanıcı ve üye işyeri yükümlülükleri, sorumluluk sınırları.",
     heading: "Kullanım Koşulları",
     body: "Bu sayfa, Vize Firmaları platformunun kullanımına ilişkin genel kuralları açıklar. Hizmeti kullanmaya devam ederek bu koşulları kabul etmiş sayılırsınız. Güncellemeler yayımlandığında burada duyurulur.",
+    changeFrequency: "yearly",
+    priority: 0.45,
+  },
+  "kullanici-sozlesmesi": {
+    path: "/kullanici-sozlesmesi",
+    title: "Kullanıcı Sözleşmesi",
+    description:
+      "Vize Firmaları kullanıcı sözleşmesi: aracı platform, misafir ve üye kullanıcı, üye işyeri; yükümlülükler, yasaklar, içerik feragatı, firma ilişkisinden muafiyet, sorumluluk sınırı, fikri mülkiyet, Türk hukuku ve yetki.",
+    heading: "Kullanıcı Sözleşmesi",
+    body: "Platform hizmet sağlayıcı değildir; kullanıcı kendi sorumluluğunda hareket eder. Taraflar arası ilişkiden Platform sorumlu değildir; doğrudan ve dolaylı zararlar hariç tutulur.",
+    changeFrequency: "yearly",
+    priority: 0.45,
+  },
+  "bilgi-toplumu-hizmetleri": {
+    path: "/bilgi-toplumu-hizmetleri",
+    title: "Bilgi Toplumu Hizmetleri",
+    description:
+      "5651 sayılı Kanun ve elektronik ticaret mevzuatı çerçevesinde Vize Firmaları: platform kimliği, iletişim, bilgi toplumu hizmetlerinin kapsamı, aracı rol, üçüncü taraf firmalar ve sorumluluk ayrımı.",
+    heading: "Bilgi Toplumu Hizmetleri",
+    body: "Vize Firmaları yalnızca aracı platformdur; listeleme ve karşılaştırma sunar, vize danışmanlığı veya başvuru işlemi yürütmez. Resmi iletişim ve şeffaflık bilgileri bu sayfada yer alır.",
     changeFrequency: "yearly",
     priority: 0.45,
   },
@@ -61,9 +121,9 @@ export const PUBLIC_DOCUMENT_PAGES = {
     path: "/cerez-politikasi",
     title: "Çerez Politikası",
     description:
-      "Vize Firmaları çerez kullanımı, tercihler ve üçüncü taraf çerezler hakkında bilgilendirme.",
+      "KVKK uyumlu çerez politikası: zorunlu, analitik, fonksiyonel ve olası pazarlama çerezleri; açık rıza ve meşru menfaat; üçüncü taraf çerezler; kullanıcı tercihleri ve tarayıcı yönetimi. Vize Firmaları aracı listeleme platformudur.",
     heading: "Çerez Politikası",
-    body: "Sitemizde deneyimi iyileştirmek, trafiği ölçmek ve tercihlerinizi hatırlamak için çerezler kullanılabilir. Hangi çerezlerin kullanıldığı ve nasıl yönetebileceğiniz bu politika kapsamında açıklanır.",
+    body: "6698 sayılı KVKK çerçevesinde çerez türleri, hukuki dayanaklar, üçüncü taraf çerezler ve kullanıcı kontrolü şeffaf biçimde açıklanır; çerezler vize danışmanlığı için kullanılmaz.",
     changeFrequency: "yearly",
     priority: 0.45,
   },
@@ -71,9 +131,19 @@ export const PUBLIC_DOCUMENT_PAGES = {
     path: "/aydinlatma-metni",
     title: "Aydınlatma Metni",
     description:
-      "6698 sayılı KVKK kapsamında Vize Firmaları veri sorumlusu aydınlatma metni.",
+      "6698 sayılı KVKK kapsamında Vize Firmaları aydınlatma metni: işlenen veriler, amaçlar, hukuki sebepler, aktarım, saklama, KVKK md. 11 hakları ve başvuru.",
     heading: "Aydınlatma Metni",
     body: "Kişisel verilerinizin hangi amaçlarla ve hangi hukuki sebeple işlendiği, aktarıldığı ve haklarınızın neler olduğu bu aydınlatma metninde özetlenir.",
+    changeFrequency: "yearly",
+    priority: 0.45,
+  },
+  "veri-guvenligi-politikasi": {
+    path: "/veri-guvenligi-politikasi",
+    title: "Veri Güvenliği Politikası",
+    description:
+      "6698 sayılı KVKK uyumlu veri güvenliği: gizlilik, bütünlük, erişilebilirlik; teknik ve idari tedbirler; erişim kontrolü; ihlal yönetimi; üçüncü taraf altyapı; kullanıcı ve aracı platform sınırları.",
+    heading: "Veri Güvenliği Politikası",
+    body: "Vize Firmaları makul teknik ve idari tedbirlerle veri güvenliğini hedefler; mutlak güvenlik garanti edilemez. Aracı platform, kullanıcı–firma dış kanallarındaki veri alışverişini kontrol etmez.",
     changeFrequency: "yearly",
     priority: 0.45,
   },
@@ -82,7 +152,7 @@ export const PUBLIC_DOCUMENT_PAGES = {
     title:
       "Kişisel Verilerin Korunması ve İşlenmesi ve Gizlilik Politikası",
     description:
-      "Vize Firmaları kişisel verilerin korunması, işlenmesi ve gizlilik politikası.",
+      "6698 sayılı KVKK uyumlu gizlilik politikası: veri kategorileri, amaçlar, hukuki sebepler, aktarım, saklama, güvenlik, çerezler, KVKK md. 11 hakları ve aracı platform sınırları.",
     heading:
       "Kişisel Verilerin Korunması ve İşlenmesi ve Gizlilik Politikası",
     body: "Platformda toplanan kişisel verilerin işlenme ilkeleri, saklama süreleri, güvenlik önlemleri ve kullanıcı hakları bu politika ile şeffaf biçimde duyurulur.",
@@ -93,7 +163,7 @@ export const PUBLIC_DOCUMENT_PAGES = {
     path: "/sss-ve-islem-rehberi",
     title: "S.S.S. ve İşlem Rehberi",
     description:
-      "Vize Firmaları sık sorulan sorular ve platform üzerinden işlem rehberi.",
+      "Vize Firmaları S.S.S. ve işlem rehberi: vize danışmanlık firmalarını karşılaştırma, vize başvuru sürecinde dikkat edilecekler, platformun aracı rolü ve sık sorulan sorular.",
     heading: "S.S.S. ve İşlem Rehberi",
     body: "Firmaları nasıl karşılaştıracağınız, profil bilgilerini nasıl okuyacağınız ve başvuru sürecine nasıl başlayacağınız gibi konularda sık sorulan sorular ve adım adım özet bilgiler bu sayfada yer alır.",
     changeFrequency: "weekly",
@@ -103,7 +173,7 @@ export const PUBLIC_DOCUMENT_PAGES = {
     path: "/mesafeli-satis-sozlesmesi",
     title: "Mesafeli Satış Sözleşmesi",
     description:
-      "Vize Firmaları mesafeli satış sözleşmesi metni ve tüketici bilgilendirmesi.",
+      "Vize Firmaları mesafeli satış sözleşmesi: dijital platform hizmetleri, ücret ve teslim, cayma hakkı, iade koşulları ve aracı platformun sorumluluk sınırları.",
     heading: "Mesafeli Satış Sözleşmesi",
     body: "Elektronik ortamda sunulan hizmet veya ürünler için geçerli mesafeli satış sözleşmesi hükümleri burada yayımlanır. Sipariş ve ödeme öncesi okumanız önerilir.",
     changeFrequency: "yearly",
@@ -113,7 +183,7 @@ export const PUBLIC_DOCUMENT_PAGES = {
     path: "/sorumluluk-reddi-beyani",
     title: "Sorumluluk Reddi Beyanı",
     description:
-      "Vize Firmaları sorumluluk reddi beyanı — platform ve listelenen firmalar hakkında hukuki sınırlar.",
+      "Vize Firmaları sorumluluk reddi beyanı: aracı platform, garanti vermeme, taraflar arası ilişkiden muafiyet, zarar ve risklerin kullanıcıda kalması.",
     heading: "Sorumluluk Reddi Beyanı",
     body: "Platformda sunulan bilgiler genel bilgilendirme amaçlıdır. Vize kararları resmi makamlara aittir; listelenen firmaların hizmetleri kendi sorumluluğundadır. Platform, üçüncü taraf firmaların eylemlerinden doğrudan sorumlu tutulamaz.",
     changeFrequency: "yearly",
@@ -123,7 +193,7 @@ export const PUBLIC_DOCUMENT_PAGES = {
     path: "/hizmet-kosullari",
     title: "Hizmet Koşulları",
     description:
-      "Vize Firmaları platform hizmet koşulları ve kapsam sınırları.",
+      "Vize Firmaları hizmet koşulları: aracı vize danışmanlık platformu kapsamı, ücretsiz ve ücretli özellikler, ödeme ile sorumluluk ilişkisi ve tarafların yükümlülükleri.",
     heading: "Hizmet Koşulları",
     body: "Platformun sağladığı listeleme, karşılaştırma ve bilgilendirme hizmetlerinin kapsamı, sınırları ve kullanım kuralları bu metinde düzenlenir.",
     changeFrequency: "yearly",

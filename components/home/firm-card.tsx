@@ -103,35 +103,44 @@ export function FirmCard({ firm }: FirmCardProps) {
   return (
     <article className="flex h-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-[#0B3C5D]/10 bg-white px-4 py-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)] sm:px-5">
       <div className="flex flex-col items-center text-center">
-        <div className="relative flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-xl bg-[#F7F9FB] ring-1 ring-[#0B3C5D]/10">
-          {firm.logo_url ? (
-            <Image
-              src={firm.logo_url}
-              alt={
-                firm.logo_alt_text?.trim() ||
-                `${firm.name} logosu`
-              }
-              width={72}
-              height={72}
-              className="h-full w-full object-contain"
-              loading="lazy"
-            />
-          ) : (
-            <span className="text-lg font-bold text-[#0B3C5D]" aria-hidden>
-              {initials(firm.name)}
-            </span>
-          )}
+        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-3 shadow-[0_2px_14px_rgba(11,60,93,0.08)] sm:rounded-xl sm:p-3.5">
+          <div className="relative box-border flex h-[92px] w-[92px] items-center justify-center rounded-xl bg-[#F7F9FB] p-2 ring-1 ring-[#0B3C5D]/8 sm:h-[96px] sm:w-[96px] sm:p-2.5">
+            {firm.logo_url ? (
+              <Image
+                src={firm.logo_url}
+                alt={
+                  firm.logo_alt_text?.trim() ||
+                  `${firm.name} logosu`
+                }
+                fill
+                sizes="(max-width: 639px) 76px, 80px"
+                className="object-contain object-center"
+                loading="lazy"
+              />
+            ) : (
+              <span
+                className="relative z-1 text-2xl font-bold tracking-tight text-[#0B3C5D] sm:text-[1.625rem]"
+                aria-hidden
+              >
+                {initials(firm.name)}
+              </span>
+            )}
+          </div>
         </div>
-        <h3 className="mt-3 text-lg font-semibold text-[#0B3C5D]">
+        <h3 className="mt-4 text-[1.375rem] font-bold leading-snug text-[#0B3C5D] sm:mt-3.5 sm:text-xl sm:font-semibold sm:leading-snug">
           {firm.name}
         </h3>
         {firm.short_badge ? (
-          <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-[#D9A441]">
+          <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-[#D9A441] sm:mt-1.5">
             {firm.short_badge}
           </p>
         ) : null}
         {firmTypeAndYearLine ? (
-          <p className="mt-1 max-w-full truncate px-1 text-[10px] leading-tight text-[#1A1A1A]/45">
+          <p
+            className={`max-w-full truncate px-1 text-[10px] leading-tight text-[#1A1A1A]/45 ${
+              firm.short_badge ? "mt-1.5" : "mt-2"
+            } sm:mt-1.5`}
+          >
             {firmTypeAndYearLine}
           </p>
         ) : null}

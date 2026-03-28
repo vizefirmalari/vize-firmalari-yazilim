@@ -1,9 +1,8 @@
-import { PublicDocumentPage } from "@/components/seo/public-document-page";
+import { IletisimPage } from "@/components/content/iletisim-page";
 import { buildPublicDocumentMetadata } from "@/lib/seo/public-document-metadata";
-import { PUBLIC_DOCUMENT_PAGES } from "@/lib/seo/public-routes";
 
 export const metadata = buildPublicDocumentMetadata("iletisim");
 
 export default function Page() {
-  return <PublicDocumentPage page={PUBLIC_DOCUMENT_PAGES.iletisim} />;
+  return <IletisimPage />;
 }

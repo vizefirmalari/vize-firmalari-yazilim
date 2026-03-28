@@ -1,9 +1,8 @@
-import { PublicDocumentPage } from "@/components/seo/public-document-page";
+import { AydinlatmaMetniPage } from "@/components/content/aydinlatma-metni-page";
 import { buildPublicDocumentMetadata } from "@/lib/seo/public-document-metadata";
-import { PUBLIC_DOCUMENT_PAGES } from "@/lib/seo/public-routes";
 
 export const metadata = buildPublicDocumentMetadata("aydinlatma-metni");
 
 export default function Page() {
-  return <PublicDocumentPage page={PUBLIC_DOCUMENT_PAGES["aydinlatma-metni"]} />;
+  return <AydinlatmaMetniPage />;
 }

@@ -11,7 +11,7 @@ const OFFICE_ADDRESS =
 const CONTACT_EMAIL = "iletisim@vizefirmalari.com";
 
 const navLinkClass =
-  "block w-full rounded-md py-1.5 text-left text-[13px] leading-snug text-foreground/72 transition hover:bg-primary/4 hover:text-primary sm:py-1";
+  "flex min-h-11 w-full items-start rounded-md px-1 py-2.5 text-left text-[13px] leading-snug text-foreground/72 transition hover:bg-primary/4 hover:text-primary lg:min-h-0 lg:items-center lg:px-0 lg:py-1.5";
 
 function FooterLink({
   href,
@@ -43,10 +43,23 @@ function FooterColumn({
 }) {
   return (
     <div className="min-w-0">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/55">
-        {title}
-      </h3>
-      <ul className="mt-4 space-y-0.5">{children}</ul>
+      <details className="overflow-hidden rounded-lg border border-primary/10 bg-white shadow-[0_1px_6px_rgba(11,60,93,0.04)] lg:hidden">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 text-left transition hover:bg-primary/3 active:bg-primary/5 [&::-webkit-details-marker]:hidden">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/70">
+            {title}
+          </span>
+          <span className="shrink-0 text-primary/45" aria-hidden>
+            <ChevronDownGlyph className="h-4 w-4" />
+          </span>
+        </summary>
+        <ul className="space-y-0 border-t border-border/60 px-1.5 py-1.5">{children}</ul>
+      </details>
+      <div className="hidden lg:block">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/55">
+          {title}
+        </h3>
+        <ul className="mt-4 space-y-0.5">{children}</ul>
+      </div>
     </div>
   );
 }
@@ -67,7 +80,7 @@ function SocialIconLink({
       rel="noopener noreferrer"
       aria-label={label}
       title={label}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-primary/10 bg-white text-primary/65 shadow-[0_1px_2px_rgba(11,60,93,0.04)] transition hover:border-primary/20 hover:bg-surface hover:text-primary"
+      className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-primary/10 bg-white text-primary/65 shadow-[0_1px_2px_rgba(11,60,93,0.04)] transition hover:border-primary/20 hover:bg-surface hover:text-primary lg:h-10 lg:w-10"
     >
       {children}
     </a>
@@ -86,10 +99,24 @@ function SocialIconButton({
       role="img"
       aria-label={label}
       title={label}
-      className="inline-flex h-10 w-10 cursor-default items-center justify-center rounded-xl border border-primary/10 bg-white text-primary/45 shadow-[0_1px_2px_rgba(11,60,93,0.04)]"
+      className="inline-flex h-11 w-11 cursor-default items-center justify-center rounded-xl border border-primary/10 bg-white text-primary/45 shadow-[0_1px_2px_rgba(11,60,93,0.04)] lg:h-10 lg:w-10"
     >
       {children}
     </span>
+  );
+}
+
+function ChevronDownGlyph({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M6 9l6 6 6-6"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -97,199 +124,220 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
   const logoAlt = siteLogoAltText();
 
+  const ctaCard = (
+    <div className="rounded-2xl border border-primary/12 bg-white p-4 shadow-[0_6px_24px_rgba(11,60,93,0.07)] max-lg:border-l-[3px] max-lg:border-l-accent/85 sm:p-6 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:p-8 lg:shadow-[0_8px_30px_rgba(11,60,93,0.06)]">
+      <div className="min-w-0 lg:flex-1">
+        <p className="text-[0.9375rem] font-semibold leading-snug text-primary sm:text-lg">
+          Üye İş Yerimiz Olun
+        </p>
+        <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-foreground/65 sm:mt-1.5 sm:text-sm">
+          Platformda yer alarak daha fazla müşteriye ulaşın
+        </p>
+      </div>
+      <div className="mt-4 flex flex-col gap-2.5 sm:mt-5 sm:flex-row sm:items-center sm:gap-3 lg:mt-0 lg:shrink-0">
+        <Link
+          href="/uye-is-yerimiz-olun"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-accent/90"
+        >
+          Üye İş Yerimiz Olun
+        </Link>
+        <button
+          type="button"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-surface"
+        >
+          Firma Şikayet Et
+        </button>
+      </div>
+    </div>
+  );
+
+  const linkColumns = (
+    <div className="grid min-w-0 gap-2 sm:grid-cols-2 sm:gap-6 lg:col-span-4 lg:grid-cols-4 lg:gap-8 max-lg:rounded-2xl max-lg:border max-lg:border-primary/10 max-lg:bg-white/70 max-lg:p-2 max-lg:shadow-[0_2px_10px_rgba(11,60,93,0.04)]">
+      <FooterColumn title="Platform">
+        <li>
+          <FooterLink href="/yardim-merkezi">Yardım Merkezi</FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/sss-ve-islem-rehberi">
+            S.S.S. ve İşlem Rehberi
+          </FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/kullanim-kosullari">
+            Kullanım Koşulları
+          </FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/hizmet-kosullari">Hizmet Koşulları</FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/mesafeli-satis-sozlesmesi">
+            Mesafeli Satış Sözleşmesi
+          </FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/sorumluluk-reddi-beyani">
+            Sorumluluk Reddi Beyanı
+          </FooterLink>
+        </li>
+      </FooterColumn>
+
+      <FooterColumn title="Gizlilik & Hukuk">
+        <li>
+          <FooterLink href="/aydinlatma-metni">Aydınlatma Metni</FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/kisisel-verilerin-korunmasi-ve-islenmesi-ve-gizlilik-politikasi">
+            Kişisel Verilerin Korunması ve İşlenmesi ve Gizlilik
+            Politikası
+          </FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/cerez-politikasi">Çerez Politikası</FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/bilgi-toplumu-hizmetleri">
+            Bilgi Toplumu Hizmetleri
+          </FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/veri-guvenligi-politikasi">
+            Veri Güvenliği Politikası
+          </FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/kullanici-sozlesmesi">
+            Kullanıcı Sözleşmesi
+          </FooterLink>
+        </li>
+      </FooterColumn>
+
+      <FooterColumn title="Kurumsal">
+        <li>
+          <FooterLink href="/hakkimizda">Hakkımızda</FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/iletisim">İletişim</FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/is-ortagimiz-olun">İş Ortağımız Olun</FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/uye-is-yerimiz-olun">Üye İş Yerimiz Olun</FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/kurumsal-site">Kurumsal Site</FooterLink>
+        </li>
+        <li>
+          <FooterLink href="/kariyer">Kariyer</FooterLink>
+        </li>
+      </FooterColumn>
+
+      <FooterColumn title="Keşfet">
+        <li>
+          <FooterLink>Ülkelere Göre Vize Rehberi</FooterLink>
+        </li>
+        <li>
+          <FooterLink>Vize Türleri</FooterLink>
+        </li>
+        <li>
+          <FooterLink>Popüler Vize Süreçleri</FooterLink>
+        </li>
+        <li>
+          <FooterLink>Vize Başvuru Rehberi</FooterLink>
+        </li>
+        <li>
+          <FooterLink>Blog & Rehberler</FooterLink>
+        </li>
+        <li>
+          <FooterLink>Güncel Duyurular</FooterLink>
+        </li>
+      </FooterColumn>
+    </div>
+  );
+
   return (
     <footer className="border-t border-border bg-surface">
-      <div className="container-shell max-w-7xl py-12 sm:py-14">
-        <div className="grid gap-12 lg:grid-cols-6 lg:gap-10 xl:gap-12">
-          {/* Brand */}
-          <div className="min-w-0 lg:col-span-2">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={SITE_HEADER_LOGO_URL}
-                alt={logoAlt}
-                width={52}
-                height={52}
-                className="h-12 w-12 shrink-0 object-contain"
-                decoding="async"
-              />
-              <div>
-                <p className="text-lg font-semibold tracking-tight text-primary">
-                  Vize Firmaları
+      <div className="container-shell max-w-7xl py-8 sm:py-10 lg:py-14">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-6 lg:gap-10 xl:gap-12">
+          {/* Brand + contact + social: order 1 mobile; col 1 desktop */}
+          <div className="order-1 flex min-w-0 flex-col gap-0 lg:col-span-2 lg:order-0 lg:gap-0">
+            {/* 1–2. Brand + contact: grouped on mobile */}
+            <div className="rounded-2xl border border-primary/10 bg-white p-4 shadow-[0_2px_12px_rgba(11,60,93,0.05)] lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:gap-3 lg:gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={SITE_HEADER_LOGO_URL}
+                  alt={logoAlt}
+                  width={52}
+                  height={52}
+                  className="h-12 w-12 shrink-0 object-contain sm:h-[52px] sm:w-[52px] lg:h-12 lg:w-12"
+                  decoding="async"
+                />
+                <div className="min-w-0 text-left sm:text-left">
+                  <p className="text-lg font-semibold tracking-tight text-primary">
+                    Vize Firmaları
+                  </p>
+                  <p className="mt-1 max-w-sm whitespace-pre-line text-[13px] leading-snug text-foreground/68 sm:mt-1.5 sm:leading-relaxed lg:mt-2">
+                    {BRAND_DESCRIPTION_LINES}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-2.5 border-t border-primary/10 pt-4 sm:space-y-3 lg:mt-8 lg:space-y-3.5 lg:border-border lg:pt-8">
+                <p className="flex gap-2 text-[13px] leading-relaxed text-foreground/72">
+                  <span className="mt-0.5 shrink-0 leading-none" aria-hidden>
+                    📍
+                  </span>
+                  <span className="min-w-0">{OFFICE_ADDRESS}</span>
                 </p>
-                <p className="mt-2 max-w-sm whitespace-pre-line text-[13px] leading-relaxed text-foreground/68">
-                  {BRAND_DESCRIPTION_LINES}
+                <p className="flex gap-2 text-[13px] leading-relaxed text-foreground/72">
+                  <span className="mt-0.5 shrink-0 leading-none" aria-hidden>
+                    ✉️
+                  </span>
+                  <a
+                    href={`mailto:${CONTACT_EMAIL}`}
+                    className="min-w-0 break-all font-medium text-secondary transition hover:underline"
+                  >
+                    {CONTACT_EMAIL}
+                  </a>
                 </p>
               </div>
             </div>
 
-            <div className="mt-8 space-y-4 border-t border-border pt-8">
-              <p className="text-[13px] leading-relaxed text-foreground/72">
-                <span className="mr-1.5" aria-hidden>
-                  📍
-                </span>
-                {OFFICE_ADDRESS}
+            {/* 3. Social */}
+            <div className="mt-3.5 rounded-xl border border-primary/10 bg-white/90 p-3 shadow-[0_2px_10px_rgba(11,60,93,0.04)] sm:mt-4 lg:mt-6 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+              <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/50 lg:hidden">
+                Sosyal medya
               </p>
-              <p className="text-[13px] leading-relaxed text-foreground/72">
-                <span className="mr-1.5" aria-hidden>
-                  ✉️
-                </span>
-                <a
-                  href={`mailto:${CONTACT_EMAIL}`}
-                  className="font-medium text-secondary transition hover:underline"
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start lg:justify-start lg:gap-2">
+                <SocialIconLink
+                  href="https://www.facebook.com/vizefirmalari"
+                  label="Facebook — Vize Firmaları"
                 >
-                  {CONTACT_EMAIL}
-                </a>
-              </p>
-            </div>
-
-            <div className="mt-6 flex flex-wrap items-center gap-2">
-              <SocialIconLink
-                href="https://www.facebook.com/vizefirmalari"
-                label="Facebook — Vize Firmaları"
-              >
-                <FacebookGlyph className="h-5 w-5" />
-              </SocialIconLink>
-              <SocialIconLink
-                href="https://www.instagram.com/vizefirmalari"
-                label="Instagram — Vize Firmaları"
-              >
-                <InstagramGlyph className="h-5 w-5" />
-              </SocialIconLink>
-              <SocialIconButton label="WhatsApp (yakında)">
-                <WhatsAppGlyph className="h-5 w-5" />
-              </SocialIconButton>
-              <SocialIconButton label="E-posta">
-                <EnvelopeGlyph className="h-5 w-5" />
-              </SocialIconButton>
+                  <FacebookGlyph className="h-5 w-5" />
+                </SocialIconLink>
+                <SocialIconLink
+                  href="https://www.instagram.com/vizefirmalari"
+                  label="Instagram — Vize Firmaları"
+                >
+                  <InstagramGlyph className="h-5 w-5" />
+                </SocialIconLink>
+                <SocialIconButton label="WhatsApp (yakında)">
+                  <WhatsAppGlyph className="h-5 w-5" />
+                </SocialIconButton>
+                <SocialIconButton label="E-posta">
+                  <EnvelopeGlyph className="h-5 w-5" />
+                </SocialIconButton>
+              </div>
             </div>
           </div>
 
-          {/* Link columns */}
-          <div className="grid min-w-0 gap-10 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-4 lg:gap-8">
-            <FooterColumn title="Platform">
-              <li>
-                <FooterLink href="/yardim-merkezi">Yardım Merkezi</FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/sss-ve-islem-rehberi">
-                  S.S.S. ve İşlem Rehberi
-                </FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/kullanim-kosullari">
-                  Kullanım Koşulları
-                </FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/hizmet-kosullari">Hizmet Koşulları</FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/mesafeli-satis-sozlesmesi">
-                  Mesafeli Satış Sözleşmesi
-                </FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/sorumluluk-reddi-beyani">
-                  Sorumluluk Reddi Beyanı
-                </FooterLink>
-              </li>
-            </FooterColumn>
+          {/* 4. CTA — directly under social on mobile (order-2); full width row on desktop after columns */}
+          <div className="order-2 lg:order-3 lg:col-span-6">{ctaCard}</div>
 
-            <FooterColumn title="Gizlilik & Hukuk">
-              <li>
-                <FooterLink href="/aydinlatma-metni">Aydınlatma Metni</FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/kisisel-verilerin-korunmasi-ve-islenmesi-ve-gizlilik-politikasi">
-                  Kişisel Verilerin Korunması ve İşlenmesi ve Gizlilik
-                  Politikası
-                </FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/cerez-politikasi">Çerez Politikası</FooterLink>
-              </li>
-              <li>
-                <FooterLink>Bilgi Toplumu Hizmetleri</FooterLink>
-              </li>
-              <li>
-                <FooterLink>Veri Güvenliği Politikası</FooterLink>
-              </li>
-              <li>
-                <FooterLink>Kullanıcı Sözleşmesi</FooterLink>
-              </li>
-            </FooterColumn>
-
-            <FooterColumn title="Kurumsal">
-              <li>
-                <FooterLink href="/hakkimizda">Hakkımızda</FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/iletisim">İletişim</FooterLink>
-              </li>
-              <li>
-                <FooterLink>İş Ortağımız Olun</FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/firma-ekle">Üye İş Yerimiz Olun</FooterLink>
-              </li>
-              <li>
-                <FooterLink>Kurumsal Site</FooterLink>
-              </li>
-              <li>
-                <FooterLink>Kariyer</FooterLink>
-              </li>
-            </FooterColumn>
-
-            <FooterColumn title="Keşfet">
-              <li>
-                <FooterLink>Ülkelere Göre Vize Rehberi</FooterLink>
-              </li>
-              <li>
-                <FooterLink>Vize Türleri</FooterLink>
-              </li>
-              <li>
-                <FooterLink>Popüler Vize Süreçleri</FooterLink>
-              </li>
-              <li>
-                <FooterLink>Vize Başvuru Rehberi</FooterLink>
-              </li>
-              <li>
-                <FooterLink>Blog & Rehberler</FooterLink>
-              </li>
-              <li>
-                <FooterLink>Güncel Duyurular</FooterLink>
-              </li>
-            </FooterColumn>
-          </div>
-        </div>
-
-        {/* CTA */}
-        <div className="mt-12 lg:mt-14">
-          <div className="rounded-2xl border border-primary/10 bg-white p-6 shadow-[0_8px_30px_rgba(11,60,93,0.06)] sm:p-8 lg:flex lg:items-center lg:justify-between lg:gap-10">
-            <div className="min-w-0 lg:flex-1">
-              <p className="text-base font-semibold text-primary sm:text-lg">
-                Üye İş Yerimiz Olun
-              </p>
-              <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-foreground/65">
-                Platformda yer alarak daha fazla müşteriye ulaşın
-              </p>
-            </div>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center lg:mt-0 lg:shrink-0">
-              <Link
-                href="/firma-ekle"
-                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-accent/90"
-              >
-                Üye İş Yerimiz Olun
-              </Link>
-              <button
-                type="button"
-                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-surface"
-              >
-                Firma Şikayet Et
-              </button>
-            </div>
-          </div>
+          {/* 5. Nav groups */}
+          <div className="order-3 lg:order-2 lg:col-span-4">{linkColumns}</div>
         </div>
       </div>
 
