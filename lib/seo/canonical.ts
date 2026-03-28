@@ -1,0 +1,22 @@
+import { getSiteUrl } from "@/lib/env";
+
+/** Kök domain + path — sonda slash yok (Next metadataBase ile uyumlu). */
+export function absoluteUrl(path: string): string {
+  const base = getSiteUrl().replace(/\/$/, "");
+  if (!path || path === "/") return base;
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${p}`;
+}
+
+/**
+ * Admin alanından girilen kanonik URL göreli olabilir; her zaman mutlak ve tekilleştirilmiş döner.
+ */
+export function resolveCanonicalUrl(
+  custom: string | null | undefined,
+  fallbackAbsolute: string
+): string {
+  const t = custom?.trim();
+  if (!t) return fallbackAbsolute;
+  if (/^https?:\/\//i.test(t)) return t;
+  return absoluteUrl(t);
+}

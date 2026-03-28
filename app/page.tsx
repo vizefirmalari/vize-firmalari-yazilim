@@ -19,36 +19,53 @@ import {
   getPublicFilterCountries,
   getPublicFilterServiceTypes,
 } from "@/lib/data/public-cms";
-import { getSiteUrl } from "@/lib/env";
-
-const siteUrl = getSiteUrl();
-
-export const metadata: Metadata = {
-  title: "Vize danışmanlık firmalarını karşılaştırın",
-  description:
-    "Vize danışmanlık firmalarını Hype Puanı ve Kurumsallık Skoru ile karşılaştırın; iletişim ve hizmet bilgileri tek yerde.",
-  alternates: { canonical: siteUrl },
-  openGraph: {
-    title: "VizeFirmalari — Vize danışmanlık firmalarını karşılaştırın",
-    description:
-      "Güvenilir firmaları inceleyin, karşılaştırın ve başvurunuzu başlatın.",
-    url: siteUrl,
-    siteName: "VizeFirmalari",
-    locale: "tr_TR",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "VizeFirmalari — Vize danışmanlık firmalarını karşılaştırın",
-    description:
-      "Güvenilir firmaları inceleyin, karşılaştırın ve başvurunuzu başlatın.",
-  },
-  robots: { index: true, follow: true },
-};
+import { absoluteUrl } from "@/lib/seo/canonical";
+import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
+import { homePageShouldNoindex } from "@/lib/seo/home-indexing";
+import { resolveDefaultSiteShareImage } from "@/lib/seo/og-images";
 
 type HomePageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
+
+export async function generateMetadata({
+  searchParams,
+}: HomePageProps): Promise<Metadata> {
+  const sp = await searchParams;
+  const filterOrAuth = homePageShouldNoindex(sp);
+  const canonical = absoluteUrl("/");
+  const titleSegment = "Vize danışmanlık firmalarını karşılaştırın";
+  const description =
+    "Vize danışmanlık firmalarını Hype Puanı ve Kurumsallık Skoru ile karşılaştırın; iletişim ve hizmet bilgileri tek yerde.";
+  const ogTitle = `${SITE_BRAND_NAME} — ${titleSegment}`;
+  const ogDesc =
+    "Güvenilir firmaları inceleyin, karşılaştırın ve başvurunuzu başlatın.";
+  const img = resolveDefaultSiteShareImage();
+
+  return {
+    title: titleSegment,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title: ogTitle,
+      description: ogDesc,
+      url: canonical,
+      siteName: SITE_BRAND_NAME,
+      locale: "tr_TR",
+      type: "website",
+      images: [{ url: img.url, alt: img.alt }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ogTitle,
+      description: ogDesc,
+      images: [img.url],
+    },
+    robots: filterOrAuth
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
+  };
+}
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const sp = await searchParams;

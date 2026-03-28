@@ -1,6 +1,27 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
+import { resolveDefaultSiteShareImage } from "@/lib/seo/og-images";
+
+const nfShare = resolveDefaultSiteShareImage();
+
+export const metadata: Metadata = {
+  title: "Sayfa bulunamadı",
+  robots: { index: false, follow: false },
+  openGraph: {
+    title: `Sayfa bulunamadı | ${SITE_BRAND_NAME}`,
+    description: "Aradığınız sayfa bulunamadı.",
+    images: [{ url: nfShare.url, alt: nfShare.alt }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `Sayfa bulunamadı | ${SITE_BRAND_NAME}`,
+    description: "Aradığınız sayfa bulunamadı.",
+    images: [nfShare.url],
+  },
+};
 
 export default function NotFound() {
   return (

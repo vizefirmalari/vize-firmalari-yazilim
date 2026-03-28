@@ -364,3 +364,54 @@ export async function getAllFirmSlugs(): Promise<string[]> {
 
   return (data ?? []).map((r: { slug: string }) => r.slug);
 }
+
+export type SitemapFirmRow = {
+  slug: string;
+  created_at: string;
+  is_indexable: boolean | null;
+};
+
+/**
+ * Sitemap için: yalnızca yayında ve indekslemeye açık firmalar.
+ * `is_indexable === false` olanlar hariç (null / true = dahil).
+ */
+export async function getSitemapFirmEntries(): Promise<SitemapFirmRow[]> {
+  if (!isSupabaseConfigured()) {
+    return MOCK_FIRMS.filter((f) => f.is_indexable !== false).map((f) => ({
+      slug: f.slug,
+      created_at: f.created_at,
+      is_indexable: f.is_indexable ?? true,
+    }));
+  }
+
+  const supabase = createSupabasePublicClient();
+  if (!supabase) {
+    return MOCK_FIRMS.filter((f) => f.is_indexable !== false).map((f) => ({
+      slug: f.slug,
+      created_at: f.created_at,
+      is_indexable: f.is_indexable ?? true,
+    }));
+  }
+
+  const { data, error } = await supabase
+    .from("firms")
+    .select("slug, created_at, is_indexable")
+    .eq("status", "published");
+
+  if (error) {
+    console.error("[getSitemapFirmEntries]", error.message);
+    return MOCK_FIRMS.filter((f) => f.is_indexable !== false).map((f) => ({
+      slug: f.slug,
+      created_at: f.created_at,
+      is_indexable: f.is_indexable ?? true,
+    }));
+  }
+
+  return (data ?? [])
+    .filter((r: SitemapFirmRow) => r.is_indexable !== false)
+    .map((r: SitemapFirmRow) => ({
+      slug: r.slug,
+      created_at: r.created_at,
+      is_indexable: r.is_indexable,
+    }));
+}

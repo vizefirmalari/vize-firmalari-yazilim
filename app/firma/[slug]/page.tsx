@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -6,6 +5,8 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getAllFirmSlugs, getFirmBySlug } from "@/lib/data/firms";
 import { getSiteUrl } from "@/lib/env";
+import { buildFirmPageMetadata } from "@/lib/seo/firma-metadata";
+import { buildFirmSchemaGraph } from "@/lib/seo/firma-schema";
 import type { FirmRow } from "@/lib/types/firm";
 import { FirmServiceScope } from "@/components/firma/firm-service-scope";
 import { SectionReveal } from "@/components/home/section-reveal";
@@ -20,96 +21,24 @@ function whatsappHref(raw: string): string {
   return `https://wa.me/${digits}`;
 }
 
-function jsonLd(firm: FirmRow, url: string) {
-  const ogOrLogo = firm.og_image_url?.trim() || firm.logo_url || undefined;
-  const tags = Array.isArray(firm.tags) ? firm.tags.filter(Boolean) : [];
-  const allCoverage = Array.isArray(firm.countries) ? firm.countries : [];
-  const { regions, countries } = splitRegionsAndCountries(allCoverage);
-  const coverageAll = [...regions, ...countries];
-
-  const keywordSet = new Set<string>();
-  for (const k of tags) {
-    const s = String(k).trim();
-    if (s) keywordSet.add(s);
-  }
-  for (const c of coverageAll) {
-    const s = String(c).trim();
-    if (s) keywordSet.add(s);
-  }
-  const keywords = keywordSet.size ? Array.from(keywordSet).join(", ") : undefined;
-
-  return {
-    "@context": "https://schema.org",
-    "@type": "ProfessionalService",
-    name: firm.name,
-    description: firm.description ?? undefined,
-    url,
-    telephone: firm.phone ?? undefined,
-    email: firm.email ?? undefined,
-    keywords,
-    areaServed: coverageAll.map((c) => ({
-      "@type": "Place",
-      name: c,
-    })),
-    image: ogOrLogo,
-  };
-}
-
 export async function generateStaticParams() {
   const slugs = await getAllFirmSlugs();
   return slugs.map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const firm = await getFirmBySlug(slug);
   if (!firm) {
-    return { title: "Firma bulunamadı" };
+    return {
+      title: "Firma bulunamadı",
+      robots: { index: false, follow: false },
+    };
   }
 
   const siteUrl = getSiteUrl();
   const pageUrl = `${siteUrl}/firma/${firm.slug}`;
-  const canonical =
-    firm.canonical_url?.trim() ||
-    pageUrl;
-  const titleBase =
-    firm.seo_title?.trim() || `${firm.name} | VizeFirmalari`;
-  const desc =
-    firm.meta_description?.trim() ||
-    firm.short_description?.trim() ||
-    firm.description?.slice(0, 155) ||
-    `${firm.name} — Güven / Kurumsallık ${firm.corporateness_score}/100.`;
-  const ogTitle =
-    firm.og_title?.trim() || firm.seo_title?.trim() || `${firm.name} | VizeFirmalari`;
-  const ogDesc = firm.og_description?.trim() || desc;
-  const ogImage =
-    firm.og_image_url?.trim() || firm.logo_url?.trim() || undefined;
-  const indexable = firm.is_indexable !== false;
-
-  return {
-    title: titleBase,
-    description: desc,
-    alternates: { canonical },
-    openGraph: {
-      title: ogTitle,
-      description: ogDesc,
-      url: canonical,
-      siteName: "VizeFirmalari",
-      locale: "tr_TR",
-      type: "website",
-      images: ogImage ? [{ url: ogImage }] : undefined,
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: ogTitle,
-      description: ogDesc,
-    },
-    robots: indexable
-      ? { index: true, follow: true }
-      : { index: false, follow: true },
-  };
+  return buildFirmPageMetadata(firm, pageUrl);
 }
 
 export default async function FirmaPage({ params }: PageProps) {
@@ -235,13 +164,15 @@ export default async function FirmaPage({ params }: PageProps) {
 
   const siteUrl = getSiteUrl();
   const pageUrl = `${siteUrl}/firma/${firm.slug}`;
+  const homeUrl = siteUrl.replace(/\/$/, "");
+  const schemaGraph = buildFirmSchemaGraph(firm, pageUrl, homeUrl);
 
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd(firm, pageUrl)),
+          __html: JSON.stringify(schemaGraph),
         }}
       />
       <SiteHeader />
