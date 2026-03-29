@@ -47,6 +47,18 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (pathname.startsWith("/panel")) {
+    if (!user) {
+      const next = `${pathname}${request.nextUrl.search}`;
+      return withNoStore(
+        NextResponse.redirect(
+          new URL(`/?auth=login&next=${encodeURIComponent(next)}`, request.url)
+        )
+      );
+    }
+    return withNoStore(response);
+  }
+
   if (
     process.env.NODE_ENV === "development" &&
     (pathname === "/hesabim" || pathname === "/auth/callback")

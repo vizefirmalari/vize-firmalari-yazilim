@@ -50,11 +50,23 @@ export default async function HesabimPage() {
     redirect(loginRedirect);
   }
 
+  // OAuth dışı (e-posta/şifre) girişlerde de bekleyen firma paneli davetlerini işle
+  await supabase.rpc("accept_firm_panel_invites_for_user");
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .maybeSingle();
+
+  const { data: firmPanelRows } = await supabase
+    .from("firm_panel_members")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .limit(1);
+
+  const hasFirmPanel = (firmPanelRows?.length ?? 0) > 0;
 
   const meta = user.user_metadata as Record<string, string | undefined>;
   const displayName =
@@ -127,6 +139,14 @@ export default async function HesabimPage() {
             </dl>
 
             <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:flex-wrap">
+              {hasFirmPanel ? (
+                <Link
+                  href="/panel"
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/5 px-5 py-2.5 text-center text-sm font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 focus-visible:ring-offset-2"
+                >
+                  Firma paneli
+                </Link>
+              ) : null}
               {isAdmin ? (
                 <Link
                   href="/admin"

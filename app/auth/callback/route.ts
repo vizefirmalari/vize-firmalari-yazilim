@@ -66,6 +66,12 @@ export async function GET(request: NextRequest) {
     return errorRedirect;
   }
 
+  // Bekleyen firma paneli davetlerini e-posta ile eşle (hesap zaten varken atanan davetler)
+  const { error: inviteErr } = await supabase.rpc("accept_firm_panel_invites_for_user");
+  if (inviteErr && process.env.NODE_ENV === "development") {
+    console.warn("[auth/callback] accept_firm_panel_invites_for_user:", inviteErr.message);
+  }
+
   if (process.env.NODE_ENV === "development") {
     const { data: userData } = await supabase.auth.getUser();
     console.log(
