@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FirmPanelAnnouncementsStrip } from "@/components/firm-panel/firm-panel-announcements-strip";
 import { FirmPanelNav } from "@/components/firm-panel/firm-panel-nav";
 import { getFirmPanelAnnouncementsForUser } from "@/lib/data/firm-panel-announcements";
-import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
+import { getFirmPanelMemberships, requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
@@ -31,6 +31,8 @@ export default async function FirmPanelSectionLayout({ children, params }: Props
   if (!firm) notFound();
 
   const announcements = await getFirmPanelAnnouncementsForUser();
+  const allMemberships = await getFirmPanelMemberships();
+  const showFirmSwitcher = allMemberships.length > 1;
 
   const name = firm.name as string;
   const logoUrl = firm.logo_url as string | null;
@@ -61,12 +63,14 @@ export default async function FirmPanelSectionLayout({ children, params }: Props
           </div>
 
           <div className="mt-auto space-y-1 border-t border-white/10 px-3 py-4">
-            <Link
-              href="/panel"
-              className="flex rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition hover:bg-white/8"
-            >
-              ← Tüm firmalar
-            </Link>
+            {showFirmSwitcher ? (
+              <Link
+                href="/panel"
+                className="flex rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition hover:bg-white/8"
+              >
+                ← Firma değiştir
+              </Link>
+            ) : null}
             <Link
               href="/hesabim"
               className="flex rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition hover:bg-white/8"
