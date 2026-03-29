@@ -2,7 +2,8 @@ import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/env";
 
 /**
- * Özel / oturum / yönetim yolları kapatılır. Kamu listeleri ve firma profilleri açık kalır.
+ * Özel / oturum / yönetim / firma paneli yolları kapatılır.
+ * Kamu listeleri, firma profilleri ve (ileride) panelden yayınlanıp açık URL’ye taşınan içerikler endekslenebilir.
  */
 export default function robots(): MetadataRoute.Robots {
   const base = getSiteUrl().replace(/\/$/, "");
@@ -12,6 +13,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: [
         "/admin",
+        "/panel",
         "/hesabim",
         "/giris",
         "/kayit",

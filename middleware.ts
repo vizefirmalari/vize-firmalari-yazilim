@@ -6,6 +6,13 @@ function withNoStore(res: NextResponse) {
   return res;
 }
 
+/** Firma paneli — arama motorlarına URL düşmesin (meta ile birlikte HTTP başlığı). */
+function withPrivateNoIndex(res: NextResponse) {
+  res.headers.set("Cache-Control", "no-store, must-revalidate");
+  res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return res;
+}
+
 /**
  * Tüm sayfalarda Supabase oturumunu yeniler; çerezler request/response ile senkron kalır.
  * /admin/* için ek olarak admin rolü kontrolü.
@@ -50,13 +57,13 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/panel")) {
     if (!user) {
       const next = `${pathname}${request.nextUrl.search}`;
-      return withNoStore(
+      return withPrivateNoIndex(
         NextResponse.redirect(
           new URL(`/?auth=login&next=${encodeURIComponent(next)}`, request.url)
         )
       );
     }
-    return withNoStore(response);
+    return withPrivateNoIndex(response);
   }
 
   if (
