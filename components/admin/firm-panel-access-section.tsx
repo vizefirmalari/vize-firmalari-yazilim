@@ -96,7 +96,8 @@ export function FirmPanelAccessSection({ firmId, firmName, members, invitations 
         <p className="mt-2 text-sm leading-relaxed text-[#1A1A1A]/60">
           <span className="font-medium text-[#1A1A1A]/75">{firmName}</span> için firma sahibi veya
           yetkili e-posta tanımlayın. Hesabı olan kullanıcılar anında bağlanır; hesabı olmayanlar
-          aynı e-posta ile kayıt olduğunda otomatik atanır.
+          aynı e-posta ile kayıt olduğunda otomatik atanır. Erişim kaldırıldığında kayıtlar silinmez;
+          geçmiş üyelik satırları listede kalır.
         </p>
       </div>
 
@@ -142,16 +143,27 @@ export function FirmPanelAccessSection({ firmId, firmName, members, invitations 
                   </p>
                   <p className="mt-0.5 text-xs text-[#1A1A1A]/45">
                     {m.role} · {formatTrDate(m.created_at)}
+                    {m.status === "revoked" && m.revoked_at ? (
+                      <span className="block text-amber-800/90">
+                        Erişim kaldırıldı · {formatTrDate(m.revoked_at)}
+                      </span>
+                    ) : null}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  disabled={busy || m.status !== "active"}
-                  onClick={() => onRemoveMember(m.id)}
-                  className="shrink-0 rounded-lg border border-[#1A1A1A]/15 px-3 py-1.5 text-xs font-semibold text-[#1A1A1A]/70 transition hover:bg-[#F4F6F8] disabled:opacity-50"
-                >
-                  Erişimi kaldır
-                </button>
+                {m.status === "active" ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onRemoveMember(m.id)}
+                    className="shrink-0 rounded-lg border border-[#1A1A1A]/15 px-3 py-1.5 text-xs font-semibold text-[#1A1A1A]/70 transition hover:bg-[#F4F6F8] disabled:opacity-50"
+                  >
+                    Erişimi kaldır
+                  </button>
+                ) : (
+                  <span className="shrink-0 rounded-lg border border-dashed border-[#1A1A1A]/20 px-3 py-1.5 text-xs text-[#1A1A1A]/45">
+                    {m.status === "revoked" ? "Geçmiş kayıt" : "Askıda"}
+                  </span>
+                )}
               </li>
             ))}
           </ul>

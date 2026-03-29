@@ -7,6 +7,8 @@ export type FirmPanelMemberRow = {
   status: string;
   created_at: string;
   email: string | null;
+  /** Erişim kaldırıldıysa dolu; kayıt silinmez */
+  revoked_at: string | null;
 };
 
 export type FirmPanelInvitationRow = {
@@ -54,6 +56,7 @@ export async function getFirmPanelAccessLists(firmId: string): Promise<{
       status: String(r.status),
       created_at: String(r.created_at),
       email: r.email != null ? String(r.email) : null,
+      revoked_at: r.revoked_at != null ? String(r.revoked_at) : null,
     })
   );
 

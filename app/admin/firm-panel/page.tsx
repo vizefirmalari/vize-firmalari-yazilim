@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 import { FirmPanelHubProvision } from "@/components/admin/firm-panel-hub-provision";
-import { getAdminFirmsList } from "@/lib/data/admin-firms-list";
+import { getPublishedFirmsForFirmPanelHub } from "@/lib/data/firm-panel-publisher-firms";
+import { getSiteUrl } from "@/lib/env";
 
 export const metadata = {
   title: "Firma panel",
@@ -9,7 +10,8 @@ export const metadata = {
 };
 
 export default async function AdminFirmPanelHubPage() {
-  const firms = await getAdminFirmsList({});
+  const firms = await getPublishedFirmsForFirmPanelHub();
+  const siteBaseUrl = getSiteUrl();
 
   return (
     <div className="space-y-8">
@@ -25,14 +27,14 @@ export default async function AdminFirmPanelHubPage() {
           Firma panel tanımla
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#1A1A1A]/60">
-          Firma sahiplerine e-posta ve güçlü şifre ile hesap açın; platforma giriş yaptıklarında
-          markalarını yönetebilirler. Platform duyuruları tüm firma panellerinde üst bantta
-          gösterilir.
+          Yalnızca <strong className="font-semibold text-[#1A1A1A]/75">yayında</strong> firmalar
+          listelenir; panel atanmış firmalar &quot;bağlı&quot; olarak görünür, tekrar tanım
+          gerektirmez. Şifre ürettikten sonra referans kodu ve hazır metin ile firmaya iletebilirsiniz.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_minmax(0,280px)]">
-        <FirmPanelHubProvision firms={firms} />
+        <FirmPanelHubProvision firms={firms} siteBaseUrl={siteBaseUrl} />
         <aside className="space-y-4 rounded-2xl border border-[#1A1A1A]/10 bg-white p-6 shadow-sm">
           <h2 className="text-sm font-bold text-[#0B3C5D]">Kısayollar</h2>
           <ul className="space-y-3 text-sm">

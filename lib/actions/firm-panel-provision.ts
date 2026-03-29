@@ -5,6 +5,8 @@ import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 
 import { requireAdmin } from "@/lib/auth/admin";
+import { buildFirmPanelConnectionCode } from "@/lib/firm-panel/connection-code";
+import { getSiteUrl } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
@@ -14,6 +16,12 @@ export type ProvisionFirmPanelResult =
       password: string;
       kind: "created" | "updated";
       userId: string;
+      firmId: string;
+      firmName: string;
+      firmSlug: string;
+      connectionCode: string;
+      loginUrl: string;
+      panelDeepLink: string;
     }
   | { ok: false; error: string };
 
@@ -47,6 +55,29 @@ export async function provisionFirmPanelAccount(
   if (!normalized.includes("@")) {
     return { ok: false, error: "Geçerli bir e-posta girin." };
   }
+
+  const { data: firmRow, error: firmErr } = await adminClient
+    .from("firms")
+    .select("id, name, slug, status")
+    .eq("id", firmId)
+    .maybeSingle();
+
+  if (firmErr || !firmRow) {
+    return { ok: false, error: firmErr?.message ?? "Firma bulunamadı." };
+  }
+  if ((firmRow.status as string) !== "published") {
+    return {
+      ok: false,
+      error: "Yalnızca yayında (published) firmalar firma paneline bağlanabilir. Önce firmayı yayınlayın.",
+    };
+  }
+
+  const firmName = firmRow.name as string;
+  const firmSlug = firmRow.slug as string;
+  const base = getSiteUrl().replace(/\/$/, "");
+  const loginUrl = `${base}/giris`;
+  const panelDeepLink = `${base}/panel/${firmId}`;
+  const connectionCode = buildFirmPanelConnectionCode(firmId);
 
   const password = generateStrongPassword();
 
@@ -103,6 +134,8 @@ export async function provisionFirmPanelAccount(
       role: "owner",
       status: "active",
       created_by: ctx.userId,
+      revoked_at: null,
+      revoked_by: null,
     },
     { onConflict: "firm_id,user_id", ignoreDuplicates: false }
   );
@@ -122,7 +155,18 @@ export async function provisionFirmPanelAccount(
   revalidatePath(`/admin/firms/${firmId}/panel`);
   revalidatePath("/panel");
 
-  return { ok: true, password, kind, userId };
+  return {
+    ok: true,
+    password,
+    kind,
+    userId,
+    firmId,
+    firmName,
+    firmSlug,
+    connectionCode,
+    loginUrl,
+    panelDeepLink,
+  };
 }
 
 /** Davet + RPC ile aynı sonuç (service role olmadan). */
@@ -130,6 +174,20 @@ export async function assignFirmPanelInviteOnly(firmId: string, email: string) {
   await requireAdmin();
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false as const, error: "Yapılandırma eksik" };
+
+  const { data: pub, error: pubErr } = await supabase
+    .from("firms")
+    .select("status")
+    .eq("id", firmId)
+    .maybeSingle();
+  if (pubErr || !pub) return { ok: false as const, error: pubErr?.message ?? "Firma bulunamadı." };
+  if ((pub.status as string) !== "published") {
+    return {
+      ok: false as const,
+      error: "Yalnızca yayında firmalar için davet oluşturulabilir.",
+    };
+  }
+
   const { data, error } = await supabase.rpc("admin_assign_firm_panel_by_email", {
     p_firm_id: firmId,
     p_email: email.trim(),
