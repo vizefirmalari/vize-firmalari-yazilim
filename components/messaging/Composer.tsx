@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import { sendChatMessage } from "@/lib/actions/chat-message";
 import { CHAT_ATTACHMENT_MAX_BYTES, validateChatAttachment } from "@/lib/validation/chat-attachment";
@@ -9,18 +9,39 @@ import { CHAT_ATTACHMENT_MAX_BYTES, validateChatAttachment } from "@/lib/validat
 type Props = {
   conversationId: string | null;
   disabled?: boolean;
+  /** Realtime typing broadcast (debounce içeride) */
+  onTyping?: () => void;
 };
 
 /**
  * Metin gönderimi + ek yükleme (FormData → /api/chat/upload).
  */
-export function Composer({ conversationId, disabled }: Props) {
+export function Composer({ conversationId, disabled, onTyping }: Props) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleTyping = useCallback(() => {
+    if (!onTyping) return;
+    if (typingTimerRef.current) {
+      clearTimeout(typingTimerRef.current);
+    }
+    typingTimerRef.current = setTimeout(() => {
+      onTyping();
+    }, 450);
+  }, [onTyping]);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current);
+      }
+    };
+  }, []);
 
   const canSend = Boolean(conversationId) && !disabled && !isPending && !uploading;
 
@@ -34,7 +55,6 @@ export function Composer({ conversationId, disabled }: Props) {
         return;
       }
       setText("");
-      router.refresh();
     });
   };
 
@@ -77,7 +97,10 @@ export function Composer({ conversationId, disabled }: Props) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <textarea
           value={text}
-          onChange={(ev) => setText(ev.target.value)}
+          onChange={(ev) => {
+            setText(ev.target.value);
+            scheduleTyping();
+          }}
           placeholder="Mesajınızı yazın…"
           rows={3}
           disabled={!canSend}

@@ -1,32 +1,40 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 
-import type { MessageBroadcastPayload, MessageRow } from "@/lib/messaging/types";
+import type { MessageBroadcastPayload, MessageWithAttachment } from "@/lib/messaging/types";
 import { conversationTopic } from "@/lib/realtime/channel-names";
 import {
   getSupabaseBrowserClientForRealtime,
-  subscribeRealtimeChannel,
   type RealtimeSubscribeStatus,
 } from "@/lib/supabase/realtime";
 
 type Options = {
   conversationId: string | null;
-  initialMessages: MessageRow[];
+  /** Presence / typing için */
+  userId: string | null;
+  initialMessages: MessageWithAttachment[];
   onChannelStatus?: (status: RealtimeSubscribeStatus) => void;
 };
 
 /**
- * Private Broadcast kanalı: DB tetikleyicisi `event: message` ile uyumludur.
- * İlk liste SSR’dan; delta bu hook ile eklenir.
+ * Private kanal: mesaj broadcast, typing broadcast, presence senkronu.
  */
 export function useConversationRealtime({
   conversationId,
+  userId,
   initialMessages,
   onChannelStatus,
 }: Options) {
-  const [messages, setMessages] = useState<MessageRow[]>(initialMessages);
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  const [messages, setMessages] = useState<MessageWithAttachment[]>(initialMessages);
+  const [remoteTypingUserId, setRemoteTypingUserId] = useState<string | null>(null);
+  const [peerOnline, setPeerOnline] = useState(false);
+  const typingClearRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
   const statusCb = useRef(onChannelStatus);
   statusCb.current = onChannelStatus;
 
@@ -34,8 +42,19 @@ export function useConversationRealtime({
     setMessages(initialMessages);
   }, [initialMessages]);
 
+  const emitTyping = useCallback(() => {
+    const ch = channelRef.current;
+    if (!ch || !userId) return;
+    void ch.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { userId, ts: Date.now() },
+    });
+  }, [userId]);
+
   useEffect(() => {
-    if (!conversationId) {
+    if (!conversationId || !userId) {
+      channelRef.current = null;
       return;
     }
 
@@ -46,41 +65,89 @@ export function useConversationRealtime({
 
     const topic = conversationTopic(conversationId);
     const channel = supabase.channel(topic, {
-      config: { private: true },
+      config: {
+        private: true,
+        ...(userId ? { presence: { key: userId } } : {}),
+      },
     });
+    channelRef.current = channel;
 
     channel.on("broadcast", { event: "message" }, ({ payload }) => {
       const p = payload as MessageBroadcastPayload | undefined;
       if (!p?.id || !p.conversation_id) {
         return;
       }
+      if (p.kind === "attachment") {
+        startTransition(() => router.refresh());
+        return;
+      }
       setMessages((prev) => {
         if (prev.some((m) => m.id === p.id)) {
           return prev;
         }
-        const row: MessageRow = {
+        const row: MessageWithAttachment = {
           id: p.id,
           conversation_id: p.conversation_id,
           sender_id: p.sender_id,
-          kind: (p.kind as MessageRow["kind"]) ?? "text",
+          kind: (p.kind as MessageWithAttachment["kind"]) ?? "text",
           body: p.preview ?? null,
           created_at:
             typeof p.created_at === "string"
               ? p.created_at
               : new Date(p.created_at as unknown as string).toISOString(),
+          attachment: null,
         };
         return [...prev, row];
       });
     });
 
-    const unsubscribe = subscribeRealtimeChannel(channel, (status) => {
-      statusCb.current?.(status);
+    channel.on("broadcast", { event: "typing" }, ({ payload }) => {
+      const p = payload as { userId?: string } | undefined;
+      if (!p?.userId || p.userId === userId) {
+        return;
+      }
+      if (typingClearRef.current) {
+        clearTimeout(typingClearRef.current);
+      }
+      setRemoteTypingUserId(p.userId);
+      typingClearRef.current = setTimeout(() => {
+        setRemoteTypingUserId((cur) => (cur === p.userId ? null : cur));
+      }, 2800);
+    });
+
+    if (userId) {
+      channel.on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState();
+        const others = Object.keys(state).filter((k) => k !== userId);
+        setPeerOnline(others.length > 0);
+      });
+    }
+
+    channel.subscribe(async (status) => {
+      statusCb.current?.(status as RealtimeSubscribeStatus);
+      if (status === "SUBSCRIBED" && userId) {
+        try {
+          await channel.track({ user_id: userId, at: new Date().toISOString() });
+        } catch {
+          setPeerOnline(false);
+        }
+      }
     });
 
     return () => {
-      unsubscribe();
+      if (typingClearRef.current) {
+        clearTimeout(typingClearRef.current);
+      }
+      channelRef.current = null;
+      void channel.unsubscribe();
     };
-  }, [conversationId]);
+  }, [conversationId, userId, router, startTransition]);
 
-  return { messages, setMessages };
+  return {
+    messages,
+    setMessages,
+    remoteTypingUserId,
+    peerOnline,
+    emitTyping,
+  };
 }

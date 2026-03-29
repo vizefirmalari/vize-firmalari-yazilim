@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { FirmRow } from "@/lib/types/firm";
-import { ContactModal } from "@/components/home/contact-modal";
+import { FirmMessageChatButton } from "@/components/firma/firm-message-chat-button";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
 import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
 import {
@@ -29,7 +29,6 @@ type FirmCardProps = {
 };
 
 export function FirmCard({ firm }: FirmCardProps) {
-  const [contactOpen, setContactOpen] = useState(false);
   const [countriesModalOpen, setCountriesModalOpen] = useState(false);
   const [servicesModalOpen, setServicesModalOpen] = useState(false);
   const [aboutTextModalOpen, setAboutTextModalOpen] = useState(false);
@@ -56,7 +55,6 @@ export function FirmCard({ firm }: FirmCardProps) {
   const singleServiceOnly = shownServices.length === 1 && restServices === 0;
 
   const servicePool = Array.isArray(firm.services) ? firm.services : [];
-  const contactOk = firm.contact_popup_enabled !== false;
   const quickApplyOk = firm.quick_apply_enabled !== false;
   const socialOk = firm.social_buttons_enabled !== false;
 
@@ -199,7 +197,7 @@ export function FirmCard({ firm }: FirmCardProps) {
                   className={
                     singleCountryOnly
                       ? "min-w-0 w-auto max-w-full"
-                      : "min-w-0 flex-1 basis-0 sm:max-w-[12.5rem]"
+                      : "min-w-0 flex-1 basis-0 sm:max-w-50"
                   }
                 >
                   <CoverageChip
@@ -233,7 +231,7 @@ export function FirmCard({ firm }: FirmCardProps) {
                   className={
                     singleServiceOnly
                       ? "min-w-0 w-auto max-w-full"
-                      : "min-w-0 flex-1 basis-0 sm:max-w-[12.5rem]"
+                      : "min-w-0 flex-1 basis-0 sm:max-w-50"
                   }
                 >
                   <ServiceSummaryChip
@@ -256,19 +254,7 @@ export function FirmCard({ firm }: FirmCardProps) {
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-2">
-        {contactOk ? (
-          <button
-            type="button"
-            onClick={() => setContactOpen(true)}
-            className="rounded-xl border border-[#0B3C5D]/15 bg-white py-2.5 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
-          >
-            İletişim
-          </button>
-        ) : (
-          <span className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/80 py-2.5 text-center text-xs text-[#1A1A1A]/45">
-            İletişim kapalı
-          </span>
-        )}
+        <FirmMessageChatButton firmId={firm.id} />
         {quickApplyOk ? (
           <Link
             href={`/firma/${firm.slug}#basvuru`}
@@ -371,12 +357,6 @@ export function FirmCard({ firm }: FirmCardProps) {
           </div>
         ) : null}
       </div>
-
-      <ContactModal
-        firm={firm}
-        open={contactOk && contactOpen}
-        onClose={() => setContactOpen(false)}
-      />
 
       <CountriesRegionsModal
         open={countriesModalOpen}
@@ -571,7 +551,7 @@ function CountriesRegionsModal({
   if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999]">
+    <div className="fixed inset-0 z-9999">
       <div
         className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
           visible ? "opacity-100" : "opacity-0"
@@ -676,7 +656,7 @@ function ServicesCoverageModal({
   if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999]">
+    <div className="fixed inset-0 z-9999">
       <div
         className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
           visible ? "opacity-100" : "opacity-0"

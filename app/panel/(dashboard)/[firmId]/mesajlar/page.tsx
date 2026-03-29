@@ -1,7 +1,9 @@
-import { ConversationScreen } from "@/components/messaging/ConversationScreen";
+import { FirmPanelMessagesShell } from "@/components/messaging/firm-panel-messages-shell";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
-import { loadConversationMessages } from "@/lib/messaging/server/messages";
+import { loadFirmInboxRows, loadFirmMessageStats } from "@/lib/messaging/server/inbox-firm";
+import { loadConversationMessagesDetailed } from "@/lib/messaging/server/messages-detailed";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { MessageWithAttachment } from "@/lib/messaging/types";
 
 type PageProps = {
   params: Promise<{ firmId: string }>;
@@ -14,22 +16,39 @@ export default async function FirmPanelMessagesPage({ params, searchParams }: Pa
   await requireFirmPanelAccess(firmId);
 
   const supabase = await createSupabaseServerClient();
-  let currentUserId: string | null = null;
+  let currentUserId = "";
   if (supabase) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    currentUserId = user?.id ?? null;
+    currentUserId = user?.id ?? "";
   }
 
-  const initialMessages = conversationId ? await loadConversationMessages(conversationId) : [];
+  const inboxRows = await loadFirmInboxRows(firmId);
+  const stats = await loadFirmMessageStats(firmId, inboxRows);
+
+  let initialMessages: MessageWithAttachment[] = [];
+  const activeC = conversationId?.trim();
+  if (activeC && supabase && currentUserId) {
+    const { data: participant } = await supabase
+      .from("conversation_participants")
+      .select("id")
+      .eq("conversation_id", activeC)
+      .eq("user_id", currentUserId)
+      .maybeSingle();
+    if (participant) {
+      initialMessages = await loadConversationMessagesDetailed(activeC);
+    }
+  }
 
   return (
-    <ConversationScreen
+    <FirmPanelMessagesShell
       firmId={firmId}
-      conversationId={conversationId ?? null}
-      initialMessages={initialMessages}
       currentUserId={currentUserId}
+      initialList={inboxRows}
+      initialStats={stats}
+      conversationId={conversationId?.trim() ?? null}
+      initialMessages={initialMessages}
     />
   );
 }

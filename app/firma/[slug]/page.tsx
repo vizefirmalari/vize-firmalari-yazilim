@@ -8,6 +8,7 @@ import { getSiteUrl } from "@/lib/env";
 import { buildFirmPageMetadata } from "@/lib/seo/firma-metadata";
 import { buildFirmSchemaGraph } from "@/lib/seo/firma-schema";
 import type { FirmRow } from "@/lib/types/firm";
+import { FirmMessageChatButton } from "@/components/firma/firm-message-chat-button";
 import { FirmServiceScope } from "@/components/firma/firm-service-scope";
 import { SectionReveal } from "@/components/home/section-reveal";
 import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
@@ -105,6 +106,8 @@ export default async function FirmaPage({ params }: PageProps) {
     (typeof firm.employee_count === "number" && firm.employee_count > 0) ||
     (typeof firm.support_staff_count === "number" && firm.support_staff_count > 0) ||
     (typeof firm.office_count === "number" && firm.office_count > 0);
+
+  const quickApplyOk = firm.quick_apply_enabled !== false;
 
   const hasLegal =
     Boolean(firm.company_structure?.trim()) ||
@@ -529,15 +532,24 @@ export default async function FirmaPage({ params }: PageProps) {
                   Başvuruya başlayın
                 </h2>
                 <p className="mt-2 text-sm text-[#1A1A1A]/70">
-                  Hızlı başvuru için iletişim kanallarını kullanın veya doğrudan
-                  başvuru adımına geçin.
+                  Firma ile güvenli mesajlaşma veya hızlı başvuru için aşağıdaki adımları
+                  kullanın.
                 </p>
-                <Link
-                  href="#iletisim"
-                  className="mt-4 flex w-full items-center justify-center rounded-xl bg-[#D9A441] py-3 text-center text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
-                >
-                  Hızlı Başvur
-                </Link>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <FirmMessageChatButton firmId={firm.id} />
+                  {quickApplyOk ? (
+                    <Link
+                      href="#iletisim"
+                      className="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-center text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
+                    >
+                      Hızlı Başvur
+                    </Link>
+                  ) : (
+                    <span className="flex items-center justify-center rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/80 py-2.5 text-center text-xs text-[#1A1A1A]/45">
+                      Başvuru kapalı
+                    </span>
+                  )}
+                </div>
               </div>
 
               {hasContactCard ? (

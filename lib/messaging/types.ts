@@ -8,6 +8,18 @@ export type MessageRow = {
   created_at: string;
 };
 
+export type MessageAttachmentMeta = {
+  id: string;
+  file_name: string;
+  mime_type: string;
+  byte_size: number;
+  storage_path: string;
+};
+
+export type MessageWithAttachment = MessageRow & {
+  attachment?: MessageAttachmentMeta | null;
+};
+
 /** Broadcast payload (DB tetikleyicisi ile aynı anahtarlar) */
 export type MessageBroadcastPayload = {
   id: string;

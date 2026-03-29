@@ -11,3 +11,11 @@ export function conversationTopic(conversationId: string): string {
 export function notificationTopic(userId: string): string {
   return `notifications:${userId}`;
 }
+
+export function userInboxTopic(userId: string): string {
+  return `user-inbox:${userId}`;
+}
+
+export function firmInboxTopic(firmId: string): string {
+  return `firm-inbox:${firmId}`;
+}
