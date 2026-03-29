@@ -8,9 +8,8 @@ import {
   assignFirmPanelInviteOnly,
   provisionFirmPanelAccount,
 } from "@/lib/actions/firm-panel-provision";
+import { FIRM_PANEL_DEFAULT_EMAIL } from "@/lib/constants";
 import type { AdminFirmListRow } from "@/lib/data/admin-firms-list";
-
-const DEFAULT_EMAIL = "vizedanismanlikfirmalari@gmail.com";
 
 type Props = {
   firms: AdminFirmListRow[];
@@ -19,7 +18,7 @@ type Props = {
 export function FirmPanelHubProvision({ firms }: Props) {
   const router = useRouter();
   const [firmId, setFirmId] = useState<string>(() => firms[0]?.id ?? "");
-  const [email, setEmail] = useState(DEFAULT_EMAIL);
+  const [email, setEmail] = useState(FIRM_PANEL_DEFAULT_EMAIL);
   const [busy, setBusy] = useState(false);
   const [lastPassword, setLastPassword] = useState<string | null>(null);
 

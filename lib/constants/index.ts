@@ -10,6 +10,8 @@ export {
   mergePublicServiceFilterOptions,
 } from "./firm-services-taxonomy";
 
+export { ADMIN_PANEL_ACCOUNT_EMAIL, FIRM_PANEL_DEFAULT_EMAIL } from "./platform-emails";
+
 import { ALL_COUNTRIES } from "./filters";
 
 /** FirmsListing ve benzeri için tam ülke listesi */

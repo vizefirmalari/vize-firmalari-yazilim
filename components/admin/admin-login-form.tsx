@@ -2,8 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { ADMIN_PANEL_ACCOUNT_EMAIL } from "@/lib/constants";
 import { isSupabaseConfigured } from "@/lib/env";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export function AdminLoginForm() {
   const router = useRouter();
@@ -84,6 +85,7 @@ export function AdminLoginForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          placeholder={ADMIN_PANEL_ACCOUNT_EMAIL}
           className="mt-1 w-full rounded-xl border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 py-2.5 text-sm outline-none ring-[#328CC1]/30 focus:ring-2"
         />
       </label>
