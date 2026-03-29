@@ -22,28 +22,56 @@ export function ConversationThreadHeader({
   onBack,
 }: Props) {
   return (
-    <header className="flex items-center gap-3 border-b border-[#0B3C5D]/10 bg-white px-3 py-3 sm:px-4">
-      {onBack ? (
-        <button
-          type="button"
-          onClick={onBack}
-          className="rounded-lg border border-[#0B3C5D]/15 px-2 py-1.5 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB] md:hidden"
-          aria-label="Konuşma listesine dön"
-        >
-          ←
-        </button>
-      ) : null}
-      <MessagingAvatar name={title} imageUrl={logoUrl} size="md" />
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold text-[#0B3C5D]">{title}</div>
-        {subtitle ? (
-          <div className="truncate text-xs font-medium text-[#1A1A1A]/50">{subtitle}</div>
+    <header className="shrink-0 border-b border-[#0B3C5D]/08 bg-white px-2.5 py-2 sm:px-3 sm:py-2.5 md:px-4 md:py-3">
+      <div className="flex items-start gap-2 sm:gap-2.5 md:gap-3">
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="shrink-0 rounded-lg border border-[#0B3C5D]/12 bg-white px-2 py-1.5 text-base font-semibold leading-none text-[#0B3C5D] transition-colors duration-200 hover:bg-[#F7F9FB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/30 md:hidden"
+            aria-label="Konuşma listesine dön"
+          >
+            ←
+          </button>
         ) : null}
-        {detailLine ? (
-          <div className="truncate text-[11px] text-[#1A1A1A]/45">{detailLine}</div>
-        ) : null}
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[10px] font-semibold uppercase tracking-wide text-[#1A1A1A]/40">
-          <span className={typingText ? "text-[#D9A441]" : ""}>{typingText ?? statusText}</span>
+        <div className="shrink-0 max-md:origin-top-left max-md:scale-[0.92]">
+          <MessagingAvatar name={title} imageUrl={logoUrl} size="md" className="mt-0.5 max-md:mt-0" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-[0.875rem] font-semibold leading-tight text-[#0B3C5D] md:text-base">
+            {title}
+          </h2>
+          {(subtitle || detailLine) && (
+            <div className="mt-0.5 space-y-0 md:space-y-0.5">
+              {subtitle ? (
+                <p className="truncate text-[10px] font-medium text-[#1A1A1A]/45 md:text-xs md:text-[#1A1A1A]/48">
+                  {subtitle}
+                </p>
+              ) : null}
+              {detailLine ? (
+                <p className="truncate text-[10px] leading-tight text-[#1A1A1A]/38 sm:text-[11px] sm:text-[#1A1A1A]/40">
+                  {detailLine}
+                </p>
+              ) : null}
+            </div>
+          )}
+          <div className="mt-1 md:mt-1.5">
+            {typingText ? (
+              <p className="text-[11px] font-medium text-[#0B3C5D]/80 md:text-xs md:text-[#0B3C5D]/75">
+                <span className="inline-flex items-center gap-1 md:gap-1.5">
+                  <span
+                    className="inline-flex h-1 w-1 rounded-full bg-[#0B3C5D]/40 md:bg-[#0B3C5D]/45"
+                    aria-hidden
+                  />
+                  {typingText}
+                </span>
+              </p>
+            ) : (
+              <p className="text-[11px] font-medium text-[#1A1A1A]/36 md:text-xs md:text-[#1A1A1A]/38">
+                {statusText}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </header>

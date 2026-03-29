@@ -92,21 +92,25 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
   }
 
   return (
-    <div className="space-y-2">
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+    <div className="space-y-1.5 pb-[max(0rem,env(safe-area-inset-bottom,0px))] sm:space-y-2">
+      {error ? (
+        <p className="rounded-lg border border-red-200 bg-red-50/80 px-2.5 py-1.5 text-xs text-red-700 sm:px-3 sm:py-2 sm:text-sm">
+          {error}
+        </p>
+      ) : null}
+      <div className="flex flex-row items-end gap-2 sm:items-end sm:gap-3">
         <textarea
           value={text}
           onChange={(ev) => {
             setText(ev.target.value);
             scheduleTyping();
           }}
-          placeholder="Mesajınızı yazın…"
-          rows={3}
+          placeholder="Mesaj yazın…"
+          rows={1}
           disabled={!canSend}
-          className="min-h-[88px] flex-1 resize-y rounded-2xl border border-[#1A1A1A]/15 bg-white px-4 py-3 text-sm text-[#1A1A1A] outline-none ring-[#0B3C5D]/20 placeholder:text-[#1A1A1A]/40 focus:border-[#0B3C5D]/40 focus:ring-2 disabled:opacity-50"
+          className="min-h-[42px] max-h-[min(30vh,6.5rem)] flex-1 resize-none rounded-2xl border border-[#0B3C5D]/10 bg-white px-3 py-2 text-[0.8125rem] leading-snug text-[#1A1A1A] outline-none transition-[border-color,box-shadow] placeholder:text-[13px] placeholder:text-[#1A1A1A]/30 focus:border-[#0B3C5D]/25 focus:ring-[3px] focus:ring-[#0B3C5D]/07 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-[76px] sm:max-h-[min(40vh,14rem)] sm:resize-y sm:rounded-xl sm:border-[#0B3C5D]/12 sm:px-3.5 sm:py-2.5 sm:text-sm sm:leading-relaxed sm:placeholder:text-sm sm:placeholder:text-[#1A1A1A]/38 sm:focus:border-[#0B3C5D]/28 sm:focus:ring-2 sm:focus:ring-[#0B3C5D]/10 sm:disabled:opacity-45"
         />
-        <div className="flex shrink-0 gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 pb-px sm:gap-2 sm:pb-0">
           <input
             ref={fileRef}
             type="file"
@@ -118,7 +122,7 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
             type="button"
             disabled={!canSend}
             onClick={() => fileRef.current?.click()}
-            className="rounded-2xl border border-[#1A1A1A]/15 bg-white px-4 py-3 text-sm font-medium text-[#0B3C5D] transition hover:bg-[#F7F7F7] disabled:opacity-50"
+            className="min-h-10 rounded-xl border border-transparent bg-[#EEF1F4] px-3 py-2 text-xs font-medium text-[#0B3C5D]/75 transition-colors duration-200 hover:bg-[#E4E8EC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/22 disabled:cursor-not-allowed disabled:opacity-38 sm:min-h-0 sm:border-[#0B3C5D]/12 sm:bg-white sm:px-4 sm:py-2.5 sm:text-sm sm:font-medium sm:text-[#0B3C5D] sm:hover:bg-[#F7F9FB] sm:focus-visible:outline-[#0B3C5D]/28 sm:disabled:opacity-45"
           >
             {uploading ? "…" : "Dosya"}
           </button>
@@ -126,13 +130,13 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
             type="button"
             disabled={!canSend || !text.trim()}
             onClick={handleSend}
-            className="rounded-2xl bg-[#0B3C5D] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-40"
+            className="min-h-10 rounded-xl bg-[#0B3C5D] px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-[#0B3C5D]/15 transition-[opacity,transform] duration-200 hover:opacity-[0.96] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/38 disabled:cursor-not-allowed disabled:opacity-32 disabled:active:scale-100 sm:min-h-0 sm:px-5 sm:py-2.5 sm:text-sm sm:shadow-[#0B3C5D]/18 sm:disabled:opacity-38"
           >
             {isPending ? "…" : "Gönder"}
           </button>
         </div>
       </div>
-      <p className="text-[10px] text-[#1A1A1A]/45">
+      <p className="px-0.5 text-[9px] leading-snug tracking-wide text-[#1A1A1A]/32 sm:px-0 sm:text-[10px] sm:leading-relaxed sm:tracking-normal sm:text-[#1A1A1A]/40">
         Ek en fazla {Math.round(CHAT_ATTACHMENT_MAX_BYTES / (1024 * 1024))} MB; video gönderilemez.
       </p>
     </div>

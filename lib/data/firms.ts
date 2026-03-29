@@ -97,6 +97,7 @@ export function normalizeFirmRow(r: Record<string, unknown>): FirmRow {
     raw_hype_score: Math.min(100, hypeNum > 0 ? hypeNum / 100 : 0),
     corporateness_score: Number.isFinite(corp) ? corp : 0,
     manual_priority: Number.isFinite(prio) ? prio : 0,
+    messaging_enabled: r.messaging_enabled === false ? false : true,
   };
 }
 

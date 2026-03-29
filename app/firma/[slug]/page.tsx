@@ -8,7 +8,7 @@ import { getSiteUrl } from "@/lib/env";
 import { buildFirmPageMetadata } from "@/lib/seo/firma-metadata";
 import { buildFirmSchemaGraph } from "@/lib/seo/firma-schema";
 import type { FirmRow } from "@/lib/types/firm";
-import { FirmMessageChatButton } from "@/components/firma/firm-message-chat-button";
+import { FirmPrimaryLeftCta } from "@/components/firma/firm-primary-left-cta";
 import { FirmServiceScope } from "@/components/firma/firm-service-scope";
 import { SectionReveal } from "@/components/home/section-reveal";
 import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
@@ -532,11 +532,16 @@ export default async function FirmaPage({ params }: PageProps) {
                   Başvuruya başlayın
                 </h2>
                 <p className="mt-2 text-sm text-[#1A1A1A]/70">
-                  Firma ile güvenli mesajlaşma veya hızlı başvuru için aşağıdaki adımları
-                  kullanın.
+                  {firm.messaging_enabled === false
+                    ? "İletişim bilgileri veya hızlı başvuru için aşağıdaki adımları kullanın."
+                    : "Firma ile güvenli mesajlaşma veya hızlı başvuru için aşağıdaki adımları kullanın."}
                 </p>
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                  <FirmMessageChatButton firmId={firm.id} />
+                  <FirmPrimaryLeftCta
+                    firm={firm}
+                    layout="detail"
+                    hasContactSection={hasContactCard}
+                  />
                   {quickApplyOk ? (
                     <Link
                       href="#iletisim"

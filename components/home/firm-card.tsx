@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { FirmRow } from "@/lib/types/firm";
-import { FirmMessageChatButton } from "@/components/firma/firm-message-chat-button";
+import { FirmPrimaryLeftCta } from "@/components/firma/firm-primary-left-cta";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
 import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
 import {
@@ -254,7 +254,7 @@ export function FirmCard({ firm }: FirmCardProps) {
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-2">
-        <FirmMessageChatButton firmId={firm.id} />
+        <FirmPrimaryLeftCta firm={firm} layout="card" />
         {quickApplyOk ? (
           <Link
             href={`/firma/${firm.slug}#basvuru`}

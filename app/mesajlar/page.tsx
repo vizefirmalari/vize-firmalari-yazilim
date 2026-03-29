@@ -93,10 +93,18 @@ export default async function MesajlarPage({ searchParams }: PageProps) {
     firmHeader = await loadFirmMetaForConversation(conversationId);
   }
 
+  const mobileThreadFocus = Boolean(conversationId);
+
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-dvh flex-col">
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-6">
+      <main
+        className={`mx-auto flex w-full max-w-6xl min-h-0 flex-1 flex-col ${
+          mobileThreadFocus
+            ? "px-0 py-0 md:px-4 md:py-6"
+            : "px-4 py-6"
+        }`}
+      >
         <UserMessagesShell
           userId={user.id}
           initialList={inboxRows}
@@ -105,7 +113,9 @@ export default async function MesajlarPage({ searchParams }: PageProps) {
           firmHeader={firmHeader}
         />
       </main>
-      <SiteFooter />
+      <div className={mobileThreadFocus ? "max-md:hidden" : undefined}>
+        <SiteFooter />
+      </div>
     </div>
   );
 }

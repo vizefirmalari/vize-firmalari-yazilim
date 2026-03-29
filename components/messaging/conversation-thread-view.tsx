@@ -52,7 +52,7 @@ export function ConversationThreadView({
   const typingText = remoteTypingUserId ? "Yazıyor…" : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#0B3C5D]/10 bg-[#FAFBFC] shadow-[0_4px_24px_rgba(11,60,93,0.06)]">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#0B3C5D]/10 bg-[#F8F9FA] max-md:rounded-none max-md:border-0 max-md:bg-[#F0F2F4]">
       <ConversationThreadHeader
         title={headerTitle}
         subtitle={headerSubtitle}
@@ -62,15 +62,12 @@ export function ConversationThreadView({
         typingText={typingText}
         onBack={onBackMobile}
       />
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain">
         <MessagingThreadBody messages={messages} currentUserId={currentUserId} />
-        <div ref={bottomRef} className="h-2 shrink-0" aria-hidden />
+        <div ref={bottomRef} className="h-0.5 shrink-0 sm:h-2" aria-hidden />
       </div>
-      <div className="border-t border-[#0B3C5D]/10 bg-white p-3 sm:p-4">
-        <Composer
-          conversationId={conversationId}
-          onTyping={emitTyping}
-        />
+      <div className="shrink-0 border-t border-[#0B3C5D]/08 bg-white px-2.5 py-2 shadow-[0_-6px_24px_rgba(11,60,93,0.06)] sm:px-4 sm:py-3 sm:shadow-none md:shadow-none">
+        <Composer conversationId={conversationId} onTyping={emitTyping} />
       </div>
     </div>
   );

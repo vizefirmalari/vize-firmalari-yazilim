@@ -132,6 +132,8 @@ export type FirmRow = {
   show_working_hours?: boolean | null;
   contact_popup_enabled?: boolean | null;
   quick_apply_enabled?: boolean | null;
+  /** false: sol CTA "İletişim Bilgileri"; aksi (true / eksik): "Firma ile Mesajlaş" */
+  messaging_enabled?: boolean | null;
   social_buttons_enabled?: boolean | null;
 };
 

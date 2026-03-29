@@ -12,24 +12,24 @@ type Props = {
 };
 
 const sizes = {
-  sm: "h-9 w-9 text-[11px]",
-  md: "h-11 w-11 text-xs",
+  sm: "h-10 w-10 text-[11px]",
+  md: "h-11 w-11 text-xs sm:h-12 sm:w-12 sm:text-[0.8125rem]",
   lg: "h-14 w-14 text-sm",
 };
 
 const imgSizes = {
-  sm: 36,
-  md: 44,
+  sm: 40,
+  md: 48,
   lg: 56,
 };
 
 export function MessagingAvatar({ name, imageUrl, size = "md", className = "" }: Props) {
-  const ring = "ring-1 ring-[#0B3C5D]/10";
-  const base = `${sizes[size]} flex shrink-0 items-center justify-center rounded-xl bg-[#F7F9FB] font-bold text-[#0B3C5D] ${ring} ${className}`;
+  const ring = "ring-1 ring-[#0B3C5D]/08";
+  const base = `${sizes[size]} flex shrink-0 items-center justify-center rounded-xl bg-[#F4F6F8] font-bold text-[#0B3C5D] ${ring} ${className}`;
 
   if (imageUrl?.trim()) {
     return (
-      <div className={`relative overflow-hidden rounded-xl ${ring} ${sizes[size]} ${className}`}>
+      <div className={`relative shrink-0 overflow-hidden rounded-xl ${ring} ${sizes[size]} ${className}`}>
         <Image
           src={imageUrl}
           alt=""
