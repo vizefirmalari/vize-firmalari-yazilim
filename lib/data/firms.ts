@@ -25,6 +25,7 @@ const MOCK_FIRMS: FirmRow[] = [
     instagram: "https://instagram.com/vizefirmalari",
     status: "published",
     created_at: new Date().toISOString(),
+    has_active_panel_member: true,
   },
   {
     id: "00000000-0000-0000-0000-000000000002",
@@ -47,6 +48,7 @@ const MOCK_FIRMS: FirmRow[] = [
     instagram: null,
     status: "published",
     created_at: new Date().toISOString(),
+    has_active_panel_member: true,
   },
 ];
 
@@ -290,6 +292,23 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
     normalizeFirmRow(row as Record<string, unknown>)
   );
 
+  const { data: panelRows, error: panelErr } = await supabase.rpc(
+    "published_firm_ids_with_active_panel"
+  );
+  if (panelErr) {
+    console.error(
+      "[getFirms] published_firm_ids_with_active_panel",
+      panelErr.message
+    );
+  }
+  const panelSet = new Set<string>(
+    (panelRows ?? []).map((row: { firm_id: string }) => String(row.firm_id))
+  );
+  rows = rows.map((r) => ({
+    ...r,
+    has_active_panel_member: panelSet.has(r.id),
+  }));
+
   if (filters.services.length > 0) {
     rows = rows.filter((r) => {
       const labels = new Set(collectAllServiceLabelsFromFirm(r));
@@ -341,7 +360,20 @@ export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {
   }
 
   if (!data) return null;
-  return normalizeFirmRow(data as Record<string, unknown>);
+
+  let firm = normalizeFirmRow(data as Record<string, unknown>);
+  const { data: hasPanel, error: panelErr } = await supabase.rpc(
+    "firm_has_active_panel_member",
+    { p_firm_id: data.id }
+  );
+  if (panelErr) {
+    console.error(
+      "[getFirmBySlug] firm_has_active_panel_member",
+      panelErr.message
+    );
+  }
+  firm = { ...firm, has_active_panel_member: Boolean(hasPanel) };
+  return firm;
 }
 
 export async function getAllFirmSlugs(): Promise<string[]> {

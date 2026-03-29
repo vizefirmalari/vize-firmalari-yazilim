@@ -132,8 +132,10 @@ export type FirmRow = {
   show_working_hours?: boolean | null;
   contact_popup_enabled?: boolean | null;
   quick_apply_enabled?: boolean | null;
-  /** false: sol CTA "İletişim Bilgileri"; aksi (true / eksik): "Firma ile Mesajlaş" */
+  /** false: mesajlaşma CTA kapalı; aksi (true / eksik): mesajlaşma açık (panel şartı ayrı). */
   messaging_enabled?: boolean | null;
+  /** En az bir aktif firma panel üyesi var mı (public RPC ile doldurulur). */
+  has_active_panel_member?: boolean;
   social_buttons_enabled?: boolean | null;
 };
 

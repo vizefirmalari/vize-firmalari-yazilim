@@ -109,6 +109,9 @@ export default async function FirmaPage({ params }: PageProps) {
 
   const quickApplyOk = firm.quick_apply_enabled !== false;
 
+  const messagingCtaActive =
+    firm.messaging_enabled === true && firm.has_active_panel_member === true;
+
   const hasLegal =
     Boolean(firm.company_structure?.trim()) ||
     Boolean(firm.tax_number?.trim()) ||
@@ -532,19 +535,15 @@ export default async function FirmaPage({ params }: PageProps) {
                   Başvuruya başlayın
                 </h2>
                 <p className="mt-2 text-sm text-[#1A1A1A]/70">
-                  {firm.messaging_enabled === false
-                    ? "İletişim bilgileri veya hızlı başvuru için aşağıdaki adımları kullanın."
-                    : "Firma ile güvenli mesajlaşma veya hızlı başvuru için aşağıdaki adımları kullanın."}
+                  {messagingCtaActive
+                    ? "Firma ile güvenli mesajlaşma veya hızlı başvuru için aşağıdaki adımları kullanın."
+                    : "İletişim bilgileri veya hızlı başvuru için aşağıdaki adımları kullanın."}
                 </p>
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                  <FirmPrimaryLeftCta
-                    firm={firm}
-                    layout="detail"
-                    hasContactSection={hasContactCard}
-                  />
+                  <FirmPrimaryLeftCta firm={firm} />
                   {quickApplyOk ? (
                     <Link
-                      href="#iletisim"
+                      href="#basvuru"
                       className="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-center text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
                     >
                       Hızlı Başvur

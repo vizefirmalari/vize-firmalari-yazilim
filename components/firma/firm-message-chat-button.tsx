@@ -14,7 +14,7 @@ type Props = {
 };
 
 const defaultClassName =
-  "inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#0B3C5D]/15 bg-white py-2.5 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/35 disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex h-10 w-full min-w-0 shrink flex-nowrap items-center justify-center gap-1 whitespace-nowrap rounded-xl border border-[#0B3C5D]/12 bg-white px-2.5 text-center text-xs font-semibold leading-none text-[#0B3C5D] transition hover:border-[#0B3C5D]/18 hover:bg-[#F7F9FB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/35 disabled:pointer-events-none disabled:opacity-50 sm:px-3 sm:text-sm";
 
 function ChatBubbleIcon({ className }: { className?: string }) {
   return (
@@ -22,13 +22,13 @@ function ChatBubbleIcon({ className }: { className?: string }) {
       <path
         d="M8 10h8M8 14h5"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="1.25"
         strokeLinecap="round"
       />
       <path
         d="M6.5 19.5 8 17H18a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12l2.5-2.5Z"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="1.25"
         strokeLinejoin="round"
       />
     </svg>
@@ -75,11 +75,14 @@ export function FirmMessageChatButton({ firmId, className, disabled }: Props) {
       aria-busy={loading}
     >
       {loading ? (
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#0B3C5D]/30 border-t-[#0B3C5D]" />
+        <span
+          className="size-3 shrink-0 animate-spin rounded-full border-[1.5px] border-[#0B3C5D]/25 border-t-[#0B3C5D]"
+          aria-hidden
+        />
       ) : (
-        <ChatBubbleIcon className="h-4 w-4 shrink-0" />
+        <ChatBubbleIcon className="size-3 shrink-0 opacity-90" />
       )}
-      Firma ile Mesajlaş
+      <span>Firma ile Mesajlaş</span>
     </button>
   );
 }

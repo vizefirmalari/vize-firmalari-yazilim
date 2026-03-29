@@ -254,7 +254,7 @@ export function FirmCard({ firm }: FirmCardProps) {
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-2">
-        <FirmPrimaryLeftCta firm={firm} layout="card" />
+        <FirmPrimaryLeftCta firm={firm} />
         {quickApplyOk ? (
           <Link
             href={`/firma/${firm.slug}#basvuru`}

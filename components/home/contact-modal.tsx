@@ -14,6 +14,13 @@ function whatsappHref(raw: string): string {
   return `https://wa.me/${digits}`;
 }
 
+function websiteHref(raw: string): string {
+  const t = raw.trim();
+  if (!t) return "#";
+  if (/^https?:\/\//i.test(t)) return t;
+  return `https://${t}`;
+}
+
 export function ContactModal({ firm, open, onClose }: ContactModalProps) {
   const titleId = useId();
 
@@ -101,10 +108,26 @@ export function ContactModal({ firm, open, onClose }: ContactModalProps) {
               </a>
             </li>
           ) : null}
+          {firm.website && firm.show_website !== false ? (
+            <li>
+              <p className="text-xs font-medium uppercase tracking-wide text-[#1A1A1A]/50">
+                Web sitesi
+              </p>
+              <a
+                href={websiteHref(firm.website)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-flex break-all text-base font-medium text-[#328CC1] underline-offset-4 hover:underline"
+              >
+                {firm.website.replace(/^https?:\/\//i, "")}
+              </a>
+            </li>
+          ) : null}
           {!(
             (firm.phone && firm.show_phone !== false) ||
             (firm.whatsapp && firm.show_whatsapp !== false) ||
-            (firm.email && firm.show_email !== false)
+            (firm.email && firm.show_email !== false) ||
+            (firm.website && firm.show_website !== false)
           ) ? (
             <li className="text-sm text-[#1A1A1A]/70">
               Bu firma için gösterilebilir iletişim bilgisi yok.
