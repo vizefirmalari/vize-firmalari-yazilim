@@ -3,9 +3,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SignOutButton } from "@/components/account/sign-out-button";
+import { UserChatHistorySection } from "@/components/account/user-chat-history-section";
 import { authMutedClass } from "@/components/auth/auth-styles";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { loadUserInboxRows } from "@/lib/messaging/server/inbox-user";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -77,11 +79,13 @@ export default async function HesabimPage() {
   const avatarUrl = meta.avatar_url || meta.picture;
   const isAdmin = profile?.role === "admin";
 
+  const chatInboxRows = await loadUserInboxRows();
+
   return (
     <>
       <SiteHeader />
       <main className="flex flex-1 flex-col bg-background px-4 py-10 sm:px-6 sm:py-14">
-        <div className="container-shell mx-auto w-full max-w-lg">
+        <div className="container-shell mx-auto w-full max-w-xl">
           <h1 className="text-2xl font-bold text-primary sm:text-3xl">Kontrol paneli</h1>
           <p className={`${authMutedClass} mt-2`}>
             Oturum bilgileriniz aşağıdadır. Çıkış yaptığınızda tekrar giriş yapmanız gerekir.
@@ -166,6 +170,8 @@ export default async function HesabimPage() {
               </div>
             </div>
           </div>
+
+          <UserChatHistorySection rows={chatInboxRows} />
         </div>
       </main>
       <SiteFooter />
