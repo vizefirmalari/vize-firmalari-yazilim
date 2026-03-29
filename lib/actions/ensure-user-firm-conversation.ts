@@ -37,6 +37,12 @@ export async function ensureUserFirmConversationAction(
       if (msg.includes("firm_not_found")) {
         return { ok: false, error: "Firma bulunamadı." };
       }
+      if (msg.includes("messaging_disabled")) {
+        return {
+          ok: false,
+          error: "Bu firma şu anda platform mesajlaşmasını kullanmıyor.",
+        };
+      }
       if (msg.includes("no_counterparty")) {
         return {
           ok: false,

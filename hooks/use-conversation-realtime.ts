@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 
 import type { MessageBroadcastPayload, MessageWithAttachment } from "@/lib/messaging/types";
@@ -19,6 +18,45 @@ type Options = {
   onChannelStatus?: (status: RealtimeSubscribeStatus) => void;
 };
 
+function normalizeAttachment(
+  raw: unknown
+): MessageWithAttachment["attachment"] {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const id = o.id != null ? String(o.id) : "";
+  const file_name = o.file_name != null ? String(o.file_name) : "";
+  const mime_type = o.mime_type != null ? String(o.mime_type) : "";
+  const storage_path = o.storage_path != null ? String(o.storage_path) : "";
+  const byte_size = Number(o.byte_size);
+  if (!id || !file_name || !storage_path || !Number.isFinite(byte_size)) {
+    return null;
+  }
+  return {
+    id,
+    file_name,
+    mime_type,
+    byte_size,
+    storage_path,
+  };
+}
+
+function payloadToRow(p: MessageBroadcastPayload): MessageWithAttachment {
+  const att = normalizeAttachment(p.attachment);
+  const kind = (p.kind as MessageWithAttachment["kind"]) ?? "text";
+  return {
+    id: p.id,
+    conversation_id: p.conversation_id,
+    sender_id: p.sender_id,
+    kind,
+    body: p.preview?.trim() ? p.preview : null,
+    created_at:
+      typeof p.created_at === "string"
+        ? p.created_at
+        : new Date(p.created_at as unknown as string).toISOString(),
+    attachment: kind === "attachment" ? att : null,
+  };
+}
+
 /**
  * Private kanal: mesaj broadcast, typing broadcast, presence senkronu.
  */
@@ -28,8 +66,6 @@ export function useConversationRealtime({
   initialMessages,
   onChannelStatus,
 }: Options) {
-  const router = useRouter();
-  const [, startTransition] = useTransition();
   const [messages, setMessages] = useState<MessageWithAttachment[]>(initialMessages);
   const [remoteTypingUserId, setRemoteTypingUserId] = useState<string | null>(null);
   const [peerOnline, setPeerOnline] = useState(false);
@@ -77,27 +113,11 @@ export function useConversationRealtime({
       if (!p?.id || !p.conversation_id) {
         return;
       }
-      if (p.kind === "attachment") {
-        startTransition(() => router.refresh());
-        return;
-      }
       setMessages((prev) => {
         if (prev.some((m) => m.id === p.id)) {
           return prev;
         }
-        const row: MessageWithAttachment = {
-          id: p.id,
-          conversation_id: p.conversation_id,
-          sender_id: p.sender_id,
-          kind: (p.kind as MessageWithAttachment["kind"]) ?? "text",
-          body: p.preview ?? null,
-          created_at:
-            typeof p.created_at === "string"
-              ? p.created_at
-              : new Date(p.created_at as unknown as string).toISOString(),
-          attachment: null,
-        };
-        return [...prev, row];
+        return [...prev, payloadToRow(p)];
       });
     });
 
@@ -141,7 +161,7 @@ export function useConversationRealtime({
       channelRef.current = null;
       void channel.unsubscribe();
     };
-  }, [conversationId, userId, router, startTransition]);
+  }, [conversationId, userId]);
 
   return {
     messages,

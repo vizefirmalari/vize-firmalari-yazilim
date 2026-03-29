@@ -20,7 +20,7 @@ export type MessageWithAttachment = MessageRow & {
   attachment?: MessageAttachmentMeta | null;
 };
 
-/** Broadcast payload (DB tetikleyicisi ile aynı anahtarlar) */
+/** Broadcast payload (DB tetikleyicisi ile aynı anahtarlar; attachment ek satırı sonrası `attachment` dolu) */
 export type MessageBroadcastPayload = {
   id: string;
   conversation_id: string;
@@ -28,6 +28,7 @@ export type MessageBroadcastPayload = {
   kind: string;
   created_at: string;
   preview: string;
+  attachment?: MessageAttachmentMeta | null;
 };
 
 export type NotificationBroadcastPayload = {

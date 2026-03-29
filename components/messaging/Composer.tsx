@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import { sendChatMessage } from "@/lib/actions/chat-message";
@@ -17,7 +16,6 @@ type Props = {
  * Metin gönderimi + ek yükleme (FormData → /api/chat/upload).
  */
 export function Composer({ conversationId, disabled, onTyping }: Props) {
-  const router = useRouter();
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -79,9 +77,8 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
       const json = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
         setError(json.error ?? "Yükleme başarısız.");
-      } else {
-        router.refresh();
       }
+      /* Başarı: DB tetikleyicisi attachment sonrası conversation broadcast — tam liste refresh gerekmez */
     } finally {
       setUploading(false);
     }
