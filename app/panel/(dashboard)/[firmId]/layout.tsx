@@ -4,6 +4,7 @@ import { FirmPanelAnnouncementsStrip } from "@/components/firm-panel/firm-panel-
 import { FirmPanelNav } from "@/components/firm-panel/firm-panel-nav";
 import { getFirmPanelAnnouncementsForUser } from "@/lib/data/firm-panel-announcements";
 import { getFirmPanelMemberships, requireFirmPanelAccess } from "@/lib/auth/firm-panel";
+import { loadFirmInboxRows } from "@/lib/messaging/server/inbox-firm";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
@@ -33,6 +34,8 @@ export default async function FirmPanelSectionLayout({ children, params }: Props
   const announcements = await getFirmPanelAnnouncementsForUser();
   const allMemberships = await getFirmPanelMemberships();
   const showFirmSwitcher = allMemberships.length > 1;
+  const inboxRows = await loadFirmInboxRows(firmId);
+  const unreadMessagesCount = inboxRows.reduce((sum, row) => sum + row.unread_for_firm, 0);
 
   const name = firm.name as string;
   const logoUrl = firm.logo_url as string | null;
@@ -59,7 +62,7 @@ export default async function FirmPanelSectionLayout({ children, params }: Props
           </div>
 
           <div className="border-t border-white/10 px-2 py-3 lg:flex-1">
-            <FirmPanelNav firmId={firmId} />
+            <FirmPanelNav firmId={firmId} unreadMessagesCount={unreadMessagesCount} />
           </div>
 
           <div className="mt-auto space-y-1 border-t border-white/10 px-3 py-4">

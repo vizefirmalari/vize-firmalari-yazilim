@@ -97,6 +97,7 @@ export function FirmPanelMessagesShell({
     topic: firmInboxTopic(firmId),
     enabled: Boolean(firmId),
     onInboxPing,
+    playSoundOnPing: true,
   });
 
   const filtered = useMemo(() => {

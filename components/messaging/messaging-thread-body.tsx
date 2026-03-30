@@ -1,13 +1,19 @@
 "use client";
 
 import { useCallback } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
+import { deleteChatMessage } from "@/lib/actions/delete-chat-message";
 import type { MessageWithAttachment } from "@/lib/messaging/types";
 import { formatFileSize } from "@/lib/messaging/identity";
+import { buildMessageOrderIndex, isMessageReadByPeer } from "@/lib/messaging/read-status";
 
 type Props = {
   messages: MessageWithAttachment[];
   currentUserId: string | null;
+  peerLastReadMessageId?: string | null;
+  onSoftDeleteMessage?: (messageId: string, deletedAt: string, deletedBy: string) => void;
 };
 
 function timeLabel(iso: string) {
@@ -69,7 +75,56 @@ function AttachmentCard({
   );
 }
 
-export function MessagingThreadBody({ messages, currentUserId }: Props) {
+function ReadTick({ read }: { read: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center ${read ? "text-[#D9A441]/95" : "text-current opacity-80"}`}
+      aria-label={read ? "Okundu" : "Gönderildi"}
+      title={read ? "Okundu" : "Gönderildi"}
+    >
+      {read ? (
+        <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
+          <path d="M2.5 8.2 5.1 10.8 8.1 6.9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M7.7 8.2 10.3 10.8 13.3 6.9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
+          <path d="M4.2 8.2 6.9 10.8 11.7 6.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
+export function MessagingThreadBody({
+  messages,
+  currentUserId,
+  peerLastReadMessageId = null,
+  onSoftDeleteMessage,
+}: Props) {
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const deletingSet = useMemo(() => new Set(deletingId ? [deletingId] : []), [deletingId]);
+  const orderIndex = useMemo(() => buildMessageOrderIndex(messages), [messages]);
+
+  const handleDelete = async (messageId: string) => {
+    if (!currentUserId || deletingSet.has(messageId)) return;
+    setDeletingId(messageId);
+    setOpenMenuId((cur) => (cur === messageId ? null : cur));
+    try {
+      const res = await deleteChatMessage(messageId);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      onSoftDeleteMessage?.(res.messageId, res.deletedAt, res.deletedBy);
+    } catch {
+      toast.error("Mesaj silinirken bir hata oluştu.");
+    } finally {
+      setDeletingId((cur) => (cur === messageId ? null : cur));
+    }
+  };
+
   if (messages.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 text-center sm:px-5 sm:py-16">
@@ -95,6 +150,14 @@ export function MessagingThreadBody({ messages, currentUserId }: Props) {
         const prev = i > 0 ? messages[i - 1] : null;
         const next = i < messages.length - 1 ? messages[i + 1] : null;
         const mine = Boolean(currentUserId && m.sender_id === currentUserId);
+        const isDeleted = Boolean(m.deleted_at);
+        const readByPeer = mine
+          ? isMessageReadByPeer({
+              messageId: m.id,
+              peerLastReadMessageId,
+              orderIndex,
+            })
+          : false;
 
         if (m.kind === "system") {
           return (
@@ -125,10 +188,54 @@ export function MessagingThreadBody({ messages, currentUserId }: Props) {
         return (
           <li key={m.id} className={`flex w-full ${mine ? "justify-end" : "justify-start"} ${topGap}`}>
             <div className={`max-w-[min(88%,26rem)] px-3 py-2 sm:px-3.5 sm:py-2.5 ${bubbleRound} ${mine ? bubbleBg : ""}`}>
-              {m.kind === "attachment" && m.attachment ? (
+              {mine && !isDeleted ? (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOpenMenuId((cur) => (cur === m.id ? null : m.id))}
+                    className={`absolute -right-1 -top-1 inline-flex h-6 w-6 items-center justify-center rounded-md transition focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                      mine
+                        ? "text-white/70 hover:bg-white/12 hover:text-white focus-visible:outline-white/35"
+                        : "text-[#0B3C5D]/60 hover:bg-[#F3F5F7] hover:text-[#0B3C5D] focus-visible:outline-[#0B3C5D]/25"
+                    }`}
+                    aria-label="Mesaj menüsü"
+                    aria-expanded={openMenuId === m.id}
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+                      <path d="M5 12h.01M12 12h.01M19 12h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                  {openMenuId === m.id ? (
+                    <div
+                      className={`absolute right-0 top-6 z-10 min-w-28 rounded-lg border bg-white py-1 shadow-lg ${
+                        mine ? "border-white/20" : "border-[#0B3C5D]/10"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => void handleDelete(m.id)}
+                        disabled={deletingId === m.id}
+                        className="flex w-full items-center justify-start px-3 py-1.5 text-xs font-medium text-[#1A1A1A] transition hover:bg-[#F7F9FB] disabled:opacity-50"
+                      >
+                        Sil
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {m.kind === "attachment" && m.attachment && !isDeleted ? (
                 <AttachmentCard attachment={m.attachment} mine={Boolean(mine)} />
               ) : null}
-              {m.body?.trim() ? (
+              {isDeleted ? (
+                <p
+                  className={`text-[0.8125rem] italic leading-[1.45] sm:text-sm sm:leading-relaxed ${
+                    mine ? "text-white/80" : "text-[#1A1A1A]/55"
+                  }`}
+                >
+                  Bu mesaj silindi
+                </p>
+              ) : m.body?.trim() ? (
                 <p
                   className={`whitespace-pre-wrap wrap-break-word text-[0.8125rem] leading-[1.45] sm:text-sm sm:leading-relaxed ${
                     m.kind === "attachment" && m.attachment ? "mt-2" : ""
@@ -138,13 +245,14 @@ export function MessagingThreadBody({ messages, currentUserId }: Props) {
                 </p>
               ) : null}
               {showTime ? (
-                <p
-                  className={`mt-1.5 text-[10px] tabular-nums leading-none ${
+                <div
+                  className={`mt-1.5 inline-flex items-center gap-1 text-[10px] tabular-nums leading-none ${
                     mine ? "text-white/55" : "text-[#1A1A1A]/36"
                   }`}
                 >
-                  {timeLabel(m.created_at)}
-                </p>
+                  <span>{timeLabel(m.created_at)}</span>
+                  {mine ? <ReadTick read={readByPeer} /> : null}
+                </div>
               ) : null}
             </div>
           </li>

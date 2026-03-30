@@ -15,7 +15,7 @@ export async function loadConversationMessages(
 
   const { data, error } = await supabase
     .from("messages")
-    .select("id, conversation_id, sender_id, kind, body, created_at")
+    .select("id, conversation_id, sender_id, kind, body, created_at, deleted_at, deleted_by")
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: false })
     .limit(limit);

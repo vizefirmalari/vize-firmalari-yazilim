@@ -15,7 +15,11 @@ const items = (firmId: string) =>
 
 type Props = { firmId: string };
 
-export function FirmPanelNav({ firmId }: Props) {
+function formatCompactBadge(count: number): string {
+  return count > 99 ? "99+" : String(count);
+}
+
+export function FirmPanelNav({ firmId, unreadMessagesCount = 0 }: Props & { unreadMessagesCount?: number }) {
   const pathname = usePathname();
   const nav = items(firmId);
 
@@ -39,10 +43,20 @@ export function FirmPanelNav({ firmId }: Props) {
                 : "text-white/75 hover:bg-white/6 hover:text-white"
             }`}
           >
-            <span className="w-5 text-center opacity-85" aria-hidden>
+            <span className="relative w-5 text-center opacity-85" aria-hidden>
               {item.icon}
+              {item.href === `/panel/${firmId}/mesajlar` && unreadMessagesCount > 0 ? (
+                <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-[#D9A441] lg:hidden" />
+              ) : null}
             </span>
-            {item.label}
+            <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+              <span className="truncate">{item.label}</span>
+              {item.href === `/panel/${firmId}/mesajlar` && unreadMessagesCount > 0 ? (
+                <span className="hidden h-5 min-w-5 items-center justify-center rounded-full bg-[#D9A441] px-1.5 text-[10px] font-bold leading-none text-[#1A1A1A] lg:inline-flex">
+                  {formatCompactBadge(unreadMessagesCount)}
+                </span>
+              ) : null}
+            </span>
           </Link>
         );
       })}

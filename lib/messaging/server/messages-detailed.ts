@@ -23,6 +23,8 @@ export async function loadConversationMessagesDetailed(
       kind,
       body,
       created_at,
+      deleted_at,
+      deleted_by,
       message_attachments (
         id,
         file_name,

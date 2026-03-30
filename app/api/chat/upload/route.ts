@@ -4,7 +4,7 @@ import { validateChatAttachment } from "@/lib/validation/chat-attachment";
 
 /**
  * Sohbet eki: önce Storage (path sabit), sonra mesaj + message_attachments.
- * Hata durumunda ters sırada temizlik (mesaj silme RLS: gönderen).
+ * Hata durumunda ters sırada temizlik (mesaj soft-delete + storage remove).
  */
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient();
@@ -76,7 +76,16 @@ export async function POST(request: Request) {
   });
 
   if (attErr) {
-    await supabase.from("messages").delete().eq("id", msg.id);
+    await supabase
+      .from("messages")
+      .update({
+        deleted_at: new Date().toISOString(),
+        deleted_by: user.id,
+        body: "Bu mesaj silindi",
+      })
+      .eq("id", msg.id)
+      .eq("sender_id", user.id)
+      .is("deleted_at", null);
     await supabase.storage.from("chat-attachments").remove([path]);
     return NextResponse.json({ error: attErr.message }, { status: 400 });
   }

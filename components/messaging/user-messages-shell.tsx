@@ -88,6 +88,7 @@ export function UserMessagesShell({
     topic: userInboxTopic(userId),
     enabled: Boolean(userId),
     onInboxPing,
+    playSoundOnPing: true,
   });
 
   const showMobileThread = Boolean(conversationId);

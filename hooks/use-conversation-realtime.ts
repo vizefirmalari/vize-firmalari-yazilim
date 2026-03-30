@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 
 import type { MessageBroadcastPayload, MessageWithAttachment } from "@/lib/messaging/types";
+import { playNotificationSound } from "@/lib/messaging/notification-sound";
 import { conversationTopic } from "@/lib/realtime/channel-names";
 import {
   getSupabaseBrowserClientForRealtime,
@@ -54,6 +55,8 @@ function payloadToRow(p: MessageBroadcastPayload): MessageWithAttachment {
         ? p.created_at
         : new Date(p.created_at as unknown as string).toISOString(),
     attachment: kind === "attachment" ? att : null,
+    deleted_at: p.deleted_at ?? null,
+    deleted_by: p.deleted_by ?? null,
   };
 }
 
@@ -113,11 +116,29 @@ export function useConversationRealtime({
       if (!p?.id || !p.conversation_id) {
         return;
       }
+      const isIncoming = p.sender_id && p.sender_id !== userId;
+      const isTabHidden = typeof document !== "undefined" ? document.hidden : false;
+      if (isIncoming && isTabHidden) {
+        playNotificationSound({ minIntervalMs: 2200 });
+      }
+      if (isIncoming) {
+        setRemoteTypingUserId(null);
+      }
       setMessages((prev) => {
-        if (prev.some((m) => m.id === p.id)) {
-          return prev;
+        const nextRow = payloadToRow(p);
+        const idx = prev.findIndex((m) => m.id === p.id);
+        if (idx >= 0) {
+          const current = prev[idx];
+          const merged: MessageWithAttachment = {
+            ...current,
+            ...nextRow,
+            attachment: nextRow.attachment ?? current.attachment ?? null,
+          };
+          const cloned = [...prev];
+          cloned[idx] = merged;
+          return cloned;
         }
-        return [...prev, payloadToRow(p)];
+        return [...prev, nextRow];
       });
     });
 

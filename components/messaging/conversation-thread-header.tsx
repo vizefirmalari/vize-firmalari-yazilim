@@ -1,6 +1,7 @@
 "use client";
 
 import { MessagingAvatar } from "@/components/messaging/messaging-avatar";
+import { TypingIndicator } from "@/components/messaging/typing-indicator";
 
 type Props = {
   title: string;
@@ -57,15 +58,7 @@ export function ConversationThreadHeader({
           )}
           <div className="mt-1 md:mt-1.5">
             {typingText ? (
-              <p className="text-[11px] font-medium text-[#0B3C5D]/80 md:text-xs md:text-[#0B3C5D]/75">
-                <span className="inline-flex items-center gap-1 md:gap-1.5">
-                  <span
-                    className="inline-flex h-1 w-1 rounded-full bg-[#0B3C5D]/40 md:bg-[#0B3C5D]/45"
-                    aria-hidden
-                  />
-                  {typingText}
-                </span>
-              </p>
+              <TypingIndicator text={typingText} />
             ) : (
               <p className="text-[11px] font-medium text-[#1A1A1A]/36 md:text-xs md:text-[#1A1A1A]/38">
                 {statusText}

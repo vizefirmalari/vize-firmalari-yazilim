@@ -6,6 +6,8 @@ export type MessageRow = {
   kind: "text" | "attachment" | "system";
   body: string | null;
   created_at: string;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
 };
 
 export type MessageAttachmentMeta = {
@@ -29,6 +31,8 @@ export type MessageBroadcastPayload = {
   created_at: string;
   preview: string;
   attachment?: MessageAttachmentMeta | null;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
 };
 
 export type NotificationBroadcastPayload = {
