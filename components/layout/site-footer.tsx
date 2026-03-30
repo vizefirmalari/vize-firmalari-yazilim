@@ -136,7 +136,7 @@ export function SiteFooter() {
       </div>
       <div className="mt-4 flex flex-col gap-2.5 sm:mt-5 sm:flex-row sm:items-center sm:gap-3 lg:mt-0 lg:shrink-0">
         <Link
-          href="/uye-is-yerimiz-olun"
+          href="/uye-is-yerimiz-olun#basvuru"
           className="inline-flex min-h-11 items-center justify-center rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-accent/90"
         >
           Üye İş Yerimiz Olun
@@ -223,7 +223,7 @@ export function SiteFooter() {
           <FooterLink href="/is-ortagimiz-olun">İş Ortağımız Olun</FooterLink>
         </li>
         <li>
-          <FooterLink href="/uye-is-yerimiz-olun">Üye İş Yerimiz Olun</FooterLink>
+          <FooterLink href="/uye-is-yerimiz-olun#basvuru">Üye İş Yerimiz Olun</FooterLink>
         </li>
         <li>
           <FooterLink href="/kurumsal-site">Kurumsal Site</FooterLink>

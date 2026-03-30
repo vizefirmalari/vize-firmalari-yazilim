@@ -1,200 +1,294 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { BusinessMembershipForm } from "@/components/forms/business-membership-form";
 
-const CONTACT_EMAIL = "iletisim@vizefirmalari.com";
-
-const h2First =
-  "scroll-mt-28 text-xl font-bold tracking-tight text-primary sm:text-2xl";
-const h2Next =
-  "mt-10 scroll-mt-28 border-t border-border pt-10 text-xl font-bold tracking-tight text-primary sm:text-2xl";
-const p = "mt-4 text-sm leading-relaxed text-foreground/80 sm:text-base";
-const ul = "mt-4 list-disc space-y-2 pl-5 text-sm leading-relaxed text-foreground/80 sm:text-base";
-const noticeBox =
-  "mt-6 rounded-xl border border-primary/15 bg-surface/80 p-5 text-sm leading-relaxed text-foreground/85 sm:p-6 sm:text-base";
+const benefitCards = [
+  {
+    title: "Sıfır komisyon modeli",
+    body: "Platform, müşteriden sizin adınıza ücret almaz; gelir modeliniz tamamen sizin kontrolünüzdedir.",
+    icon: IconCommission,
+  },
+  {
+    title: "Nitelikli danışan erişimi",
+    body: "Lead skor sistemi ile gerçekten ilgilenen kullanıcılarla eşleşin; zamanı doğru talebe harcayın.",
+    icon: IconLead,
+  },
+  {
+    title: "Mesajlaşma ve dosya akışı",
+    body: "Danışanlarla doğrudan yazışın; belge ve dosya paylaşımıyla süreci tek kanalda yürütün.",
+    icon: IconChat,
+  },
+  {
+    title: "SEO ile Google görünürlüğü",
+    body: "Ücretsiz SEO desteği ve yapılandırılmış profil ile arama motorlarında keşfedilme şansını artırın.",
+    icon: IconSeo,
+  },
+  {
+    title: "Sosyal medya gücü",
+    body: "Facebook ve Instagram’da toplam 160K+ takipçiye ulaşan kanallarımızda ücretsiz tanıtım fırsatları.",
+    icon: IconSocial,
+  },
+  {
+    title: "Kurumsal skor ve hype",
+    body: "Kurumsallık skoru ile güven verin; akışta içerik paylaşarak hype puanınızı yükseltin ve listede öne çıkın.",
+    icon: IconScore,
+  },
+] as const;
 
 export function UyeIsYerimizOlunPage() {
   return (
     <>
       <SiteHeader />
       <main className="flex-1 bg-background">
-        <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-          <header>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/55">
-              Firma kaydı
+        {/* Hero */}
+        <section className="border-b border-border/60 bg-gradient-to-b from-surface to-background">
+          <div className="mx-auto max-w-5xl px-4 pb-14 pt-10 sm:px-6 sm:pb-16 sm:pt-14 lg:px-8 lg:pb-20">
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.16em] text-primary/55">
+              Firma ortaklığı
             </p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight text-primary sm:text-3xl">
-              Üye İş Yerimiz Olun
+            <h1 className="mt-3 text-center text-[1.65rem] font-bold leading-tight tracking-tight text-primary sm:text-3xl md:text-4xl md:leading-[1.15]">
+              Platformumuzda Yer Alın,
+              <br className="hidden sm:inline" />{" "}
+              <span className="text-primary">Daha Fazla Danışana Ulaşın</span>
             </h1>
-            <p className={`${p} text-base sm:text-lg`}>
-              İşinizi büyütün, daha fazla müşteriye ulaşın ve vize hizmeti arayan kullanıcılar tarafından
-              keşfedilin. Vize Firmaları üzerinde yer alarak dijital vitrininizi açar, talepleri tek
-              çatı altında toplarsınız.
+            <p className="mx-auto mt-5 max-w-3xl text-center text-[0.9375rem] leading-relaxed text-foreground/80 sm:text-lg">
+              Vize Firmaları; vize danışmanlığı arayan kullanıcılar ile profesyonel ofisleri buluşturan,
+              <strong className="font-semibold text-foreground"> güven odaklı bir vitrin platformudur</strong>.
+              Aşağıdaki avantajlar, <strong className="font-semibold text-foreground">yayına alınmış üye iş yeri</strong>{" "}
+              profilleri için geçerlidir. Bu sayfadaki form yalnızca{" "}
+              <strong className="font-semibold text-foreground">ön başvuru / talep toplama</strong> içindir;{" "}
+              firma otomatik olarak listeye eklenmez,{" "}
+              <strong className="font-semibold text-foreground">yönetim incelemesi sonrası</strong> firma kaydı ayrıca
+              oluşturulur.
             </p>
-          </header>
 
-          <section aria-labelledby="uy-ne" className="mt-10">
-            <h2 id="uy-ne" className={h2First}>
-              Bu sayfa kimin için?
-            </h2>
-            <p className={p}>
-              Platforma katılmak isteyen <strong className="font-semibold text-foreground">vize
-              danışmanlık firmaları</strong> ve vize süreçlerinde destek sunan hizmet sağlayıcıları
-              içindir. Kayıt sonrası <strong className="font-semibold text-foreground">profilinizi
-              oluşturun</strong>, hizmetlerinizi yayınlayın ve ilgilenen kullanıcılardan gelen talepleri{" "}
-              <strong className="font-semibold text-foreground">doğrudan kullanıcı ile iletişim</strong>{" "}
-              kurarak yönetirsiniz.
-            </p>
-          </section>
+            <div
+              className="mx-auto mt-8 max-w-3xl rounded-xl border border-primary/15 bg-surface/90 p-4 text-left text-sm leading-relaxed text-foreground/85 sm:p-5 sm:text-[0.9375rem]"
+              role="note"
+            >
+              <p className="m-0 font-semibold text-foreground">Önemli</p>
+              <p className="mt-2 mb-0">
+                Gönderdiğiniz bilgiler <strong className="font-semibold text-foreground">doğrudan firms veritabanına
+                yazılmaz</strong>. Başvurular ayrı bir tabloda saklanır; platform yöneticisi uygunluğu değerlendirir ve
+                firmanızı <strong className="font-semibold text-foreground">manuel olarak</strong> sisteme ekler.
+                Otomatik yayına alma <strong className="font-semibold text-foreground">yoktur</strong>.
+              </p>
+            </div>
 
-          <section aria-labelledby="uy-nasil">
-            <h2 id="uy-nasil" className={h2Next}>
-              Nasıl çalışır?
-            </h2>
-            <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-foreground/80 sm:text-base">
-              <li>
-                <strong className="font-semibold text-foreground">Hesap oluşturun</strong> — üyelik
-                adımlarını tamamlayın.
-              </li>
-              <li>
-                <strong className="font-semibold text-foreground">Firma bilgilerinizi ekleyin</strong>{" "}
-                — iletişim, adres ve kurumsal detaylar.
-              </li>
-              <li>
-                <strong className="font-semibold text-foreground">Hizmetlerinizi yayınlayın</strong> —{" "}
-                sunduğunuz çözümleri net ve profesyonel şekilde tanıtın.
-              </li>
-              <li>
-                <strong className="font-semibold text-foreground">Talep alın</strong> — kullanıcılar
-                sizi bulur; <strong className="font-semibold text-foreground">doğrudan kullanıcı ile
-                iletişim</strong> kurarak süreci siz yürütürsünüz.
-              </li>
-            </ol>
-          </section>
-
-          <div className={noticeBox} role="note">
-            <p className="m-0 font-semibold text-foreground">
-              Platformun rolü
-            </p>
-            <p className="mt-3 text-foreground/85">
-              <strong className="font-semibold text-foreground">Vize Firmaları yalnızca aracı
-              platformdur</strong>. Mesleki vize danışmanlığı sunmaz; müşteri ilişkisine müdahale etmez
-              ve sözleşme taraflarından biri değildir. Size görünürlük ve bağlantı imkânı sağlarız;
-              hizmeti ve iletişimi siz yönetirsiniz.
-            </p>
-          </div>
-
-          <section aria-labelledby="uy-fayda">
-            <h2 id="uy-fayda" className={h2Next}>
-              Neden şimdi katılmalısınız?
-            </h2>
-            <ul className={ul}>
-              <li>
-                <strong className="font-semibold text-foreground">Daha fazla görünürlük</strong> — vize
-                arayan niyetli kitleye açılırsınız;
-              </li>
-              <li>
-                <strong className="font-semibold text-foreground">Doğrudan temas</strong> — talepler
-                size ulaşır, pazarlık ve kapanış sizin kontrolünüzdedir;
-              </li>
-              <li>
-                <strong className="font-semibold text-foreground">Profesyonel firma sayfası</strong> — tek
-                linkte kurumsal kimliğiniz;
-              </li>
-              <li>
-                <strong className="font-semibold text-foreground">SEO fırsatı</strong> — arama motorlarında
-                keşfedilme potansiyeli;
-              </li>
-              <li>
-                <strong className="font-semibold text-foreground">Kullanıcı güveni</strong> — şeffaf
-                listeleme ve karşılaştırma ortamı.
-              </li>
+            <ul className="mx-auto mt-8 max-w-3xl space-y-3 text-left text-sm leading-relaxed text-foreground/85 sm:text-[0.9375rem]">
+              <HeroCheck>
+                <strong className="font-semibold text-foreground">Sıfır komisyon</strong> — müşteriden
+                platform adına ücret alınmaz.
+              </HeroCheck>
+              <HeroCheck>
+                <strong className="font-semibold text-foreground">Lead skor sistemi</strong> ile gerçek
+                niyetli danışanlara erişim.
+              </HeroCheck>
+              <HeroCheck>
+                <strong className="font-semibold text-foreground">Doğrudan mesajlaşma</strong> ve dosya
+                gönderme / alma ile tek kanalda iletişim.
+              </HeroCheck>
+              <HeroCheck>
+                <strong className="font-semibold text-foreground">Ücretsiz SEO desteği</strong> ve Google
+                görünürlüğünü güçlendiren profil yapısı.
+              </HeroCheck>
+              <HeroCheck>
+                <strong className="font-semibold text-foreground">Facebook + Instagram toplam 160K+</strong>{" "}
+                takipçi ağında ücretsiz tanıtım imkânları.
+              </HeroCheck>
+              <HeroCheck>
+                Akışa özel <strong className="font-semibold text-foreground">içerik paylaşımı</strong>;
+                etiketler, içerikler ve WhatsApp butonları ile erişimi büyütme.
+              </HeroCheck>
+              <HeroCheck>
+                <strong className="font-semibold text-foreground">Kurumsal skor</strong> ile güven;
+                içerik paylaşarak <strong className="font-semibold text-foreground">hype puanı</strong>{" "}
+                artırma ve listede öne çıkma.
+              </HeroCheck>
             </ul>
-          </section>
+          </div>
+        </section>
 
-          <section aria-labelledby="uy-kim">
-            <h2 id="uy-kim" className={h2Next}>
-              Kimler başvurmalı?
-            </h2>
-            <p className={p}>
-              Vize ve ikamet danışmanlığı veren ofisler, başvuru süreçlerinde danışmanlık veya operasyonel
-              destek sunan işletmeler ve ilgili hizmet sağlayıcıları platforma uyumludur. Hizmetinizi
-              yasal çerçevede sunduğunuzdan emin olun.
-            </p>
-          </section>
-
-          <section aria-labelledby="uy-sorumlu">
-            <h2 id="uy-sorumlu" className={h2Next}>
-              Firma sorumluluğu
-            </h2>
-            <p className={p}>
-              Listelenen bilgilerin doğruluğu, sunduğunuz hizmetlerin niteliği ve kullanıcılarla
-              kurduğunuz iletişim <strong className="font-semibold text-foreground">tamamen firmanıza
-              aittir</strong>. Profilinizi güncel ve yanıltıcı olmayan şekilde tutmanız beklenir.
-            </p>
-          </section>
-
-          <section aria-labelledby="uy-hukuk">
-            <h2 id="uy-hukuk" className={h2Next}>
-              Yasal sınır
-            </h2>
-            <p className={p}>
-              Platform; sizin ile kullanıcılar arasındaki anlaşmalardan, hizmet sonuçlarından ve
-              olası uyuşmazlıklardan <strong className="font-semibold text-foreground">sorumlu
-              değildir</strong>. Ayrıntılar için{" "}
-              <Link
-                href="/hizmet-kosullari"
-                className="font-medium text-secondary underline-offset-2 hover:underline"
+        {/* Avantaj kartları */}
+        <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
+          <h2 className="text-center text-xl font-bold tracking-tight text-primary sm:text-2xl">
+            Neden şimdi?
+          </h2>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-foreground/65 sm:text-base">
+            Aşağıdaki faydalar, onaylanıp yayına alındıktan sonraki üye iş yeri deneyimini özetler. Ön başvuru formu bu
+            özellikleri tek başına açmaz.
+          </p>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+            {benefitCards.map((c) => (
+              <div
+                key={c.title}
+                className="flex flex-col rounded-2xl border border-primary/10 bg-white p-5 shadow-[0_4px_24px_rgba(11,60,93,0.06)] transition hover:border-primary/18 hover:shadow-[0_8px_32px_rgba(11,60,93,0.09)] sm:p-6"
               >
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/8 text-primary">
+                  <c.icon className="h-5 w-5" />
+                </div>
+                <h3 className="mt-4 text-base font-bold tracking-tight text-primary sm:text-[1.0625rem]">
+                  {c.title}
+                </h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-foreground/72">{c.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Form */}
+        <section
+          id="basvuru"
+          className="border-t border-border/60 bg-surface/50 py-12 sm:py-16"
+          aria-labelledby="basvuru-baslik"
+        >
+          <div className="mx-auto max-w-xl px-4 sm:px-6 lg:px-8">
+            <h2 id="basvuru-baslik" className="sr-only">
+              Üyelik başvurusu
+            </h2>
+            <BusinessMembershipForm />
+          </div>
+        </section>
+
+        {/* Kısa hukuki not */}
+        <section className="mx-auto max-w-3xl px-4 pb-14 pt-2 sm:px-6 lg:px-8 lg:pb-16">
+          <div className="rounded-xl border border-primary/12 bg-white/80 p-5 text-sm leading-relaxed text-foreground/75 shadow-sm sm:p-6">
+            <p className="m-0">
+              <strong className="font-semibold text-foreground">Vize Firmaları yalnızca aracı platformdur</strong>
+              ; mesleki danışmanlık sunmaz, müşteri ile firma arasındaki sözleşmeye taraf olmaz. Ayrıntılar
+              için{" "}
+              <Link href="/hizmet-kosullari" className="font-medium text-secondary underline-offset-2 hover:underline">
                 Hizmet Koşulları
-              </Link>{" "}
-              ve{" "}
+              </Link>
+              {" "}ve{" "}
               <Link
-                href="/sorumluluk-reddi-beyani"
+                href="/kullanici-sozlesmesi"
                 className="font-medium text-secondary underline-offset-2 hover:underline"
               >
-                Sorumluluk Reddi Beyanı
-              </Link>{" "}
-              geçerlidir. Sorularınız:{" "}
-              <a
-                href={`mailto:${CONTACT_EMAIL}`}
-                className="font-medium text-secondary underline-offset-2 hover:underline"
-              >
-                {CONTACT_EMAIL}
-              </a>
+                Kullanıcı Sözleşmesi
+              </Link>
               .
             </p>
-          </section>
-
-          <section
-            aria-labelledby="uy-cta"
-            className="mt-10 rounded-2xl border border-primary/10 bg-white p-6 shadow-[0_8px_30px_rgba(11,60,93,0.06)] sm:p-8"
-          >
-            <h2 id="uy-cta" className="text-lg font-bold tracking-tight text-primary sm:text-xl">
-              Hemen başlayın
-            </h2>
-            <p className={`${p} mb-0`}>
-              Birkaç adımda <strong className="font-semibold text-foreground">profilinizi oluşturun</strong>,
-              yayına alın ve müşteri taleplerini almaya başlayın.
+            <p className="mt-3 mb-0 text-foreground/65">
+              <strong className="font-semibold text-foreground/80">Not:</strong> Yukarıdaki form yalnızca ön başvuru
+              toplar; gönderim tek başına yayınlanmış firma kaydı oluşturmaz. Kurumsal kayıt akışı için{" "}
+              <Link href="/firma-ekle" className="font-medium text-secondary underline-offset-2 hover:underline">
+                firma ekle
+              </Link>{" "}
+              sayfasındaki sürece de bakabilirsiniz (platform kuralları geçerlidir).
             </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <Link
-                href="/firma-ekle"
-                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-accent px-6 py-2.5 text-sm font-semibold text-primary shadow-sm transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-              >
-                Kayıt ol — firma ekle
-              </Link>
-              <Link
-                href="/is-ortagimiz-olun"
-                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-surface"
-              >
-                İş ortaklığı hakkında
-              </Link>
-            </div>
-          </section>
-        </article>
+          </div>
+        </section>
       </main>
       <SiteFooter />
     </>
+  );
+}
+
+function HeroCheck({ children }: { children: ReactNode }) {
+  return (
+    <li className="flex gap-3">
+      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary/15 text-secondary">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path
+            d="M20 6L9 17l-5-5"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+      <span>{children}</span>
+    </li>
+  );
+}
+
+function IconCommission(props: { className?: string }) {
+  return (
+    <svg className={props.className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 3v18M8 7h8M8 17h8"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+      <path
+        d="M6 12h12"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeDasharray="2 3"
+      />
+    </svg>
+  );
+}
+
+function IconLead(props: { className?: string }) {
+  return (
+    <svg className={props.className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 12a4 4 0 100-8 4 4 0 000 8zM4 20a8 8 0 1116 0H4z"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconChat(props: { className?: string }) {
+  return (
+    <svg className={props.className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M4 6h16v10H9l-5 4V6z"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinejoin="round"
+      />
+      <path d="M8 10h8M8 14h5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconSeo(props: { className?: string }) {
+  return (
+    <svg className={props.className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M20 20l-3-3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path d="M8 11h6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconSocial(props: { className?: string }) {
+  return (
+    <svg className={props.className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M16 8h3v3M8 16H5v-3M16 16l-4-4-3 3-4-4"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="1.75" />
+    </svg>
+  );
+}
+
+function IconScore(props: { className?: string }) {
+  return (
+    <svg className={props.className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 3l2.4 7.4h7.8l-6.3 4.6 2.4 7.4L12 17.8l-6.3 4.6 2.4-7.4L2 10.4h7.8L12 3z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

@@ -7,6 +7,11 @@ const nav = [
   { href: "/admin", label: "Genel Bakış", icon: "◎" },
   { href: "/admin/firms", label: "Firmalar", icon: "▤" },
   { href: "/admin/firm-complaints", label: "Gelen şikayetler", icon: "⚑" },
+  {
+    href: "/admin/business-membership-applications",
+    label: "Üye iş yeri başvuruları",
+    icon: "◆",
+  },
   { href: "/admin/firm-panel", label: "Firma panel", icon: "▣" },
   { href: "/admin/filters/countries", label: "Ülkeler", icon: "⌖" },
   { href: "/admin/filters/services", label: "İşlem türleri", icon: "☰" },

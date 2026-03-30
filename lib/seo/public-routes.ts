@@ -81,9 +81,9 @@ export const PUBLIC_DOCUMENT_PAGES = {
     path: "/uye-is-yerimiz-olun",
     title: "Üye İş Yerimiz Olun",
     description:
-      "Vize Firmalarına üye iş yeri olun: profil oluşturun, görünürlük ve doğrudan kullanıcı iletişimi. Müşteri edinimi kanalı; aracı platform, danışmanlık sunmaz.",
+      "Vize Firmaları üye iş yeri ön başvurusu: talep formu ile bilgi bırakın; otomatik yayın yok, firma yönetim tarafından manuel eklenir. Aracı platform.",
     heading: "Üye İş Yerimiz Olun",
-    body: "Vize danışmanlık firmaları için kayıt, profesyonel sayfa ve talep akışı. Vize Firmaları yalnızca aracı platformdur.",
+    body: "Ön başvuru toplanır; firms listesine otomatik eklenmez. Uygunluk sonrası yönetim firma kaydını ayrıca oluşturur. Vize Firmaları yalnızca aracı platformdur.",
     changeFrequency: "monthly",
     priority: 0.73,
   },
