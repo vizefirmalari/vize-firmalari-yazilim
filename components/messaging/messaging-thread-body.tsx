@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback } from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { toast } from "sonner";
 
 import { deleteChatMessage } from "@/lib/actions/delete-chat-message";
@@ -96,6 +96,47 @@ function ReadTick({ read }: { read: boolean }) {
   );
 }
 
+/** Balon dışında (metinle aynı kutuda değil). Mobilde küçük icon-button. */
+function MessageActionTrigger({
+  menuOpen,
+  onToggle,
+  deleting,
+}: {
+  menuOpen: boolean;
+  onToggle: () => void;
+  deleting: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={deleting}
+      className={`inline-flex h-6 w-6 shrink-0 touch-manipulation items-center justify-center rounded-md border border-[#0B3C5D]/12 bg-[#FAFBFC] text-[#0B3C5D]/75 shadow-sm transition hover:border-[#0B3C5D]/20 hover:bg-white hover:text-[#0B3C5D] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/28 disabled:opacity-40 max-md:h-7 max-md:w-7 md:shadow-none md:transition-opacity md:duration-200 md:group-hover:shadow-sm md:focus-visible:opacity-100 ${menuOpen ? "md:opacity-100" : "md:opacity-0 md:group-hover:opacity-100"}`}
+      aria-label="Mesaj menüsü"
+      aria-expanded={menuOpen}
+    >
+      <svg viewBox="0 0 24 24" className="h-3 w-3 max-md:h-3.5 max-md:w-3.5" fill="none" aria-hidden>
+        <path d="M5 12h.01M12 12h.01M19 12h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    </button>
+  );
+}
+
+function MessageActionDropdown({
+  align,
+  children,
+}: {
+  align: "left" | "right";
+  children: ReactNode;
+}) {
+  const pos = align === "right" ? "right-0" : "left-0";
+  return (
+    <div className={`absolute ${pos} top-full z-30 mt-1 min-w-30 rounded-xl border border-[#0B3C5D]/12 bg-white py-1 shadow-lg ring-1 ring-[#0B3C5D]/06`}>
+      {children}
+    </div>
+  );
+}
+
 export function MessagingThreadBody({
   messages,
   currentUserId,
@@ -185,79 +226,79 @@ export function MessagingThreadBody({
 
         const bubbleBg = mine ? "bg-[#0B3C5D] text-white" : "";
 
+        const showActionMenu = mine && !isDeleted;
+        /** Giden mesaj: sağ dış; ileride gelen mesaj aksiyonu eklenirse "left" + satırda [menü][balon] kullanılır. */
+        const menuOuterSide: "left" | "right" = "right";
+
+        const bubbleInner = (
+          <>
+            {m.kind === "attachment" && m.attachment && !isDeleted ? (
+              <AttachmentCard attachment={m.attachment} mine={Boolean(mine)} />
+            ) : null}
+            {isDeleted ? (
+              <p
+                className={`text-[0.8125rem] italic leading-[1.45] sm:text-sm sm:leading-relaxed ${
+                  mine ? "text-white/80" : "text-[#1A1A1A]/55"
+                }`}
+              >
+                Bu mesaj silindi
+              </p>
+            ) : m.body?.trim() ? (
+              <p
+                className={`whitespace-pre-wrap wrap-break-word text-[0.8125rem] leading-[1.45] sm:text-sm sm:leading-relaxed ${
+                  m.kind === "attachment" && m.attachment ? "mt-2" : ""
+                } ${mine ? "text-white" : "text-[#1A1A1A]"}`}
+              >
+                {m.body}
+              </p>
+            ) : null}
+            {showTime ? (
+              <div
+                className={`mt-1.5 inline-flex items-center gap-1 text-[10px] tabular-nums leading-none ${
+                  mine ? "text-white/55" : "text-[#1A1A1A]/36"
+                }`}
+              >
+                <span>{timeLabel(m.created_at)}</span>
+                {mine ? <ReadTick read={readByPeer} /> : null}
+              </div>
+            ) : null}
+          </>
+        );
+
+        const bubbleClass = `min-w-0 px-3 py-2 sm:px-3.5 sm:py-2.5 ${bubbleRound} ${mine ? bubbleBg : ""}`;
+
+        const menuColumn = showActionMenu ? (
+          <div className="relative shrink-0 self-start pt-0.5">
+            <MessageActionTrigger
+              menuOpen={openMenuId === m.id}
+              deleting={deletingId === m.id}
+              onToggle={() => setOpenMenuId((cur) => (cur === m.id ? null : m.id))}
+            />
+            {openMenuId === m.id ? (
+              <MessageActionDropdown align={menuOuterSide}>
+                <button
+                  type="button"
+                  onClick={() => void handleDelete(m.id)}
+                  disabled={deletingId === m.id}
+                  className="flex min-h-9 w-full items-center justify-start px-3 py-1.5 text-xs font-medium text-[#1A1A1A] transition hover:bg-[#F0F3F6] active:bg-[#E8ECF0] disabled:opacity-50 max-md:min-h-10 max-md:py-2 max-md:text-[13px]"
+                >
+                  Sil
+                </button>
+              </MessageActionDropdown>
+            ) : null}
+          </div>
+        ) : null;
+
         return (
           <li key={m.id} className={`flex w-full ${mine ? "justify-end" : "justify-start"} ${topGap}`}>
-            <div className={`max-w-[min(88%,26rem)] px-3 py-2 sm:px-3.5 sm:py-2.5 ${bubbleRound} ${mine ? bubbleBg : ""}`}>
-              {mine && !isDeleted ? (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setOpenMenuId((cur) => (cur === m.id ? null : m.id))}
-                    className="absolute -right-1 -top-1 inline-flex h-9 w-9 max-md:h-12 max-md:w-12 max-md:-right-2 max-md:-top-2 items-center justify-center rounded-xl border border-white/65 bg-[#F8F9FA]/95 text-[#0B3C5D] shadow-md shadow-black/20 ring-1 ring-white/35 transition hover:border-white/85 hover:bg-white hover:text-[#0B3C5D] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/35"
-                    aria-label="Mesaj menüsü"
-                    aria-expanded={openMenuId === m.id}
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-4 w-4 max-md:h-4.5 max-md:w-4.5"
-                      fill="none"
-                      aria-hidden
-                    >
-                      <path d="M5 12h.01M12 12h.01M19 12h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                  {openMenuId === m.id ? (
-                    <div
-                      className={`absolute right-0 top-9 z-20 min-w-30 rounded-xl border py-1 shadow-xl ring-1 ring-black/5 max-md:top-12 ${
-                        mine
-                          ? "border-white/25 bg-white/98 backdrop-blur-sm"
-                          : "border-[#0B3C5D]/12 bg-white/98 backdrop-blur-sm"
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => void handleDelete(m.id)}
-                        disabled={deletingId === m.id}
-                        className="flex min-h-10 w-full items-center justify-start px-3 py-2 text-xs font-medium text-[#1A1A1A] transition hover:bg-[#F0F3F6] active:bg-[#E8ECF0] disabled:opacity-50 max-md:min-h-11 max-md:text-[13px]"
-                      >
-                        Sil
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {m.kind === "attachment" && m.attachment && !isDeleted ? (
-                <AttachmentCard attachment={m.attachment} mine={Boolean(mine)} />
-              ) : null}
-              {isDeleted ? (
-                <p
-                  className={`text-[0.8125rem] italic leading-[1.45] sm:text-sm sm:leading-relaxed ${
-                    mine ? "text-white/80" : "text-[#1A1A1A]/55"
-                  }`}
-                >
-                  Bu mesaj silindi
-                </p>
-              ) : m.body?.trim() ? (
-                <p
-                  className={`whitespace-pre-wrap wrap-break-word text-[0.8125rem] leading-[1.45] sm:text-sm sm:leading-relaxed ${
-                    m.kind === "attachment" && m.attachment ? "mt-2" : ""
-                  } ${mine ? "text-white" : "text-[#1A1A1A]"}`}
-                >
-                  {m.body}
-                </p>
-              ) : null}
-              {showTime ? (
-                <div
-                  className={`mt-1.5 inline-flex items-center gap-1 text-[10px] tabular-nums leading-none ${
-                    mine ? "text-white/55" : "text-[#1A1A1A]/36"
-                  }`}
-                >
-                  <span>{timeLabel(m.created_at)}</span>
-                  {mine ? <ReadTick read={readByPeer} /> : null}
-                </div>
-              ) : null}
-            </div>
+            {showActionMenu ? (
+              <div className="group flex max-w-[min(96%,30rem)] flex-nowrap items-start gap-2.5 sm:gap-3">
+                <div className={`max-w-[min(88%,26rem)] min-w-0 flex-1 ${bubbleClass}`}>{bubbleInner}</div>
+                {menuColumn}
+              </div>
+            ) : (
+              <div className={`max-w-[min(88%,26rem)] ${bubbleClass}`}>{bubbleInner}</div>
+            )}
           </li>
         );
       })}
