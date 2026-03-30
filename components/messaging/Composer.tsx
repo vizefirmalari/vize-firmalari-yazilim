@@ -10,20 +10,27 @@ type Props = {
   disabled?: boolean;
   /** Realtime typing broadcast (debounce içeride) */
   onTyping?: () => void;
+  /**
+   * Görsel viewport klavye payı (px). Üst bileşen (thread) composer şeridine padding verir;
+   * burada tekrar etmeyiz; sadece textarea yüksekliği / odak davranışı için kullanılır.
+   */
+  keyboardInsetPx?: number;
 };
 
 /**
  * Metin gönderimi + ek yükleme (FormData → /api/chat/upload).
+ * Mobilde klavye: üstteki ConversationThreadView composer şeridi visualViewport padding ile kalkar.
  */
-export function Composer({ conversationId, disabled, onTyping }: Props) {
+export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx = 0 }: Props) {
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const preFocusWindowScrollY = useRef(0);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const keyboardLikelyOpen = keyboardInsetPx > 12;
 
   const scheduleTyping = useCallback(() => {
     if (!onTyping) return;
@@ -90,7 +97,7 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
     return null;
   }
 
-  /** Tık / dokunuşla odak: tarayıcının window scroll ile alanı göstermesini engeller (focus preventScroll). */
+  /** Tık / dokunuşla odak: tarayıcının window scroll ile alanı göstermesini engeller. */
   const handleTextareaPointerDown = (e: React.PointerEvent<HTMLTextAreaElement>) => {
     if (!canSend) return;
     const ta = textareaRef.current;
@@ -101,27 +108,19 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
     ta.focus({ preventScroll: true });
   };
 
-  /** Klavye (Tab) vb.: odak öncesi scrollY (capture) korunur; tarayıcı window kaydırdıysa geri alınır. */
-  const handleTextareaFocusCapture = () => {
-    if (typeof window !== "undefined") {
-      preFocusWindowScrollY.current = window.scrollY;
-    }
+  /** Gönder / Dosya tıklanınca odak taşınmasın → tarayıcı scroll-into-view tetiklemesin. */
+  const preventFocusStealScroll = (e: React.MouseEvent) => {
+    e.preventDefault();
   };
 
-  const handleTextareaFocus = () => {
-    if (typeof window === "undefined") return;
-    const y = preFocusWindowScrollY.current;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (Math.abs(window.scrollY - y) > 0.5) {
-          window.scrollTo({ top: y, left: 0, behavior: "auto" });
-        }
-      });
-    });
-  };
+  /** Klavye açıkken dvh küçülür; kapalıyken svh ile adres çubuğu oynamasına karşı daha stabil max yükseklik. */
+  const mobileTextareaMax =
+    keyboardLikelyOpen
+      ? "max-md:max-h-[min(38dvh,7rem)]"
+      : "max-md:max-h-[min(24svh,5rem)]";
 
   return (
-    <div className="space-y-1.5 pb-[max(0rem,env(safe-area-inset-bottom,0px))] sm:space-y-2">
+    <div className="space-y-1.5 sm:space-y-2">
       {error ? (
         <p className="rounded-lg border border-red-200 bg-red-50/80 px-2.5 py-1.5 text-xs text-red-700 sm:px-3 sm:py-2 sm:text-sm">
           {error}
@@ -132,16 +131,15 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
           ref={textareaRef}
           value={text}
           onPointerDown={handleTextareaPointerDown}
-          onFocusCapture={handleTextareaFocusCapture}
-          onFocus={handleTextareaFocus}
           onChange={(ev) => {
             setText(ev.target.value);
             scheduleTyping();
           }}
           placeholder="Mesaj yazın…"
           rows={1}
+          enterKeyHint="send"
           disabled={!canSend}
-          className="min-h-[42px] max-h-[min(30vh,6.5rem)] flex-1 resize-none rounded-2xl border border-[#0B3C5D]/10 bg-white px-3 py-2 text-[0.8125rem] leading-snug text-[#1A1A1A] outline-none transition-[border-color,box-shadow] scroll-my-0 placeholder:text-[13px] placeholder:text-[#1A1A1A]/30 focus:border-[#0B3C5D]/25 focus:ring-[3px] focus:ring-[#0B3C5D]/07 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-[76px] sm:max-h-[min(40vh,14rem)] sm:resize-y sm:rounded-xl sm:border-[#0B3C5D]/12 sm:px-3.5 sm:py-2.5 sm:text-sm sm:leading-relaxed sm:placeholder:text-sm sm:placeholder:text-[#1A1A1A]/38 sm:focus:border-[#0B3C5D]/28 sm:focus:ring-2 sm:focus:ring-[#0B3C5D]/10 sm:disabled:opacity-45"
+          className={`min-h-[44px] flex-1 resize-none rounded-2xl border border-[#0B3C5D]/10 bg-white px-3 py-2.5 text-[0.8125rem] leading-snug text-[#1A1A1A] outline-none transition-[border-color,box-shadow,max-height] scroll-my-0 placeholder:text-[13px] placeholder:text-[#1A1A1A]/30 focus:border-[#0B3C5D]/25 focus:ring-[3px] focus:ring-[#0B3C5D]/07 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-[76px] sm:max-h-[min(40vh,14rem)] sm:resize-y sm:rounded-xl sm:border-[#0B3C5D]/12 sm:px-3.5 sm:py-2.5 sm:text-sm sm:leading-relaxed sm:placeholder:text-sm sm:placeholder:text-[#1A1A1A]/38 sm:focus:border-[#0B3C5D]/28 sm:focus:ring-2 sm:focus:ring-[#0B3C5D]/10 sm:disabled:opacity-45 ${mobileTextareaMax}`}
         />
         <div className="flex shrink-0 items-center gap-1.5 pb-px sm:gap-2 sm:pb-0">
           <input
@@ -154,6 +152,7 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
           <button
             type="button"
             disabled={!canSend}
+            onMouseDown={preventFocusStealScroll}
             onClick={() => fileRef.current?.click()}
             className="min-h-10 rounded-xl border border-transparent bg-[#EEF1F4] px-3 py-2 text-xs font-medium text-[#0B3C5D]/75 transition-colors duration-200 hover:bg-[#E4E8EC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/22 disabled:cursor-not-allowed disabled:opacity-38 sm:min-h-0 sm:border-[#0B3C5D]/12 sm:bg-white sm:px-4 sm:py-2.5 sm:text-sm sm:font-medium sm:text-[#0B3C5D] sm:hover:bg-[#F7F9FB] sm:focus-visible:outline-[#0B3C5D]/28 sm:disabled:opacity-45"
           >
@@ -162,6 +161,7 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
           <button
             type="button"
             disabled={!canSend || !text.trim()}
+            onMouseDown={preventFocusStealScroll}
             onClick={handleSend}
             className="min-h-10 rounded-xl bg-[#0B3C5D] px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-[#0B3C5D]/15 transition-[opacity,transform] duration-200 hover:opacity-[0.96] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/38 disabled:cursor-not-allowed disabled:opacity-32 disabled:active:scale-100 sm:min-h-0 sm:px-5 sm:py-2.5 sm:text-sm sm:shadow-[#0B3C5D]/18 sm:disabled:opacity-38"
           >

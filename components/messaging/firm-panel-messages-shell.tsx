@@ -160,22 +160,22 @@ export function FirmPanelMessagesShell({
   );
 
   return (
-    <div className="space-y-5">
-      <div>
+    <div className="flex h-full min-h-0 flex-1 flex-col space-y-5 overflow-hidden lg:max-h-[min(100dvh-8rem,900px)]">
+      <div className="shrink-0">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0B3C5D]/55">
           Gelen mesajlar
         </p>
         <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-[#0B3C5D]">Mesaj yönetimi</h1>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+      <div className="grid shrink-0 grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
         <StatCard label="Okunmamış" value={initialStats.unreadTotal} variant="accent" />
         <StatCard label="Kullanıcı" value={initialStats.uniqueUserCount} variant="default" />
         <StatCard label="Bugün" value={initialStats.todayMessageCount} variant="muted" />
         <StatCard label="Açık konuşma" value={initialStats.openConversationCount} variant="default" />
       </div>
 
-      <div className="flex min-h-0 flex-col overflow-hidden lg:max-h-[min(100dvh-14rem,760px)] lg:min-h-[min(100dvh-14rem,760px)] lg:flex-row lg:rounded-xl lg:border lg:border-[#0B3C5D]/10 lg:bg-white lg:shadow-[0_2px_16px_rgba(11,60,93,0.05)]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:min-h-[min(100dvh-16rem,720px)] lg:flex-row lg:rounded-xl lg:border lg:border-[#0B3C5D]/10 lg:bg-white lg:shadow-[0_2px_16px_rgba(11,60,93,0.05)]">
         <aside
           className={`flex min-h-0 w-full flex-col overflow-hidden border-[#0B3C5D]/10 lg:max-w-[400px] lg:shrink-0 lg:border-r ${
             showMobileThread ? "hidden lg:flex" : "flex"

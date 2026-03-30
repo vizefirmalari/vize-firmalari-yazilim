@@ -95,9 +95,9 @@ export function UserMessagesShell({
 
   return (
     <div
-      className={`flex h-full min-h-0 flex-1 flex-col overflow-hidden md:max-h-[min(100dvh-11rem,720px)] md:min-h-[min(100dvh-11rem,720px)] md:flex-row md:rounded-xl md:border md:border-[#0B3C5D]/10 md:bg-white md:shadow-[0_2px_16px_rgba(11,60,93,0.05)] ${
-        showMobileThread ? "max-md:min-h-0 max-md:flex-1" : ""
-      }`}
+      className={`flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row md:rounded-xl md:border md:border-[#0B3C5D]/10 md:bg-white md:shadow-[0_2px_16px_rgba(11,60,93,0.05)] ${
+        conversationId ? "h-full min-h-0" : ""
+      } ${showMobileThread ? "max-md:min-h-0 max-md:flex-1" : ""}`}
     >
       <aside
         className={`flex min-h-0 w-full flex-col overflow-hidden border-[#0B3C5D]/10 md:max-w-[380px] md:shrink-0 md:border-r ${

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Viewport } from "next";
 
 import { FirmPanelAnnouncementsStrip } from "@/components/firm-panel/firm-panel-announcements-strip";
 import { FirmPanelNav } from "@/components/firm-panel/firm-panel-nav";
@@ -11,6 +12,11 @@ import { notFound } from "next/navigation";
 type Props = {
   children: React.ReactNode;
   params: Promise<{ firmId: string }>;
+};
+
+/** Firma panelinde (mesajlar dahil) klavye ile layout’un uyumlu küçülmesi. */
+export const viewport: Viewport = {
+  interactiveWidget: "resizes-content",
 };
 
 /**
@@ -44,7 +50,7 @@ export default async function FirmPanelSectionLayout({ children, params }: Props
     <div className="min-h-screen bg-[#F4F6F8]">
       <FirmPanelAnnouncementsStrip announcements={announcements} />
 
-      <div className="mx-auto flex max-w-[1400px] flex-col lg:flex-row lg:min-h-[calc(100vh-0px)]">
+      <div className="mx-auto flex max-w-[1400px] min-h-0 flex-col lg:min-h-[calc(100vh-0px)] lg:flex-row">
         <aside className="flex w-full flex-col border-[#1A1A1A]/10 bg-[#0B3C5D] text-white lg:w-64 lg:shrink-0 lg:border-r">
           <div className="flex items-center gap-3 px-4 py-5 sm:px-5">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/15">
@@ -89,8 +95,10 @@ export default async function FirmPanelSectionLayout({ children, params }: Props
           </div>
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
+            {children}
+          </div>
         </div>
       </div>
     </div>

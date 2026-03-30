@@ -127,7 +127,7 @@ export function MessagingThreadBody({
 
   if (messages.length === 0) {
     return (
-      <div className="flex min-h-full flex-col items-center justify-center px-4 py-10 text-center sm:px-5 sm:py-16">
+      <div className="box-border flex min-h-full w-full flex-col items-center justify-center px-4 py-10 text-center sm:px-5 sm:py-16">
         <div
           className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-[#0B3C5D]/10 bg-white text-[#0B3C5D]/30"
           aria-hidden
@@ -193,29 +193,32 @@ export function MessagingThreadBody({
                   <button
                     type="button"
                     onClick={() => setOpenMenuId((cur) => (cur === m.id ? null : m.id))}
-                    className={`absolute -right-1 -top-1 inline-flex h-6 w-6 items-center justify-center rounded-md transition focus-visible:outline-2 focus-visible:outline-offset-2 ${
-                      mine
-                        ? "text-white/70 hover:bg-white/12 hover:text-white focus-visible:outline-white/35"
-                        : "text-[#0B3C5D]/60 hover:bg-[#F3F5F7] hover:text-[#0B3C5D] focus-visible:outline-[#0B3C5D]/25"
-                    }`}
+                    className="absolute -right-1 -top-1 inline-flex h-9 w-9 max-md:h-12 max-md:w-12 max-md:-right-2 max-md:-top-2 items-center justify-center rounded-xl border border-white/65 bg-[#F8F9FA]/95 text-[#0B3C5D] shadow-md shadow-black/20 ring-1 ring-white/35 transition hover:border-white/85 hover:bg-white hover:text-[#0B3C5D] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/35"
                     aria-label="Mesaj menüsü"
                     aria-expanded={openMenuId === m.id}
                   >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4 max-md:h-4.5 max-md:w-4.5"
+                      fill="none"
+                      aria-hidden
+                    >
                       <path d="M5 12h.01M12 12h.01M19 12h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                     </svg>
                   </button>
                   {openMenuId === m.id ? (
                     <div
-                      className={`absolute right-0 top-6 z-10 min-w-28 rounded-lg border bg-white py-1 shadow-lg ${
-                        mine ? "border-white/20" : "border-[#0B3C5D]/10"
+                      className={`absolute right-0 top-9 z-20 min-w-30 rounded-xl border py-1 shadow-xl ring-1 ring-black/5 max-md:top-12 ${
+                        mine
+                          ? "border-white/25 bg-white/98 backdrop-blur-sm"
+                          : "border-[#0B3C5D]/12 bg-white/98 backdrop-blur-sm"
                       }`}
                     >
                       <button
                         type="button"
                         onClick={() => void handleDelete(m.id)}
                         disabled={deletingId === m.id}
-                        className="flex w-full items-center justify-start px-3 py-1.5 text-xs font-medium text-[#1A1A1A] transition hover:bg-[#F7F9FB] disabled:opacity-50"
+                        className="flex min-h-10 w-full items-center justify-start px-3 py-2 text-xs font-medium text-[#1A1A1A] transition hover:bg-[#F0F3F6] active:bg-[#E8ECF0] disabled:opacity-50 max-md:min-h-11 max-md:text-[13px]"
                       >
                         Sil
                       </button>

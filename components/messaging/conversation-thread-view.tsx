@@ -8,6 +8,7 @@ import { ConversationThreadHeader } from "@/components/messaging/conversation-th
 import { Composer } from "@/components/messaging/Composer";
 import { MessagingThreadBody } from "@/components/messaging/messaging-thread-body";
 import { useConversationRealtime } from "@/hooks/use-conversation-realtime";
+import { useVisualViewportKeyboardInset } from "@/hooks/use-visual-viewport-keyboard-inset";
 import type { MessageWithAttachment } from "@/lib/messaging/types";
 
 type Props = {
@@ -36,6 +37,7 @@ export function ConversationThreadView({
 }: Props) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
+  const keyboardInsetPx = useVisualViewportKeyboardInset();
   const [peerLastReadMessageId, setPeerLastReadMessageId] = useState<string | null>(null);
   const { messages, setMessages, remoteTypingUserId, peerOnline, emitTyping } = useConversationRealtime({
     conversationId,
@@ -98,17 +100,31 @@ export function ConversationThreadView({
   const lastMessageId = lastMessage?.id;
   const lastSenderId = lastMessage?.sender_id;
 
+  /** Sadece thread scroll konteyneri; window/document scroll kullanılmaz. */
+  const scrollThreadContainerToEnd = (el: HTMLDivElement) => {
+    const top = Math.max(0, el.scrollHeight - el.clientHeight);
+    el.scrollTo({ top, left: 0, behavior: "auto" });
+  };
+
   useLayoutEffect(() => {
     const el = scrollAreaRef.current;
     if (!el) return;
     const userSent = lastSenderId === currentUserId;
     if (!isNearBottomRef.current && !userSent) return;
-    const scrollThreadToEnd = () => {
-      el.scrollTop = el.scrollHeight;
-    };
-    scrollThreadToEnd();
-    requestAnimationFrame(scrollThreadToEnd);
+    scrollThreadContainerToEnd(el);
+    requestAnimationFrame(() => {
+      scrollThreadContainerToEnd(el);
+      requestAnimationFrame(() => scrollThreadContainerToEnd(el));
+    });
   }, [messages.length, lastMessageId, lastSenderId, currentUserId]);
+
+  /** Klavye açılınca thread alanı küçülür; son mesajlar görünür kalsın (sadece iç scroll). */
+  useEffect(() => {
+    if (keyboardInsetPx <= 0) return;
+    const el = scrollAreaRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => scrollThreadContainerToEnd(el));
+  }, [keyboardInsetPx]);
 
   const statusText = peerOnline ? "Çevrimiçi" : "Pasif";
   const typingText = remoteTypingUserId ? "Yazıyor…" : null;
@@ -140,9 +156,9 @@ export function ConversationThreadView({
       />
       <div
         ref={scrollAreaRef}
-        className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain [overflow-anchor:none]"
+        className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain contain-[layout] [overflow-anchor:none]"
       >
-        <div className="min-h-full min-w-0">
+        <div className="min-h-full min-w-0 overflow-x-hidden [overflow-anchor:none]">
           <MessagingThreadBody
             messages={messages}
             currentUserId={currentUserId}
@@ -151,8 +167,16 @@ export function ConversationThreadView({
           />
         </div>
       </div>
-      <div className="shrink-0 border-t border-[#0B3C5D]/08 bg-white px-2.5 py-2 shadow-[0_-6px_24px_rgba(11,60,93,0.06)] sm:px-4 sm:py-3 sm:shadow-none md:shadow-none">
-        <Composer conversationId={conversationId} onTyping={emitTyping} />
+      <div
+        className="shrink-0 border-t border-[#0B3C5D]/08 bg-white px-2.5 py-2 shadow-[0_-6px_24px_rgba(11,60,93,0.06)] transition-[padding-bottom] duration-200 ease-out sm:px-4 sm:py-3 sm:shadow-none md:shadow-none"
+        style={{
+          paddingBottom:
+            keyboardInsetPx > 0
+              ? `calc(${keyboardInsetPx}px + env(safe-area-inset-bottom, 0px))`
+              : `max(0.5rem, env(safe-area-inset-bottom, 0px))`,
+        }}
+      >
+        <Composer conversationId={conversationId} keyboardInsetPx={keyboardInsetPx} onTyping={emitTyping} />
       </div>
     </div>
   );

@@ -99,16 +99,16 @@ export default async function MesajlarPage({ searchParams }: PageProps) {
     <div
       className={`flex flex-col ${
         mobileThreadFocus
-          ? "h-dvh max-h-dvh overflow-hidden md:min-h-dvh md:max-h-none md:overflow-visible"
+          ? "h-dvh max-h-dvh min-h-0 overflow-hidden"
           : "min-h-dvh"
       }`}
     >
       <SiteHeader />
       <main
-        className={`mx-auto flex w-full max-w-6xl min-h-0 flex-1 flex-col ${
+        className={`mx-auto flex w-full max-w-6xl flex-col ${
           mobileThreadFocus
-            ? "max-md:min-h-0 max-md:overflow-hidden px-0 py-0 md:px-4 md:py-6"
-            : "px-4 py-6"
+            ? "min-h-0 flex-1 overflow-hidden px-0 py-0 md:px-4 md:py-6"
+            : "min-h-0 flex-1 px-4 py-6"
         }`}
       >
         <UserMessagesShell
@@ -119,7 +119,7 @@ export default async function MesajlarPage({ searchParams }: PageProps) {
           firmHeader={firmHeader}
         />
       </main>
-      <div className={mobileThreadFocus ? "max-md:hidden" : undefined}>
+      <div className={mobileThreadFocus ? "hidden" : undefined}>
         <SiteFooter />
       </div>
     </div>
