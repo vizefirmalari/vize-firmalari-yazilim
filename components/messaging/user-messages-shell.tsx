@@ -95,10 +95,10 @@ export function UserMessagesShell({
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col md:min-h-[min(100dvh-11rem,720px)] md:flex-row md:rounded-xl md:border md:border-[#0B3C5D]/10 md:bg-white md:shadow-[0_2px_16px_rgba(11,60,93,0.05)]"
+      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden md:max-h-[min(100dvh-11rem,720px)] md:min-h-[min(100dvh-11rem,720px)] md:flex-row md:rounded-xl md:border md:border-[#0B3C5D]/10 md:bg-white md:shadow-[0_2px_16px_rgba(11,60,93,0.05)]"
     >
       <aside
-        className={`flex w-full flex-col border-[#0B3C5D]/10 md:max-w-[380px] md:shrink-0 md:border-r ${
+        className={`flex min-h-0 w-full flex-col overflow-hidden border-[#0B3C5D]/10 md:max-w-[380px] md:shrink-0 md:border-r ${
           showMobileThread ? "hidden md:flex" : "flex"
         }`}
       >
@@ -184,7 +184,7 @@ export function UserMessagesShell({
       </aside>
 
       <section
-        className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden ${showMobileThread ? "flex" : "hidden md:flex"}`}
+        className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden ${showMobileThread ? "flex min-h-0" : "hidden md:flex"}`}
       >
         {conversationId ? (
           <ConversationThreadView

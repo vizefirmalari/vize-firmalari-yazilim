@@ -175,9 +175,9 @@ export function FirmPanelMessagesShell({
         <StatCard label="Açık konuşma" value={initialStats.openConversationCount} variant="default" />
       </div>
 
-      <div className="flex min-h-[min(100dvh-14rem,760px)] flex-col lg:flex-row lg:rounded-xl lg:border lg:border-[#0B3C5D]/10 lg:bg-white lg:shadow-[0_2px_16px_rgba(11,60,93,0.05)]">
+      <div className="flex min-h-0 flex-col overflow-hidden lg:max-h-[min(100dvh-14rem,760px)] lg:min-h-[min(100dvh-14rem,760px)] lg:flex-row lg:rounded-xl lg:border lg:border-[#0B3C5D]/10 lg:bg-white lg:shadow-[0_2px_16px_rgba(11,60,93,0.05)]">
         <aside
-          className={`flex w-full flex-col border-[#0B3C5D]/10 lg:max-w-[400px] lg:shrink-0 lg:border-r ${
+          className={`flex min-h-0 w-full flex-col overflow-hidden border-[#0B3C5D]/10 lg:max-w-[400px] lg:shrink-0 lg:border-r ${
             showMobileThread ? "hidden lg:flex" : "flex"
           }`}
         >
@@ -278,7 +278,7 @@ export function FirmPanelMessagesShell({
         </aside>
 
         <section
-          className={`flex min-h-0 min-w-0 flex-1 flex-col ${showMobileThread ? "flex" : "hidden lg:flex"}`}
+          className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden ${showMobileThread ? "flex" : "hidden lg:flex"}`}
         >
           {conversationId && currentUserId ? (
             <ConversationThreadView

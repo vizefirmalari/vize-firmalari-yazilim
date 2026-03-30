@@ -101,7 +101,7 @@ export default async function MesajlarPage({ searchParams }: PageProps) {
       <main
         className={`mx-auto flex w-full max-w-6xl min-h-0 flex-1 flex-col ${
           mobileThreadFocus
-            ? "px-0 py-0 md:px-4 md:py-6"
+            ? "max-md:overflow-hidden px-0 py-0 md:px-4 md:py-6"
             : "px-4 py-6"
         }`}
       >

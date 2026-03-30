@@ -127,7 +127,7 @@ export function MessagingThreadBody({
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 text-center sm:px-5 sm:py-16">
+      <div className="flex min-h-full flex-col items-center justify-center px-4 py-10 text-center sm:px-5 sm:py-16">
         <div
           className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-[#0B3C5D]/10 bg-white text-[#0B3C5D]/30"
           aria-hidden
