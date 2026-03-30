@@ -103,11 +103,11 @@ export function ConversationThreadView({
     if (!el) return;
     const userSent = lastSenderId === currentUserId;
     if (!isNearBottomRef.current && !userSent) return;
-    const scrollToEnd = () => {
+    const scrollThreadToEnd = () => {
       el.scrollTop = el.scrollHeight;
     };
-    scrollToEnd();
-    requestAnimationFrame(scrollToEnd);
+    scrollThreadToEnd();
+    requestAnimationFrame(scrollThreadToEnd);
   }, [messages.length, lastMessageId, lastSenderId, currentUserId]);
 
   const statusText = peerOnline ? "Çevrimiçi" : "Pasif";

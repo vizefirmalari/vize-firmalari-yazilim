@@ -96,12 +96,18 @@ export default async function MesajlarPage({ searchParams }: PageProps) {
   const mobileThreadFocus = Boolean(conversationId);
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div
+      className={`flex flex-col ${
+        mobileThreadFocus
+          ? "h-dvh max-h-dvh overflow-hidden md:min-h-dvh md:max-h-none md:overflow-visible"
+          : "min-h-dvh"
+      }`}
+    >
       <SiteHeader />
       <main
         className={`mx-auto flex w-full max-w-6xl min-h-0 flex-1 flex-col ${
           mobileThreadFocus
-            ? "max-md:overflow-hidden px-0 py-0 md:px-4 md:py-6"
+            ? "max-md:min-h-0 max-md:overflow-hidden px-0 py-0 md:px-4 md:py-6"
             : "px-4 py-6"
         }`}
       >

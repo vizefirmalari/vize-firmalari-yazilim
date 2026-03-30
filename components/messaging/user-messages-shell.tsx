@@ -95,7 +95,9 @@ export function UserMessagesShell({
 
   return (
     <div
-      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden md:max-h-[min(100dvh-11rem,720px)] md:min-h-[min(100dvh-11rem,720px)] md:flex-row md:rounded-xl md:border md:border-[#0B3C5D]/10 md:bg-white md:shadow-[0_2px_16px_rgba(11,60,93,0.05)]"
+      className={`flex h-full min-h-0 flex-1 flex-col overflow-hidden md:max-h-[min(100dvh-11rem,720px)] md:min-h-[min(100dvh-11rem,720px)] md:flex-row md:rounded-xl md:border md:border-[#0B3C5D]/10 md:bg-white md:shadow-[0_2px_16px_rgba(11,60,93,0.05)] ${
+        showMobileThread ? "max-md:min-h-0 max-md:flex-1" : ""
+      }`}
     >
       <aside
         className={`flex min-h-0 w-full flex-col overflow-hidden border-[#0B3C5D]/10 md:max-w-[380px] md:shrink-0 md:border-r ${
@@ -130,7 +132,9 @@ export function UserMessagesShell({
                 <li key={row.conversation_id}>
                   <button
                     type="button"
-                    onClick={() => router.push(`/mesajlar?c=${row.conversation_id}`)}
+                    onClick={() =>
+                      router.push(`/mesajlar?c=${row.conversation_id}`, { scroll: false })
+                    }
                     className={`flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors duration-200 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#0B3C5D]/28 sm:px-4 sm:py-3 ${
                       active
                         ? "border-l-[3px] border-l-[#0B3C5D] bg-[#F2F5F8]"
@@ -194,7 +198,7 @@ export function UserMessagesShell({
             headerTitle={firmHeader?.name ?? "Firma"}
             headerSubtitle="Şirket temsilcisi"
             headerLogoUrl={firmHeader?.logo_url ?? null}
-            onBackMobile={() => router.push("/mesajlar")}
+            onBackMobile={() => router.push("/mesajlar", { scroll: false })}
           />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center border-t border-[#0B3C5D]/08 bg-[#FAFBFC] px-5 py-14 text-center md:border-t-0 md:py-20">

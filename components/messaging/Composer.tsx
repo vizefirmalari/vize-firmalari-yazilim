@@ -21,6 +21,8 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
   const [isPending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const preFocusWindowScrollY = useRef(0);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scheduleTyping = useCallback(() => {
@@ -88,6 +90,36 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
     return null;
   }
 
+  /** Tık / dokunuşla odak: tarayıcının window scroll ile alanı göstermesini engeller (focus preventScroll). */
+  const handleTextareaPointerDown = (e: React.PointerEvent<HTMLTextAreaElement>) => {
+    if (!canSend) return;
+    const ta = textareaRef.current;
+    if (!ta) return;
+    if (document.activeElement === ta) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    e.preventDefault();
+    ta.focus({ preventScroll: true });
+  };
+
+  /** Klavye (Tab) vb.: odak öncesi scrollY (capture) korunur; tarayıcı window kaydırdıysa geri alınır. */
+  const handleTextareaFocusCapture = () => {
+    if (typeof window !== "undefined") {
+      preFocusWindowScrollY.current = window.scrollY;
+    }
+  };
+
+  const handleTextareaFocus = () => {
+    if (typeof window === "undefined") return;
+    const y = preFocusWindowScrollY.current;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (Math.abs(window.scrollY - y) > 0.5) {
+          window.scrollTo({ top: y, left: 0, behavior: "auto" });
+        }
+      });
+    });
+  };
+
   return (
     <div className="space-y-1.5 pb-[max(0rem,env(safe-area-inset-bottom,0px))] sm:space-y-2">
       {error ? (
@@ -97,7 +129,11 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
       ) : null}
       <div className="flex flex-row items-end gap-2 sm:items-end sm:gap-3">
         <textarea
+          ref={textareaRef}
           value={text}
+          onPointerDown={handleTextareaPointerDown}
+          onFocusCapture={handleTextareaFocusCapture}
+          onFocus={handleTextareaFocus}
           onChange={(ev) => {
             setText(ev.target.value);
             scheduleTyping();
@@ -105,7 +141,7 @@ export function Composer({ conversationId, disabled, onTyping }: Props) {
           placeholder="Mesaj yazın…"
           rows={1}
           disabled={!canSend}
-          className="min-h-[42px] max-h-[min(30vh,6.5rem)] flex-1 resize-none rounded-2xl border border-[#0B3C5D]/10 bg-white px-3 py-2 text-[0.8125rem] leading-snug text-[#1A1A1A] outline-none transition-[border-color,box-shadow] placeholder:text-[13px] placeholder:text-[#1A1A1A]/30 focus:border-[#0B3C5D]/25 focus:ring-[3px] focus:ring-[#0B3C5D]/07 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-[76px] sm:max-h-[min(40vh,14rem)] sm:resize-y sm:rounded-xl sm:border-[#0B3C5D]/12 sm:px-3.5 sm:py-2.5 sm:text-sm sm:leading-relaxed sm:placeholder:text-sm sm:placeholder:text-[#1A1A1A]/38 sm:focus:border-[#0B3C5D]/28 sm:focus:ring-2 sm:focus:ring-[#0B3C5D]/10 sm:disabled:opacity-45"
+          className="min-h-[42px] max-h-[min(30vh,6.5rem)] flex-1 resize-none rounded-2xl border border-[#0B3C5D]/10 bg-white px-3 py-2 text-[0.8125rem] leading-snug text-[#1A1A1A] outline-none transition-[border-color,box-shadow] scroll-my-0 placeholder:text-[13px] placeholder:text-[#1A1A1A]/30 focus:border-[#0B3C5D]/25 focus:ring-[3px] focus:ring-[#0B3C5D]/07 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-[76px] sm:max-h-[min(40vh,14rem)] sm:resize-y sm:rounded-xl sm:border-[#0B3C5D]/12 sm:px-3.5 sm:py-2.5 sm:text-sm sm:leading-relaxed sm:placeholder:text-sm sm:placeholder:text-[#1A1A1A]/38 sm:focus:border-[#0B3C5D]/28 sm:focus:ring-2 sm:focus:ring-[#0B3C5D]/10 sm:disabled:opacity-45"
         />
         <div className="flex shrink-0 items-center gap-1.5 pb-px sm:gap-2 sm:pb-0">
           <input

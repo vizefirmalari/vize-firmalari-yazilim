@@ -218,7 +218,9 @@ export function FirmPanelMessagesShell({
                     <button
                       type="button"
                       onClick={() =>
-                        router.push(`/panel/${firmId}/mesajlar?c=${row.conversation_id}`)
+                        router.push(`/panel/${firmId}/mesajlar?c=${row.conversation_id}`, {
+                          scroll: false,
+                        })
                       }
                       className={`flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors duration-200 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#0B3C5D]/28 sm:px-4 sm:py-3 ${
                         active
@@ -289,7 +291,7 @@ export function FirmPanelMessagesShell({
               headerSubtitle="Kullanıcı"
               headerDetail={activeRow?.user_email ?? undefined}
               headerLogoUrl={activeRow?.user_avatar_url ?? null}
-              onBackMobile={() => router.push(`/panel/${firmId}/mesajlar`)}
+              onBackMobile={() => router.push(`/panel/${firmId}/mesajlar`, { scroll: false })}
             />
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center border-t border-[#0B3C5D]/08 bg-[#FAFBFC] px-5 py-14 text-center lg:border-t-0 lg:py-20">
