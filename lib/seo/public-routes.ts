@@ -57,6 +57,16 @@ export const PUBLIC_DOCUMENT_PAGES = {
     changeFrequency: "monthly",
     priority: 0.7,
   },
+  "firma-sikayet": {
+    path: "/firma-sikayet",
+    title: "Firma Şikayet Et",
+    description:
+      "Vize Firmaları firma bildirimi: yayınlanmış firma ile ilgili durumları platform yönetimine iletin; kontrollü inceleme ve profesyonel değerlendirme kanalı.",
+    heading: "Firma Şikayet Et",
+    body: "Form platform yönetimine iletilir; firma karalamak değil, kayıtlı inceleme için ölçülü bildirim sağlar.",
+    changeFrequency: "monthly",
+    priority: 0.55,
+  },
   "is-ortagimiz-olun": {
     path: "/is-ortagimiz-olun",
     title: "İş Ortağımız Olun",

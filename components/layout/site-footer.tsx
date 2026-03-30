@@ -141,12 +141,12 @@ export function SiteFooter() {
         >
           Üye İş Yerimiz Olun
         </Link>
-        <button
-          type="button"
+        <Link
+          href="/firma-sikayet"
           className="inline-flex min-h-11 items-center justify-center rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-surface"
         >
           Firma Şikayet Et
-        </button>
+        </Link>
       </div>
     </div>
   );
