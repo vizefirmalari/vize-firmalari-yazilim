@@ -71,10 +71,11 @@ export function UyeIsYerimizOlunPage() {
             >
               <p className="m-0 font-semibold text-foreground">Önemli</p>
               <p className="mt-2 mb-0">
-                Gönderdiğiniz bilgiler <strong className="font-semibold text-foreground">doğrudan firms veritabanına
-                yazılmaz</strong>. Başvurular ayrı bir tabloda saklanır; platform yöneticisi uygunluğu değerlendirir ve
-                firmanızı <strong className="font-semibold text-foreground">manuel olarak</strong> sisteme ekler.
-                Otomatik yayına alma <strong className="font-semibold text-foreground">yoktur</strong>.
+                Bu formu doldurmanız, firmanızın platformda yayınlanacağı anlamına gelmez. Gönderdiğiniz bilgiler
+                sistemde kayıt altına alınır ancak doğrudan yayına alınmaz. Başvurular platform yönetimi tarafından
+                incelenir ve yalnızca uygun bulunan firmalar <strong className="font-semibold text-foreground">manuel
+                olarak</strong> sisteme eklenir. Otomatik yayınlama <strong className="font-semibold text-foreground">
+                yoktur</strong>.
               </p>
             </div>
 
