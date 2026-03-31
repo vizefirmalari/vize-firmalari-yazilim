@@ -28,12 +28,27 @@ export default async function AkisPage({
     sort: typeof sp.sort === "string" ? (sp.sort as "smart" | "new" | "trending" | "top") : undefined,
   };
 
-  const [{ items, hasMore }, adPool, categories, countries] = await Promise.all([
-    getFeedItemsPage(0, 9, query),
-    getActiveAds(),
-    getCategoryOptions(),
-    getCountryOptions(),
-  ]);
+  let items: Awaited<ReturnType<typeof getFeedItemsPage>>["items"] = [];
+  let hasMore = false;
+  let adPool: BlogAdRow[] = [];
+  let categories: Array<{ id: string; name: string }> = [];
+  let countries: string[] = [];
+
+  try {
+    const result = await Promise.all([
+      getFeedItemsPage(0, 9, query),
+      getActiveAds(),
+      getCategoryOptions(),
+      getCountryOptions(),
+    ]);
+    items = result[0].items;
+    hasMore = result[0].hasMore;
+    adPool = result[1];
+    categories = result[2];
+    countries = result[3];
+  } catch (error) {
+    console.error("AkisPage render error:", error);
+  }
   const queryString = new URLSearchParams(
     Object.entries(query).reduce<Record<string, string>>((acc, [k, v]) => {
       if (typeof v === "string" && v) acc[k] = v;
@@ -69,41 +84,69 @@ export default async function AkisPage({
 }
 
 async function getActiveAds(): Promise<BlogAdRow[]> {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("blog_ads")
-    .select("id,ad_type,title,advertiser_name,image_url,cta_text,sponsor_name,sponsor_logo_url,native_image_url,native_title,native_description,target_url,position,weight,start_date,end_date,is_active,target_category_ids,target_countries,target_visa_types")
-    .eq("is_active", true)
-    .in("ad_type", ["image", "native"]);
+  try {
+    const supabase = await createSupabaseServerClient();
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from("blog_ads")
+      .select("id,ad_type,title,advertiser_name,image_url,cta_text,sponsor_name,sponsor_logo_url,native_image_url,native_title,native_description,target_url,position,weight,start_date,end_date,is_active,target_category_ids,target_countries,target_visa_types")
+      .eq("is_active", true)
+      .in("ad_type", ["image", "native"]);
 
-  const now = Date.now();
-  return ((data ?? []) as BlogAdRow[]).filter((item) => {
-    const startOk = new Date(item.start_date).getTime() <= now;
-    const endOk = !item.end_date || new Date(item.end_date).getTime() >= now;
-    return startOk && endOk;
-  });
+    if (error) {
+      console.error("getActiveAds error:", error.message);
+      return [];
+    }
+
+    const now = Date.now();
+    return ((data ?? []) as BlogAdRow[]).filter((item) => {
+      const startOk = new Date(item.start_date).getTime() <= now;
+      const endOk = !item.end_date || new Date(item.end_date).getTime() >= now;
+      return startOk && endOk;
+    });
+  } catch (error) {
+    console.error("getActiveAds exception:", error);
+    return [];
+  }
 }
 
 async function getCategoryOptions(): Promise<Array<{ id: string; name: string }>> {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("blog_categories")
-    .select("id,name")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
-  return (data ?? []).map((x) => ({ id: String(x.id), name: String(x.name) }));
+  try {
+    const supabase = await createSupabaseServerClient();
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from("blog_categories")
+      .select("id,name")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    if (error) {
+      console.error("getCategoryOptions error:", error.message);
+      return [];
+    }
+    return (data ?? []).map((x) => ({ id: String(x.id), name: String(x.name) }));
+  } catch (error) {
+    console.error("getCategoryOptions exception:", error);
+    return [];
+  }
 }
 
 async function getCountryOptions(): Promise<string[]> {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("countries")
-    .select("name")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
-  return (data ?? []).map((x) => String(x.name));
+  try {
+    const supabase = await createSupabaseServerClient();
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from("countries")
+      .select("name")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    if (error) {
+      console.error("getCountryOptions error:", error.message);
+      return [];
+    }
+    return (data ?? []).map((x) => String(x.name));
+  } catch (error) {
+    console.error("getCountryOptions exception:", error);
+    return [];
+  }
 }
 
