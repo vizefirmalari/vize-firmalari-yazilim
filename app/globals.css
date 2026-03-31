@@ -83,3 +83,61 @@ body {
     transform: translateY(-1px);
   }
 }
+
+.tiptap-public p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.tiptap-public p + p {
+  margin-top: 0.9rem;
+}
+
+.tiptap-public h2 {
+  margin: 1rem 0 0.55rem;
+  font-size: 1.2rem;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #0b3c5d;
+}
+
+.tiptap-public h3 {
+  margin: 0.85rem 0 0.45rem;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  font-weight: 700;
+  color: #0b3c5d;
+}
+
+.tiptap-public ul,
+.tiptap-public ol {
+  margin: 0.6rem 0 0.75rem 1.1rem;
+  padding-left: 0.7rem;
+  line-height: 1.5;
+}
+
+.tiptap-public ol {
+  list-style-type: decimal;
+}
+
+.tiptap-public ul[data-list-style="square"] > li::marker {
+  color: #b42318;
+}
+
+.tiptap-public ul[data-list-style="circle"] > li::marker {
+  color: #111111;
+}
+
+.tiptap-public .vf-list-check > li {
+  position: relative;
+  list-style: none;
+  padding-left: 1.4rem;
+}
+
+.tiptap-public .vf-list-check > li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #0f8a2d;
+  font-weight: 700;
+}
