@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getSitemapFirmEntries } from "@/lib/data/firms";
+import { getSitemapBlogEntries, getSitemapFirmEntries } from "@/lib/data/firms";
 import { getSiteUrl } from "@/lib/env";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import { listPublicDocumentPages } from "@/lib/seo/public-routes";
@@ -37,7 +37,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  const merged = [...staticPages, ...firmEntries];
+  const blogRows = await getSitemapBlogEntries();
+  const blogEntries: MetadataRoute.Sitemap = blogRows
+    .filter((r) => r.firm_slug && r.post_slug)
+    .map((r) => ({
+      url: absoluteUrl(`/firma/${r.firm_slug}/blog/${r.post_slug}`),
+      lastModified: r.published_at ? new Date(r.published_at) : now,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+
+  const merged = [...staticPages, ...firmEntries, ...blogEntries];
   if (merged.length > MAX_URL_HINT) {
     console.warn(
       `[sitemap] URL sayısı (${merged.length}) önerilen üst sınırı aştı; sitemap index’e geçilmeli.`

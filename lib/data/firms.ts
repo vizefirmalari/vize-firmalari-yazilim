@@ -432,6 +432,12 @@ export type SitemapFirmRow = {
   is_indexable: boolean | null;
 };
 
+export type SitemapBlogRow = {
+  firm_slug: string;
+  post_slug: string;
+  published_at: string | null;
+};
+
 /**
  * Sitemap için: yalnızca yayında ve indekslemeye açık firmalar.
  * `is_indexable === false` olanlar hariç (null / true = dahil).
@@ -475,4 +481,31 @@ export async function getSitemapFirmEntries(): Promise<SitemapFirmRow[]> {
       created_at: r.created_at,
       is_indexable: r.is_indexable,
     }));
+}
+
+export async function getSitemapBlogEntries(): Promise<SitemapBlogRow[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = createSupabasePublicClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("firm_blog_posts")
+    .select("slug, published_at, firms!inner(slug)")
+    .eq("status", "published")
+    .not("published_at", "is", null)
+    .order("published_at", { ascending: false })
+    .limit(45000);
+
+  if (error) {
+    console.error("[getSitemapBlogEntries]", error.message);
+    return [];
+  }
+
+  return (data ?? []).map(
+    (row: { slug: string; published_at: string | null; firms: { slug: string } | { slug: string }[] }) => ({
+      firm_slug: Array.isArray(row.firms) ? String(row.firms[0]?.slug ?? "") : String(row.firms?.slug ?? ""),
+      post_slug: String(row.slug ?? ""),
+      published_at: row.published_at ?? null,
+    })
+  );
 }
