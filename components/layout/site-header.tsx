@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
 
 import { HeaderSearchForm } from "@/components/layout/header-search-form";
+import { HeaderFlowNavButton } from "@/components/layout/header-flow-nav-button";
 import { SiteAuthNav } from "@/components/layout/site-auth-nav";
 import { SITE_HEADER_LOGO_URL } from "@/lib/constants";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -29,7 +30,7 @@ function HeaderFallback({
     <header
       className={`sticky top-0 z-50 pt-[env(safe-area-inset-top,0px)] ${headerBarClass}`}
     >
-      <div className="container-shell flex min-h-[3.25rem] items-center gap-2 py-2 sm:min-h-[5.25rem] sm:gap-4 sm:py-3">
+      <div className="container-shell flex min-h-13 items-center gap-2 py-2 sm:min-h-21 sm:gap-4 sm:py-3">
         <Link
           href="/"
           aria-label="Vize Firmaları — Ana sayfa"
@@ -65,7 +66,8 @@ function HeaderFallback({
           aria-label="Oturum ve firma"
           className="ml-auto flex shrink-0 flex-nowrap items-center justify-end gap-1.5 sm:gap-2"
         >
-          <span className="inline-block min-h-11 w-[5.25rem] shrink-0 animate-pulse rounded-xl bg-primary/[0.08] sm:w-[5.75rem]" />
+          <HeaderFlowNavButton />
+          <span className="inline-block min-h-11 w-21 shrink-0 animate-pulse rounded-xl bg-primary/8 sm:w-23" />
           <Link
             href="/firma-ekle"
             aria-label="Firma ekle"
@@ -111,7 +113,7 @@ async function SiteHeaderAsync({
     <header
       className={`sticky top-0 z-50 pt-[env(safe-area-inset-top,0px)] ${headerBarClass}`}
     >
-      <div className="container-shell flex min-h-[3.25rem] items-center gap-2 py-2 sm:min-h-[5.25rem] sm:gap-4 sm:py-3">
+      <div className="container-shell flex min-h-13 items-center gap-2 py-2 sm:min-h-21 sm:gap-4 sm:py-3">
         <Link
           href="/"
           aria-label="Vize Firmaları — Ana sayfa"
@@ -149,6 +151,7 @@ async function SiteHeaderAsync({
           aria-label="Oturum ve firma"
           className="ml-auto flex shrink-0 flex-nowrap items-center justify-end gap-1.5 sm:gap-2"
         >
+          <HeaderFlowNavButton />
           <SiteAuthNav serverUser={navUser} />
           <Link
             href="/firma-ekle"

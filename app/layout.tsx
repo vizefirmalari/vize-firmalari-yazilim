@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import { AuthModalProvider } from "@/components/auth/auth-modal-context";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { SITE_FAVICON_URL } from "@/lib/constants";
 import { getSiteUrl } from "@/lib/env";
 import {
@@ -67,6 +68,7 @@ export default function RootLayout({
         <AuthModalProvider>
           {children}
           <AuthShell />
+          <MobileTabBar />
         </AuthModalProvider>
         <Toaster richColors position="top-right" />
       </body>
