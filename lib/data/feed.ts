@@ -92,7 +92,12 @@ export async function getFeedItemsPage(
     [`feed:${offset}:${limit}:${serializeQuery(query)}`],
     { revalidate: 45 }
   );
-  return cached();
+  try {
+    return await cached();
+  } catch (error) {
+    console.error("getFeedItemsPage error:", error);
+    return { items: [], hasMore: false };
+  }
 }
 
 export async function getFirmFeedItems(
@@ -172,104 +177,105 @@ async function computeFeedPage(
   limit: number,
   query: FeedQuery
 ): Promise<{ items: FeedItem[]; hasMore: boolean }> {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) return { items: [], hasMore: false };
+  try {
+    const supabase = await createSupabaseServerClient();
+    if (!supabase) return { items: [], hasMore: false };
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  let postQuery = supabase
-    .from("firm_blog_posts")
-    .select(
-      "id,title,summary,cover_image_url,published_at,firm_id,company_name,company_logo_url,slug,category_id,related_countries,related_visa_types"
-    )
-    .eq("status", "published")
-    .not("published_at", "is", null);
+    let postQuery = supabase
+      .from("firm_blog_posts")
+      .select(
+        "id,title,summary,cover_image_url,published_at,firm_id,company_name,company_logo_url,slug,category_id,related_countries,related_visa_types"
+      )
+      .eq("status", "published")
+      .not("published_at", "is", null);
 
-  if (query.category) postQuery = postQuery.eq("category_id", query.category);
-  if (query.country) postQuery = postQuery.contains("related_countries", [query.country]);
-  if (query.visaType) postQuery = postQuery.contains("related_visa_types", [query.visaType]);
+    if (query.category) postQuery = postQuery.eq("category_id", query.category);
+    if (query.country) postQuery = postQuery.contains("related_countries", [query.country]);
+    if (query.visaType) postQuery = postQuery.contains("related_visa_types", [query.visaType]);
 
-  const { data: posts } = await postQuery
-    .order("published_at", { ascending: false })
-    .range(0, Math.max(50, offset + limit + 30));
+    const { data: posts } = await postQuery
+      .order("published_at", { ascending: false })
+      .range(0, Math.max(50, offset + limit + 30));
 
-  const rows = posts ?? [];
-  const ids = rows.map((x) => String(x.id));
-  if (ids.length === 0) return { items: [], hasMore: false };
+    const rows = posts ?? [];
+    const ids = rows.map((x) => String(x.id));
+    if (ids.length === 0) return { items: [], hasMore: false };
 
-  const { data: firms } = await supabase
-    .from("firms")
-    .select("id,slug,name,logo_url,premium_badge,featured")
-    .in("id", rows.map((r) => String(r.firm_id)));
-  const firmMap = new Map((firms ?? []).map((f) => [String(f.id), f]));
+    const { data: firms } = await supabase
+      .from("firms")
+      .select("id,slug,name,logo_url,premium_badge,featured")
+      .in("id", rows.map((r) => String(r.firm_id)));
+    const firmMap = new Map((firms ?? []).map((f) => [String(f.id), f]));
 
-  const { data: categories } = await supabase
-    .from("blog_categories")
-    .select("id,name");
-  const categoryMap = new Map((categories ?? []).map((c) => [String(c.id), String(c.name)]));
+    const { data: categories } = await supabase
+      .from("blog_categories")
+      .select("id,name");
+    const categoryMap = new Map((categories ?? []).map((c) => [String(c.id), String(c.name)]));
 
-  const { data: likeRows } = await supabase
-    .from("post_likes")
-    .select("post_id,created_at")
-    .in("post_id", ids);
-  const likeCountMap = new Map<string, number>();
-  for (const row of likeRows ?? []) {
-    const key = String(row.post_id);
-    likeCountMap.set(key, (likeCountMap.get(key) ?? 0) + 1);
-  }
-
-  let likedSet = new Set<string>();
-  if (user?.id) {
-    const { data: liked } = await supabase
+    const { data: likeRows } = await supabase
       .from("post_likes")
-      .select("post_id")
-      .eq("user_id", user.id)
+      .select("post_id,created_at")
       .in("post_id", ids);
-    likedSet = new Set((liked ?? []).map((x) => String(x.post_id)));
-  }
-
-  const nowIso = new Date().toISOString();
-  const twoHoursAgoIso = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
-  const fourHoursAgoIso = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
-
-  const { data: clickRows } = await supabase
-    .from("post_engagement_events")
-    .select("post_id,event_type,created_at")
-    .in("post_id", ids)
-    .gte("created_at", fourHoursAgoIso)
-    .lte("created_at", nowIso);
-
-  const clickMap = new Map<string, number>();
-  const shareMap = new Map<string, number>();
-  const recentTwoHourMap = new Map<string, number>();
-  const previousTwoHourMap = new Map<string, number>();
-
-  for (const row of clickRows ?? []) {
-    const postId = String(row.post_id);
-    if (row.event_type === "click") clickMap.set(postId, (clickMap.get(postId) ?? 0) + 1);
-    if (row.event_type === "share") shareMap.set(postId, (shareMap.get(postId) ?? 0) + 1);
-    const created = String(row.created_at);
-    if (created >= twoHoursAgoIso) {
-      const boost = row.event_type === "click" ? 3 : 4;
-      recentTwoHourMap.set(postId, (recentTwoHourMap.get(postId) ?? 0) + boost);
-    } else if (created >= fourHoursAgoIso) {
-      const boost = row.event_type === "click" ? 3 : 4;
-      previousTwoHourMap.set(postId, (previousTwoHourMap.get(postId) ?? 0) + boost);
+    const likeCountMap = new Map<string, number>();
+    for (const row of likeRows ?? []) {
+      const key = String(row.post_id);
+      likeCountMap.set(key, (likeCountMap.get(key) ?? 0) + 1);
     }
-  }
 
-  const likeRecentRows = (likeRows ?? []).filter((r) => {
-    const created = (r as unknown as { created_at?: string }).created_at;
-    return typeof created === "string" && created >= twoHoursAgoIso;
-  });
-  for (const row of likeRecentRows) {
-    const postId = String(row.post_id);
-    recentTwoHourMap.set(postId, (recentTwoHourMap.get(postId) ?? 0) + 2);
-  }
+    let likedSet = new Set<string>();
+    if (user?.id) {
+      const { data: liked } = await supabase
+        .from("post_likes")
+        .select("post_id")
+        .eq("user_id", user.id)
+        .in("post_id", ids);
+      likedSet = new Set((liked ?? []).map((x) => String(x.post_id)));
+    }
 
-  const items: FeedItem[] = rows.map((row) => {
+    const nowIso = new Date().toISOString();
+    const twoHoursAgoIso = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    const fourHoursAgoIso = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+
+    const { data: clickRows } = await supabase
+      .from("post_engagement_events")
+      .select("post_id,event_type,created_at")
+      .in("post_id", ids)
+      .gte("created_at", fourHoursAgoIso)
+      .lte("created_at", nowIso);
+
+    const clickMap = new Map<string, number>();
+    const shareMap = new Map<string, number>();
+    const recentTwoHourMap = new Map<string, number>();
+    const previousTwoHourMap = new Map<string, number>();
+
+    for (const row of clickRows ?? []) {
+      const postId = String(row.post_id);
+      if (row.event_type === "click") clickMap.set(postId, (clickMap.get(postId) ?? 0) + 1);
+      if (row.event_type === "share") shareMap.set(postId, (shareMap.get(postId) ?? 0) + 1);
+      const created = String(row.created_at);
+      if (created >= twoHoursAgoIso) {
+        const boost = row.event_type === "click" ? 3 : 4;
+        recentTwoHourMap.set(postId, (recentTwoHourMap.get(postId) ?? 0) + boost);
+      } else if (created >= fourHoursAgoIso) {
+        const boost = row.event_type === "click" ? 3 : 4;
+        previousTwoHourMap.set(postId, (previousTwoHourMap.get(postId) ?? 0) + boost);
+      }
+    }
+
+    const likeRecentRows = (likeRows ?? []).filter((r) => {
+      const created = (r as unknown as { created_at?: string }).created_at;
+      return typeof created === "string" && created >= twoHoursAgoIso;
+    });
+    for (const row of likeRecentRows) {
+      const postId = String(row.post_id);
+      recentTwoHourMap.set(postId, (recentTwoHourMap.get(postId) ?? 0) + 2);
+    }
+
+    const items: FeedItem[] = rows.map((row) => {
     const postId = String(row.id);
     const firmId = String(row.firm_id);
     const firm = firmMap.get(firmId);
@@ -315,23 +321,27 @@ async function computeFeedPage(
       premium_score: premiumScore,
       admin_score: adminScore,
     };
-  });
+    });
 
-  const filtered = items.filter((item) => {
-    if (query.premium && item.premium_score <= 0) return false;
-    if (query.search && !item.company_name.toLowerCase().includes(query.search.toLowerCase())) return false;
-    return true;
-  });
+    const filtered = items.filter((item) => {
+      if (query.premium && item.premium_score <= 0) return false;
+      if (query.search && !item.company_name.toLowerCase().includes(query.search.toLowerCase())) return false;
+      return true;
+    });
 
-  const sort = query.sort ?? "smart";
-  const sorted = [...filtered].sort((a, b) => {
-    if (sort === "new") return b.created_at.localeCompare(a.created_at);
-    if (sort === "trending") return b.hype_score - a.hype_score;
-    if (sort === "top") return b.engagement_score - a.engagement_score;
-    return b.score - a.score;
-  });
-  const antiSpam = applyAntiSpam(sorted);
-  const paged = antiSpam.slice(offset, offset + limit);
-  return { items: paged, hasMore: antiSpam.length > offset + limit };
+    const sort = query.sort ?? "smart";
+    const sorted = [...filtered].sort((a, b) => {
+      if (sort === "new") return b.created_at.localeCompare(a.created_at);
+      if (sort === "trending") return b.hype_score - a.hype_score;
+      if (sort === "top") return b.engagement_score - a.engagement_score;
+      return b.score - a.score;
+    });
+    const antiSpam = applyAntiSpam(sorted);
+    const paged = antiSpam.slice(offset, offset + limit);
+    return { items: paged, hasMore: antiSpam.length > offset + limit };
+  } catch (error) {
+    console.error("computeFeedPage error:", error);
+    return { items: [], hasMore: false };
+  }
 }
 
