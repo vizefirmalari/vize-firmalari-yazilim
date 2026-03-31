@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { normalizeBlogCtaButtons } from "@/lib/blog/cta-buttons";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
 type SaveMode = "draft" | "scheduled" | "published";
 
@@ -50,6 +51,7 @@ export async function saveFirmBlogPost(
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false, error: "Sunucu bağlantısı kurulamadı." };
+  const adminSupabase = createSupabaseServiceRoleClient() ?? supabase;
 
   const {
     data: { user },
@@ -103,6 +105,9 @@ export async function saveFirmBlogPost(
   }
   if (!metaDescription || metaDescription.length < 60) {
     return { ok: false, error: "Meta açıklama çok kısa." };
+  }
+  if (payload.mode === "published" && !payload.coverImageUrl?.trim()) {
+    return { ok: false, error: "Yayınlamak için hero görsel zorunlu." };
   }
 
   let scheduledAt: string | null = null;
@@ -167,14 +172,14 @@ export async function saveFirmBlogPost(
 
   let savedId = payload.postId?.trim() || "";
   if (savedId) {
-    const { error } = await supabase
+    const { error } = await adminSupabase
       .from("firm_blog_posts")
       .update(row)
       .eq("id", savedId)
       .eq("firm_id", firmId);
     if (error) return { ok: false, error: error.message };
   } else {
-    const { data, error } = await supabase
+    const { data, error } = await adminSupabase
       .from("firm_blog_posts")
       .insert(row)
       .select("id")
@@ -184,7 +189,7 @@ export async function saveFirmBlogPost(
   }
 
   if (status === "published") {
-    const { data: postRow } = await supabase
+      const { data: postRow } = await adminSupabase
       .from("firm_blog_posts")
       .select("hype_points_awarded")
       .eq("id", savedId)
@@ -197,7 +202,7 @@ export async function saveFirmBlogPost(
         p_payload: { source: "firm_blog_publish", post_id: savedId, slug },
       });
       if (!hypeErr) {
-        await supabase
+        await adminSupabase
           .from("firm_blog_posts")
           .update({ hype_points_awarded: true, hype_points_value: 50 })
           .eq("id", savedId);

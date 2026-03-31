@@ -733,6 +733,9 @@ export function FirmBlogEditorForm({
                   <p className="text-xs text-[#1A1A1A]/55">
                     Önerilen ölçü: 1200 × 630. Yüklenen dosya otomatik URL ile eşlenir.
                   </p>
+                  <p className={`text-xs ${coverUrl ? "text-[#067647]" : "text-[#B42318]"}`}>
+                    Yayınlama için hero görsel zorunludur.
+                  </p>
                   {coverAspectWarn ? (
                     <p className="text-xs text-[#9A6700]">{coverAspectWarn}</p>
                   ) : null}
@@ -1276,7 +1279,7 @@ export function FirmBlogEditorForm({
               <button
                 type="button"
                 onClick={() => save("published")}
-                disabled={isPending || hasHardError || !publishAt}
+                disabled={isPending || hasHardError || !publishAt || !coverUrl}
                 className="rounded-xl bg-[#0B3C5D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0A3552] disabled:opacity-60"
               >
                 Yayınla
