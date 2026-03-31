@@ -38,9 +38,9 @@ export const FIRM_DASHBOARD_MODULES: readonly FirmDashboardModule[] = [
   {
     id: "run-ads",
     title: "Reklam Ver",
-    description: "Yeni kampanya oluşturmaya hazır, modüler reklam kutusu.",
-    status: "taslak",
-    actionLabel: "Planla",
+    description: "Sosyal medya ve web platformu reklamlarını veri odaklı planlayın.",
+    status: "aktif",
+    actionLabel: "Aç",
     href: "/panel/{firmId}/reklam",
   },
   {

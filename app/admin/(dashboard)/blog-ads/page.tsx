@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { BlogAdsManager } from "@/components/admin/blog-ads-manager";
 import { requireAdmin } from "@/lib/auth/admin";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
+import { getAdReachSummary } from "@/lib/data/ad-reach";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const metadata = {
@@ -18,6 +19,13 @@ export default async function AdminBlogAdsPage() {
     .from("blog_ads")
     .select("id,ad_type,title,advertiser_name,image_url,cta_text,sponsor_name,sponsor_logo_url,native_image_url,native_title,native_description,target_url,position,weight,start_date,end_date,is_active,target_category_ids,target_countries,target_visa_types")
     .order("created_at", { ascending: false });
+
+  const { data: socialMetricRows } = await supabase
+    .from("platform_social_metrics")
+    .select(
+      "id,platform_name,handle,follower_count,monthly_reach,engagement_rate,estimated_lead_rate,is_active,sort_order"
+    )
+    .order("sort_order", { ascending: true });
 
   const { data: categoryRows } = await supabase
     .from("blog_categories")
@@ -67,6 +75,7 @@ export default async function AdminBlogAdsPage() {
       ctr: m.impressions > 0 ? (m.clicks / m.impressions) * 100 : 0,
     };
   });
+  const adReachSummary = await getAdReachSummary(supabase);
 
   return (
     <div className="space-y-6">
@@ -80,6 +89,8 @@ export default async function AdminBlogAdsPage() {
         rows={(data ?? []) as never}
         metricsByAd={metricsByAd}
         slotSummary={slotSummary}
+        adReachSummary={adReachSummary}
+        socialMetrics={(socialMetricRows ?? []) as never}
         categoryOptions={(categoryRows ?? []).map((x) => ({ id: String(x.id), name: String(x.name) }))}
         countryOptions={(countryRows ?? []).map((x) => String(x.name))}
         visaTypeOptions={SPECIALIZATION_OPTIONS.map((x) => x.label)}

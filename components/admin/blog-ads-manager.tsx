@@ -3,8 +3,15 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { deleteBlogAd, upsertBlogAd, uploadBlogAdAsset } from "@/lib/actions/blog-ads-admin";
+import {
+  deleteBlogAd,
+  deletePlatformSocialMetric,
+  upsertBlogAd,
+  upsertPlatformSocialMetric,
+  uploadBlogAdAsset,
+} from "@/lib/actions/blog-ads-admin";
 import type { BlogAdRow } from "@/lib/blog/ads";
+import type { AdReachSummary, SocialMetricRow } from "@/lib/data/ad-reach";
 
 type Metrics = {
   impressions: number;
@@ -16,6 +23,8 @@ export function BlogAdsManager({
   rows,
   metricsByAd,
   slotSummary,
+  adReachSummary,
+  socialMetrics,
   categoryOptions,
   countryOptions,
   visaTypeOptions,
@@ -23,12 +32,25 @@ export function BlogAdsManager({
   rows: BlogAdRow[];
   metricsByAd: Record<string, Metrics>;
   slotSummary: Array<{ slot: "top" | "middle" | "bottom"; impressions: number; clicks: number; ctr: number }>;
+  adReachSummary: AdReachSummary;
+  socialMetrics: SocialMetricRow[];
   categoryOptions: Array<{ id: string; name: string }>;
   countryOptions: string[];
   visaTypeOptions: string[];
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [socialDraft, setSocialDraft] = useState({
+    id: "",
+    platform_name: "",
+    handle: "",
+    follower_count: 0,
+    monthly_reach: 0,
+    engagement_rate: 0,
+    estimated_lead_rate: 1.7,
+    is_active: true,
+    sort_order: 0,
+  });
   const [draft, setDraft] = useState({
     id: "",
     ad_type: "image" as "image" | "native",
@@ -76,6 +98,19 @@ export function BlogAdsManager({
       is_active: true,
     });
 
+  const resetSocialDraft = () =>
+    setSocialDraft({
+      id: "",
+      platform_name: "",
+      handle: "",
+      follower_count: 0,
+      monthly_reach: 0,
+      engagement_rate: 0,
+      estimated_lead_rate: 1.7,
+      is_active: true,
+      sort_order: 0,
+    });
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setPending(true);
@@ -96,6 +131,26 @@ export function BlogAdsManager({
     router.refresh();
   }
 
+  async function saveSocialMetric(e: React.FormEvent) {
+    e.preventDefault();
+    setPending(true);
+    const res = await upsertPlatformSocialMetric(socialDraft);
+    setPending(false);
+    if (!res.ok) return toast.error(res.error);
+    toast.success("Sosyal metrik kaydedildi.");
+    resetSocialDraft();
+    router.refresh();
+  }
+
+  async function removeSocialMetric(id: string) {
+    setPending(true);
+    const res = await deletePlatformSocialMetric(id);
+    setPending(false);
+    if (!res.ok) return toast.error(res.error);
+    toast.success("Sosyal metrik silindi.");
+    router.refresh();
+  }
+
   const toggleList = (list: string[], value: string, checked: boolean) =>
     checked ? (list.includes(value) ? list : [...list, value]) : list.filter((x) => x !== value);
 
@@ -113,6 +168,41 @@ export function BlogAdsManager({
 
   return (
     <div className="space-y-6">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/55">Toplam Blog İçeriği</p>
+          <p className="mt-1 text-2xl font-bold text-[#0B3C5D]">{adReachSummary.publishedBlogCount}</p>
+        </div>
+        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/55">Toplam Akış İçeriği</p>
+          <p className="mt-1 text-2xl font-bold text-[#0B3C5D]">{adReachSummary.feedContentCount}</p>
+        </div>
+        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/55">Toplam Reklam Alanı</p>
+          <p className="mt-1 text-2xl font-bold text-[#0B3C5D]">{adReachSummary.activeSlotCapacity}</p>
+        </div>
+        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/55">Son 30g Gösterim</p>
+          <p className="mt-1 text-2xl font-bold text-[#0B3C5D]">{adReachSummary.last30Impressions.toLocaleString("tr-TR")}</p>
+        </div>
+        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/55">Son 30g Tıklama</p>
+          <p className="mt-1 text-2xl font-bold text-[#0B3C5D]">{adReachSummary.last30Clicks.toLocaleString("tr-TR")}</p>
+        </div>
+        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/55">Ortalama CTR</p>
+          <p className="mt-1 text-2xl font-bold text-[#0B3C5D]">%{adReachSummary.ctr.toFixed(2)}</p>
+        </div>
+        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/55">Tahmini Tekil Erişim</p>
+          <p className="mt-1 text-2xl font-bold text-[#0B3C5D]">{adReachSummary.estimatedUniqueUsers.toLocaleString("tr-TR")}</p>
+        </div>
+        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/55">Tahmini Potansiyel Müşteri</p>
+          <p className="mt-1 text-2xl font-bold text-[#0B3C5D]">{adReachSummary.estimatedPotentialLeads.toLocaleString("tr-TR")}</p>
+        </div>
+      </section>
+
       <section className="grid gap-3 md:grid-cols-3">
         {slotSummary.map((slot) => (
           <div key={slot.slot} className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
@@ -122,6 +212,165 @@ export function BlogAdsManager({
             <p className="text-sm font-semibold text-[#0B3C5D]">CTR: %{slot.ctr.toFixed(2)}</p>
           </div>
         ))}
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[1.25fr_1fr]">
+        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-[#1A1A1A]/55">Sosyal medya metrikleri</h2>
+          <p className="mt-1 text-xs text-[#1A1A1A]/60">
+            Firma panelindeki "Sosyal Medyada Reklam Ver" kartı bu verilerle senkron çalışır.
+          </p>
+          <div className="mt-3 overflow-x-auto rounded-xl border border-[#0B3C5D]/10">
+            <table className="min-w-[680px] w-full text-left text-sm">
+              <thead className="bg-[#F7F9FB] text-xs uppercase tracking-wide text-[#1A1A1A]/60">
+                <tr>
+                  <th className="px-3 py-2">Platform</th>
+                  <th className="px-3 py-2">Takipçi</th>
+                  <th className="px-3 py-2">30g Erişim</th>
+                  <th className="px-3 py-2">Etkileşim</th>
+                  <th className="px-3 py-2">Lead Oranı</th>
+                  <th className="px-3 py-2">Durum</th>
+                  <th className="px-3 py-2">İşlem</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#0B3C5D]/10">
+                {socialMetrics.map((row) => (
+                  <tr key={row.id}>
+                    <td className="px-3 py-2 font-semibold text-[#0B3C5D]">{row.platform_name}</td>
+                    <td className="px-3 py-2">{row.follower_count.toLocaleString("tr-TR")}</td>
+                    <td className="px-3 py-2">{row.monthly_reach.toLocaleString("tr-TR")}</td>
+                    <td className="px-3 py-2">%{Number(row.engagement_rate).toFixed(2)}</td>
+                    <td className="px-3 py-2">%{Number(row.estimated_lead_rate).toFixed(2)}</td>
+                    <td className="px-3 py-2 text-xs">{row.is_active ? "Aktif" : "Pasif"}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className="text-xs font-semibold text-[#328CC1] hover:underline"
+                          onClick={() =>
+                            setSocialDraft({
+                              id: row.id,
+                              platform_name: row.platform_name,
+                              handle: row.handle ?? "",
+                              follower_count: row.follower_count,
+                              monthly_reach: row.monthly_reach,
+                              engagement_rate: Number(row.engagement_rate),
+                              estimated_lead_rate: Number(row.estimated_lead_rate),
+                              is_active: row.is_active,
+                              sort_order: row.sort_order,
+                            })
+                          }
+                        >
+                          Düzenle
+                        </button>
+                        <button
+                          type="button"
+                          className="text-xs font-semibold text-red-600 hover:underline"
+                          onClick={() => void removeSocialMetric(row.id)}
+                        >
+                          Sil
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <form onSubmit={saveSocialMetric} className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-[#1A1A1A]/55">
+            {socialDraft.id ? "Sosyal metrik düzenle" : "Yeni sosyal metrik"}
+          </h3>
+          <div className="mt-3 space-y-2">
+            <input
+              required
+              value={socialDraft.platform_name}
+              onChange={(e) => setSocialDraft((d) => ({ ...d, platform_name: e.target.value }))}
+              placeholder="Platform adı"
+              className="h-10 w-full rounded-xl border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 text-sm outline-none"
+            />
+            <input
+              value={socialDraft.handle}
+              onChange={(e) => setSocialDraft((d) => ({ ...d, handle: e.target.value }))}
+              placeholder="@hesap (opsiyonel)"
+              className="h-10 w-full rounded-xl border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 text-sm outline-none"
+            />
+            <input
+              type="number"
+              min={0}
+              value={socialDraft.follower_count}
+              onChange={(e) => setSocialDraft((d) => ({ ...d, follower_count: Number(e.target.value) }))}
+              placeholder="Takipçi sayısı"
+              className="h-10 w-full rounded-xl border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 text-sm outline-none"
+            />
+            <input
+              type="number"
+              min={0}
+              value={socialDraft.monthly_reach}
+              onChange={(e) => setSocialDraft((d) => ({ ...d, monthly_reach: Number(e.target.value) }))}
+              placeholder="30g erişim"
+              className="h-10 w-full rounded-xl border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 text-sm outline-none"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={socialDraft.engagement_rate}
+                onChange={(e) => setSocialDraft((d) => ({ ...d, engagement_rate: Number(e.target.value) }))}
+                placeholder="Etkileşim %"
+                className="h-10 w-full rounded-xl border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 text-sm outline-none"
+              />
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={socialDraft.estimated_lead_rate}
+                onChange={(e) => setSocialDraft((d) => ({ ...d, estimated_lead_rate: Number(e.target.value) }))}
+                placeholder="Lead oranı %"
+                className="h-10 w-full rounded-xl border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 text-sm outline-none"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                min={0}
+                value={socialDraft.sort_order}
+                onChange={(e) => setSocialDraft((d) => ({ ...d, sort_order: Number(e.target.value) }))}
+                placeholder="Sıralama"
+                className="h-10 w-full rounded-xl border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 text-sm outline-none"
+              />
+              <label className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 text-sm text-[#0B3C5D]">
+                <input
+                  type="checkbox"
+                  checked={socialDraft.is_active}
+                  onChange={(e) => setSocialDraft((d) => ({ ...d, is_active: e.target.checked }))}
+                />
+                Aktif
+              </label>
+            </div>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button
+              type="submit"
+              disabled={pending}
+              className="rounded-xl bg-[#D9A441] px-4 py-2 text-sm font-semibold text-[#1A1A1A]"
+            >
+              Kaydet
+            </button>
+            {socialDraft.id ? (
+              <button
+                type="button"
+                onClick={resetSocialDraft}
+                className="rounded-xl border border-[#0B3C5D]/15 px-4 py-2 text-sm font-semibold text-[#0B3C5D]"
+              >
+                Yeni kayda geç
+              </button>
+            ) : null}
+          </div>
+        </form>
       </section>
 
       <form onSubmit={save} className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">

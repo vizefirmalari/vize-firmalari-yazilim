@@ -113,3 +113,55 @@ export async function deleteBlogAd(id: string): Promise<{ ok: true } | { ok: fal
   return { ok: true };
 }
 
+export async function upsertPlatformSocialMetric(input: {
+  id?: string;
+  platform_name: string;
+  handle?: string;
+  follower_count: number;
+  monthly_reach: number;
+  engagement_rate: number;
+  estimated_lead_rate: number;
+  is_active: boolean;
+  sort_order: number;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin();
+  const supabase = createSupabaseServiceRoleClient();
+  if (!supabase) return { ok: false, error: "Service role bağlantısı eksik." };
+
+  const row = {
+    platform_name: input.platform_name.trim(),
+    handle: input.handle?.trim() || null,
+    follower_count: Math.max(0, Math.floor(Number(input.follower_count) || 0)),
+    monthly_reach: Math.max(0, Math.floor(Number(input.monthly_reach) || 0)),
+    engagement_rate: Math.max(0, Number(input.engagement_rate) || 0),
+    estimated_lead_rate: Math.max(0, Number(input.estimated_lead_rate) || 0),
+    is_active: Boolean(input.is_active),
+    sort_order: Math.max(0, Math.floor(Number(input.sort_order) || 0)),
+    updated_at: new Date().toISOString(),
+  };
+  if (!row.platform_name) return { ok: false, error: "Platform adı zorunlu." };
+
+  const query = input.id
+    ? supabase.from("platform_social_metrics").update(row).eq("id", input.id)
+    : supabase.from("platform_social_metrics").insert(row);
+  const { error } = await query;
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/blog-ads");
+  revalidatePath("/panel");
+  return { ok: true };
+}
+
+export async function deletePlatformSocialMetric(
+  id: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin();
+  const supabase = createSupabaseServiceRoleClient();
+  if (!supabase) return { ok: false, error: "Service role bağlantısı eksik." };
+  const { error } = await supabase.from("platform_social_metrics").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/blog-ads");
+  revalidatePath("/panel");
+  return { ok: true };
+}
+
