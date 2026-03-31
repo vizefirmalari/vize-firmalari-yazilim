@@ -191,6 +191,7 @@ export function FirmBlogEditorForm({
   const [coverUploading, setCoverUploading] = useState(false);
   const [coverAspectWarn, setCoverAspectWarn] = useState<string | null>(null);
   const [coverLocalPreview, setCoverLocalPreview] = useState<string>("");
+  const [coverPendingFile, setCoverPendingFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (slugTouched) return;
@@ -458,6 +459,15 @@ export function FirmBlogEditorForm({
     const bodyRich = bodyRichState;
     const bodyPlainText = bodyPlainState;
     startTransition(async () => {
+      let publishCoverUrl = coverUrl;
+      if (nextMode === "published" && !publishCoverUrl && coverPendingFile) {
+        setCoverUploading(true);
+        const uploaded = await uploadCoverFile(coverPendingFile);
+        setCoverUploading(false);
+        if (!uploaded) return;
+        publishCoverUrl = uploaded;
+        setCoverPendingFile(null);
+      }
       const res = await saveFirmBlogPost({
         postId,
         firmId,
@@ -466,7 +476,7 @@ export function FirmBlogEditorForm({
         slug,
         categoryId,
         summary: flowDescription,
-        coverImageUrl: coverUrl,
+        coverImageUrl: publishCoverUrl,
         coverImageAlt: coverAlt,
         metaDescription,
         bodyRich,
@@ -527,6 +537,57 @@ export function FirmBlogEditorForm({
       // Bazı blok durumlarında (özellikle custom list/heading geçişlerinde)
       // doğrudan toggle başarısız olabiliyor; önce paragrafla normalize edip tekrar dene.
       editor.chain().focus().clearNodes().setParagraph().toggleOrderedList().run();
+    }
+  };
+
+  const uploadCoverFile = async (file: File): Promise<string | null> => {
+    try {
+      let uploadFile: File = file;
+      if (file.type.startsWith("image/")) {
+        try {
+          const bitmap = await createImageBitmap(file);
+          const canvas = document.createElement("canvas");
+          const maxSide = 1600;
+          const ratio = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+          canvas.width = Math.max(1, Math.round(bitmap.width * ratio));
+          canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
+          const context = canvas.getContext("2d");
+          if (context) {
+            context.drawImage(bitmap, 0, 0);
+            const toWebp = (quality: number) =>
+              new Promise<Blob | null>((resolve) =>
+                canvas.toBlob((blob) => resolve(blob), "image/webp", quality)
+              );
+            let quality = 0.86;
+            let webpBlob = await toWebp(quality);
+            while (webpBlob && webpBlob.size > 900 * 1024 && quality > 0.56) {
+              quality -= 0.08;
+              webpBlob = await toWebp(quality);
+            }
+            if (webpBlob) {
+              uploadFile = new File([webpBlob], `${file.name.replace(/\.[^.]+$/, "")}.webp`, {
+                type: "image/webp",
+              });
+            }
+          }
+        } catch {
+          uploadFile = file;
+        }
+      }
+
+      const fd = new FormData();
+      fd.set("firmId", firmId);
+      fd.set("file", uploadFile);
+      const res = await withTimeout(uploadFirmBlogCoverImage(fd), 45000);
+      if (!res.ok) {
+        setMessage(res.error);
+        return null;
+      }
+      setCoverUrl(res.url);
+      return res.url;
+    } catch {
+      setMessage("Görsel yüklenemedi veya zaman aşımına uğradı. Daha küçük bir görsel ile tekrar deneyin.");
+      return null;
     }
   };
 
@@ -662,55 +723,16 @@ export function FirmBlogEditorForm({
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
+                        setCoverPendingFile(file);
                         if (coverLocalPreview) URL.revokeObjectURL(coverLocalPreview);
                         const nextPreview = URL.createObjectURL(file);
                         setCoverLocalPreview(nextPreview);
                         setCoverUploading(true);
                         setMessage(null);
                         try {
-                          let uploadFile: File = file;
-                          if (file.type.startsWith("image/")) {
-                            try {
-                              const bitmap = await createImageBitmap(file);
-                              const canvas = document.createElement("canvas");
-                              const maxSide = 1600;
-                              const ratio = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-                              canvas.width = Math.max(1, Math.round(bitmap.width * ratio));
-                              canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
-                              const context = canvas.getContext("2d");
-                              if (context) {
-                                context.drawImage(bitmap, 0, 0);
-                                const toWebp = (quality: number) =>
-                                  new Promise<Blob | null>((resolve) =>
-                                    canvas.toBlob((blob) => resolve(blob), "image/webp", quality)
-                                  );
-                                let quality = 0.86;
-                                let webpBlob = await toWebp(quality);
-                                while (webpBlob && webpBlob.size > 900 * 1024 && quality > 0.56) {
-                                  quality -= 0.08;
-                                  webpBlob = await toWebp(quality);
-                                }
-                                if (webpBlob) {
-                                  uploadFile = new File(
-                                    [webpBlob],
-                                    `${file.name.replace(/\.[^.]+$/, "")}.webp`,
-                                    { type: "image/webp" }
-                                  );
-                                }
-                              }
-                            } catch {
-                              uploadFile = file;
-                            }
-                          }
-                          const fd = new FormData();
-                          fd.set("firmId", firmId);
-                          fd.set("file", uploadFile);
-                          const res = await withTimeout(uploadFirmBlogCoverImage(fd), 25000);
-                          if (!res.ok) {
-                            setMessage(res.error);
-                            return;
-                          }
-                          setCoverUrl(res.url);
+                          const uploaded = await uploadCoverFile(file);
+                          if (!uploaded) return;
+                          setCoverPendingFile(null);
                         } catch {
                           setMessage(
                             "Görsel yüklenemedi veya zaman aşımına uğradı. Daha küçük bir görsel ile tekrar deneyin."
@@ -733,8 +755,12 @@ export function FirmBlogEditorForm({
                   <p className="text-xs text-[#1A1A1A]/55">
                     Önerilen ölçü: 1200 × 630. Yüklenen dosya otomatik URL ile eşlenir.
                   </p>
-                  <p className={`text-xs ${coverUrl ? "text-[#067647]" : "text-[#B42318]"}`}>
-                    Yayınlama için hero görsel zorunludur.
+                  <p className={`text-xs ${coverUrl ? "text-[#067647]" : coverPendingFile ? "text-[#9A6700]" : "text-[#B42318]"}`}>
+                    {coverUrl
+                      ? "Hero görsel hazır."
+                      : coverPendingFile
+                        ? "Görsel seçildi. Yayınlarken otomatik olarak tekrar yüklenecek."
+                        : "Yayınlama için hero görsel zorunludur."}
                   </p>
                   {coverAspectWarn ? (
                     <p className="text-xs text-[#9A6700]">{coverAspectWarn}</p>
@@ -1279,7 +1305,7 @@ export function FirmBlogEditorForm({
               <button
                 type="button"
                 onClick={() => save("published")}
-                disabled={isPending || hasHardError || !publishAt || !coverUrl}
+                disabled={isPending || hasHardError || !publishAt || (!coverUrl && !coverPendingFile)}
                 className="rounded-xl bg-[#0B3C5D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0A3552] disabled:opacity-60"
               >
                 Yayınla
