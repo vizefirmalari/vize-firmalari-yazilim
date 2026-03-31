@@ -117,6 +117,38 @@ function parseList(param: string | string[] | undefined): string[] {
     .filter(Boolean);
 }
 
+function firmMatchesQuery(r: FirmRow, rawQuery: string): boolean {
+  const needle = rawQuery.trim().toLocaleLowerCase("tr");
+  if (!needle) return true;
+
+  const inText =
+    r.name.toLocaleLowerCase("tr").includes(needle) ||
+    (r.description?.toLocaleLowerCase("tr").includes(needle) ?? false) ||
+    (r.short_description?.toLocaleLowerCase("tr").includes(needle) ?? false) ||
+    r.countries.some((c) => c.toLocaleLowerCase("tr").includes(needle));
+  if (inText) return true;
+
+  // Vize türü araması: kullanıcı "schengen", "öğrenci", "çalışma" vb. yazdığında
+  // ilgili uzmanlık bayrağı olan firmaları eşle.
+  const visaLabelMatch = SPECIALIZATION_OPTIONS.some(({ key, label }) => {
+    if (!Boolean((r as unknown as Record<string, unknown>)[key])) return false;
+    return label.toLocaleLowerCase("tr").includes(needle);
+  });
+  if (visaLabelMatch) return true;
+
+  // Anahtar kelime label'i tam eşleşmiyorsa token bazlı gevşek eşle.
+  const tokens = needle.split(/\s+/).filter(Boolean);
+  if (tokens.length > 0) {
+    return SPECIALIZATION_OPTIONS.some(({ key, label }) => {
+      if (!Boolean((r as unknown as Record<string, unknown>)[key])) return false;
+      const normalized = label.toLocaleLowerCase("tr");
+      return tokens.some((t) => normalized.includes(t));
+    });
+  }
+
+  return false;
+}
+
 export function parseFirmFilters(searchParams: {
   [key: string]: string | string[] | undefined;
 }): FirmFilters {
@@ -153,14 +185,7 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
   let out = [...rows];
 
   if (f.q) {
-    const needle = f.q.toLocaleLowerCase("tr");
-    out = out.filter(
-      (r) =>
-        r.name.toLocaleLowerCase("tr").includes(needle) ||
-        (r.description &&
-          r.description.toLocaleLowerCase("tr").includes(needle)) ||
-        r.countries.some((c) => c.toLocaleLowerCase("tr").includes(needle))
-    );
+    out = out.filter((r) => firmMatchesQuery(r, f.q));
   }
 
   if (f.countries.length > 0) {
@@ -249,14 +274,6 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
 
   let query = supabase.from("firms").select("*").eq("status", "published");
 
-  if (filters.q) {
-    const safe = filters.q.replace(/,/g, " ").trim();
-    if (safe) {
-      const term = `%${safe}%`;
-      query = query.or(`name.ilike.${term},description.ilike.${term}`);
-    }
-  }
-
   if (filters.countries.length > 0) {
     query = query.overlaps("countries", filters.countries);
   }
@@ -342,6 +359,10 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
           Boolean((r as unknown as Record<string, unknown>)[key])
       );
     });
+  }
+
+  if (filters.q) {
+    rows = rows.filter((r) => firmMatchesQuery(r, filters.q));
   }
 
   const { data: hs } = await supabase

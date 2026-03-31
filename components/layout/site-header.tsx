@@ -30,7 +30,47 @@ function HeaderFallback({
     <header
       className={`sticky top-0 z-50 pt-[env(safe-area-inset-top,0px)] ${headerBarClass}`}
     >
-      <div className="container-shell flex min-h-13 items-center gap-2 py-2 sm:min-h-21 sm:gap-4 sm:py-3">
+      <div className="container-shell flex min-h-14 items-center gap-1.5 py-2 md:hidden">
+        <Link
+          href="/"
+          aria-label="Vize Firmaları — Ana sayfa"
+          className="group flex shrink-0 items-center gap-1.5 focus-visible:outline-none"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={SITE_HEADER_LOGO_URL}
+            alt=""
+            width={36}
+            height={36}
+            fetchPriority="high"
+            decoding="async"
+            aria-hidden
+            className="h-9 w-9 shrink-0 object-contain"
+          />
+          <span className="text-sm font-semibold tracking-tight text-primary max-[359px]:hidden">
+            Vize Firmaları
+          </span>
+        </Link>
+        <HeaderSearchForm
+          hiddenParams={hiddenParams}
+          defaultValue={searchValue}
+          inputId="header-search-mobile-inline"
+          className="min-w-0 flex-1"
+          placeholder="Ara..."
+          compact
+        />
+        <Link
+          href="/giris"
+          aria-label="Hesap"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-white text-primary"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+            <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.3 0-6 1.8-6 4v1h12v-1c0-2.2-2.7-4-6-4Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+      </div>
+
+      <div className="container-shell hidden min-h-13 items-center gap-2 py-2 sm:min-h-21 sm:gap-4 sm:py-3 md:flex">
         <Link
           href="/"
           aria-label="Vize Firmaları — Ana sayfa"
@@ -78,13 +118,6 @@ function HeaderFallback({
           </Link>
         </nav>
       </div>
-      <div className="container-shell border-t border-border/40 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-2 md:hidden">
-        <HeaderSearchForm
-          hiddenParams={hiddenParams}
-          defaultValue={searchValue}
-          inputId="header-search-mobile"
-        />
-      </div>
     </header>
   );
 }
@@ -113,7 +146,47 @@ async function SiteHeaderAsync({
     <header
       className={`sticky top-0 z-50 pt-[env(safe-area-inset-top,0px)] ${headerBarClass}`}
     >
-      <div className="container-shell flex min-h-13 items-center gap-2 py-2 sm:min-h-21 sm:gap-4 sm:py-3">
+      <div className="container-shell flex min-h-14 items-center gap-1.5 py-2 md:hidden">
+        <Link
+          href="/"
+          aria-label="Vize Firmaları — Ana sayfa"
+          className="group flex shrink-0 items-center gap-1.5 focus-visible:outline-none"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={SITE_HEADER_LOGO_URL}
+            alt=""
+            width={36}
+            height={36}
+            fetchPriority="high"
+            decoding="async"
+            aria-hidden
+            className="h-9 w-9 shrink-0 object-contain"
+          />
+          <span className="text-sm font-semibold tracking-tight text-primary max-[359px]:hidden">
+            Vize Firmaları
+          </span>
+        </Link>
+        <HeaderSearchForm
+          hiddenParams={hiddenParams}
+          defaultValue={searchValue}
+          inputId="header-search-mobile-inline"
+          className="min-w-0 flex-1"
+          placeholder="Ara..."
+          compact
+        />
+        <Link
+          href={navUser ? "/hesabim" : "/giris"}
+          aria-label={navUser ? "Profil" : "Giriş yap"}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-white text-primary"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+            <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.3 0-6 1.8-6 4v1h12v-1c0-2.2-2.7-4-6-4Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+      </div>
+
+      <div className="container-shell hidden min-h-13 items-center gap-2 py-2 sm:min-h-21 sm:gap-4 sm:py-3 md:flex">
         <Link
           href="/"
           aria-label="Vize Firmaları — Ana sayfa"
@@ -162,14 +235,6 @@ async function SiteHeaderAsync({
             <span className="hidden sm:inline">Firma Ekle</span>
           </Link>
         </nav>
-      </div>
-
-      <div className="container-shell border-t border-border/40 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-2 md:hidden">
-        <HeaderSearchForm
-          hiddenParams={hiddenParams}
-          defaultValue={searchValue}
-          inputId="header-search-mobile"
-        />
       </div>
     </header>
   );
