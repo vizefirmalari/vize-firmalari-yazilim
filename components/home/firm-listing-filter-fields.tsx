@@ -8,6 +8,7 @@ import {
   REGIONS,
   resolvePopularCountryRows,
 } from "@/lib/firma/coverage-catalog";
+import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -107,7 +108,7 @@ function RangePair({
   );
 }
 
-function toggleListItem(list: string[], item: string, checked: boolean) {
+function toggleListItem<T extends string>(list: T[], item: T, checked: boolean): T[] {
   if (checked) return list.includes(item) ? list : [...list, item];
   return list.filter((x) => x !== item);
 }
@@ -198,7 +199,7 @@ function CountryFullListBlock({
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
-        Ülke Seçimi
+        Tüm Ülkeler
       </p>
       <input
         type="search"
@@ -252,8 +253,6 @@ type FilterFieldsProps = {
   onChange: (next: AppliedListingFilters) => void;
   bounds: ListingRangeBounds;
   countryOptions: string[];
-  serviceOptions: string[];
-  companyTypeOptions: string[];
   collapsible?: boolean;
 };
 
@@ -262,8 +261,6 @@ export function FirmListingFilterFields({
   onChange,
   bounds,
   countryOptions,
-  serviceOptions,
-  companyTypeOptions,
   collapsible = false,
 }: FilterFieldsProps) {
   const patch = (partial: Partial<AppliedListingFilters>) =>
@@ -318,62 +315,32 @@ export function FirmListingFilterFields({
     </div>
   );
 
-  const serviceBlock = (
-    <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
-      {serviceOptions.map((s) => (
+  const visaTypeBlock = (
+    <div className="space-y-2">
+      {SPECIALIZATION_OPTIONS.map(({ key, label }) => (
         <label
-          key={s}
+          key={key}
           className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
         >
           <input
             type="checkbox"
-            checked={draft.services.includes(s)}
+            checked={draft.visaTypes.includes(key)}
             onChange={(e) =>
               patch({
-                services: toggleListItem(
-                  draft.services,
-                  s,
+                visaTypes: toggleListItem(
+                  draft.visaTypes,
+                  key,
                   e.target.checked
                 ),
               })
             }
             className="accent-primary"
           />
-          <span className="truncate">{s}</span>
+          <span>{label}</span>
         </label>
       ))}
     </div>
   );
-
-  const companyBlock =
-    companyTypeOptions.length === 0 ? (
-      <p className="text-xs text-foreground/55">Firma türü seçeneği bulunamadı.</p>
-    ) : (
-      <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
-        {companyTypeOptions.map((t) => (
-          <label
-            key={t}
-            className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
-          >
-            <input
-              type="checkbox"
-              checked={draft.companyTypes.includes(t)}
-              onChange={(e) =>
-                patch({
-                  companyTypes: toggleListItem(
-                    draft.companyTypes,
-                    t,
-                    e.target.checked
-                  ),
-                })
-              }
-              className="accent-primary"
-            />
-            <span className="truncate">{t}</span>
-          </label>
-        ))}
-      </div>
-    );
 
   const trustBlock = (
     <div className="space-y-2">
@@ -563,8 +530,7 @@ export function FirmListingFilterFields({
     return (
       <>
         <Collapsible title="Ülke / Bölge Seçimi">{coverageGroup}</Collapsible>
-        <Collapsible title="Hizmet Türü">{serviceBlock}</Collapsible>
-        <Collapsible title="Firma Türü">{companyBlock}</Collapsible>
+        <Collapsible title="Vize Türü">{visaTypeBlock}</Collapsible>
         <Collapsible title="Kurumsallık & Yasal Yapı">{trustBlock}</Collapsible>
         <Collapsible title="Hizmet Biçimi">{serviceModeBlock}</Collapsible>
         <Collapsible title="Dil & Profesyonellik">{langBlock}</Collapsible>
@@ -586,13 +552,8 @@ export function FirmListingFilterFields({
       </div>
 
       <div>
-        <p className="text-sm font-semibold text-foreground">Hizmet Türü</p>
-        <div className="mt-3">{serviceBlock}</div>
-      </div>
-
-      <div>
-        <p className="text-sm font-semibold text-foreground">Firma Türü</p>
-        <div className="mt-3">{companyBlock}</div>
+        <p className="text-sm font-semibold text-foreground">Vize Türü</p>
+        <div className="mt-3">{visaTypeBlock}</div>
       </div>
 
       <div>

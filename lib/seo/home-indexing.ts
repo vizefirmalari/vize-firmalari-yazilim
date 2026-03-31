@@ -16,7 +16,7 @@ export function homePageShouldNoindex(sp: {
   const f = parseFirmFilters(sp);
   if (f.q.trim().length > 0) return true;
   if (f.countries.length > 0) return true;
-  if (f.services.length > 0) return true;
+  if (f.visaTypes.length > 0) return true;
   if (f.sort !== "hype_desc") return true;
 
   return false;

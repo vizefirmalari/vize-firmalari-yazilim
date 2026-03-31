@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { DEFAULT_COUNTRIES, SERVICE_OPTIONS } from "@/lib/constants";
+import { DEFAULT_COUNTRIES } from "@/lib/constants";
 import {
   applyListingFilters,
   computeRangeBounds,
@@ -16,16 +16,15 @@ import type { FirmRow, FirmSort } from "@/lib/types/firm";
 import { FirmCard } from "@/components/home/firm-card";
 import { FirmFilterBottomSheet, FirmSortBottomSheet } from "@/components/home/firm-listing-sheets";
 import { FirmListingFilterFields } from "@/components/home/firm-listing-filter-fields";
+import { specializationKeyFromLabel, type SpecializationKey } from "@/lib/constants/firm-specializations";
 
 type Props = {
   initialFirms: FirmRow[];
   initialCountries?: string[];
-  initialServices?: string[];
+  initialVisaTypes?: string[];
   initialSort?: FirmSort;
   query?: string;
   countryList?: string[];
-  serviceOptions?: string[];
-  companyTypeOptions?: string[];
   featuredTitle?: string;
   featuredSubtitle?: string;
 };
@@ -33,15 +32,17 @@ type Props = {
 function buildApplied(
   bounds: ReturnType<typeof computeRangeBounds>,
   countries: string[],
-  services: string[]
+  visaTypes: string[]
 ): AppliedListingFilters {
+  const normalizedVisaTypes = visaTypes
+    .map((v) => specializationKeyFromLabel(v) ?? (v as SpecializationKey))
+    .filter(Boolean);
   return {
     coverage: {
       regionIds: [],
       countries: [...countries],
     },
-    services: [...services],
-    companyTypes: [],
+    visaTypes: [...new Set(normalizedVisaTypes)],
     trust: {
       requireTaxCertificate: false,
       requireLicense: false,
@@ -71,12 +72,10 @@ function buildApplied(
 export function FirmsListing({
   initialFirms,
   initialCountries = [],
-  initialServices = [],
+  initialVisaTypes = [],
   initialSort = "hype_desc",
   query = "",
   countryList,
-  serviceOptions,
-  companyTypeOptions = [],
   featuredTitle = "Öne Çıkan Vize Firmaları",
   featuredSubtitle = "Doğrulanmış firmaları karşılaştırın, iletişime geçin ve güvenle başvurun.",
 }: Props) {
@@ -87,27 +86,27 @@ export function FirmsListing({
   );
 
   const [appliedFilters, setAppliedFilters] = useState<AppliedListingFilters>(
-    () => buildApplied(bounds, initialCountries, initialServices)
+    () => buildApplied(bounds, initialCountries, initialVisaTypes)
   );
   const [sort, setSort] = useState<FirmSort>(initialSort);
 
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [sortSheetOpen, setSortSheetOpen] = useState(false);
   const [filterDraft, setFilterDraft] = useState<AppliedListingFilters>(
-    () => buildApplied(bounds, initialCountries, initialServices)
+    () => buildApplied(bounds, initialCountries, initialVisaTypes)
   );
 
   const urlKey = useMemo(
     () =>
-      `${initialCountries.join(",")}|${initialServices.join(",")}|${initialSort}`,
-    [initialCountries, initialServices, initialSort]
+      `${initialCountries.join(",")}|${initialVisaTypes.join(",")}|${initialSort}`,
+    [initialCountries, initialVisaTypes, initialSort]
   );
 
   useEffect(() => {
-    setAppliedFilters(buildApplied(bounds, initialCountries, initialServices));
+    setAppliedFilters(buildApplied(bounds, initialCountries, initialVisaTypes));
     setSort(initialSort);
     // Yalnızca URL / sunucu filtre senkronu; firms realtime ile bounds değişince sıfırlanmaz.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- bounds, initialCountries, initialServices, initialSort: urlKey ile birlikte güncellenir
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bounds, initialCountries, initialVisaTypes, initialSort: urlKey ile birlikte güncellenir
   }, [urlKey]);
 
   useEffect(() => {
@@ -133,11 +132,6 @@ export function FirmsListing({
 
   const countriesSource =
     countryList && countryList.length > 0 ? countryList : DEFAULT_COUNTRIES;
-  const servicesSource =
-    serviceOptions && serviceOptions.length > 0
-      ? serviceOptions
-      : [...SERVICE_OPTIONS];
-
   const filtered = useMemo(
     () =>
       applyListingFilters(initialFirms, appliedFilters, bounds, query),
@@ -212,8 +206,6 @@ export function FirmsListing({
               onChange={setAppliedFilters}
               bounds={bounds}
               countryOptions={countriesSource}
-              serviceOptions={servicesSource}
-              companyTypeOptions={companyTypeOptions}
             />
           </div>
 
@@ -268,8 +260,6 @@ export function FirmsListing({
         onChange={setFilterDraft}
         bounds={bounds}
         countryOptions={countriesSource}
-        serviceOptions={servicesSource}
-        companyTypeOptions={companyTypeOptions}
         resultCount={previewCount}
         onApply={applyFilterSheet}
         onClear={clearFilterDraft}

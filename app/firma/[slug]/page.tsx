@@ -12,6 +12,10 @@ import { FirmPrimaryLeftCta } from "@/components/firma/firm-primary-left-cta";
 import { FirmServiceScope } from "@/components/firma/firm-service-scope";
 import { SectionReveal } from "@/components/home/section-reveal";
 import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
+import {
+  normalizeLegacyServiceLabels,
+  SPECIALIZATION_OPTIONS,
+} from "@/lib/constants/firm-specializations";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -65,21 +69,14 @@ export default async function FirmaPage({ params }: PageProps) {
     (Array.isArray(firm.main_services) && firm.main_services.length
       ? firm.main_services
       : firm.services) ?? [];
-  const subServices = Array.isArray(firm.sub_services) ? firm.sub_services : [];
-  const customServices = Array.isArray(firm.custom_services) ? firm.custom_services : [];
+  const subServices = normalizeLegacyServiceLabels(
+    Array.isArray(firm.sub_services) ? firm.sub_services : []
+  );
+  const customServices = normalizeLegacyServiceLabels(
+    Array.isArray(firm.custom_services) ? firm.custom_services : []
+  );
 
-  const specializationLabels: { key: string; label: string }[] = [
-    { key: "schengen_expert", label: "Schengen Vizesi" },
-    { key: "usa_visa_expert", label: "ABD Vize Uzmanı" },
-    { key: "student_visa_support", label: "Öğrenci Desteği" },
-    { key: "work_visa_support", label: "Çalışma Vizesi" },
-    { key: "tourist_visa_support", label: "Turistik Vize" },
-    { key: "business_visa_support", label: "İş / Ticari Vize" },
-    { key: "family_reunion_support", label: "Aile Birleşimi" },
-    { key: "appeal_support", label: "İtiraz / Red Sonrası" },
-  ];
-
-  const specializationFlags = specializationLabels
+  const specializationFlags = SPECIALIZATION_OPTIONS
     .filter((s) => Boolean((firm as unknown as Record<string, unknown>)[s.key]))
     .map((s) => s.label);
 

@@ -20,6 +20,7 @@ import {
   effectiveFirmCategoryLabel,
   orderedServiceLabelsForCardSummary,
 } from "@/lib/firma/listing-filter-options";
+import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -63,17 +64,9 @@ export function FirmCard({ firm }: FirmCardProps) {
 
   const specializationLabels = useMemo(() => {
     const f = firm as unknown as Record<string, unknown>;
-    const pairs: Array<[string, string]> = [
-      ["schengen_expert", "Schengen Vizesi"],
-      ["usa_visa_expert", "ABD Vize Uzmanı"],
-      ["student_visa_support", "Öğrenci Desteği"],
-      ["work_visa_support", "Çalışma Vizesi"],
-      ["tourist_visa_support", "Turistik Vize"],
-      ["business_visa_support", "İş / Ticari Vize"],
-      ["family_reunion_support", "Aile Birleşimi"],
-      ["appeal_support", "İtiraz / Red Sonrası"],
-    ];
-    return pairs.filter(([key]) => Boolean(f[key])).map(([, label]) => label);
+    return SPECIALIZATION_OPTIONS.filter(({ key }) => Boolean(f[key])).map(
+      ({ label }) => label
+    );
   }, [firm]);
 
   /**

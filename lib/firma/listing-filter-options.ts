@@ -1,4 +1,5 @@
 import type { FirmRow } from "@/lib/types/firm";
+import { normalizeLegacyServiceLabel } from "@/lib/constants/firm-specializations";
 
 /**
  * Kimlik > Sınıflandırma > Firma türü (`firm_category`), eski kayıtlar için `company_type`.
@@ -18,7 +19,8 @@ export function orderedServiceLabelsForCardSummary(f: FirmRow): string[] {
   const add = (arr: string[] | null | undefined) => {
     if (!Array.isArray(arr)) return;
     for (const s of arr) {
-      const t = typeof s === "string" ? s.trim() : "";
+      const t =
+        typeof s === "string" ? normalizeLegacyServiceLabel(s) : "";
       if (t && !seen.has(t)) {
         seen.add(t);
         out.push(t);
@@ -43,7 +45,8 @@ export function collectAllServiceLabelsFromFirm(f: FirmRow): string[] {
   ]) {
     if (!Array.isArray(list)) continue;
     for (const s of list) {
-      const t = typeof s === "string" ? s.trim() : "";
+      const t =
+        typeof s === "string" ? normalizeLegacyServiceLabel(s) : "";
       if (t) out.add(t);
     }
   }

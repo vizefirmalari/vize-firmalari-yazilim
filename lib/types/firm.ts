@@ -154,6 +154,6 @@ export type FirmSort =
 export type FirmFilters = {
   q: string;
   countries: string[];
-  services: string[];
+  visaTypes: string[];
   sort: FirmSort;
 };

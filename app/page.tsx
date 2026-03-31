@@ -5,19 +5,11 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getFirms, parseFirmFilters } from "@/lib/data/firms";
 import {
-  mergePublicServiceFilterOptions,
-  SERVICE_OPTIONS,
-} from "@/lib/constants";
-import {
-  mergeCompanyTypeFilterOptions,
   mergeCountryFilterOptionsFromFirms,
-  mergeServiceFilterOptionsWithFirms,
 } from "@/lib/firma/listing-filter-options";
 import {
   getHomepageSettings,
-  getPublicFilterCompanyTypes,
   getPublicFilterCountries,
-  getPublicFilterServiceTypes,
 } from "@/lib/data/public-cms";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
@@ -74,36 +66,19 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const listingFirms = await getFirms({
     q: filters.q,
     countries: filters.countries,
-    services: filters.services,
+    visaTypes: filters.visaTypes,
     sort: filters.sort,
   });
 
   const cms = await getHomepageSettings();
   const dbCountries = await getPublicFilterCountries();
-  const dbServices = await getPublicFilterServiceTypes();
-
-  const serviceNamesFromDb = dbServices.length
-    ? [...dbServices]
-        .sort((a, b) => a.sort_order - b.sort_order)
-        .map((s) => s.name)
-    : [];
-  const serviceNames = mergeServiceFilterOptionsWithFirms(
-    mergePublicServiceFilterOptions(serviceNamesFromDb, SERVICE_OPTIONS),
-    listingFirms
-  );
-
-  const dbCompanyTypes = await getPublicFilterCompanyTypes();
-  const companyTypeOptions = mergeCompanyTypeFilterOptions(
-    dbCompanyTypes.map((c) => c.name),
-    listingFirms
-  );
 
   const hiddenParams: Record<string, string> = {};
   if (filters.countries.length) {
     hiddenParams.countries = filters.countries.join(",");
   }
-  if (filters.services.length) {
-    hiddenParams.services = filters.services.join(",");
+  if (filters.visaTypes.length) {
+    hiddenParams.visaTypes = filters.visaTypes.join(",");
   }
   if (filters.sort !== "hype_desc") {
     hiddenParams.sort = filters.sort;
@@ -138,12 +113,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <FirmsListing
           initialFirms={listingFirms}
           initialCountries={filters.countries}
-          initialServices={filters.services}
+          initialVisaTypes={filters.visaTypes}
           initialSort={filters.sort}
           query={filters.q}
           countryList={countryListForListing}
-          serviceOptions={serviceNames}
-          companyTypeOptions={companyTypeOptions}
           featuredTitle={
             cms?.featured_section_title?.trim() || undefined
           }

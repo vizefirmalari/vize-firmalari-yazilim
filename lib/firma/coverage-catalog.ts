@@ -56,32 +56,9 @@ export type PopularCountryRow = { label: string; value: string };
 type PopularRowDef = { label: string; match: (n: string) => boolean };
 
 const POPULAR_ROW_DEFS: PopularRowDef[] = [
-  {
-    label: "ABD",
-    match: (n) =>
-      (n.includes("amerika") && n.includes("birlesik")) ||
-      n.includes("abd") ||
-      n === "usa",
-  },
-  {
-    label: "İngiltere",
-    match: (n) => n.includes("ingiltere") || n.includes("birlesik krallik"),
-  },
-  { label: "Kanada", match: (n) => n.includes("kanada") },
   { label: "Almanya", match: (n) => n.includes("almanya") },
+  { label: "Yunanistan", match: (n) => n.includes("yunanistan") },
   { label: "Fransa", match: (n) => n.includes("fransa") },
-  { label: "İtalya", match: (n) => n.includes("italya") },
-  { label: "Avustralya", match: (n) => n.includes("avustralya") },
-  { label: "Rusya", match: (n) => n.includes("rusya") },
-  {
-    label: "Çin",
-    match: (n) =>
-      (n.includes("cin") && !n.includes("guney") && !n.includes("kuzey")) ||
-      n.includes("china"),
-  },
-  { label: "Japonya", match: (n) => n.includes("japonya") },
-  { label: "Brezilya", match: (n) => n.includes("brezilya") },
-  { label: "Katar", match: (n) => n.includes("katar") },
   {
     label: "BAE (Dubai)",
     match: (n) =>
@@ -90,6 +67,26 @@ const POPULAR_ROW_DEFS: PopularRowDef[] = [
       n.includes("dubai") ||
       n === "bae",
   },
+  { label: "Katar", match: (n) => n.includes("katar") },
+  {
+    label: "Amerika",
+    match: (n) =>
+      (n.includes("amerika") && n.includes("birlesik")) ||
+      n.includes("abd") ||
+      n === "usa",
+  },
+  { label: "Belçika", match: (n) => n.includes("belcika") },
+  {
+    label: "İngiltere",
+    match: (n) => n.includes("ingiltere") || n.includes("birlesik krallik"),
+  },
+  { label: "Kanada", match: (n) => n.includes("kanada") },
+  { label: "Hollanda", match: (n) => n.includes("hollanda") },
+  { label: "İtalya", match: (n) => n.includes("italya") },
+  { label: "Avustralya", match: (n) => n.includes("avustralya") },
+  { label: "İsviçre", match: (n) => n.includes("isvicre") },
+  { label: "İspanya", match: (n) => n.includes("ispanya") },
+  { label: "Avusturya", match: (n) => n.includes("avusturya") },
 ];
 
 /**

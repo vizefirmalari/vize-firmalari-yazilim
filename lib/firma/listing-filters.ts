@@ -1,9 +1,9 @@
 import type { FirmRow, FirmSort } from "@/lib/types/firm";
 import { firmMatchesCoverageSelection } from "@/lib/firma/coverage-catalog";
 import {
-  collectAllServiceLabelsFromFirm,
-  effectiveFirmCategoryLabel,
-} from "@/lib/firma/listing-filter-options";
+  SPECIALIZATION_OPTIONS,
+  type SpecializationKey,
+} from "@/lib/constants/firm-specializations";
 
 export function hypeValue(f: FirmRow): number {
   return f.hype_score ?? f.raw_hype_score * 100;
@@ -70,8 +70,7 @@ export type YearPreset = null | "recent" | "vintage";
 
 export type AppliedListingFilters = {
   coverage: CoverageSelection;
-  services: string[];
-  companyTypes: string[];
+  visaTypes: SpecializationKey[];
   trust: TrustFilterFlags;
   serviceMode: ServiceModeFlags;
   languagePro: LanguageProFlags;
@@ -167,13 +166,13 @@ export function applyListingFilters(
   return firms.filter((firm) => {
     if (!firmMatchesCoverageSelection(firm, f.coverage)) return false;
 
-    if (f.services.length > 0) {
-      const labels = new Set(collectAllServiceLabelsFromFirm(firm));
-      if (!f.services.some((s) => labels.has(s))) return false;
-    }
-    if (f.companyTypes.length > 0) {
-      const ct = effectiveFirmCategoryLabel(firm);
-      if (!ct || !f.companyTypes.includes(ct)) return false;
+    if (f.visaTypes.length > 0) {
+      const active = new Set(
+        SPECIALIZATION_OPTIONS.filter(({ key }) =>
+          Boolean((firm as unknown as Record<string, unknown>)[key])
+        ).map(({ key }) => key)
+      );
+      if (!f.visaTypes.some((key) => active.has(key))) return false;
     }
     if (!passesTrust(firm, f.trust)) return false;
     if (!passesServiceMode(firm, f.serviceMode)) return false;

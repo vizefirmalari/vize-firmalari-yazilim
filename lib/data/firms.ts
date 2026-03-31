@@ -1,7 +1,11 @@
 import type { FirmFilters, FirmRow, FirmSort } from "@/lib/types/firm";
-import { collectAllServiceLabelsFromFirm } from "@/lib/firma/listing-filter-options";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/env";
+import {
+  specializationKeyFromLabel,
+  SPECIALIZATION_OPTIONS,
+  type SpecializationKey,
+} from "@/lib/constants/firm-specializations";
 
 const MOCK_FIRMS: FirmRow[] = [
   {
@@ -129,10 +133,18 @@ export function parseFirmFilters(searchParams: {
         ? searchParams.sort[0]
         : undefined
   );
+  const visaTypesRaw = parseList(searchParams.visaTypes);
+  const legacyServicesRaw = parseList(searchParams.services);
+  const visaTypes =
+    visaTypesRaw.length > 0
+      ? visaTypesRaw
+      : legacyServicesRaw
+          .map((s) => specializationKeyFromLabel(s))
+          .filter((s): s is SpecializationKey => Boolean(s));
   return {
     q,
     countries: parseList(searchParams.countries),
-    services: parseList(searchParams.services),
+    visaTypes,
     sort,
   };
 }
@@ -157,10 +169,18 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
     );
   }
 
-  if (f.services.length > 0) {
+  if (f.visaTypes.length > 0) {
+    const selected = new Set<SpecializationKey>(
+      f.visaTypes
+        .map((v) => specializationKeyFromLabel(v) ?? (v as SpecializationKey))
+        .filter(Boolean)
+    );
     out = out.filter((r) => {
-      const labels = new Set(collectAllServiceLabelsFromFirm(r));
-      return f.services.some((s) => labels.has(s));
+      return SPECIALIZATION_OPTIONS.some(
+        ({ key }) =>
+          selected.has(key) &&
+          Boolean((r as unknown as Record<string, unknown>)[key])
+      );
     });
   }
 
@@ -309,10 +329,18 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
     has_active_panel_member: panelSet.has(r.id),
   }));
 
-  if (filters.services.length > 0) {
+  if (filters.visaTypes.length > 0) {
+    const selected = new Set<SpecializationKey>(
+      filters.visaTypes
+        .map((v) => specializationKeyFromLabel(v) ?? (v as SpecializationKey))
+        .filter(Boolean)
+    );
     rows = rows.filter((r) => {
-      const labels = new Set(collectAllServiceLabelsFromFirm(r));
-      return filters.services.some((s) => labels.has(s));
+      return SPECIALIZATION_OPTIONS.some(
+        ({ key }) =>
+          selected.has(key) &&
+          Boolean((r as unknown as Record<string, unknown>)[key])
+      );
     });
   }
 

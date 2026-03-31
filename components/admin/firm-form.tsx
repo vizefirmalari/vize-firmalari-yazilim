@@ -22,6 +22,7 @@ import {
   createInlineMainServiceCategory,
   createInlineSubService,
 } from "@/lib/actions/filters-admin";
+import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 
 type Option = { id: string; name: string };
 
@@ -1374,29 +1375,23 @@ export function FirmForm({
             Kurumsallık skorunu besleyen uzmanlık bayrakları.
           </p>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {(
-              [
-                ["schengen_expert", "Schengen vizesi"],
-                ["usa_visa_expert", "ABD vizesi uzmanı"],
-                ["student_visa_support", "Öğrenci vizesi"],
-                ["work_visa_support", "Çalışma vizesi"],
-                ["tourist_visa_support", "Turistik vize"],
-                ["business_visa_support", "İş ticari vize"],
-                ["family_reunion_support", "Aile birleşimi"],
-                ["appeal_support", "İtiraz / red sonrası"],
-              ] as const
-            ).map(([key, lab]) => (
+            {SPECIALIZATION_OPTIONS.map(({ key, label }) => (
               <label
                 key={key}
                 className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D]"
               >
                 <input
                   type="checkbox"
-                  checked={Boolean(form[key])}
-                  onChange={(e) => patch(key, e.target.checked)}
+                  checked={Boolean(form[key as keyof FirmFormState])}
+                  onChange={(e) =>
+                    patch(
+                      key as keyof FirmFormState,
+                      e.target.checked as FirmFormState[keyof FirmFormState]
+                    )
+                  }
                   className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
                 />
-                {lab}
+                {label}
               </label>
             ))}
           </div>

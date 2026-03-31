@@ -14,8 +14,6 @@ type FilterSheetProps = {
   onChange: (next: AppliedListingFilters) => void;
   bounds: ListingRangeBounds;
   countryOptions: string[];
-  serviceOptions: string[];
-  companyTypeOptions: string[];
   resultCount: number;
   onApply: () => void;
   onClear: () => void;
@@ -28,8 +26,6 @@ export function FirmFilterBottomSheet({
   onChange,
   bounds,
   countryOptions,
-  serviceOptions,
-  companyTypeOptions,
   resultCount,
   onApply,
   onClear,
@@ -86,8 +82,6 @@ export function FirmFilterBottomSheet({
             onChange={onChange}
             bounds={bounds}
             countryOptions={countryOptions}
-            serviceOptions={serviceOptions}
-            companyTypeOptions={companyTypeOptions}
           />
         </div>
 
