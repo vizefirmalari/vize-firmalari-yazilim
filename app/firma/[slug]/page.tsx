@@ -221,6 +221,13 @@ export default async function FirmaPage({ params }: PageProps) {
                         {firm.corporateness_score}/100
                       </span>
                     </span>
+                    {" · "}
+                    <span>
+                      Hype Puanı:{" "}
+                      <span className="font-semibold text-[#D9A441]">
+                        {typeof firm.hype_score === "number" ? firm.hype_score : 0}
+                      </span>
+                    </span>
                   </p>
                 </div>
               </div>

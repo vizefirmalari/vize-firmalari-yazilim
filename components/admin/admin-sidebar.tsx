@@ -15,6 +15,7 @@ const nav = [
   { href: "/admin/firm-panel", label: "Firma panel", icon: "▣" },
   { href: "/admin/filters/countries", label: "Ülkeler", icon: "⌖" },
   { href: "/admin/filters/services", label: "İşlem türleri", icon: "☰" },
+  { href: "/admin/blog-categories", label: "Blog kategorileri", icon: "✦" },
   { href: "/admin/homepage", label: "Ana sayfa", icon: "◇" },
   { href: "/admin/contact-popup", label: "İletişim popup", icon: "✉" },
 ];
