@@ -95,6 +95,78 @@ export async function getFeedItemsPage(
   return cached();
 }
 
+export async function getFirmFeedItems(
+  firmId: string,
+  firmSlug: string,
+  limit = 9
+): Promise<FeedItem[]> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return [];
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: posts } = await supabase
+    .from("firm_blog_posts")
+    .select(
+      "id,title,summary,cover_image_url,published_at,company_name,company_logo_url,slug,category_id"
+    )
+    .eq("firm_id", firmId)
+    .eq("status", "published")
+    .not("published_at", "is", null)
+    .order("published_at", { ascending: false })
+    .limit(limit);
+
+  const rows = posts ?? [];
+  if (rows.length === 0) return [];
+
+  const ids = rows.map((x) => String(x.id));
+  const { data: categories } = await supabase.from("blog_categories").select("id,name");
+  const categoryMap = new Map((categories ?? []).map((c) => [String(c.id), String(c.name)]));
+
+  const { data: likeRows } = await supabase.from("post_likes").select("post_id").in("post_id", ids);
+  const likeCountMap = new Map<string, number>();
+  for (const row of likeRows ?? []) {
+    const key = String(row.post_id);
+    likeCountMap.set(key, (likeCountMap.get(key) ?? 0) + 1);
+  }
+
+  let likedSet = new Set<string>();
+  if (user?.id) {
+    const { data: liked } = await supabase
+      .from("post_likes")
+      .select("post_id")
+      .eq("user_id", user.id)
+      .in("post_id", ids);
+    likedSet = new Set((liked ?? []).map((x) => String(x.post_id)));
+  }
+
+  return rows.map((row) => {
+    const postId = String(row.id);
+    return {
+      id: postId,
+      type: "blog",
+      company_name: String(row.company_name ?? ""),
+      company_logo: row.company_logo_url ? String(row.company_logo_url) : null,
+      company_slug: firmSlug,
+      title: String(row.title ?? ""),
+      description: String(row.summary ?? ""),
+      image_url: row.cover_image_url ? String(row.cover_image_url) : null,
+      created_at: String(row.published_at),
+      like_count: likeCountMap.get(postId) ?? 0,
+      is_liked: likedSet.has(postId),
+      target_url: `/firma/${firmSlug}/blog/${String(row.slug)}`,
+      category_name: row.category_id ? (categoryMap.get(String(row.category_id)) ?? null) : null,
+      score: 0,
+      engagement_score: 0,
+      hype_score: 0,
+      premium_score: 0,
+      admin_score: 0,
+    };
+  });
+}
+
 async function computeFeedPage(
   offset: number,
   limit: number,

@@ -12,6 +12,8 @@ import { FirmPrimaryLeftCta } from "@/components/firma/firm-primary-left-cta";
 import { FirmServiceScope } from "@/components/firma/firm-service-scope";
 import { SectionReveal } from "@/components/home/section-reveal";
 import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
+import { FirmFeedList } from "@/components/firma/firm-feed-list";
+import { getFirmFeedItems } from "@/lib/data/feed";
 import {
   normalizeLegacyServiceLabels,
   SPECIALIZATION_OPTIONS,
@@ -169,6 +171,7 @@ export default async function FirmaPage({ params }: PageProps) {
   const pageUrl = `${siteUrl}/firma/${firm.slug}`;
   const homeUrl = siteUrl.replace(/\/$/, "");
   const schemaGraph = buildFirmSchemaGraph(firm, pageUrl, homeUrl);
+  const firmFeedItems = await getFirmFeedItems(firm.id, firm.slug, 9);
 
   return (
     <>
@@ -231,12 +234,20 @@ export default async function FirmaPage({ params }: PageProps) {
                   </p>
                 </div>
               </div>
-              <Link
-                href="/#firmalar"
-                className="inline-flex shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15"
-              >
-                Tüm firmalar
-              </Link>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                <Link
+                  href="/#firmalar"
+                  className="order-1 inline-flex shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 sm:order-2"
+                >
+                  Tüm firmalar
+                </Link>
+                <Link
+                  href="#firmanin-akisi"
+                  className="order-2 inline-flex shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 sm:order-1"
+                >
+                  Firmanın Akışı
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -885,6 +896,29 @@ export default async function FirmaPage({ params }: PageProps) {
               ) : null}
             </aside>
           </div>
+        </div>
+
+        <div id="firmanin-akisi" className="mx-auto max-w-7xl scroll-mt-28 px-4 pb-14 sm:px-6 lg:px-8">
+          <SectionReveal delayMs={315}>
+            <section className="rounded-2xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-5 sm:p-6">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="text-xl font-semibold text-[#0B3C5D]">Firmanın Akışı</h2>
+              </div>
+
+              {firmFeedItems.length > 0 ? (
+                <FirmFeedList items={firmFeedItems} />
+              ) : (
+                <div className="rounded-2xl border border-dashed border-[#0B3C5D]/20 bg-white px-6 py-10 text-center">
+                  <p className="text-sm font-semibold text-[#0B3C5D]">
+                    Bu firma henüz paylaşım yapmadı.
+                  </p>
+                  <p className="mt-1 text-sm text-[#1A1A1A]/65">
+                    İlk yayınlar burada görünecek. Daha sonra tekrar kontrol edin.
+                  </p>
+                </div>
+              )}
+            </section>
+          </SectionReveal>
         </div>
       </article>
       <SiteFooter />
