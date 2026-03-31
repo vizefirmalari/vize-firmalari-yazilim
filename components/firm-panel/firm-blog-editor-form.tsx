@@ -41,6 +41,7 @@ type Props = {
     cta_buttons: unknown[];
     status: "draft" | "scheduled" | "published";
     scheduled_at: string | null;
+    published_at: string | null;
   } | null;
   firmCountries: string[];
   firmVisaTypes: string[];
@@ -140,8 +141,16 @@ export function FirmBlogEditorForm({
   const [coverUrl, setCoverUrl] = useState(initialPost?.cover_image_url ?? "");
   const [coverAlt, setCoverAlt] = useState(initialPost?.cover_image_alt ?? "");
   const [metaDescription, setMetaDescription] = useState(initialPost?.meta_description ?? "");
+  const [flowDescription, setFlowDescription] = useState(initialPost?.summary ?? "");
   const [scheduledAt, setScheduledAt] = useState(
     initialPost?.scheduled_at ? initialPost.scheduled_at.slice(0, 16) : ""
+  );
+  const [publishAt, setPublishAt] = useState(
+    initialPost?.published_at
+      ? initialPost.published_at.slice(0, 16)
+      : initialPost?.scheduled_at
+        ? initialPost.scheduled_at.slice(0, 16)
+        : new Date().toISOString().slice(0, 16)
   );
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(initialPost?.tags ?? []);
@@ -249,6 +258,7 @@ export function FirmBlogEditorForm({
   );
   const titleLen = title.trim().length;
   const metaLen = metaDescription.trim().length;
+  const flowLen = flowDescription.trim().length;
   const altLen = coverAlt.trim().length;
   const slugLen = slug.trim().length;
 
@@ -285,6 +295,7 @@ export function FirmBlogEditorForm({
     titleLen < 50 ||
     metaLen > 160 ||
     metaLen < 140 ||
+    flowLen > 150 ||
     altLen > 120 ||
     altLen < 50 ||
     slugLen > 75 ||
@@ -432,7 +443,7 @@ export function FirmBlogEditorForm({
         title,
         slug,
         categoryId,
-        summary: metaDescription,
+        summary: flowDescription,
         coverImageUrl: coverUrl,
         coverImageAlt: coverAlt,
         metaDescription,
@@ -444,6 +455,7 @@ export function FirmBlogEditorForm({
         relatedCountries,
         relatedVisaTypes,
         scheduledAt,
+        publishAt,
       });
       if (!res.ok) {
         setMessage(res.error);
@@ -556,6 +568,21 @@ export function FirmBlogEditorForm({
             />
             <p className={`mt-1 text-xs ${metaState === "error" ? "text-[#B42318]" : metaState === "warn" ? "text-[#9A6700]" : "text-[#067647]"}`}>
               Google arama sonuçlarında görünecek açıklama. Min 140, max 160; ideal 150-155. ({metaLen})
+            </p>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0B3C5D]/70">
+              Akış Açıklaması
+            </label>
+            <input
+              value={flowDescription}
+              onChange={(e) => setFlowDescription(e.target.value.slice(0, 150))}
+              placeholder="Akışta görünecek açıklama ilg çekici olmalı..."
+              className="mt-1.5 w-full rounded-xl border border-[#1A1A1A]/14 bg-white px-3 py-2.5 text-sm text-[#1A1A1A] outline-none focus:border-[#0B3C5D]/30"
+            />
+            <p className={`mt-1 text-xs ${flowLen > 150 ? "text-[#B42318]" : "text-[#1A1A1A]/55"}`}>
+              Akışta görünecek kısa açıklama. Blog yazısında gösterilmez. Maksimum 150 karakter. ({flowLen}/150)
             </p>
           </div>
 
@@ -1204,7 +1231,7 @@ export function FirmBlogEditorForm({
               <button
                 type="button"
                 onClick={() => save("published")}
-                disabled={isPending || hasHardError}
+                disabled={isPending || hasHardError || !publishAt}
                 className="rounded-xl bg-[#0B3C5D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0A3552] disabled:opacity-60"
               >
                 Yayınla
@@ -1213,24 +1240,30 @@ export function FirmBlogEditorForm({
           </div>
           <div className="w-full sm:w-72">
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0B3C5D]/70">
-              Planla (tarih/saat)
+              Yayınlanma zamanı (zorunlu)
             </label>
             <div className="mt-1.5 flex gap-2">
               <input
                 type="datetime-local"
-                value={scheduledAt}
-                onChange={(e) => setScheduledAt(e.target.value)}
+                value={publishAt}
+                onChange={(e) => {
+                  setPublishAt(e.target.value);
+                  setScheduledAt(e.target.value);
+                }}
                 className="w-full rounded-xl border border-[#1A1A1A]/14 px-3 py-2 text-sm outline-none focus:border-[#0B3C5D]/30"
               />
               <button
                 type="button"
                 onClick={() => save("scheduled")}
-                disabled={isPending || hasHardError}
+                disabled={isPending || hasHardError || !publishAt}
                 className="rounded-xl border border-[#0B3C5D]/16 bg-white px-3 py-2 text-sm font-semibold text-[#0B3C5D] hover:bg-[#F7F9FB] disabled:opacity-60"
               >
                 Planla
               </button>
             </div>
+            <p className={`mt-1 text-xs ${publishAt ? "text-[#1A1A1A]/58" : "text-[#B42318]"}`}>
+              Yayınla ve planla işlemleri için zorunludur.
+            </p>
           </div>
         </div>
         <p className="mt-2 text-xs text-[#1A1A1A]/58">

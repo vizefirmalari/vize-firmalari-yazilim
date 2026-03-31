@@ -209,9 +209,18 @@ export default async function BlogDetailPage({ params }: Props) {
                     {String(category.name)}
                   </span>
                 ) : null}
-                <span className="text-xs text-[#1A1A1A]/55">
-                  {post.published_at ? new Date(String(post.published_at)).toLocaleDateString("tr-TR") : ""}
-                </span>
+                {post.published_at ? (
+                  <span className="text-xs text-[#1A1A1A]/55">
+                    Yayınlanma tarihi:{" "}
+                    {new Date(String(post.published_at)).toLocaleString("tr-TR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                ) : null}
               </div>
               <h1 className="text-2xl font-bold tracking-tight text-[#0B3C5D] sm:text-3xl">{String(post.title)}</h1>
               <p className="text-sm leading-relaxed text-[#1A1A1A]/75">{String(post.meta_description ?? post.summary ?? "")}</p>

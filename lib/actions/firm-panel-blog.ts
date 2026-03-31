@@ -27,6 +27,7 @@ type SavePayload = {
   relatedVisaTypes: string[];
   ctaButtons: unknown[];
   scheduledAt?: string | null;
+  publishAt?: string | null;
 };
 
 function uniqueText(values: string[]): string[] {
@@ -66,7 +67,7 @@ export async function saveFirmBlogPost(
   const title = payload.title.trim();
   const slug = payload.slug.trim().toLowerCase();
   const categoryId = payload.categoryId.trim();
-  const summary = payload.metaDescription.trim();
+  const summary = payload.summary.trim();
   const metaDescription = payload.metaDescription.trim();
   const bodyRich = payload.bodyRich.trim();
   const bodyPlainText = payload.bodyPlainText.trim();
@@ -78,8 +79,8 @@ export async function saveFirmBlogPost(
   if (!title || title.length < 8) return { ok: false, error: "Başlık çok kısa." };
   if (!slug || slug.length < 3) return { ok: false, error: "Geçerli bir slug girin." };
   if (!categoryId) return { ok: false, error: "Kategori seçimi zorunlu." };
-  if (!summary || summary.length < 140 || summary.length > 160) {
-    return { ok: false, error: "Meta açıklama 140-160 karakter aralığında olmalı." };
+  if (summary.length > 150) {
+    return { ok: false, error: "Akış açıklaması en fazla 150 karakter olabilir." };
   }
   if (!bodyPlainText || bodyPlainText.length < 80) {
     return { ok: false, error: "İçerik gövdesi yeterli değil." };
@@ -105,18 +106,22 @@ export async function saveFirmBlogPost(
   }
 
   let scheduledAt: string | null = null;
-  if (payload.mode === "scheduled") {
-    if (!payload.scheduledAt?.trim()) {
-      return { ok: false, error: "Planlama için tarih/saat seçin." };
+  let publishedAt: string | null = null;
+  if (payload.mode === "scheduled" || payload.mode === "published") {
+    const rawPublishAt = payload.publishAt?.trim() || payload.scheduledAt?.trim() || "";
+    if (!rawPublishAt) {
+      return { ok: false, error: "Yayınlanma zamanı zorunlu." };
     }
-    const dt = new Date(payload.scheduledAt);
-    if (Number.isNaN(dt.getTime())) return { ok: false, error: "Geçersiz planlama tarihi." };
-    scheduledAt = dt.toISOString();
+    const dt = new Date(rawPublishAt);
+    if (Number.isNaN(dt.getTime())) return { ok: false, error: "Geçersiz yayınlanma zamanı." };
+    const iso = dt.toISOString();
+    if (payload.mode === "scheduled") scheduledAt = iso;
+    if (payload.mode === "published") publishedAt = iso;
   }
 
   const nowIso = new Date().toISOString();
   const status: SaveMode = payload.mode;
-  const publishedAt = status === "published" ? nowIso : null;
+  const finalPublishedAt = status === "published" ? (publishedAt ?? nowIso) : null;
   const finalScheduledAt = status === "scheduled" ? scheduledAt : null;
 
   const row = {
@@ -133,7 +138,7 @@ export async function saveFirmBlogPost(
     meta_description: metaDescription,
     status,
     scheduled_at: finalScheduledAt,
-    published_at: publishedAt,
+    published_at: finalPublishedAt,
     tags: uniqueText(payload.tags),
     faq_items: faqItems,
     faq_schema_json:

@@ -46,13 +46,14 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
     cta_buttons: unknown[];
     status: "draft" | "scheduled" | "published";
     scheduled_at: string | null;
+    published_at: string | null;
   } | null = null;
 
   if (postId) {
     const { data } = await supabase
       .from("firm_blog_posts")
       .select(
-        "id, title, slug, summary, cover_image_url, cover_image_alt, meta_description, body_rich, tags, category_id, faq_items, related_countries, related_visa_types, cta_buttons, status, scheduled_at"
+        "id, title, slug, summary, cover_image_url, cover_image_alt, meta_description, body_rich, tags, category_id, faq_items, related_countries, related_visa_types, cta_buttons, status, scheduled_at, published_at"
       )
       .eq("id", postId)
       .eq("firm_id", firmId)
@@ -81,6 +82,7 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
         cta_buttons: Array.isArray(data.cta_buttons) ? (data.cta_buttons as unknown[]) : [],
         status: (data.status as "draft" | "scheduled" | "published") ?? "draft",
         scheduled_at: data.scheduled_at ? String(data.scheduled_at) : null,
+        published_at: data.published_at ? String(data.published_at) : null,
       };
     }
   }
