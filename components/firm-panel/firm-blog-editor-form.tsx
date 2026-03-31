@@ -68,6 +68,21 @@ function toSlug(value: string): string {
     .slice(0, 75);
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("UPLOAD_TIMEOUT")), ms);
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
+}
+
 function ToolbarButton({
   onClick,
   active,
@@ -175,6 +190,7 @@ export function FirmBlogEditorForm({
   const [bodyPlainState, setBodyPlainState] = useState("");
   const [coverUploading, setCoverUploading] = useState(false);
   const [coverAspectWarn, setCoverAspectWarn] = useState<string | null>(null);
+  const [coverLocalPreview, setCoverLocalPreview] = useState<string>("");
 
   useEffect(() => {
     if (slugTouched) return;
@@ -202,6 +218,12 @@ export function FirmBlogEditorForm({
     img.onerror = () => setCoverAspectWarn(null);
     img.src = coverUrl;
   }, [coverUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (coverLocalPreview) URL.revokeObjectURL(coverLocalPreview);
+    };
+  }, [coverLocalPreview]);
 
   const editor = useEditor(
     {
@@ -630,6 +652,7 @@ export function FirmBlogEditorForm({
                   Hero görsel
                 </label>
                 <div className="mt-1.5 space-y-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-[#0B3C5D]/25 bg-[#F7F9FB] px-4 py-3 text-sm font-semibold text-[#0B3C5D] hover:bg-[#EEF2F6]">
                     <input
                       type="file"
@@ -639,52 +662,74 @@ export function FirmBlogEditorForm({
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
+                        if (coverLocalPreview) URL.revokeObjectURL(coverLocalPreview);
+                        const nextPreview = URL.createObjectURL(file);
+                        setCoverLocalPreview(nextPreview);
                         setCoverUploading(true);
-                        let uploadFile: File = file;
-                        if (file.type !== "image/webp") {
-                          try {
-                            const bitmap = await createImageBitmap(file);
-                            const canvas = document.createElement("canvas");
-                            canvas.width = bitmap.width;
-                            canvas.height = bitmap.height;
-                            const context = canvas.getContext("2d");
-                            if (context) {
-                              context.drawImage(bitmap, 0, 0);
-                              const webpBlob = await new Promise<Blob | null>((resolve) =>
-                                canvas.toBlob((blob) => resolve(blob), "image/webp", 0.88)
-                              );
-                              if (webpBlob) {
-                                uploadFile = new File(
-                                  [webpBlob],
-                                  `${file.name.replace(/\.[^.]+$/, "")}.webp`,
-                                  { type: "image/webp" }
-                                );
+                        setMessage(null);
+                        try {
+                          let uploadFile: File = file;
+                          if (file.type.startsWith("image/")) {
+                            try {
+                              const bitmap = await createImageBitmap(file);
+                              const canvas = document.createElement("canvas");
+                              const maxSide = 1600;
+                              const ratio = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+                              canvas.width = Math.max(1, Math.round(bitmap.width * ratio));
+                              canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
+                              const context = canvas.getContext("2d");
+                              if (context) {
+                                context.drawImage(bitmap, 0, 0);
+                                const toWebp = (quality: number) =>
+                                  new Promise<Blob | null>((resolve) =>
+                                    canvas.toBlob((blob) => resolve(blob), "image/webp", quality)
+                                  );
+                                let quality = 0.86;
+                                let webpBlob = await toWebp(quality);
+                                while (webpBlob && webpBlob.size > 900 * 1024 && quality > 0.56) {
+                                  quality -= 0.08;
+                                  webpBlob = await toWebp(quality);
+                                }
+                                if (webpBlob) {
+                                  uploadFile = new File(
+                                    [webpBlob],
+                                    `${file.name.replace(/\.[^.]+$/, "")}.webp`,
+                                    { type: "image/webp" }
+                                  );
+                                }
                               }
+                            } catch {
+                              uploadFile = file;
                             }
-                          } catch {
-                            uploadFile = file;
                           }
+                          const fd = new FormData();
+                          fd.set("firmId", firmId);
+                          fd.set("file", uploadFile);
+                          const res = await withTimeout(uploadFirmBlogCoverImage(fd), 25000);
+                          if (!res.ok) {
+                            setMessage(res.error);
+                            return;
+                          }
+                          setCoverUrl(res.url);
+                        } catch {
+                          setMessage(
+                            "Görsel yüklenemedi veya zaman aşımına uğradı. Daha küçük bir görsel ile tekrar deneyin."
+                          );
+                        } finally {
+                          setCoverUploading(false);
+                          e.currentTarget.value = "";
                         }
-                        const fd = new FormData();
-                        fd.set("firmId", firmId);
-                        fd.set("file", uploadFile);
-                        const res = await uploadFirmBlogCoverImage(fd);
-                        setCoverUploading(false);
-                        if (!res.ok) {
-                          setMessage(res.error);
-                          return;
-                        }
-                        setCoverUrl(res.url);
                       }}
                     />
                     {coverUploading ? "Yükleniyor..." : "Görsel yükle"}
                   </label>
-                  {coverUrl ? (
-                    <div className="overflow-hidden rounded-xl border border-[#1A1A1A]/12 bg-[#F8FAFC]">
+                  {(coverLocalPreview || coverUrl) ? (
+                    <div className="w-full overflow-hidden rounded-xl border border-[#1A1A1A]/12 bg-[#F8FAFC] sm:w-52">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={coverUrl} alt="" className="h-32 w-full object-cover" />
+                      <img src={coverLocalPreview || coverUrl} alt="" className="h-24 w-full object-contain" />
                     </div>
                   ) : null}
+                  </div>
                   <p className="text-xs text-[#1A1A1A]/55">
                     Önerilen ölçü: 1200 × 630. Yüklenen dosya otomatik URL ile eşlenir.
                   </p>
@@ -887,7 +932,7 @@ export function FirmBlogEditorForm({
                 type="button"
                 onClick={() =>
                   setFaqItems((prev) =>
-                    prev.length >= 8 ? prev : [...prev, { question: "", answer: "" }]
+                    prev.length >= 8 ? prev : [{ question: "", answer: "" }, ...prev]
                   )
                 }
                 className="rounded-lg border border-[#0B3C5D]/15 px-2.5 py-1 text-xs font-semibold text-[#0B3C5D]"
@@ -1004,7 +1049,7 @@ export function FirmBlogEditorForm({
             <div className="mt-2 overflow-hidden rounded-xl border border-[#1A1A1A]/10 bg-[#F8FAFC]">
               {coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={coverUrl} alt="" className="h-28 w-full object-cover" />
+                <img src={coverLocalPreview || coverUrl} alt="" className="h-28 w-full object-contain bg-[#EEF2F6]" />
               ) : null}
               <div className="space-y-1 p-3">
                 <p className="text-sm font-semibold text-[#0B3C5D]">{title || "Başlık önizlemesi"}</p>
