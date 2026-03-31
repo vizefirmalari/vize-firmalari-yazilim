@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type FeedItem = {
@@ -41,18 +40,6 @@ const WEIGHTS = {
   admin: 0.1,
 };
 
-function serializeQuery(query: FeedQuery): string {
-  return JSON.stringify({
-    category: query.category ?? "",
-    country: query.country ?? "",
-    type: query.type ?? "all",
-    visaType: query.visaType ?? "",
-    premium: Boolean(query.premium),
-    search: query.search ?? "",
-    sort: query.sort ?? "smart",
-  });
-}
-
 function hoursAgo(date: string): number {
   const ts = new Date(date).getTime();
   return Math.max(0, (Date.now() - ts) / (1000 * 60 * 60));
@@ -87,13 +74,8 @@ export async function getFeedItemsPage(
   limit: number,
   query: FeedQuery = {}
 ): Promise<{ items: FeedItem[]; hasMore: boolean }> {
-  const cached = unstable_cache(
-    async () => computeFeedPage(offset, limit, query),
-    [`feed:${offset}:${limit}:${serializeQuery(query)}`],
-    { revalidate: 45 }
-  );
   try {
-    return await cached();
+    return await computeFeedPage(offset, limit, query);
   } catch (error) {
     console.error("getFeedItemsPage error:", error);
     return { items: [], hasMore: false };
