@@ -14,6 +14,7 @@ export type FeedItem = {
   is_liked: boolean;
   target_url: string;
   category_name: string | null;
+  tags: string[];
   score: number;
   engagement_score: number;
   hype_score: number;
@@ -97,7 +98,7 @@ export async function getFirmFeedItems(
   const { data: posts } = await supabase
     .from("firm_blog_posts")
     .select(
-      "id,title,summary,cover_image_url,published_at,company_name,company_logo_url,slug,category_id"
+      "id,title,summary,cover_image_url,published_at,company_name,company_logo_url,slug,category_id,tags"
     )
     .eq("firm_id", firmId)
     .eq("status", "published")
@@ -145,6 +146,7 @@ export async function getFirmFeedItems(
       is_liked: likedSet.has(postId),
       target_url: `/firma/${firmSlug}/blog/${String(row.slug)}`,
       category_name: row.category_id ? (categoryMap.get(String(row.category_id)) ?? null) : null,
+      tags: Array.isArray((row as { tags?: string[] }).tags) ? ((row as { tags?: string[] }).tags ?? []).slice(0, 2) : [],
       score: 0,
       engagement_score: 0,
       hype_score: 0,
@@ -170,7 +172,7 @@ async function computeFeedPage(
     let postQuery = supabase
       .from("firm_blog_posts")
       .select(
-        "id,title,summary,cover_image_url,published_at,firm_id,company_name,company_logo_url,slug,category_id,related_countries,related_visa_types"
+        "id,title,summary,cover_image_url,published_at,firm_id,company_name,company_logo_url,slug,category_id,related_countries,related_visa_types,tags"
       )
       .eq("status", "published")
       .not("published_at", "is", null);
@@ -297,6 +299,7 @@ async function computeFeedPage(
       is_liked: likedSet.has(postId),
       target_url,
       category_name: row.category_id ? (categoryMap.get(String(row.category_id)) ?? null) : null,
+      tags: Array.isArray((row as { tags?: string[] }).tags) ? ((row as { tags?: string[] }).tags ?? []).slice(0, 2) : [],
       score,
       engagement_score: engagementScore,
       hype_score: hypeScore,

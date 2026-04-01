@@ -12,9 +12,8 @@ export function FeedCardImage({
   targetUrl: string;
   postId: string;
 }) {
-  const clickHref = `/api/feed/click?postId=${postId}&target=${encodeURIComponent(targetUrl)}`;
   return (
-    <Link href={clickHref} className="flex aspect-1200/640 w-full items-center justify-center overflow-hidden bg-[#f9fafb]">
+    <Link href={targetUrl} className="flex aspect-1200/640 w-full items-center justify-center overflow-hidden bg-[#f9fafb]">
       {imageUrl ? (
         <Image
           src={imageUrl}

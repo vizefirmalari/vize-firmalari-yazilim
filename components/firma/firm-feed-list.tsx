@@ -69,8 +69,8 @@ export function FirmFeedList({ items }: { items: FeedItem[] }) {
             title={item.title}
             description={item.description}
             categoryName={item.category_name}
+            tags={item.tags}
             targetUrl={item.target_url}
-            postId={item.id}
           />
           <FeedCardActions
             postId={item.id}
