@@ -43,6 +43,7 @@ function PlatformIcon({ platform }: { platform: BlogCtaButton["platform"] }) {
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
         <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
         <path d="M3 12h18" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M12 3c2.6 2.8 4 5.9 4 9s-1.4 6.2-4 9c-2.6-2.8-4-5.9-4-9s1.4-6.2 4-9Z" stroke="currentColor" strokeWidth="1.8" />
       </svg>
     );
   }
