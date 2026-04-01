@@ -238,7 +238,8 @@ export async function uploadFirmBlogCoverImage(
     return { ok: false, error: "Yalnızca PNG, JPG veya WebP yükleyin." };
   }
 
-  const supabase = await createSupabaseServerClient();
+  const serviceRole = createSupabaseServiceRoleClient();
+  const supabase = serviceRole ?? (await createSupabaseServerClient());
   if (!supabase) return { ok: false, error: "Sunucu bağlantısı kurulamadı." };
 
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
