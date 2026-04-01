@@ -493,9 +493,42 @@ export function FirmBlogEditorForm({
             : "Taslak kaydedildi."
       );
       setMessageTone("success");
-      router.replace(`/panel/${firmId}/paylasim/blog?post=${res.id}`);
+      if (nextMode === "published") {
+        resetToNewPost();
+        router.replace(`/panel/${firmId}/paylasim/blog`);
+      } else {
+        router.replace(`/panel/${firmId}/paylasim/blog?post=${res.id}`);
+      }
       router.refresh();
     });
+  };
+
+  const resetToNewPost = () => {
+    setPostId(null);
+    setMode("draft");
+    setTitle("");
+    setSlug("");
+    setSlugTouched(false);
+    setCoverUrl("");
+    setCoverAlt("");
+    setMetaDescription("");
+    setFlowDescription("");
+    setScheduledAt("");
+    setPublishAt(new Date().toISOString().slice(0, 16));
+    setTagInput("");
+    setTags([]);
+    setCategoryId("");
+    setFaqItems([{ question: "", answer: "" }, { question: "", answer: "" }]);
+    setCtaButtons([]);
+    setRelatedCountries([]);
+    setRelatedVisaTypes([]);
+    setBodyRichState("<p></p>");
+    setBodyPlainState("");
+    setCoverPendingFile(null);
+    if (coverLocalPreview) URL.revokeObjectURL(coverLocalPreview);
+    setCoverLocalPreview("");
+    setCoverAspectWarn(null);
+    editor?.commands.setContent("<p></p>");
   };
 
   const applyBulletListStyle = (style: "disc" | "circle" | "square" | "check") => {

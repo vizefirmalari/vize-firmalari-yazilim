@@ -165,7 +165,7 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
 
       <section className="rounded-2xl border border-[#1A1A1A]/10 bg-white p-4 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0B3C5D]/70">
-          Son yazılar
+          Yayın arşivi
         </p>
         <ul className="mt-3 grid gap-2 sm:grid-cols-2">
           {(recentPosts ?? []).map((p) => (
