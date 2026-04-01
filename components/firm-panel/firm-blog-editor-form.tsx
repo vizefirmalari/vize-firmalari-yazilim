@@ -313,19 +313,9 @@ export function FirmBlogEditorForm({
     [relatedSuggestions, categoryId]
   );
 
-  const hasHardError =
-    titleLen > 70 ||
-    titleLen < 50 ||
-    metaLen > 160 ||
-    metaLen < 140 ||
-    flowLen > 150 ||
-    altLen > 120 ||
-    altLen < 50 ||
-    slugLen > 75 ||
-    tags.length > 10 ||
-    !categoryId ||
-    !hasAtLeastTwoFaq ||
-    hasFaqValidationError;
+  // Sadece yayın akışını gerçekten bozacak zorunlu alanlar butonu bloklasın.
+  // SEO kalite metrikleri (başlık uzunluğu vb.) kullanıcıya uyarı olarak kalır.
+  const hasHardError = !categoryId || !hasAtLeastTwoFaq || hasFaqValidationError;
 
   const seoChecklist = [
     { label: "Başlık uygun uzunluk", ok: titleLen >= 50 && titleLen <= 70 },
