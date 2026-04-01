@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useId, useMemo, useState } from "react";
+import { PLATFORM_WHATSAPP_PHONE, PLATFORM_WHATSAPP_URL } from "@/lib/constants/contact";
 
 type FirmContactData = {
   slug: string;
@@ -28,7 +29,8 @@ function websiteHref(raw: string): string {
 }
 
 function whatsappHref(raw: string): string {
-  return `https://wa.me/${raw.replace(/\D/g, "")}`;
+  void raw;
+  return PLATFORM_WHATSAPP_URL;
 }
 
 export function FirmContactSheet({ firm }: { firm: FirmContactData }) {
@@ -64,7 +66,7 @@ export function FirmContactSheet({ firm }: { firm: FirmContactData }) {
         onClick={() => setOpen(true)}
         className="rounded-xl bg-[#0B3C5D] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0A3552]"
       >
-        Firma iletişim
+        Firma iletişim ({PLATFORM_WHATSAPP_PHONE} - WhatsApp)
       </button>
 
       {open ? (
@@ -126,7 +128,7 @@ export function FirmContactSheet({ firm }: { firm: FirmContactData }) {
                   {firm.phone ? <a href={`tel:${firm.phone.replace(/\s/g, "")}`} className="hover:underline">Telefon: {firm.phone}</a> : null}
                   {firm.whatsapp ? (
                     <a href={whatsappHref(firm.whatsapp)} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                      WhatsApp: {firm.whatsapp}
+                      WhatsApp: {PLATFORM_WHATSAPP_PHONE}
                     </a>
                   ) : null}
                   {firm.email ? <a href={`mailto:${firm.email}`} className="break-all hover:underline">E-posta: {firm.email}</a> : null}

@@ -44,6 +44,14 @@ export const FIRM_DASHBOARD_MODULES: readonly FirmDashboardModule[] = [
     href: "/panel/{firmId}/reklam",
   },
   {
+    id: "lead-forms",
+    title: "Lead Başvuruları",
+    description: "Hızlı başvuru sihirbazından gelen lead kayıtlarını önceliklendirin.",
+    status: "aktif",
+    actionLabel: "Aç",
+    href: "/panel/{firmId}/formlar",
+  },
+  {
     id: "contact-admin",
     title: "Yönetim ile Mesajlaş",
     description: "Platform ekibiyle destek ve koordinasyon merkezi.",

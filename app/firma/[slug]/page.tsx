@@ -7,7 +7,6 @@ import { getAllFirmSlugs, getFirmBySlug } from "@/lib/data/firms";
 import { getSiteUrl } from "@/lib/env";
 import { buildFirmPageMetadata } from "@/lib/seo/firma-metadata";
 import { buildFirmSchemaGraph } from "@/lib/seo/firma-schema";
-import type { FirmRow } from "@/lib/types/firm";
 import { FirmPrimaryLeftCta } from "@/components/firma/firm-primary-left-cta";
 import { FirmServiceScope } from "@/components/firma/firm-service-scope";
 import { SectionReveal } from "@/components/home/section-reveal";
@@ -18,14 +17,16 @@ import {
   normalizeLegacyServiceLabels,
   SPECIALIZATION_OPTIONS,
 } from "@/lib/constants/firm-specializations";
+import { PLATFORM_WHATSAPP_PHONE, PLATFORM_WHATSAPP_URL } from "@/lib/constants/contact";
+import { QuickApplyLauncher } from "@/components/quick-apply/quick-apply-launcher";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
 function whatsappHref(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
-  return `https://wa.me/${digits}`;
+  void raw;
+  return PLATFORM_WHATSAPP_URL;
 }
 
 export async function generateStaticParams() {
@@ -106,7 +107,7 @@ export default async function FirmaPage({ params }: PageProps) {
     (typeof firm.support_staff_count === "number" && firm.support_staff_count > 0) ||
     (typeof firm.office_count === "number" && firm.office_count > 0);
 
-  const quickApplyOk = firm.quick_apply_enabled !== false;
+  const quickApplyOk = firm.quick_apply_enabled !== false && firm.has_active_panel_member === true;
 
   const messagingCtaActive =
     firm.messaging_enabled === true && firm.has_active_panel_member === true;
@@ -557,12 +558,11 @@ export default async function FirmaPage({ params }: PageProps) {
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <FirmPrimaryLeftCta firm={firm} />
                   {quickApplyOk ? (
-                    <Link
-                      href="#basvuru"
-                      className="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-center text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
-                    >
-                      Hızlı Başvur
-                    </Link>
+                    <QuickApplyLauncher
+                      firmId={firm.id}
+                      firmName={firm.name}
+                      buttonClassName="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-center text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
+                    />
                   ) : (
                     <span className="flex items-center justify-center rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/80 py-2.5 text-center text-xs text-[#1A1A1A]/45">
                       Başvuru kapalı
@@ -578,7 +578,7 @@ export default async function FirmaPage({ params }: PageProps) {
                     className="scroll-mt-28 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-6"
                   >
                   <h2 className="text-lg font-semibold text-[#0B3C5D]">
-                    İletişim
+                    İletişim ({PLATFORM_WHATSAPP_PHONE} - WhatsApp)
                   </h2>
                   <ul className="mt-4 space-y-3 text-sm">
                   {showPhone && firm.phone ? (
@@ -605,7 +605,7 @@ export default async function FirmaPage({ params }: PageProps) {
                         rel="noopener noreferrer"
                         className="mt-1 block font-semibold text-[#328CC1] hover:underline"
                       >
-                        {firm.whatsapp}
+                        {PLATFORM_WHATSAPP_PHONE} (WhatsApp)
                       </a>
                     </li>
                   ) : null}

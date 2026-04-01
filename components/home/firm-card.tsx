@@ -7,6 +7,7 @@ import type { FirmRow } from "@/lib/types/firm";
 import { FirmPrimaryLeftCta } from "@/components/firma/firm-primary-left-cta";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
 import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
+import { QuickApplyLauncher } from "@/components/quick-apply/quick-apply-launcher";
 import {
   ServiceSummaryChip,
   SummaryMoreButton,
@@ -56,7 +57,7 @@ export function FirmCard({ firm }: FirmCardProps) {
   const singleServiceOnly = shownServices.length === 1 && restServices === 0;
 
   const servicePool = Array.isArray(firm.services) ? firm.services : [];
-  const quickApplyOk = firm.quick_apply_enabled !== false;
+  const quickApplyOk = firm.quick_apply_enabled !== false && firm.has_active_panel_member === true;
   const socialOk = firm.social_buttons_enabled !== false;
 
   const descriptionText =
@@ -249,12 +250,11 @@ export function FirmCard({ firm }: FirmCardProps) {
       <div className="mt-5 grid grid-cols-2 gap-2">
         <FirmPrimaryLeftCta firm={firm} />
         {quickApplyOk ? (
-          <Link
-            href={`/firma/${firm.slug}#basvuru`}
-            className="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
-          >
-            Hızlı Başvur
-          </Link>
+          <QuickApplyLauncher
+            firmId={firm.id}
+            firmName={firm.name}
+            buttonClassName="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
+          />
         ) : (
           <span className="flex items-center justify-center rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/80 py-2.5 text-center text-xs text-[#1A1A1A]/45">
             Başvuru kapalı

@@ -2,6 +2,7 @@
 
 import { useEffect, useId } from "react";
 import type { FirmRow } from "@/lib/types/firm";
+import { PLATFORM_WHATSAPP_PHONE, PLATFORM_WHATSAPP_URL } from "@/lib/constants/contact";
 
 type ContactModalProps = {
   firm: FirmRow;
@@ -10,8 +11,8 @@ type ContactModalProps = {
 };
 
 function whatsappHref(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
-  return `https://wa.me/${digits}`;
+  void raw;
+  return PLATFORM_WHATSAPP_URL;
 }
 
 function websiteHref(raw: string): string {
@@ -91,7 +92,7 @@ export function ContactModal({ firm, open, onClose }: ContactModalProps) {
                 rel="noopener noreferrer"
                 className="mt-1 inline-flex text-base font-medium text-[#328CC1] underline-offset-4 hover:underline"
               >
-                {firm.whatsapp}
+                {PLATFORM_WHATSAPP_PHONE} (WhatsApp)
               </a>
             </li>
           ) : null}
