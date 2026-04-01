@@ -313,8 +313,8 @@ export function FirmBlogEditorForm({
   );
 
   // Sadece yayın akışını gerçekten bozacak zorunlu alanlar butonu bloklasın.
-  // SEO kalite metrikleri (başlık uzunluğu vb.) kullanıcıya uyarı olarak kalır.
-  const hasHardError = !categoryId || !hasAtLeastTwoFaq || hasFaqValidationError;
+  // SEO kalite metrikleri ve SSS karakter kalite kontrolü kullanıcıya uyarı olarak kalır.
+  const hasHardError = !categoryId || !hasAtLeastTwoFaq;
 
   const seoChecklist = [
     { label: "Başlık uygun uzunluk", ok: titleLen >= 50 && titleLen <= 70 },
