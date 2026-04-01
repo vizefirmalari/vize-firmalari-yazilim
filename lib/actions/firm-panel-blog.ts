@@ -211,6 +211,7 @@ export async function saveFirmBlogPost(
   }
 
   revalidatePath("/");
+  revalidatePath("/akis");
   revalidatePath(`/panel/${firmId}/paylasim`);
   revalidatePath(`/panel/${firmId}/paylasim/blog`);
   revalidatePath(`/firma/${String(firm.slug)}`);

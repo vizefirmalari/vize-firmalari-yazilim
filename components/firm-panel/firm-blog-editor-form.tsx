@@ -148,6 +148,7 @@ export function FirmBlogEditorForm({
     initialPost?.status ?? "draft"
   );
   const [message, setMessage] = useState<string | null>(null);
+  const [messageTone, setMessageTone] = useState<"success" | "error" | null>(null);
 
   const [postId, setPostId] = useState<string | null>(initialPost?.id ?? null);
   const [title, setTitle] = useState(initialPost?.title ?? "");
@@ -446,6 +447,7 @@ export function FirmBlogEditorForm({
     if (!editor) return;
     setMode(nextMode);
     setMessage(null);
+    setMessageTone(null);
     const bodyRich = bodyRichState;
     const bodyPlainText = bodyPlainState;
     startTransition(async () => {
@@ -481,6 +483,7 @@ export function FirmBlogEditorForm({
       });
       if (!res.ok) {
         setMessage(res.error);
+        setMessageTone("error");
         return;
       }
       setPostId(res.id);
@@ -491,6 +494,7 @@ export function FirmBlogEditorForm({
             ? "Yazı planlandı. Belirlenen tarihte yayınlanmaya hazır."
             : "Taslak kaydedildi."
       );
+      setMessageTone("success");
       router.replace(`/panel/${firmId}/paylasim/blog?post=${res.id}`);
       router.refresh();
     });
@@ -571,12 +575,14 @@ export function FirmBlogEditorForm({
       const res = await withTimeout(uploadFirmBlogCoverImage(fd), 45000);
       if (!res.ok) {
         setMessage(res.error);
+        setMessageTone("error");
         return null;
       }
       setCoverUrl(res.url);
       return res.url;
     } catch {
       setMessage("Görsel yüklenemedi veya zaman aşımına uğradı. Daha küçük bir görsel ile tekrar deneyin.");
+      setMessageTone("error");
       return null;
     }
   };
@@ -719,6 +725,7 @@ export function FirmBlogEditorForm({
                         setCoverLocalPreview(nextPreview);
                         setCoverUploading(true);
                         setMessage(null);
+                        setMessageTone(null);
                         try {
                           const uploaded = await uploadCoverFile(file);
                           if (!uploaded) return;
@@ -727,6 +734,7 @@ export function FirmBlogEditorForm({
                           setMessage(
                             "Görsel yüklenemedi veya zaman aşımına uğradı. Daha küçük bir görsel ile tekrar deneyin."
                           );
+                          setMessageTone("error");
                         } finally {
                           setCoverUploading(false);
                           e.currentTarget.value = "";
@@ -1337,7 +1345,18 @@ export function FirmBlogEditorForm({
               ? "Planlanan içerik seçtiğiniz zamanda yayınlanmaya hazır tutulur."
               : "Taslak içerikler düzenlemeye açık kalır."}
         </p>
-        {message ? <p className="mt-2 text-sm font-medium text-[#0B3C5D]">{message}</p> : null}
+        {message ? (
+          <p
+            className={`mt-2 rounded-lg border px-3 py-2 text-sm font-medium ${
+              messageTone === "success"
+                ? "border-[#067647]/20 bg-[#ECFDF3] text-[#067647]"
+                : "border-[#B42318]/20 bg-[#FEF3F2] text-[#B42318]"
+            }`}
+          >
+            {messageTone === "success" ? "✓ " : "⚠ "}
+            {message}
+          </p>
+        ) : null}
       </section>
     </div>
   );
