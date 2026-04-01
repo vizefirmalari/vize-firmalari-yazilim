@@ -286,8 +286,6 @@ export function FirmBlogEditorForm({
   const altLen = coverAlt.trim().length;
   const slugLen = slug.trim().length;
 
-  const titleStatus: "zayıf" | "iyi" | "mükemmel" =
-    titleLen >= 60 && titleLen <= 65 ? "mükemmel" : titleLen >= 50 && titleLen <= 70 ? "iyi" : "zayıf";
   const titleState = titleLen > 70 ? "error" : titleLen < 50 ? "warn" : "ok";
   const metaState = metaLen > 160 ? "error" : metaLen < 140 ? "warn" : "ok";
   const altState = altLen > 120 ? "error" : altLen < 50 ? "warn" : "ok";
@@ -628,9 +626,7 @@ export function FirmBlogEditorForm({
               className="mt-1.5 w-full rounded-xl border border-[#1A1A1A]/14 bg-white px-3 py-2.5 text-sm text-[#1A1A1A] outline-none focus:border-[#0B3C5D]/30"
             />
             <p className={`mt-1 text-xs ${titleState === "error" ? "text-[#B42318]" : titleState === "warn" ? "text-[#9A6700]" : "text-[#067647]"}`}>
-              Ana anahtar kelimeyi başlığa dahil edin. Min 50, max 70; ideal 60-65. ({titleLen}) · SEO:
-              {" "}
-              {titleStatus}
+              Başlık uzunluğu önerisi: min 50, max 70; ideal 60-65. ({titleLen})
             </p>
           </div>
 
@@ -936,7 +932,7 @@ export function FirmBlogEditorForm({
               vurgulayın ve CTA bağlantılarıyla okuyucuyu yönlendirin. ({plainLength} karakter · {wordCount} kelime)
             </p>
             <p className={`mt-1 text-xs ${wordState === "error" ? "text-[#B42318]" : wordState === "warn" ? "text-[#9A6700]" : "text-[#067647]"}`}>
-              Kelime hedefi: minimum 800, ideal 1200-2000.
+              Kelime sayısı: {wordCount}
             </p>
             <div className="mt-2 rounded-xl border border-[#1A1A1A]/12 bg-[#F8FAFC] p-2.5 text-xs text-[#1A1A1A]/70">
               <p className="font-semibold text-[#0B3C5D]">Canlı içerik uyarıları</p>

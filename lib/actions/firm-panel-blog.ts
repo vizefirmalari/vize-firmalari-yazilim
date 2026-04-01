@@ -87,9 +87,6 @@ export async function saveFirmBlogPost(
   if (!bodyPlainText || bodyPlainText.length < 80) {
     return { ok: false, error: "İçerik gövdesi yeterli değil." };
   }
-  if (words < 800 && payload.mode === "published") {
-    return { ok: false, error: "Yayın için içerik en az 800 kelime olmalı." };
-  }
   if (faqItems.length < 2) {
     return { ok: false, error: "En az 2 adet SSS girişi zorunlu." };
   }
