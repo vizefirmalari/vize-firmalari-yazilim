@@ -12,7 +12,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { normalizeBlogCtaButtons } from "@/lib/blog/cta-buttons";
 import { pickWeightedAd, type BlogAdRow } from "@/lib/blog/ads";
-import { getFirmBySlug } from "@/lib/data/firms";
 import { getSiteUrl } from "@/lib/env";
 
 type Props = {
@@ -20,6 +19,9 @@ type Props = {
 };
 
 type FaqItem = { question: string; answer: string };
+type DbClient =
+  | NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>
+  | NonNullable<ReturnType<typeof createSupabaseServiceRoleClient>>;
 
 const getActiveBlogAds = unstable_cache(
   async () => {
@@ -55,23 +57,44 @@ function splitBodyForMiddleAd(html: string): { first: string; second: string } {
   return { first, second };
 }
 
+async function getPublishedPostBySlug(
+  dataClient: DbClient,
+  postSlug: string
+) {
+  const primary = await dataClient
+    .from("firm_blog_posts")
+    .select("id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,faq_items,faq_schema_json,category_id")
+    .eq("slug", postSlug)
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (primary.data?.id) return primary.data;
+
+  const relaxed = await dataClient
+    .from("firm_blog_posts")
+    .select("id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,faq_items,faq_schema_json,category_id")
+    .ilike("slug", postSlug)
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return relaxed.data ?? null;
+}
+
 export async function generateMetadata({ params }: Props) {
   const { slug, postSlug } = await params;
   const supabase = await createSupabaseServerClient();
-  if (!supabase) return {};
-  const firm = await getFirmBySlug(slug);
-  if (!firm) return {};
+  const service = createSupabaseServiceRoleClient();
+  const dataClient = service ?? supabase;
+  if (!dataClient) return {};
+  const db = dataClient;
+  const post = await getPublishedPostBySlug(db, postSlug);
+  if (!post?.firm_id) return {};
+  const { data: firm } = await db.from("firms").select("slug").eq("id", String(post.firm_id)).maybeSingle();
+  const resolvedSlug = String(firm?.slug ?? slug);
 
-  const { data: post } = await supabase
-    .from("firm_blog_posts")
-    .select("title,meta_description,cover_image_url")
-    .eq("firm_id", firm.id)
-    .eq("slug", postSlug)
-    .eq("status", "published")
-    .maybeSingle();
-  if (!post) return {};
-
-  const canonical = `${getSiteUrl().replace(/\/$/, "")}/firma/${slug}/blog/${postSlug}`;
+  const canonical = `${getSiteUrl().replace(/\/$/, "")}/firma/${resolvedSlug}/blog/${postSlug}`;
   return {
     title: String(post.title),
     description: String(post.meta_description ?? ""),
@@ -98,19 +121,13 @@ export default async function BlogDetailPage({ params }: Props) {
   const service = createSupabaseServiceRoleClient();
   const dataClient = service ?? supabase;
   if (!dataClient) notFound();
+  const db = dataClient;
 
   // URL'deki firma slug yanlış olsa bile yazıyı postSlug üzerinden bul.
-  const { data: post } = await dataClient
-    .from("firm_blog_posts")
-    .select("id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,faq_items,faq_schema_json,category_id")
-    .eq("slug", postSlug)
-    .eq("status", "published")
-    .order("published_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const post = await getPublishedPostBySlug(db, postSlug);
   if (!post?.firm_id) notFound();
 
-  const { data: firm } = await dataClient
+  const { data: firm } = await db
     .from("firms")
     .select("id,slug,name,logo_url,whatsapp")
     .eq("id", String(post.firm_id))
@@ -122,7 +139,7 @@ export default async function BlogDetailPage({ params }: Props) {
   }
 
   const { data: category } = post.category_id
-    ? await dataClient.from("blog_categories").select("name").eq("id", String(post.category_id)).maybeSingle()
+    ? await db.from("blog_categories").select("name").eq("id", String(post.category_id)).maybeSingle()
     : { data: null };
 
   const tags = Array.isArray(post.tags) ? (post.tags as string[]) : [];
@@ -131,7 +148,7 @@ export default async function BlogDetailPage({ params }: Props) {
   const ctaButtons = normalizeBlogCtaButtons(post.cta_buttons ?? []);
   const { first, second } = splitBodyForMiddleAd(String(post.body_rich ?? ""));
 
-  const { data: initialRelated } = await dataClient
+  const { data: initialRelated } = await db
     .from("firm_blog_posts")
     .select("id,title,slug,summary,cover_image_url,published_at")
     .eq("status", "published")
