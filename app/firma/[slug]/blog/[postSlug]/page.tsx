@@ -93,8 +93,8 @@ async function getPublishedPostBySlug(
   ] as const;
 
   for (const selectCols of selectVariants) {
-    const primary = await dataClient
-      .from("firm_blog_posts")
+    const postsTable = dataClient.from("firm_blog_posts") as any;
+    const primary = await postsTable
       .select(selectCols)
       .eq("slug", postSlug)
       .eq("status", "published")
@@ -105,8 +105,7 @@ async function getPublishedPostBySlug(
     if (!primary.error) continue;
     if (!String(primary.error.message ?? "").toLowerCase().includes("column")) continue;
 
-    const relaxed = await dataClient
-      .from("firm_blog_posts")
+    const relaxed = await postsTable
       .select(selectCols)
       .ilike("slug", postSlug)
       .eq("status", "published")
@@ -120,8 +119,8 @@ async function getPublishedPostBySlug(
     }
   }
 
-  const finalTry = await dataClient
-    .from("firm_blog_posts")
+  const postsTable = dataClient.from("firm_blog_posts") as any;
+  const finalTry = await postsTable
     .select(selectVariants[selectVariants.length - 1])
     .ilike("slug", postSlug)
     .eq("status", "published")
