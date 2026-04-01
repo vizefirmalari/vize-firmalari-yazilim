@@ -176,7 +176,7 @@ export async function saveFirmBlogPost(
   if (savedId) {
     let { error } = await adminSupabase
       .from("firm_blog_posts")
-      .update({ ...rowBase, faq_schema_json: faqSchemaJson })
+      .update({ ...rowBase, company_slug: String(firm.slug ?? ""), faq_schema_json: faqSchemaJson })
       .eq("id", savedId)
       .eq("firm_id", firmId);
     if (isMissingColumnError(error)) {
@@ -191,7 +191,7 @@ export async function saveFirmBlogPost(
   } else {
     let { data, error } = await adminSupabase
       .from("firm_blog_posts")
-      .insert({ ...rowBase, faq_schema_json: faqSchemaJson })
+      .insert({ ...rowBase, company_slug: String(firm.slug ?? ""), faq_schema_json: faqSchemaJson })
       .select("id")
       .single();
     if (isMissingColumnError(error)) {

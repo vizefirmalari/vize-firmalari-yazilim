@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -106,7 +106,27 @@ export default async function BlogDetailPage({ params }: Props) {
     .eq("slug", postSlug)
     .eq("status", "published")
     .maybeSingle();
-  if (!post) notFound();
+  if (!post) {
+    const { data: fallbackPost } = await supabase
+      .from("firm_blog_posts")
+      .select("firm_id,slug")
+      .eq("slug", postSlug)
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (fallbackPost?.firm_id) {
+      const { data: fallbackFirm } = await supabase
+        .from("firms")
+        .select("slug")
+        .eq("id", String(fallbackPost.firm_id))
+        .maybeSingle();
+      if (fallbackFirm?.slug) {
+        redirect(`/firma/${String(fallbackFirm.slug)}/blog/${postSlug}`);
+      }
+    }
+    notFound();
+  }
 
   const { data: category } = post.category_id
     ? await supabase.from("blog_categories").select("name").eq("id", String(post.category_id)).maybeSingle()

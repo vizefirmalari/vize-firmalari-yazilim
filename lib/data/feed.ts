@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
 export type FeedItem = {
   id: string;
@@ -89,16 +90,18 @@ export async function getFirmFeedItems(
   limit = 9
 ): Promise<FeedItem[]> {
   const supabase = await createSupabaseServerClient();
-  if (!supabase) return [];
+  const service = createSupabaseServiceRoleClient();
+  const dataClient = service ?? supabase;
+  if (!dataClient) return [];
 
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
 
-  const { data: posts } = await supabase
+  const { data: posts } = await dataClient
     .from("firm_blog_posts")
     .select(
-      "id,title,summary,cover_image_url,published_at,company_name,company_logo_url,slug,category_id,tags"
+      "id,title,summary,cover_image_url,published_at,company_name,company_logo_url,company_slug,slug,category_id,tags"
     )
     .eq("firm_id", firmId)
     .eq("status", "published")
@@ -110,10 +113,10 @@ export async function getFirmFeedItems(
   if (rows.length === 0) return [];
 
   const ids = rows.map((x) => String(x.id));
-  const { data: categories } = await supabase.from("blog_categories").select("id,name");
+  const { data: categories } = await dataClient.from("blog_categories").select("id,name");
   const categoryMap = new Map((categories ?? []).map((c) => [String(c.id), String(c.name)]));
 
-  const { data: likeRows } = await supabase.from("post_likes").select("post_id").in("post_id", ids);
+  const { data: likeRows } = await dataClient.from("post_likes").select("post_id").in("post_id", ids);
   const likeCountMap = new Map<string, number>();
   for (const row of likeRows ?? []) {
     const key = String(row.post_id);
@@ -122,7 +125,7 @@ export async function getFirmFeedItems(
 
   let likedSet = new Set<string>();
   if (user?.id) {
-    const { data: liked } = await supabase
+    const { data: liked } = await dataClient
       .from("post_likes")
       .select("post_id")
       .eq("user_id", user.id)
@@ -137,14 +140,14 @@ export async function getFirmFeedItems(
       type: "blog",
       company_name: String(row.company_name ?? ""),
       company_logo: row.company_logo_url ? String(row.company_logo_url) : null,
-      company_slug: firmSlug,
+      company_slug: String((row as { company_slug?: string | null }).company_slug ?? firmSlug),
       title: String(row.title ?? ""),
       description: String(row.summary ?? ""),
       image_url: row.cover_image_url ? String(row.cover_image_url) : null,
       created_at: String(row.published_at),
       like_count: likeCountMap.get(postId) ?? 0,
       is_liked: likedSet.has(postId),
-      target_url: `/firma/${firmSlug}/blog/${String(row.slug)}`,
+      target_url: `/firma/${String((row as { company_slug?: string | null }).company_slug ?? firmSlug)}/blog/${String(row.slug)}`,
       category_name: row.category_id ? (categoryMap.get(String(row.category_id)) ?? null) : null,
       tags: Array.isArray((row as { tags?: string[] }).tags) ? ((row as { tags?: string[] }).tags ?? []).slice(0, 2) : [],
       score: 0,
@@ -163,16 +166,18 @@ async function computeFeedPage(
 ): Promise<{ items: FeedItem[]; hasMore: boolean }> {
   try {
     const supabase = await createSupabaseServerClient();
-    if (!supabase) return { items: [], hasMore: false };
+    const service = createSupabaseServiceRoleClient();
+    const dataClient = service ?? supabase;
+    if (!dataClient) return { items: [], hasMore: false };
 
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
 
-    let postQuery = supabase
+    let postQuery = dataClient
       .from("firm_blog_posts")
       .select(
-        "id,title,summary,cover_image_url,published_at,firm_id,company_name,company_logo_url,slug,category_id,related_countries,related_visa_types,tags"
+        "id,title,summary,cover_image_url,published_at,firm_id,company_name,company_logo_url,company_slug,slug,category_id,related_countries,related_visa_types,tags"
       )
       .eq("status", "published")
       .not("published_at", "is", null);
@@ -189,18 +194,18 @@ async function computeFeedPage(
     const ids = rows.map((x) => String(x.id));
     if (ids.length === 0) return { items: [], hasMore: false };
 
-    const { data: firms } = await supabase
+    const { data: firms } = await dataClient
       .from("firms")
       .select("id,slug,name,logo_url,premium_badge,featured")
       .in("id", rows.map((r) => String(r.firm_id)));
     const firmMap = new Map((firms ?? []).map((f) => [String(f.id), f]));
 
-    const { data: categories } = await supabase
+    const { data: categories } = await dataClient
       .from("blog_categories")
       .select("id,name");
     const categoryMap = new Map((categories ?? []).map((c) => [String(c.id), String(c.name)]));
 
-    const { data: likeRows } = await supabase
+    const { data: likeRows } = await dataClient
       .from("post_likes")
       .select("post_id,created_at")
       .in("post_id", ids);
@@ -212,7 +217,7 @@ async function computeFeedPage(
 
     let likedSet = new Set<string>();
     if (user?.id) {
-      const { data: liked } = await supabase
+      const { data: liked } = await dataClient
         .from("post_likes")
         .select("post_id")
         .eq("user_id", user.id)
@@ -224,7 +229,7 @@ async function computeFeedPage(
     const twoHoursAgoIso = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
     const fourHoursAgoIso = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
 
-    const { data: clickRows } = await supabase
+    const { data: clickRows } = await dataClient
       .from("post_engagement_events")
       .select("post_id,event_type,created_at")
       .in("post_id", ids)
@@ -259,11 +264,13 @@ async function computeFeedPage(
       recentTwoHourMap.set(postId, (recentTwoHourMap.get(postId) ?? 0) + 2);
     }
 
-    const items: FeedItem[] = rows.map((row) => {
+    const items: FeedItem[] = rows.map<FeedItem>((row) => {
     const postId = String(row.id);
     const firmId = String(row.firm_id);
     const firm = firmMap.get(firmId);
-    const firmSlug = String(firm?.slug ?? "");
+    const firmSlug = String(
+      (row as { company_slug?: string | null }).company_slug ?? firm?.slug ?? ""
+    );
     const target_url = `/firma/${firmSlug}/blog/${String(row.slug)}`;
     const likeCount = likeCountMap.get(postId) ?? 0;
     const clickCount = clickMap.get(postId) ?? 0;
@@ -306,7 +313,7 @@ async function computeFeedPage(
       premium_score: premiumScore,
       admin_score: adminScore,
     };
-    });
+    }).filter((item) => Boolean(item.company_slug));
 
     const filtered = items.filter((item) => {
       if (query.premium && item.premium_score <= 0) return false;
