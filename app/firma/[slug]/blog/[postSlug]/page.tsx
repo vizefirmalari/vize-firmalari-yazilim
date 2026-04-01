@@ -46,9 +46,9 @@ type PostRow = {
 
 const getActiveBlogAds = unstable_cache(
   async () => {
-    const supabase = await createSupabaseServerClient();
-    if (!supabase) return [] as BlogAdRow[];
-    const { data } = await supabase
+    const service = createSupabaseServiceRoleClient();
+    if (!service) return [] as BlogAdRow[];
+    const { data } = await service
       .from("blog_ads")
       .select("id,ad_type,title,advertiser_name,image_url,cta_text,sponsor_name,sponsor_logo_url,native_image_url,native_title,native_description,target_url,position,weight,start_date,end_date,is_active,target_category_ids,target_countries,target_visa_types")
       .eq("is_active", true);
