@@ -43,6 +43,11 @@ function uniqueText(values: string[]): string[] {
   return out;
 }
 
+function isMissingColumnError(error: { message?: string } | null): boolean {
+  const msg = String(error?.message ?? "").toLowerCase();
+  return msg.includes("could not find the") && msg.includes("column");
+}
+
 export async function saveFirmBlogPost(
   payload: SavePayload
 ): Promise<{ ok: true; id: string; status: SaveMode } | { ok: false; error: string }> {
@@ -126,7 +131,7 @@ export async function saveFirmBlogPost(
   const finalPublishedAt = status === "published" ? (publishedAt ?? nowIso) : null;
   const finalScheduledAt = status === "scheduled" ? scheduledAt : null;
 
-  const row = {
+  const rowBase = {
     firm_id: firmId,
     created_by: user.id,
     title,
@@ -143,21 +148,6 @@ export async function saveFirmBlogPost(
     published_at: finalPublishedAt,
     tags: uniqueText(payload.tags),
     faq_items: faqItems,
-    faq_schema_json:
-      faqItems.length >= 2
-        ? {
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: faqItems.map((item) => ({
-              "@type": "Question",
-              name: item.question,
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: item.answer,
-              },
-            })),
-          }
-        : null,
     related_countries: uniqueText(payload.relatedCountries),
     related_visa_types: uniqueText(payload.relatedVisaTypes),
     cta_buttons: normalizeBlogCtaButtons(payload.ctaButtons),
@@ -166,22 +156,54 @@ export async function saveFirmBlogPost(
     company_logo_url: (firm.logo_url as string | null) ?? null,
     updated_at: nowIso,
   };
+  const faqSchemaJson =
+    faqItems.length >= 2
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqItems.map((item) => ({
+            "@type": "Question",
+            name: item.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: item.answer,
+            },
+          })),
+        }
+      : null;
 
   let savedId = payload.postId?.trim() || "";
   if (savedId) {
-    const { error } = await adminSupabase
+    let { error } = await adminSupabase
       .from("firm_blog_posts")
-      .update(row)
+      .update({ ...rowBase, faq_schema_json: faqSchemaJson })
       .eq("id", savedId)
       .eq("firm_id", firmId);
+    if (isMissingColumnError(error)) {
+      const retry = await adminSupabase
+        .from("firm_blog_posts")
+        .update(rowBase)
+        .eq("id", savedId)
+        .eq("firm_id", firmId);
+      error = retry.error;
+    }
     if (error) return { ok: false, error: error.message };
   } else {
-    const { data, error } = await adminSupabase
+    let { data, error } = await adminSupabase
       .from("firm_blog_posts")
-      .insert(row)
+      .insert({ ...rowBase, faq_schema_json: faqSchemaJson })
       .select("id")
       .single();
-    if (error) return { ok: false, error: error.message };
+    if (isMissingColumnError(error)) {
+      const retry = await adminSupabase
+        .from("firm_blog_posts")
+        .insert(rowBase)
+        .select("id")
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
+    if (error || !data?.id) return { ok: false, error: error?.message ?? "Blog kaydı oluşturulamadı." };
     savedId = String(data.id);
   }
 
