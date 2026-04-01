@@ -8,6 +8,7 @@ import { StickyBackButton } from "@/components/blog/sticky-back-button";
 import { BlogAdSlot } from "@/components/blog/blog-ad-slot";
 import { BlogCtaButtonsRenderer } from "@/components/blog/blog-cta-buttons-renderer";
 import { FirmContactSheet } from "@/components/blog/firm-contact-sheet";
+import { BlogTagsSection } from "@/components/blog/blog-tags-section";
 import { RelatedPostsInfinite } from "@/components/blog/related-posts-infinite";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
@@ -77,6 +78,14 @@ function splitBodyForMiddleAd(html: string): { first: string; second: string } {
   const first = `${parts.slice(0, mid).join("</p>")}</p>`;
   const second = `${parts.slice(mid).join("</p>")}`;
   return { first, second };
+}
+
+function toAbsoluteUrl(input: string | null | undefined): string | null {
+  const value = String(input ?? "").trim();
+  if (!value) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  const site = getSiteUrl().replace(/\/$/, "");
+  return `${site}/${value.replace(/^\//, "")}`;
 }
 
 async function getPublishedPostBySlug(
@@ -149,7 +158,9 @@ export async function generateMetadata({ params }: Props) {
     resolvedSlug = String(firm?.slug ?? slug);
   }
 
-  const canonical = `${getSiteUrl().replace(/\/$/, "")}/firma/${resolvedSlug}/blog/${postSlug}`;
+  const siteUrl = getSiteUrl().replace(/\/$/, "");
+  const canonical = `${siteUrl}/firma/${resolvedSlug}/blog/${postSlug}`;
+  const ogImage = toAbsoluteUrl(post.cover_image_url) ?? `${siteUrl}/og-default.jpg`;
   return {
     title: String(post.title),
     description: String(post.meta_description ?? ""),
@@ -158,14 +169,14 @@ export async function generateMetadata({ params }: Props) {
       title: String(post.title),
       description: String(post.meta_description ?? ""),
       url: canonical,
-      images: post.cover_image_url ? [{ url: String(post.cover_image_url) }] : [],
+      images: [{ url: ogImage }],
       type: "article",
     },
     twitter: {
       card: "summary_large_image",
       title: String(post.title),
       description: String(post.meta_description ?? ""),
-      images: post.cover_image_url ? [String(post.cover_image_url)] : [],
+      images: [ogImage],
     },
   };
 }
@@ -393,16 +404,7 @@ export default async function BlogDetailPage({ params }: Props) {
           ) : null}
 
           {tags.length > 0 ? (
-            <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-[#0B3C5D]/70">Etiketler</h2>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <span key={tag} className="rounded-full border border-[#0B3C5D]/12 bg-[#F8FAFC] px-3 py-1 text-xs font-medium text-[#0B3C5D]">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </section>
+            <BlogTagsSection tags={tags} />
           ) : null}
 
           {ctaButtons.length > 0 ? <BlogCtaButtonsRenderer buttons={ctaButtons} /> : null}
