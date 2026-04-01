@@ -284,13 +284,13 @@ export default async function BlogDetailPage({ params }: Props) {
 
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Link href={`/firma/${resolvedFirmSlug}`} className="flex min-w-0 items-center gap-3 rounded-xl border border-[#0B3C5D]/10 bg-white p-3 shadow-sm">
-            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F3F6F8]">
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#F3F6F8] ring-1 ring-[#0B3C5D]/10">
               {(firm?.logo_url || postCompanyLogo) ? (
                 <Image
                   src={String(firm?.logo_url ?? postCompanyLogo)}
                   alt={`${String(firm?.name ?? postCompanyName ?? "Firma")} logosu`}
                   fill
-                  className="object-contain"
+                  className="object-cover"
                   sizes="40px"
                 />
               ) : null}
@@ -365,13 +365,6 @@ export default async function BlogDetailPage({ params }: Props) {
           </section>
 
           <BlogAdSlot ad={topAd} postId={String(post.id)} slot="top" />
-
-          {ctaButtons.length > 0 ? (
-            <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#0B3C5D]/60">Hızlı aksiyon</p>
-              <BlogCtaButtonsRenderer buttons={ctaButtons.slice(0, 2)} />
-            </section>
-          ) : null}
 
           <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
             <div className="tiptap-public" dangerouslySetInnerHTML={{ __html: first }} />

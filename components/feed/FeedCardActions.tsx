@@ -72,7 +72,7 @@ export function FeedCardActions({
   };
 
   return (
-    <div className="border-t border-[#f1f5f9] px-4 pb-3 pt-2.5 sm:px-5">
+    <div className="border-t-0 px-4 pb-3 pt-2.5 sm:border-t sm:border-[#f1f5f9] sm:px-5">
       <div>
         <div className="flex items-center justify-between gap-2 text-xs font-medium text-[#1A1A1A]/60">
           <span className="inline-flex items-center gap-1">
