@@ -17,7 +17,7 @@ const applicationSchema = z.object({
   timeline: z.string().trim().optional().default(""),
   previousRefusal: z.boolean(),
   passportStatus: z.string().trim().optional().default(""),
-  answers: z.record(z.union([z.string(), z.boolean()])),
+  answers: z.record(z.string(), z.union([z.string(), z.boolean()])),
   leadScore: z.number().int().min(0).max(100),
   leadSegment: z.enum(["hot", "warm", "low", "weak"]),
   leadPriority: z.enum(["cok_yuksek", "yuksek", "orta", "dusuk"]),
