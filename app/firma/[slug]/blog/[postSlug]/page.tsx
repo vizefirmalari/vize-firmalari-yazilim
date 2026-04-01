@@ -97,7 +97,27 @@ export default async function BlogDetailPage({ params }: Props) {
   if (!supabase) notFound();
 
   const firm = await getFirmBySlug(slug);
-  if (!firm) notFound();
+  if (!firm) {
+    const { data: fallbackPost } = await supabase
+      .from("firm_blog_posts")
+      .select("firm_id")
+      .eq("slug", postSlug)
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (fallbackPost?.firm_id) {
+      const { data: fallbackFirm } = await supabase
+        .from("firms")
+        .select("slug")
+        .eq("id", String(fallbackPost.firm_id))
+        .maybeSingle();
+      if (fallbackFirm?.slug) {
+        redirect(`/firma/${String(fallbackFirm.slug)}/blog/${postSlug}`);
+      }
+    }
+    notFound();
+  }
 
   const { data: post } = await supabase
     .from("firm_blog_posts")
