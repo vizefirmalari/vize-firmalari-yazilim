@@ -11,6 +11,32 @@ type PageProps = {
   searchParams: Promise<{ post?: string; category?: string }>;
 };
 
+async function getInitialPostForEdit(
+  supabase: NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>,
+  firmId: string,
+  postId: string
+) {
+  const selectVariants = [
+    "id, title, slug, summary, cover_image_url, cover_image_alt, meta_description, body_rich, tags, category_id, faq_items, related_countries, related_visa_types, cta_buttons, status, scheduled_at, published_at",
+    "id, title, slug, summary, cover_image_url, cover_image_alt, meta_description, body_rich, tags, category_id, faq_items, related_countries, related_visa_types, status, scheduled_at, published_at",
+    "id, title, slug, summary, cover_image_url, cover_image_alt, meta_description, body_rich, tags, category_id, related_countries, related_visa_types, status, scheduled_at, published_at",
+    "id, title, slug, summary, cover_image_url, cover_image_alt, meta_description, body_rich, tags, category_id, status, scheduled_at, published_at",
+  ] as const;
+
+  for (const selectCols of selectVariants) {
+    const result = await (supabase.from("firm_blog_posts") as any)
+      .select(selectCols)
+      .eq("id", postId)
+      .eq("firm_id", firmId)
+      .maybeSingle();
+    if (result.data?.id) return result.data as Record<string, unknown>;
+    if (!result.error) break;
+    if (!String(result.error.message ?? "").toLowerCase().includes("column")) break;
+  }
+
+  return null;
+}
+
 export default async function FirmBlogCreatePage({ params, searchParams }: PageProps) {
   const { firmId } = await params;
   const sp = await searchParams;
@@ -50,14 +76,7 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
   } | null = null;
 
   if (postId) {
-    const { data } = await supabase
-      .from("firm_blog_posts")
-      .select(
-        "id, title, slug, summary, cover_image_url, cover_image_alt, meta_description, body_rich, tags, category_id, faq_items, related_countries, related_visa_types, cta_buttons, status, scheduled_at, published_at"
-      )
-      .eq("id", postId)
-      .eq("firm_id", firmId)
-      .maybeSingle();
+    const data = await getInitialPostForEdit(supabase, firmId, postId);
     if (data) {
       initialPost = {
         id: String(data.id),
@@ -130,6 +149,7 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
       </div>
 
       <FirmBlogEditorForm
+        key={initialPost?.id ?? "new-post"}
         firmId={firmId}
         initialPost={initialPost}
         firmCountries={firmCountries}
