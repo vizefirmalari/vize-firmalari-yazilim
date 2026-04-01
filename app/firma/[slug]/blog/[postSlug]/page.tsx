@@ -22,6 +22,27 @@ type FaqItem = { question: string; answer: string };
 type DbClient =
   | NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>
   | NonNullable<ReturnType<typeof createSupabaseServiceRoleClient>>;
+type PostRow = {
+  id: string;
+  firm_id: string | null;
+  title: string | null;
+  slug: string | null;
+  summary: string | null;
+  meta_description: string | null;
+  cover_image_url: string | null;
+  cover_image_alt: string | null;
+  body_rich: string | null;
+  published_at: string | null;
+  tags?: string[] | null;
+  cta_buttons?: unknown[] | null;
+  related_countries?: string[] | null;
+  faq_items?: FaqItem[] | null;
+  faq_schema_json?: unknown;
+  category_id?: string | null;
+  company_slug?: string | null;
+  company_name?: string | null;
+  company_logo_url?: string | null;
+};
 
 const getActiveBlogAds = unstable_cache(
   async () => {
@@ -61,25 +82,53 @@ async function getPublishedPostBySlug(
   dataClient: DbClient,
   postSlug: string
 ) {
-  const primary = await dataClient
-    .from("firm_blog_posts")
-    .select("id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,faq_items,faq_schema_json,category_id")
-    .eq("slug", postSlug)
-    .eq("status", "published")
-    .order("published_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (primary.data?.id) return primary.data;
+  const selectVariants = [
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,faq_items,faq_schema_json,category_id,company_slug,company_name,company_logo_url",
+    // Backward-compatible fallback for environments missing newer blog columns.
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,related_countries,faq_items,category_id,company_slug,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,related_countries,category_id,company_slug,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,category_id,company_slug,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,category_id,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,category_id,company_name",
+  ] as const;
 
-  const relaxed = await dataClient
+  for (const selectCols of selectVariants) {
+    const primary = await dataClient
+      .from("firm_blog_posts")
+      .select(selectCols)
+      .eq("slug", postSlug)
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (primary.data?.id) return primary.data as PostRow;
+    if (!primary.error) continue;
+    if (!String(primary.error.message ?? "").toLowerCase().includes("column")) continue;
+
+    const relaxed = await dataClient
+      .from("firm_blog_posts")
+      .select(selectCols)
+      .ilike("slug", postSlug)
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (relaxed.data?.id) return relaxed.data as PostRow;
+    if (!relaxed.error) continue;
+    if (!String(relaxed.error.message ?? "").toLowerCase().includes("column")) {
+      return null;
+    }
+  }
+
+  const finalTry = await dataClient
     .from("firm_blog_posts")
-    .select("id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,faq_items,faq_schema_json,category_id")
+    .select(selectVariants[selectVariants.length - 1])
     .ilike("slug", postSlug)
     .eq("status", "published")
     .order("published_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  return relaxed.data ?? null;
+  return (finalTry.data as PostRow | null) ?? null;
 }
 
 export async function generateMetadata({ params }: Props) {
@@ -90,9 +139,12 @@ export async function generateMetadata({ params }: Props) {
   if (!dataClient) return {};
   const db = dataClient;
   const post = await getPublishedPostBySlug(db, postSlug);
-  if (!post?.firm_id) return {};
-  const { data: firm } = await db.from("firms").select("slug").eq("id", String(post.firm_id)).maybeSingle();
-  const resolvedSlug = String(firm?.slug ?? slug);
+  if (!post?.id) return {};
+  let resolvedSlug = String((post as { company_slug?: string | null }).company_slug ?? slug);
+  if (!resolvedSlug && post.firm_id) {
+    const { data: firm } = await db.from("firms").select("slug").eq("id", String(post.firm_id)).maybeSingle();
+    resolvedSlug = String(firm?.slug ?? slug);
+  }
 
   const canonical = `${getSiteUrl().replace(/\/$/, "")}/firma/${resolvedSlug}/blog/${postSlug}`;
   return {
@@ -125,17 +177,25 @@ export default async function BlogDetailPage({ params }: Props) {
 
   // URL'deki firma slug yanlış olsa bile yazıyı postSlug üzerinden bul.
   const post = await getPublishedPostBySlug(db, postSlug);
-  if (!post?.firm_id) notFound();
+  if (!post?.id) notFound();
 
-  const { data: firm } = await db
-    .from("firms")
-    .select("id,slug,name,logo_url,whatsapp")
-    .eq("id", String(post.firm_id))
-    .maybeSingle();
-  if (!firm?.slug) notFound();
+  const postCompanySlug = String((post as { company_slug?: string | null }).company_slug ?? "");
+  const postCompanyName = String((post as { company_name?: string | null }).company_name ?? "");
+  const postCompanyLogo = (post as { company_logo_url?: string | null }).company_logo_url ?? null;
 
-  if (String(firm.slug) !== slug) {
-    redirect(`/firma/${String(firm.slug)}/blog/${postSlug}`);
+  const { data: firm } = post.firm_id
+    ? await db
+        .from("firms")
+        .select("id,slug,name,logo_url,whatsapp")
+        .eq("id", String(post.firm_id))
+        .maybeSingle()
+    : { data: null };
+
+  const resolvedFirmSlug = String(firm?.slug ?? postCompanySlug ?? "");
+  if (!resolvedFirmSlug) notFound();
+
+  if (resolvedFirmSlug !== slug) {
+    redirect(`/firma/${resolvedFirmSlug}/blog/${postSlug}`);
   }
 
   const { data: category } = post.category_id
@@ -177,7 +237,7 @@ export default async function BlogDetailPage({ params }: Props) {
   const bottomPool = targetedAds.filter((x) => x.position === "bottom" && x.id !== topAd?.id && x.id !== middleAd?.id);
   const bottomAd = pickWeightedAd(bottomPool, `${post.id}-bottom-${daySeed}`);
 
-  const canonical = `${getSiteUrl().replace(/\/$/, "")}/firma/${slug}/blog/${postSlug}`;
+  const canonical = `${getSiteUrl().replace(/\/$/, "")}/firma/${resolvedFirmSlug}/blog/${postSlug}`;
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -187,10 +247,10 @@ export default async function BlogDetailPage({ params }: Props) {
     dateModified: post.published_at,
     image: post.cover_image_url ? [post.cover_image_url] : [],
     mainEntityOfPage: canonical,
-    author: { "@type": "Organization", name: firm.name },
+    author: { "@type": "Organization", name: String(firm?.name ?? postCompanyName ?? "") },
     publisher: {
       "@type": "Organization",
-      name: firm.name,
+      name: String(firm?.name ?? postCompanyName ?? ""),
       logo: post.cover_image_url ? { "@type": "ImageObject", url: post.cover_image_url } : undefined,
     },
   };
@@ -205,16 +265,24 @@ export default async function BlogDetailPage({ params }: Props) {
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-4 pb-14 pt-4 sm:px-6 lg:px-8">
         <div className="sticky top-16 z-10 mb-3 w-fit sm:top-20">
-          <StickyBackButton fallbackHref={`/firma/${slug}`} />
+          <StickyBackButton fallbackHref={`/firma/${resolvedFirmSlug}`} />
         </div>
 
-        <Link href={`/firma/${slug}`} className="mb-4 flex items-center gap-3 rounded-xl border border-[#0B3C5D]/10 bg-white p-3 shadow-sm">
+        <Link href={`/firma/${resolvedFirmSlug}`} className="mb-4 flex items-center gap-3 rounded-xl border border-[#0B3C5D]/10 bg-white p-3 shadow-sm">
           <div className="relative h-10 w-10 overflow-hidden rounded-lg bg-[#F3F6F8]">
-            {firm.logo_url ? <Image src={firm.logo_url} alt={`${firm.name} logosu`} fill className="object-contain" sizes="40px" /> : null}
+            {(firm?.logo_url || postCompanyLogo) ? (
+              <Image
+                src={String(firm?.logo_url ?? postCompanyLogo)}
+                alt={`${String(firm?.name ?? postCompanyName ?? "Firma")} logosu`}
+                fill
+                className="object-contain"
+                sizes="40px"
+              />
+            ) : null}
           </div>
           <div>
             <p className="text-xs text-[#1A1A1A]/55">Firma profili</p>
-            <p className="text-sm font-semibold text-[#0B3C5D]">{firm.name}</p>
+            <p className="text-sm font-semibold text-[#0B3C5D]">{String(firm?.name ?? postCompanyName ?? "Firma")}</p>
           </div>
         </Link>
 
@@ -296,8 +364,8 @@ export default async function BlogDetailPage({ params }: Props) {
           <section className="rounded-2xl border border-[#0B3C5D]/10 bg-[#0B3C5D] p-5 text-white shadow-sm">
             <p className="text-sm font-semibold">Premium danışmanlık desteği alın.</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Link href={`/firma/${slug}#basvuru`} className="rounded-xl bg-[#D9A441] px-4 py-2 text-sm font-semibold text-[#1A1A1A]">Premium CTA</Link>
-              {firm.whatsapp ? (
+              <Link href={`/firma/${resolvedFirmSlug}#basvuru`} className="rounded-xl bg-[#D9A441] px-4 py-2 text-sm font-semibold text-[#1A1A1A]">Premium CTA</Link>
+              {firm?.whatsapp ? (
                 <a href={`https://wa.me/${String(firm.whatsapp).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="rounded-xl border border-white/20 px-4 py-2 text-sm font-semibold text-white">
                   WhatsApp CTA
                 </a>
@@ -308,7 +376,7 @@ export default async function BlogDetailPage({ params }: Props) {
           <BlogAdSlot ad={bottomAd} postId={String(post.id)} slot="bottom" />
 
           <RelatedPostsInfinite
-            firmSlug={slug}
+            firmSlug={resolvedFirmSlug}
             currentId={String(post.id)}
             categoryId={post.category_id ? String(post.category_id) : null}
             tags={tags}
