@@ -9,6 +9,7 @@ import { BlogAdSlot } from "@/components/blog/blog-ad-slot";
 import { BlogCtaButtonsRenderer } from "@/components/blog/blog-cta-buttons-renderer";
 import { RelatedPostsInfinite } from "@/components/blog/related-posts-infinite";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { normalizeBlogCtaButtons } from "@/lib/blog/cta-buttons";
 import { pickWeightedAd, type BlogAdRow } from "@/lib/blog/ads";
 import { getFirmBySlug } from "@/lib/data/firms";
@@ -94,62 +95,34 @@ export async function generateMetadata({ params }: Props) {
 export default async function BlogDetailPage({ params }: Props) {
   const { slug, postSlug } = await params;
   const supabase = await createSupabaseServerClient();
-  if (!supabase) notFound();
+  const service = createSupabaseServiceRoleClient();
+  const dataClient = service ?? supabase;
+  if (!dataClient) notFound();
 
-  const firm = await getFirmBySlug(slug);
-  if (!firm) {
-    const { data: fallbackPost } = await supabase
-      .from("firm_blog_posts")
-      .select("firm_id")
-      .eq("slug", postSlug)
-      .eq("status", "published")
-      .order("published_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (fallbackPost?.firm_id) {
-      const { data: fallbackFirm } = await supabase
-        .from("firms")
-        .select("slug")
-        .eq("id", String(fallbackPost.firm_id))
-        .maybeSingle();
-      if (fallbackFirm?.slug) {
-        redirect(`/firma/${String(fallbackFirm.slug)}/blog/${postSlug}`);
-      }
-    }
-    notFound();
-  }
-
-  const { data: post } = await supabase
+  // URL'deki firma slug yanlış olsa bile yazıyı postSlug üzerinden bul.
+  const { data: post } = await dataClient
     .from("firm_blog_posts")
-    .select("id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,faq_items,faq_schema_json,category_id")
-    .eq("firm_id", firm.id)
+    .select("id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,faq_items,faq_schema_json,category_id")
     .eq("slug", postSlug)
     .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
-  if (!post) {
-    const { data: fallbackPost } = await supabase
-      .from("firm_blog_posts")
-      .select("firm_id,slug")
-      .eq("slug", postSlug)
-      .eq("status", "published")
-      .order("published_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (fallbackPost?.firm_id) {
-      const { data: fallbackFirm } = await supabase
-        .from("firms")
-        .select("slug")
-        .eq("id", String(fallbackPost.firm_id))
-        .maybeSingle();
-      if (fallbackFirm?.slug && String(fallbackFirm.slug) !== slug) {
-        redirect(`/firma/${String(fallbackFirm.slug)}/blog/${postSlug}`);
-      }
-    }
-    notFound();
+  if (!post?.firm_id) notFound();
+
+  const { data: firm } = await dataClient
+    .from("firms")
+    .select("id,slug,name,logo_url,whatsapp")
+    .eq("id", String(post.firm_id))
+    .maybeSingle();
+  if (!firm?.slug) notFound();
+
+  if (String(firm.slug) !== slug) {
+    redirect(`/firma/${String(firm.slug)}/blog/${postSlug}`);
   }
 
   const { data: category } = post.category_id
-    ? await supabase.from("blog_categories").select("name").eq("id", String(post.category_id)).maybeSingle()
+    ? await dataClient.from("blog_categories").select("name").eq("id", String(post.category_id)).maybeSingle()
     : { data: null };
 
   const tags = Array.isArray(post.tags) ? (post.tags as string[]) : [];
@@ -158,7 +131,7 @@ export default async function BlogDetailPage({ params }: Props) {
   const ctaButtons = normalizeBlogCtaButtons(post.cta_buttons ?? []);
   const { first, second } = splitBodyForMiddleAd(String(post.body_rich ?? ""));
 
-  const { data: initialRelated } = await supabase
+  const { data: initialRelated } = await dataClient
     .from("firm_blog_posts")
     .select("id,title,slug,summary,cover_image_url,published_at")
     .eq("status", "published")
