@@ -13,21 +13,21 @@ export function FeedCard({
   liveLikeCount?: number;
   onLiveLikeCountChange?: (count: number) => void;
 }) {
+  const kurumsallikSkoru = Math.round(Math.max(0, Math.min(100, Number(item.corporateness_score ?? 0))));
+  const hypeSkoru = Math.round(Math.max(0, Math.min(100, item.hype_score * 100)));
+
   return (
-    <article className="mx-auto w-full max-w-[720px] overflow-hidden rounded-2xl bg-white p-0 shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(0,0,0,0.09)]">
+    <article className="mx-auto w-full max-w-[720px] overflow-hidden rounded-3xl bg-white p-0 shadow-[0_8px_28px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.1)]">
       <FeedCardHeader
         logoUrl={item.company_logo}
         companyName={item.company_name}
         companySlug={item.company_slug}
         createdAt={item.created_at}
-        badge="Blog"
       />
       <FeedCardImage imageUrl={item.image_url} alt={item.title} targetUrl={item.target_url} postId={item.id} />
       <FeedCardContent
         title={item.title}
         description={item.description}
-        categoryName={item.category_name}
-        tags={item.tags}
         targetUrl={item.target_url}
       />
       <FeedCardActions
@@ -35,6 +35,8 @@ export function FeedCard({
         initialLiked={item.is_liked}
         initialLikeCount={item.like_count}
         targetUrl={item.target_url}
+        corporateScore={kurumsallikSkoru}
+        hypeScore={hypeSkoru}
         liveLikeCount={liveLikeCount}
         onLiveLikeCountChange={onLiveLikeCountChange}
       />

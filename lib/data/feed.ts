@@ -19,6 +19,7 @@ export type FeedItem = {
   score: number;
   engagement_score: number;
   hype_score: number;
+  corporateness_score: number;
   premium_score: number;
   admin_score: number;
 };
@@ -109,6 +110,13 @@ export async function getFirmFeedItems(
     .order("published_at", { ascending: false })
     .limit(limit);
 
+  const { data: firmRow } = await dataClient
+    .from("firms")
+    .select("corporateness_score")
+    .eq("id", firmId)
+    .maybeSingle();
+  const firmCorporateScore = Math.max(0, Math.min(100, Number(firmRow?.corporateness_score ?? 0)));
+
   const rows = posts ?? [];
   if (rows.length === 0) return [];
 
@@ -153,6 +161,7 @@ export async function getFirmFeedItems(
       score: 0,
       engagement_score: 0,
       hype_score: 0,
+      corporateness_score: firmCorporateScore,
       premium_score: 0,
       admin_score: 0,
     };
@@ -196,9 +205,24 @@ async function computeFeedPage(
 
     const { data: firms } = await dataClient
       .from("firms")
-      .select("id,slug,name,logo_url,premium_badge,featured")
+      .select("id,slug,name,logo_url,premium_badge,featured,corporateness_score")
       .in("id", rows.map((r) => String(r.firm_id)));
     const firmMap = new Map((firms ?? []).map((f) => [String(f.id), f]));
+    const rowCompanySlugs = Array.from(
+      new Set(
+        rows
+          .map((r) => String((r as { company_slug?: string | null }).company_slug ?? "").trim())
+          .filter(Boolean)
+      )
+    );
+    const { data: firmsBySlug } =
+      rowCompanySlugs.length > 0
+        ? await dataClient
+            .from("firms")
+            .select("id,slug,name,logo_url,premium_badge,featured,corporateness_score")
+            .in("slug", rowCompanySlugs)
+        : { data: [] };
+    const firmSlugMap = new Map((firmsBySlug ?? []).map((f) => [String(f.slug), f]));
 
     const { data: categories } = await dataClient
       .from("blog_categories")
@@ -267,9 +291,12 @@ async function computeFeedPage(
     const items: FeedItem[] = rows.map<FeedItem>((row) => {
     const postId = String(row.id);
     const firmId = String(row.firm_id);
-    const firm = firmMap.get(firmId);
+    const rowCompanySlug = String((row as { company_slug?: string | null }).company_slug ?? "");
+    const firmById = firmMap.get(firmId);
+    const firmBySlug = rowCompanySlug ? firmSlugMap.get(rowCompanySlug) : undefined;
+    const firm = firmById ?? firmBySlug;
     const firmSlug = String(
-      (row as { company_slug?: string | null }).company_slug ?? firm?.slug ?? ""
+      (row as { company_slug?: string | null }).company_slug ?? firmById?.slug ?? firmBySlug?.slug ?? ""
     );
     const target_url = `/firma/${firmSlug}/blog/${String(row.slug)}`;
     const likeCount = likeCountMap.get(postId) ?? 0;
@@ -310,6 +337,7 @@ async function computeFeedPage(
       score,
       engagement_score: engagementScore,
       hype_score: hypeScore,
+      corporateness_score: Math.max(0, Math.min(100, Number(firm?.corporateness_score ?? 0))),
       premium_score: premiumScore,
       admin_score: adminScore,
     };

@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { StickyBackButton } from "@/components/blog/sticky-back-button";
 import { BlogAdSlot } from "@/components/blog/blog-ad-slot";
 import { BlogCtaButtonsRenderer } from "@/components/blog/blog-cta-buttons-renderer";
+import { FirmContactSheet } from "@/components/blog/firm-contact-sheet";
 import { RelatedPostsInfinite } from "@/components/blog/related-posts-infinite";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
@@ -85,6 +86,9 @@ async function getPublishedPostBySlug(
   const selectVariants = [
     "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,faq_items,faq_schema_json,category_id,company_slug,company_name,company_logo_url",
     // Backward-compatible fallback for environments missing newer blog columns.
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,faq_items,category_id,company_slug,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,category_id,company_slug,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,category_id,company_slug,company_name,company_logo_url",
     "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,related_countries,faq_items,category_id,company_slug,company_name,company_logo_url",
     "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,related_countries,category_id,company_slug,company_name,company_logo_url",
     "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,category_id,company_slug,company_name,company_logo_url",
@@ -185,10 +189,21 @@ export default async function BlogDetailPage({ params }: Props) {
   const { data: firm } = post.firm_id
     ? await db
         .from("firms")
-        .select("id,slug,name,logo_url,whatsapp")
+        .select("id,slug,name,logo_url,whatsapp,phone,email,website,address,working_hours,main_services,countries,founded_year,firm_category,schengen_expert,usa_visa_expert,student_visa_support,work_visa_support,tourist_visa_support,business_visa_support,family_reunion_support,appeal_support")
         .eq("id", String(post.firm_id))
         .maybeSingle()
     : { data: null };
+
+  const expertiseLabels = [
+    firm?.schengen_expert ? "Schengen Vizesi" : null,
+    firm?.usa_visa_expert ? "ABD Vizesi" : null,
+    firm?.student_visa_support ? "Öğrenci Vizesi" : null,
+    firm?.work_visa_support ? "Çalışma Vizesi" : null,
+    firm?.tourist_visa_support ? "Turistik Vize" : null,
+    firm?.business_visa_support ? "Ticari Vize" : null,
+    firm?.family_reunion_support ? "Aile Birleşimi" : null,
+    firm?.appeal_support ? "Vize Red İtirazı" : null,
+  ].filter((x): x is string => Boolean(x));
 
   const resolvedFirmSlug = String(firm?.slug ?? postCompanySlug ?? "");
   if (!resolvedFirmSlug) notFound();
@@ -267,23 +282,48 @@ export default async function BlogDetailPage({ params }: Props) {
           <StickyBackButton fallbackHref={`/firma/${resolvedFirmSlug}`} />
         </div>
 
-        <Link href={`/firma/${resolvedFirmSlug}`} className="mb-4 flex items-center gap-3 rounded-xl border border-[#0B3C5D]/10 bg-white p-3 shadow-sm">
-          <div className="relative h-10 w-10 overflow-hidden rounded-lg bg-[#F3F6F8]">
-            {(firm?.logo_url || postCompanyLogo) ? (
-              <Image
-                src={String(firm?.logo_url ?? postCompanyLogo)}
-                alt={`${String(firm?.name ?? postCompanyName ?? "Firma")} logosu`}
-                fill
-                className="object-contain"
-                sizes="40px"
-              />
-            ) : null}
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Link href={`/firma/${resolvedFirmSlug}`} className="flex min-w-0 items-center gap-3 rounded-xl border border-[#0B3C5D]/10 bg-white p-3 shadow-sm">
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F3F6F8]">
+              {(firm?.logo_url || postCompanyLogo) ? (
+                <Image
+                  src={String(firm?.logo_url ?? postCompanyLogo)}
+                  alt={`${String(firm?.name ?? postCompanyName ?? "Firma")} logosu`}
+                  fill
+                  className="object-contain"
+                  sizes="40px"
+                />
+              ) : null}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-[#1A1A1A]/55">Firma profili</p>
+              <p className="truncate text-sm font-semibold text-[#0B3C5D]">{String(firm?.name ?? postCompanyName ?? "Firma")}</p>
+            </div>
+          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/firma/${resolvedFirmSlug}`} className="rounded-xl border border-[#0B3C5D]/20 bg-[#F7F9FB] px-3 py-2 text-xs font-semibold text-[#0B3C5D] hover:bg-[#EEF2F6]">
+              Firma sayfası
+            </Link>
+            <FirmContactSheet
+              firm={{
+                slug: resolvedFirmSlug,
+                name: String(firm?.name ?? postCompanyName ?? "Firma"),
+                logoUrl: String(firm?.logo_url ?? postCompanyLogo ?? "") || null,
+                firmType: String(firm?.firm_category ?? "") || null,
+                foundedYear: typeof firm?.founded_year === "number" ? firm.founded_year : null,
+                mainServices: Array.isArray(firm?.main_services) ? (firm.main_services as string[]) : [],
+                expertises: expertiseLabels,
+                countries: Array.isArray(firm?.countries) ? (firm.countries as string[]) : [],
+                phone: String(firm?.phone ?? "") || null,
+                whatsapp: String(firm?.whatsapp ?? "") || null,
+                email: String(firm?.email ?? "") || null,
+                website: String(firm?.website ?? "") || null,
+                address: String(firm?.address ?? "") || null,
+                workingHours: String(firm?.working_hours ?? "") || null,
+              }}
+            />
           </div>
-          <div>
-            <p className="text-xs text-[#1A1A1A]/55">Firma profili</p>
-            <p className="text-sm font-semibold text-[#0B3C5D]">{String(firm?.name ?? postCompanyName ?? "Firma")}</p>
-          </div>
-        </Link>
+        </div>
 
         <article className="space-y-5">
           <section className="overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-sm">
@@ -359,16 +399,42 @@ export default async function BlogDetailPage({ params }: Props) {
             </section>
           ) : null}
 
+          {tags.length > 0 ? (
+            <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-[#0B3C5D]/70">Etiketler</h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <span key={tag} className="rounded-full border border-[#0B3C5D]/12 bg-[#F8FAFC] px-3 py-1 text-xs font-medium text-[#0B3C5D]">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
           {ctaButtons.length > 0 ? <BlogCtaButtonsRenderer buttons={ctaButtons} /> : null}
           <section className="rounded-2xl border border-[#0B3C5D]/10 bg-[#0B3C5D] p-5 text-white shadow-sm">
             <p className="text-sm font-semibold">Premium danışmanlık desteği alın.</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Link href={`/firma/${resolvedFirmSlug}#basvuru`} className="rounded-xl bg-[#D9A441] px-4 py-2 text-sm font-semibold text-[#1A1A1A]">Premium CTA</Link>
-              {firm?.whatsapp ? (
-                <a href={`https://wa.me/${String(firm.whatsapp).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="rounded-xl border border-white/20 px-4 py-2 text-sm font-semibold text-white">
-                  WhatsApp CTA
-                </a>
-              ) : null}
+              <Link href={`/firma/${resolvedFirmSlug}`} className="rounded-xl bg-[#D9A441] px-4 py-2 text-sm font-semibold text-[#1A1A1A]">Firma sayfasına git</Link>
+              <FirmContactSheet
+                firm={{
+                  slug: resolvedFirmSlug,
+                  name: String(firm?.name ?? postCompanyName ?? "Firma"),
+                  logoUrl: String(firm?.logo_url ?? postCompanyLogo ?? "") || null,
+                  firmType: String(firm?.firm_category ?? "") || null,
+                  foundedYear: typeof firm?.founded_year === "number" ? firm.founded_year : null,
+                  mainServices: Array.isArray(firm?.main_services) ? (firm.main_services as string[]) : [],
+                  expertises: expertiseLabels,
+                  countries: Array.isArray(firm?.countries) ? (firm.countries as string[]) : [],
+                  phone: String(firm?.phone ?? "") || null,
+                  whatsapp: String(firm?.whatsapp ?? "") || null,
+                  email: String(firm?.email ?? "") || null,
+                  website: String(firm?.website ?? "") || null,
+                  address: String(firm?.address ?? "") || null,
+                  workingHours: String(firm?.working_hours ?? "") || null,
+                }}
+              />
             </div>
           </section>
 

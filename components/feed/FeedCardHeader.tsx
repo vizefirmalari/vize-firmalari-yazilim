@@ -19,16 +19,14 @@ export function FeedCardHeader({
   companyName,
   companySlug,
   createdAt,
-  badge = "Blog",
 }: {
   logoUrl: string | null;
   companyName: string;
   companySlug: string;
   createdAt: string;
-  badge?: string;
 }) {
   return (
-    <header className="flex items-start justify-between gap-3 px-4 py-3">
+    <header className="flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5">
       <div className="min-w-0 flex items-center gap-3">
         <Link href={`/firma/${companySlug}`} className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#f3f4f6]">
           {logoUrl ? <Image src={logoUrl} alt={`${companyName} logosu`} fill className="object-cover" sizes="40px" /> : null}
@@ -39,18 +37,14 @@ export function FeedCardHeader({
           </Link>
           <div className="flex items-center gap-1.5 text-[12px] text-[#6b7280]">
             <span>{formatRelativeTime(createdAt)}</span>
-            <span>•</span>
-            <span className="rounded-full bg-[#eef2ff] px-2 py-0.5 text-[11px] font-medium text-[#4f46e5]">
-              {badge}
-            </span>
           </div>
         </div>
       </div>
       <Link
         href={`/firma/${companySlug}`}
-        className="shrink-0 rounded-full bg-[#f3f4f6] px-2.5 py-1.5 text-[12px] font-medium text-[#374151] transition hover:bg-[#e5e7eb]"
+        className="shrink-0 rounded-full bg-[#F7F9FB] px-2.5 py-1.5 text-[12px] font-semibold text-[#0B3C5D] transition hover:bg-[#EEF2F6]"
       >
-        Firma sayfasına git
+        Firma profili
       </Link>
     </header>
   );
