@@ -121,7 +121,7 @@ export default async function BlogDetailPage({ params }: Props) {
         .select("slug")
         .eq("id", String(fallbackPost.firm_id))
         .maybeSingle();
-      if (fallbackFirm?.slug) {
+      if (fallbackFirm?.slug && String(fallbackFirm.slug) !== slug) {
         redirect(`/firma/${String(fallbackFirm.slug)}/blog/${postSlug}`);
       }
     }
