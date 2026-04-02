@@ -7,7 +7,19 @@ import {
 } from "@/lib/firm-panel/lead-application-copy";
 import { FILE_TYPE_LABELS, PREFERRED_CONTACT_LABELS, TIMELINE_BUCKET_LABELS, VISA_TYPE_LABELS } from "@/lib/quick-apply/config";
 import { QUESTION_KEY_LABELS } from "@/lib/quick-apply/questions";
+import { REGIONS } from "@/lib/quick-apply/regions-countries";
 import type { PreferredContactMethod, VisaType } from "@/lib/quick-apply/types";
+
+function formatRegionCodesDisplay(raw: unknown): string {
+  const s = typeof raw === "string" ? raw.trim() : "";
+  if (!s) return "—";
+  return s
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((id) => REGIONS.find((r) => r.id === id)?.label ?? id)
+    .join(", ");
+}
 
 type FileRow = {
   id: string;
@@ -66,7 +78,7 @@ export function FirmLeadApplicationDetailPanel({ application: a, files }: Props)
           Vize türü: <strong>{VISA_TYPE_LABELS[visaKey] ?? String(a.visa_type)}</strong>
         </p>
         <p className="text-sm text-[#1A1A1A]/75">
-          Bölge: <strong>{a.region_code ? String(a.region_code) : "—"}</strong>
+          Bölge: <strong>{formatRegionCodesDisplay(a.region_code)}</strong>
         </p>
         <p className="text-sm text-[#1A1A1A]/75">
           Hedef ülke:{" "}

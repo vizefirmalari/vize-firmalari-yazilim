@@ -168,7 +168,7 @@ export function ConversationThreadView({
         </div>
       </div>
       <div
-        className="shrink-0 border-t border-[#0B3C5D]/08 bg-white px-2.5 py-2 shadow-[0_-6px_24px_rgba(11,60,93,0.06)] transition-[padding-bottom] duration-200 ease-out sm:px-4 sm:py-3 sm:shadow-none md:shadow-none"
+        className="shrink-0 border-t border-[#0B3C5D]/08 bg-white px-2.5 py-2 shadow-[0_-6px_24px_rgba(11,60,93,0.06)] transition-[padding-bottom] duration-200 ease-out sm:px-4 sm:py-2.5 sm:shadow-none md:shadow-none"
         style={{
           paddingBottom:
             keyboardInsetPx > 0

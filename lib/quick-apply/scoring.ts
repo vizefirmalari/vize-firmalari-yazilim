@@ -105,13 +105,13 @@ function clarityAxis(values: QuickApplyFormValues): number {
     words >= SUMMARY_HEURISTICS.richMinWords;
 
   if (values.visaType) raw += CLARITY_FACTORS.visaTypeKnown;
-  if (values.regionCode) raw += CLARITY_FACTORS.regionSelected;
+  if (values.regionCodes.length > 0) raw += CLARITY_FACTORS.regionSelected;
 
-  if (values.countryUnsure || values.regionCode === "unsure") {
+  if (values.countryUnsure || values.regionCodes.includes("unsure")) {
     raw += CLARITY_FACTORS.countryOrUnsureExplained * 0.85;
-  } else if (values.countryCode && hasText(values.targetCountry)) {
+  } else if (values.countryCodes.length > 0 && hasText(values.targetCountry)) {
     raw += CLARITY_FACTORS.countryOrUnsureExplained;
-    if (values.regionCode && values.regionCode !== "unsure") {
+    if (values.regionCodes.some((r) => r !== "unsure")) {
       raw += CLARITY_FACTORS.regionCountryAligned;
     }
   }
@@ -212,7 +212,8 @@ function buildReason(values: QuickApplyFormValues, fileCount: number, axes: { c:
   const gaps: string[] = [];
 
   if (hasText(values.targetCountry) && !values.countryUnsure) positives.push("hedef ülke ve bölge net");
-  if (values.countryUnsure || values.regionCode === "unsure") positives.push("öncelik danışmanla netleştirilecek şekilde işaretlendi");
+  if (values.countryUnsure || values.regionCodes.includes("unsure"))
+    positives.push("öncelik danışmanla netleştirilecek şekilde işaretlendi");
   if (values.timelineBucket && values.timelineBucket !== "unclear") positives.push("zamanlama yapılandırılmış");
   if (values.shortSummary.trim().length >= 80) positives.push("başvuru özeti anlaşılır");
   if (hasText(values.phone) && hasText(values.email)) positives.push("iletişim kanalları tam");
@@ -251,7 +252,7 @@ function buildRecommendation(values: QuickApplyFormValues, fileCount: number, ax
   if (fileCount === 0 && axes.r < 60) {
     return "Önce temel belge listesini netleştirmek için kısa bir ön değerlendirme yapın; ardından yükleme talebi gönderin.";
   }
-  if (values.countryUnsure || values.regionCode === "unsure") {
+  if (values.countryUnsure || values.regionCodes.includes("unsure")) {
     return "Hedef ülke netleştirme görüşmesi planlayın; kısa özet ve meslek/amaç bilgisini önceden gözden geçirin.";
   }
   if (values.timelineBucket === "info_only" || values.timelineBucket === "unclear") {

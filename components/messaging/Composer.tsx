@@ -119,14 +119,17 @@ export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx =
       ? "max-md:max-h-[min(38dvh,7rem)]"
       : "max-md:max-h-[min(24svh,5rem)]";
 
+  const btnBase =
+    "inline-flex h-10 shrink-0 items-center justify-center rounded-xl px-3 text-xs font-medium transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed sm:min-h-[2.5rem] sm:px-4 sm:text-sm";
+
   return (
-    <div className="space-y-1.5 sm:space-y-2">
+    <div className="space-y-1 sm:space-y-1.5">
       {error ? (
         <p className="rounded-lg border border-red-200 bg-red-50/80 px-2.5 py-1.5 text-xs text-red-700 sm:px-3 sm:py-2 sm:text-sm">
           {error}
         </p>
       ) : null}
-      <div className="flex flex-row items-end gap-2 sm:items-end sm:gap-3">
+      <div className="flex flex-row items-end gap-2 sm:gap-3">
         <textarea
           ref={textareaRef}
           value={text}
@@ -139,9 +142,9 @@ export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx =
           rows={1}
           enterKeyHint="send"
           disabled={!canSend}
-          className={`min-h-[44px] flex-1 resize-none rounded-2xl border border-[#0B3C5D]/10 bg-white px-3 py-2.5 text-[0.8125rem] leading-snug text-[#1A1A1A] outline-none transition-[border-color,box-shadow,max-height] scroll-my-0 placeholder:text-[13px] placeholder:text-[#1A1A1A]/30 focus:border-[#0B3C5D]/25 focus:ring-[3px] focus:ring-[#0B3C5D]/07 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-[76px] sm:max-h-[min(40vh,14rem)] sm:resize-y sm:rounded-xl sm:border-[#0B3C5D]/12 sm:px-3.5 sm:py-2.5 sm:text-sm sm:leading-relaxed sm:placeholder:text-sm sm:placeholder:text-[#1A1A1A]/38 sm:focus:border-[#0B3C5D]/28 sm:focus:ring-2 sm:focus:ring-[#0B3C5D]/10 sm:disabled:opacity-45 ${mobileTextareaMax}`}
+          className={`min-h-[2.75rem] flex-1 resize-none rounded-2xl border border-[#0B3C5D]/10 bg-white px-3 py-2 text-[0.8125rem] leading-snug text-[#1A1A1A] outline-none transition-[border-color,box-shadow,max-height] scroll-my-0 placeholder:text-[13px] placeholder:text-[#1A1A1A]/30 focus:border-[#0B3C5D]/25 focus:ring-[3px] focus:ring-[#0B3C5D]/07 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-[3rem] sm:max-h-[min(40vh,14rem)] sm:resize-y sm:rounded-xl sm:border-[#0B3C5D]/12 sm:px-3.5 sm:py-2.5 sm:text-sm sm:leading-relaxed sm:placeholder:text-sm sm:placeholder:text-[#1A1A1A]/38 sm:focus:border-[#0B3C5D]/28 sm:focus:ring-2 sm:focus:ring-[#0B3C5D]/10 sm:disabled:opacity-45 ${mobileTextareaMax}`}
         />
-        <div className="flex shrink-0 items-center gap-1.5 pb-px sm:gap-2 sm:pb-0">
+        <div className="flex shrink-0 flex-row items-end gap-1.5 sm:gap-2">
           <input
             ref={fileRef}
             type="file"
@@ -154,7 +157,7 @@ export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx =
             disabled={!canSend}
             onMouseDown={preventFocusStealScroll}
             onClick={() => fileRef.current?.click()}
-            className="min-h-10 rounded-xl border border-transparent bg-[#EEF1F4] px-3 py-2 text-xs font-medium text-[#0B3C5D]/75 transition-colors duration-200 hover:bg-[#E4E8EC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/22 disabled:cursor-not-allowed disabled:opacity-38 sm:min-h-0 sm:border-[#0B3C5D]/12 sm:bg-white sm:px-4 sm:py-2.5 sm:text-sm sm:font-medium sm:text-[#0B3C5D] sm:hover:bg-[#F7F9FB] sm:focus-visible:outline-[#0B3C5D]/28 sm:disabled:opacity-45"
+            className={`${btnBase} border border-transparent bg-[#EEF1F4] text-[#0B3C5D]/75 hover:bg-[#E4E8EC] focus-visible:outline-[#0B3C5D]/22 disabled:opacity-38 sm:border-[#0B3C5D]/12 sm:bg-white sm:font-medium sm:text-[#0B3C5D] sm:hover:bg-[#F7F9FB] sm:focus-visible:outline-[#0B3C5D]/28 sm:disabled:opacity-45`}
           >
             {uploading ? "…" : "Dosya"}
           </button>
@@ -163,7 +166,7 @@ export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx =
             disabled={!canSend || !text.trim()}
             onMouseDown={preventFocusStealScroll}
             onClick={handleSend}
-            className="min-h-10 rounded-xl bg-[#0B3C5D] px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-[#0B3C5D]/15 transition-[opacity,transform] duration-200 hover:opacity-[0.96] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/38 disabled:cursor-not-allowed disabled:opacity-32 disabled:active:scale-100 sm:min-h-0 sm:px-5 sm:py-2.5 sm:text-sm sm:shadow-[#0B3C5D]/18 sm:disabled:opacity-38"
+            className={`${btnBase} bg-[#0B3C5D] px-3.5 font-semibold text-white shadow-sm shadow-[#0B3C5D]/15 hover:opacity-[0.96] active:scale-[0.98] focus-visible:outline-[#0B3C5D]/38 disabled:opacity-32 disabled:active:scale-100 sm:px-5 sm:shadow-[#0B3C5D]/18 sm:disabled:opacity-38`}
           >
             {isPending ? "…" : "Gönder"}
           </button>

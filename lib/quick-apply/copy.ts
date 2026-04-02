@@ -72,7 +72,8 @@ export const STEP_COPY: Record<
   },
   region_country: {
     title: "Hedef bölge ve ülke",
-    description: "Önce bölgeyi seçin; ardından önerilen ülkelerden seçin veya arayın.",
+    description:
+      "Birden fazla bölge ve ülke seçebilirsiniz; önerilen ülkelerden işaretleyin veya arayın.",
     hint: "Henüz net değilseniz “Emin değilim” ile devam edebilirsiniz; kısa özet adımında detay verin.",
     empty: "Bölge seçildiğinde popüler ülkeler listelenir.",
   },
@@ -99,8 +100,9 @@ export const STEP_COPY: Record<
   },
   files: {
     title: "Belgeleri yükleyin",
-    description: "Belgelerinizi tek seferde düzenli paylaşmanız, değerlendirme sürecini hızlandırır.",
-    hint: "Pasaport, CV veya davet mektubu gibi dosyaları sürükleyip bırakabilir veya seçebilirsiniz.",
+    description:
+      "Birden fazla belge ekleyebilirsiniz (video hariç). Değerlendirme sürecini hızlandırır.",
+    hint: "Pasaport, CV veya davet mektubu gibi dosyaları çoklu seçim veya sürükle-bırak ile ekleyin.",
     empty: "Henüz dosya eklemediniz; devam edebilirsiniz.",
   },
   approval: {

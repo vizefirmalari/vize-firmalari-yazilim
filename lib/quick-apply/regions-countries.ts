@@ -13,20 +13,6 @@ export type CountryItem = {
   name: string;
 };
 
-const flagFromIso2 = (code: string): string => {
-  const cc = code.toUpperCase().replace(/[^A-Z]/g, "");
-  if (cc.length !== 2) return "🌍";
-  const A = 0x1f1e6;
-  return String.fromCodePoint(A + cc.charCodeAt(0) - 65, A + cc.charCodeAt(1) - 65);
-};
-
-export function flagEmojiForCountry(code: string): string {
-  if (code === "UNSURE" || !code) return "🌍";
-  if (code === "AE") return "🇦🇪";
-  if (code === "GB") return "🇬🇧";
-  return flagFromIso2(code);
-}
-
 export const REGIONS: Array<{
   id: RegionId;
   label: string;
@@ -122,6 +108,61 @@ export function countryCodesForRegion(regionId: RegionId): Set<string> {
   return new Set([...pop, ...extra]);
 }
 
+/** Seçilen bölgelerin birleşik ülke kodları (unsure hariç) */
+export function countryCodesForRegions(regionIds: RegionId[]): Set<string> {
+  const ids = regionIds.filter((r) => r !== "unsure");
+  if (ids.length === 0) return new Set();
+  const union = new Set<string>();
+  for (const id of ids) {
+    for (const c of countryCodesForRegion(id)) union.add(c);
+  }
+  return union;
+}
+
+/** Bölge listesi değişince ülke kodlarını geçerli kümede tut */
+export function filterCountryCodesForRegions(
+  regionIds: RegionId[],
+  countryCodes: string[]
+): string[] {
+  const allowed = countryCodesForRegions(regionIds);
+  if (allowed.size === 0) return [];
+  return countryCodes.filter((c) => allowed.has(c));
+}
+
+export function listCountriesInRegions(regionIds: RegionId[]): CountryItem[] {
+  const allowed = countryCodesForRegions(regionIds);
+  return ALL_COUNTRIES.filter((c) => allowed.has(c.code)).sort((a, b) =>
+    a.name.localeCompare(b.name, "tr")
+  );
+}
+
+export function searchCountriesInRegions(query: string, regionIds: RegionId[]): CountryItem[] {
+  const allowed = countryCodesForRegions(regionIds);
+  if (allowed.size === 0) return [];
+  const q = query.trim().toLowerCase();
+  const base = ALL_COUNTRIES.filter((c) => allowed.has(c.code));
+  if (!q) return [];
+  return base.filter(
+    (c) => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+  );
+}
+
+/** Sık seçilenler: bölgelere göre sırayla, mükerrer yok */
+export function popularCountriesForRegions(regionIds: RegionId[]): CountryItem[] {
+  const seen = new Set<string>();
+  const out: CountryItem[] = [];
+  for (const id of regionIds) {
+    if (id === "unsure") continue;
+    for (const code of POPULAR_BY_REGION[id] ?? []) {
+      if (seen.has(code)) continue;
+      seen.add(code);
+      const c = getCountryByCode(code);
+      if (c) out.push(c);
+    }
+  }
+  return out;
+}
+
 export function listCountriesInRegion(regionId: RegionId): CountryItem[] {
   const codes = countryCodesForRegion(regionId);
   return ALL_COUNTRIES.filter((c) => codes.has(c.code)).sort((a, b) => a.name.localeCompare(b.name, "tr"));
@@ -146,4 +187,29 @@ export function buildTargetCountryLabel(regionId: RegionId | null, countryCode: 
   if (!c) return "";
   const r = regionId ? REGIONS.find((x) => x.id === regionId) : null;
   return r ? `${c.name} (${r.label})` : c.name;
+}
+
+/** Çoklu bölge + ülke → özet metin (target_country / panel) */
+export function buildTargetCountryLabelMulti(
+  regionCodes: RegionId[],
+  countryCodes: string[],
+  countryUnsure: boolean
+): string {
+  if (countryUnsure || regionCodes.includes("unsure") || regionCodes.length === 0) {
+    return "Henüz net değil / danışmanla netleştirilecek";
+  }
+  const names = countryCodes
+    .map((c) => getCountryByCode(c)?.name)
+    .filter((n): n is string => Boolean(n));
+  const regionLabels = regionCodes
+    .filter((r) => r !== "unsure")
+    .map((id) => REGIONS.find((x) => x.id === id)?.label)
+    .filter((n): n is string => Boolean(n));
+  if (names.length === 0) return "";
+  const countriesPart = names.join(", ");
+  if (regionLabels.length === 0) return countriesPart;
+  if (names.length === 1 && regionLabels.length === 1) {
+    return `${names[0]} (${regionLabels[0]})`;
+  }
+  return `${countriesPart} · ${regionLabels.join(", ")}`;
 }

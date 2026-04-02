@@ -3,6 +3,14 @@
 import { useCallback, useId, useRef, useState } from "react";
 import { FILE_TYPE_LABELS } from "@/lib/quick-apply/config";
 import type { LeadFileType } from "@/lib/quick-apply/types";
+import {
+  CHAT_ATTACHMENT_MAX_BYTES,
+  validateChatAttachment,
+} from "@/lib/validation/chat-attachment";
+
+/** Dosya seçicide öncelik; video MIME’leri dışlar (tarayıcıya göre değişir, doğrulama zorunlu). */
+const ACCEPT_ATTR =
+  ".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp";
 
 export type SelectedLeadFile = { file: File; fileType: LeadFileType };
 
@@ -24,17 +32,46 @@ export function WizardDocumentUpload({ files, onAdd, onRemove, onChangeType }: P
   const inputId = useId();
   const [dragActive, setDragActive] = useState(false);
   const [pendingType, setPendingType] = useState<LeadFileType>("passport");
+  const [batchHint, setBatchHint] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFiles = useCallback(
     (list: FileList | null) => {
       if (!list?.length) return;
       const next: SelectedLeadFile[] = [];
+      const rejected: string[] = [];
       for (let i = 0; i < list.length; i += 1) {
         const file = list[i];
-        if (file) next.push({ file, fileType: pendingType });
+        if (!file) continue;
+        const v = validateChatAttachment(file);
+        if (!v.ok) {
+          rejected.push(`${file.name}: ${v.reason}`);
+          continue;
+        }
+        next.push({ file, fileType: pendingType });
       }
       if (next.length) onAdd(next);
+
+      if (rejected.length === 0) {
+        setBatchHint(
+          next.length > 1
+            ? `${next.length} dosya eklendi. İsterseniz türünü satırdan değiştirebilirsiniz.`
+            : next.length === 1
+              ? "Dosya eklendi. İsterseniz türünü aşağıdan değiştirebilirsiniz."
+              : null
+        );
+      } else {
+        const sample = rejected.slice(0, 2).join(" · ");
+        const rejectMsg =
+          rejected.length > 2
+            ? `${rejected.length} dosya eklenemedi (video veya desteklenmeyen tür / boyut). Örnek: ${sample}`
+            : sample;
+        if (next.length > 0) {
+          setBatchHint(`${next.length} dosya eklendi. ${rejectMsg}`);
+        } else {
+          setBatchHint(rejectMsg);
+        }
+      }
     },
     [onAdd, pendingType]
   );
@@ -43,7 +80,10 @@ export function WizardDocumentUpload({ files, onAdd, onRemove, onChangeType }: P
     <div className="space-y-5">
       <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-[0_1px_3px_rgba(11,60,93,0.06)] sm:p-5">
         <p className="text-sm font-semibold text-[#0B3C5D]">Yükleme için belge türü</p>
-        <p className="mt-0.5 text-xs text-[#1A1A1A]/55">Dosyaları eklemeden önce türü seçin; her dosya için ayrıca değiştirebilirsiniz.</p>
+        <p className="mt-0.5 text-xs text-[#1A1A1A]/55">
+          Birden fazla dosya seçebilir veya sürükleyebilirsiniz. Önce türü seçin; her satırdan tek tek
+          değiştirebilirsiniz. Video dosyaları kabul edilmez.
+        </p>
         <label className="mt-3 block" htmlFor={`${inputId}-type`}>
           <span className="sr-only">Belge türü</span>
           <select
@@ -93,7 +133,10 @@ export function WizardDocumentUpload({ files, onAdd, onRemove, onChangeType }: P
           </svg>
         </div>
         <p className="text-base font-semibold text-[#0B3C5D]">Dosyaları buraya bırakın</p>
-        <p className="mt-1 max-w-sm text-sm text-[#1A1A1A]/60">veya alana tıklayarak seçin · PDF, JPG, PNG (mobil uyumlu)</p>
+        <p className="mt-1 max-w-md text-sm text-[#1A1A1A]/60">
+          veya tıklayarak çoklu seçin · PDF, Word, Excel, metin/CSV, PNG/JPG/WebP · video hariç · en fazla{" "}
+          {Math.round(CHAT_ATTACHMENT_MAX_BYTES / (1024 * 1024))} MB / dosya
+        </p>
         <p className="mt-3 rounded-full bg-[#D9A441]/18 px-3 py-1 text-[11px] font-semibold text-[#1A1A1A]/80">
           Seçilen tür: {FILE_TYPE_LABELS[pendingType]}
         </p>
@@ -103,6 +146,7 @@ export function WizardDocumentUpload({ files, onAdd, onRemove, onChangeType }: P
           type="file"
           className="sr-only"
           multiple
+          accept={ACCEPT_ATTR}
           onChange={(e) => {
             handleFiles(e.target.files);
             e.currentTarget.value = "";
@@ -110,8 +154,17 @@ export function WizardDocumentUpload({ files, onAdd, onRemove, onChangeType }: P
         />
       </div>
 
+      {batchHint ? (
+        <p
+          className="rounded-xl border border-[#0B3C5D]/12 bg-[#F7F9FB] px-3 py-2 text-center text-xs leading-relaxed text-[#1A1A1A]/75"
+          role="status"
+        >
+          {batchHint}
+        </p>
+      ) : null}
+
       <p className="text-center text-xs leading-relaxed text-[#1A1A1A]/50">
-        Desteklenen belge türleri: {FILE_TYPES.map((k) => FILE_TYPE_LABELS[k]).join(" · ")}.
+        Kategoriler (pasaport, CV, davetiye vb.): {FILE_TYPES.map((k) => FILE_TYPE_LABELS[k]).join(" · ")}.
       </p>
 
       {files.length === 0 ? (
@@ -124,7 +177,7 @@ export function WizardDocumentUpload({ files, onAdd, onRemove, onChangeType }: P
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1A1A]/45">Yüklenen dosyalar</p>
           {files.map((item, index) => (
             <li
-              key={`${item.file.name}-${index}`}
+              key={`${index}-${item.file.name}-${item.file.size}-${item.file.lastModified}`}
               className="rounded-2xl border border-[#0B3C5D]/12 bg-white p-4 shadow-[0_1px_3px_rgba(11,60,93,0.05)]"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

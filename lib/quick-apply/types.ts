@@ -1,3 +1,5 @@
+import type { RegionId } from "@/lib/quick-apply/regions-countries";
+
 export const VISA_TYPES = [
   "work",
   "tourist",
@@ -61,8 +63,10 @@ export type LeadScoreOutput = {
 
 export type QuickApplyFormValues = {
   visaType: VisaType;
-  regionCode: string | null;
-  countryCode: string | null;
+  /** Birden fazla hedef bölge; "unsure" yalnız tek başına seçilir */
+  regionCodes: RegionId[];
+  /** Birden fazla hedef ülke (ISO2) */
+  countryCodes: string[];
   countryUnsure: boolean;
   /** Görünen hedef ülke metni (firma paneli + geriye dönük uyumluluk) */
   targetCountry: string;

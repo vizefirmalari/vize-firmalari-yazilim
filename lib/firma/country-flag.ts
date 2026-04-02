@@ -5,8 +5,12 @@
 
 export const FLAGCDN_WIDTH = 40;
 
-export function flagUrlForIso(iso: string): string {
-  return `https://flagcdn.com/w${FLAGCDN_WIDTH}/${iso.toLowerCase()}.png`;
+/** flagcdn.com — `widthPx` genişliğe göre (örn. 20, 40) PNG */
+export function flagUrlForIso(iso: string, widthPx: number = FLAGCDN_WIDTH): string {
+  const w = Number.isFinite(widthPx)
+    ? Math.max(16, Math.min(256, Math.round(widthPx)))
+    : FLAGCDN_WIDTH;
+  return `https://flagcdn.com/w${w}/${iso.toLowerCase()}.png`;
 }
 
 function normalizeCountryName(input: string): string {

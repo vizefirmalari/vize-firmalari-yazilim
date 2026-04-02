@@ -13,7 +13,12 @@ import {
   SUMMARY_TEMPLATES,
 } from "@/lib/quick-apply/copy";
 import { DYNAMIC_QUESTIONS, STEP_HELP_TEXT } from "@/lib/quick-apply/questions";
-import { buildTargetCountryLabel, type RegionId } from "@/lib/quick-apply/regions-countries";
+import {
+  buildTargetCountryLabelMulti,
+  filterCountryCodesForRegions,
+  getCountryByCode,
+  type RegionId,
+} from "@/lib/quick-apply/regions-countries";
 import { calculateLeadScore } from "@/lib/quick-apply/scoring";
 import type { LeadFileType, PreferredContactMethod, QuickApplyFormValues, TimelineBucket, VisaType } from "@/lib/quick-apply/types";
 import { TIMELINE_BUCKETS } from "@/lib/quick-apply/types";
@@ -44,17 +49,38 @@ type Props = {
 
 function mergeInitialFromDraft(d: WizardDraftPayload | null | undefined): QuickApplyFormValues {
   if (!d) return initialValues;
+  const v = d.values as QuickApplyFormValues & {
+    regionCode?: string | null;
+    countryCode?: string | null;
+  };
+  const regionCodes: RegionId[] =
+    Array.isArray(v.regionCodes) && v.regionCodes.length > 0
+      ? v.regionCodes
+      : v.regionCode
+        ? [v.regionCode as RegionId]
+        : [];
+  const countryCodes: string[] =
+    Array.isArray(v.countryCodes) && v.countryCodes.length > 0
+      ? v.countryCodes
+      : v.countryCode
+        ? [v.countryCode]
+        : [];
+  const countryUnsure = Boolean(d.values.countryUnsure);
   return {
     ...initialValues,
     ...d.values,
+    regionCodes,
+    countryCodes,
+    countryUnsure,
+    targetCountry: buildTargetCountryLabelMulti(regionCodes, countryCodes, countryUnsure),
     answers: { ...initialValues.answers, ...d.values.answers },
   };
 }
 
 const initialValues: QuickApplyFormValues = {
   visaType: "tourist",
-  regionCode: null,
-  countryCode: null,
+  regionCodes: [],
+  countryCodes: [],
   countryUnsure: false,
   targetCountry: "",
   shortSummary: "",
@@ -105,9 +131,9 @@ function canAdvance(step: number, values: QuickApplyFormValues): boolean {
     case 1:
       return Boolean(values.visaType);
     case 2: {
-      if (!values.regionCode) return false;
-      if (values.regionCode === "unsure") return true;
-      return Boolean(values.countryUnsure || values.countryCode);
+      if (values.regionCodes.length === 0) return false;
+      if (values.regionCodes.includes("unsure")) return true;
+      return Boolean(values.countryUnsure || values.countryCodes.length > 0);
     }
     case 3:
       return values.shortSummary.trim().length >= 20 && values.timelineBucket !== null;
@@ -161,9 +187,9 @@ export function QuickApplyWizard({
   const syncTargetCountry = (patch: Partial<QuickApplyFormValues>) => {
     setValues((prev) => {
       const next = { ...prev, ...patch };
-      next.targetCountry = buildTargetCountryLabel(
-        (next.regionCode as RegionId | null) ?? null,
-        next.countryCode,
+      next.targetCountry = buildTargetCountryLabelMulti(
+        next.regionCodes,
+        next.countryCodes,
         next.countryUnsure
       );
       if (next.timelineBucket) {
@@ -209,16 +235,26 @@ export function QuickApplyWizard({
     }
 
     const countryName =
-      values.countryCode && !values.countryUnsure
-        ? values.targetCountry.split("(")[0]?.trim() || values.targetCountry
+      values.countryCodes.length > 0 && !values.countryUnsure
+        ? values.countryCodes
+            .map((c) => getCountryByCode(c)?.name)
+            .filter(Boolean)
+            .join(", ")
         : null;
+
+    const regionCodeJoined =
+      values.regionCodes.length > 0 ? values.regionCodes.join(",") : null;
+    const countryCodeJoined =
+      values.countryUnsure || values.countryCodes.length === 0
+        ? null
+        : values.countryCodes.join(",");
 
     const created = await createQuickApplicationAction({
       firmId,
       visaType: values.visaType,
       targetCountry: values.targetCountry || "Belirtilmedi",
-      regionCode: values.regionCode,
-      countryCode: values.countryUnsure ? null : values.countryCode,
+      regionCode: regionCodeJoined,
+      countryCode: countryCodeJoined,
       countryName,
       timelineBucket: values.timelineBucket,
       timelineNote: values.timelineNote,
@@ -394,22 +430,35 @@ export function QuickApplyWizard({
         {step === 2 ? (
           <StepShell copyKey="region_country" stepHelp={STEP_HELP_TEXT.region_country}>
             <WizardRegionCountry
-              regionId={values.regionCode as RegionId | null}
-              countryCode={values.countryCode}
+              regionCodes={values.regionCodes}
+              countryCodes={values.countryCodes}
               countryUnsure={values.countryUnsure}
-              onRegion={(id) => {
-                if (id === null) {
-                  syncTargetCountry({ regionCode: null, countryCode: null, countryUnsure: false });
+              onRegionCodesChange={(ids) => {
+                if (ids.length === 0) {
+                  syncTargetCountry({
+                    regionCodes: [],
+                    countryCodes: [],
+                    countryUnsure: false,
+                  });
                   return;
                 }
+                if (ids.includes("unsure")) {
+                  syncTargetCountry({
+                    regionCodes: ids,
+                    countryCodes: [],
+                    countryUnsure: false,
+                  });
+                  return;
+                }
+                const nextCountries = filterCountryCodesForRegions(ids, values.countryCodes);
                 syncTargetCountry({
-                  regionCode: id,
-                  countryCode: null,
-                  countryUnsure: id === "unsure",
+                  regionCodes: ids,
+                  countryCodes: nextCountries,
+                  countryUnsure: false,
                 });
               }}
-              onCountry={(code, unsure) => {
-                syncTargetCountry({ countryCode: code, countryUnsure: unsure });
+              onCountryCodesChange={(codes, unsure) => {
+                syncTargetCountry({ countryCodes: codes, countryUnsure: unsure });
               }}
             />
           </StepShell>
@@ -708,7 +757,9 @@ export function QuickApplyWizard({
         {step === 7 ? (
           <StepShell copyKey="files" stepHelp={STEP_HELP_TEXT.files}>
             <p className="mb-4 text-sm text-[#1A1A1A]/70">
-              Belgelerinizi tek seferde düzenli paylaşmanız, değerlendirme sürecini hızlandırır. Belgeleriniz herkese açık değildir; yalnızca başvuru değerlendirme sürecinde kullanılır.
+              İstediğiniz kadar belge dosyası ekleyebilirsiniz (video kabul edilmez; PDF, Office, görsel ve
+              metin dosyaları). Belgeleriniz herkese açık değildir; yalnızca başvuru değerlendirme sürecinde
+              kullanılır.
             </p>
             <WizardDocumentUpload
               files={files}

@@ -58,7 +58,8 @@ export const STEP_HELP_TEXT: Record<string, string> = {
   contact: "İletişim bilgileriniz yalnızca başvuru süreciniz kapsamında, ilgili firma tarafından kullanılır.",
   dynamic_questions: "Bu bilgiler, size daha uygun danışmanlık planı sunulmasına yardımcı olur.",
   readiness: "Yaklaşık ve doğru bilgi vermeniz yeterlidir; eksikler görüşmede tamamlanabilir.",
-  files: "Belgeleri düzenli paylaşmak zaman kaybını azaltır ve değerlendirmeyi hızlandırır.",
+  files:
+    "Birden fazla belge ekleyebilirsiniz (video hariç). Düzenli paylaşım değerlendirmeyi hızlandırır.",
   approval: "Onay sonrası başvurunuz güvenli akışla kaydedilir ve yalnızca ilgili firma tarafından görüntülenir.",
 };
 
