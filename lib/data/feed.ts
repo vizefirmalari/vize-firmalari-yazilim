@@ -18,7 +18,10 @@ export type FeedItem = {
   tags: string[];
   score: number;
   engagement_score: number;
+  /** Akış sıralaması (0–1): son 2 saat etkileşim / büyüme — kartta gösterilen hype değil */
   hype_score: number;
+  /** `firms.hype_score` birikimli platform puanı; liste/detay ile aynı gösterim */
+  firm_hype_score: number;
   corporateness_score: number;
   premium_score: number;
   admin_score: number;
@@ -52,6 +55,16 @@ function clamp01(n: number): number {
   if (n < 0) return 0;
   if (n > 1) return 1;
   return n;
+}
+
+/** `firms` satırından birikimli hype (liste / firma sayfası ile aynı) */
+function firmHypePointsFromRow(f: { hype_score?: unknown } | null | undefined): number {
+  if (!f) return 0;
+  const h = f.hype_score;
+  if (typeof h === "bigint") return Number(h);
+  if (typeof h === "number" && Number.isFinite(h)) return h;
+  if (typeof h === "string" && /^\d+$/.test(h)) return Number(h);
+  return 0;
 }
 
 function applyAntiSpam(items: FeedItem[]): FeedItem[] {
@@ -112,10 +125,11 @@ export async function getFirmFeedItems(
 
   const { data: firmRow } = await dataClient
     .from("firms")
-    .select("corporateness_score")
+    .select("corporateness_score, hype_score")
     .eq("id", firmId)
     .maybeSingle();
   const firmCorporateScore = Math.max(0, Math.min(100, Number(firmRow?.corporateness_score ?? 0)));
+  const firmHypePoints = firmHypePointsFromRow(firmRow);
 
   const rows = posts ?? [];
   if (rows.length === 0) return [];
@@ -161,6 +175,7 @@ export async function getFirmFeedItems(
       score: 0,
       engagement_score: 0,
       hype_score: 0,
+      firm_hype_score: firmHypePoints,
       corporateness_score: firmCorporateScore,
       premium_score: 0,
       admin_score: 0,
@@ -205,7 +220,7 @@ async function computeFeedPage(
 
     const { data: firms } = await dataClient
       .from("firms")
-      .select("id,slug,name,logo_url,premium_badge,featured,corporateness_score")
+      .select("id,slug,name,logo_url,premium_badge,featured,corporateness_score,hype_score")
       .in("id", rows.map((r) => String(r.firm_id)));
     const firmMap = new Map((firms ?? []).map((f) => [String(f.id), f]));
     const rowCompanySlugs = Array.from(
@@ -219,7 +234,7 @@ async function computeFeedPage(
       rowCompanySlugs.length > 0
         ? await dataClient
             .from("firms")
-            .select("id,slug,name,logo_url,premium_badge,featured,corporateness_score")
+            .select("id,slug,name,logo_url,premium_badge,featured,corporateness_score,hype_score")
             .in("slug", rowCompanySlugs)
         : { data: [] };
     const firmSlugMap = new Map((firmsBySlug ?? []).map((f) => [String(f.slug), f]));
@@ -312,6 +327,7 @@ async function computeFeedPage(
     const growthRate = prev > 0 ? recent / prev : recent > 0 ? 1 : 0;
     const hypeRaw = recent + growthRate;
     const hypeScore = clamp01(hypeRaw / 20);
+    const firmHypePoints = firmHypePointsFromRow(firm);
     const score =
       WEIGHTS.recency * recencyScore +
       WEIGHTS.engagement * engagementScore +
@@ -337,6 +353,7 @@ async function computeFeedPage(
       score,
       engagement_score: engagementScore,
       hype_score: hypeScore,
+      firm_hype_score: firmHypePoints,
       corporateness_score: Math.max(0, Math.min(100, Number(firm?.corporateness_score ?? 0))),
       premium_score: premiumScore,
       admin_score: adminScore,

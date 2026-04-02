@@ -19,6 +19,7 @@ import {
 } from "@/lib/constants/firm-specializations";
 import { PLATFORM_WHATSAPP_PHONE, PLATFORM_WHATSAPP_URL } from "@/lib/constants/contact";
 import { QuickApplyLauncher } from "@/components/quick-apply/quick-apply-launcher";
+import { buildQuickApplyExpertiseLine, buildQuickApplySubtitle } from "@/lib/quick-apply/firm-intro-branding";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -561,6 +562,9 @@ export default async function FirmaPage({ params }: PageProps) {
                     <QuickApplyLauncher
                       firmId={firm.id}
                       firmName={firm.name}
+                      firmLogoUrl={firm.logo_url}
+                      firmExpertiseLine={buildQuickApplyExpertiseLine(firm)}
+                      firmSubtitle={buildQuickApplySubtitle(firm)}
                       buttonClassName="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-center text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
                     />
                   ) : (

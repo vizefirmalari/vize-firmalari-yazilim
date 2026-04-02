@@ -1,6 +1,7 @@
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { getFirmLeadApplicationDetail, getFirmLeadApplications } from "@/lib/data/firm-panel-leads";
-import { FILE_TYPE_LABELS, VISA_TYPE_LABELS } from "@/lib/quick-apply/config";
+import { FILE_TYPE_LABELS, PREFERRED_CONTACT_LABELS, TIMELINE_BUCKET_LABELS, VISA_TYPE_LABELS } from "@/lib/quick-apply/config";
+import { QUESTION_KEY_LABELS } from "@/lib/quick-apply/questions";
 
 type PageProps = {
   params: Promise<{ firmId: string }>;
@@ -10,6 +11,7 @@ type PageProps = {
 const SEGMENT_LABELS: Record<string, string> = {
   hot: "Hot",
   warm: "Warm",
+  medium: "Medium",
   low: "Low",
   weak: "Weak",
 };
@@ -26,6 +28,11 @@ const READINESS_LABELS: Record<string, string> = {
   kismen_hazir: "Kısmen Hazır",
   on_degerlendirme_gerekli: "Ön Değerlendirme Gerekli",
 };
+
+function subScore(row: Record<string, unknown>, key: string): string {
+  const v = row[key];
+  return typeof v === "number" ? String(v) : "—";
+}
 
 export default async function FirmPanelFormsPage({ params, searchParams }: PageProps) {
   const { firmId } = await params;
@@ -81,36 +88,75 @@ export default async function FirmPanelFormsPage({ params, searchParams }: PageP
               <p className="text-xs text-[#1A1A1A]/55">{detail.application.application_no}</p>
               <h2 className="mt-1 text-xl font-bold text-[#0B3C5D]">{detail.application.applicant_name}</h2>
               <p className="mt-2 text-sm text-[#1A1A1A]/70">
-                <span className="font-semibold text-[#0B3C5D]">Lead Skoru</span><br />
-                Bu skor, başvurunun hazırlık seviyesi, bilgi netliği ve destekleyici içerik durumuna göre oluşturulur.
+                <span className="font-semibold text-[#0B3C5D]">Lead skoru</span>
+                <br />
+                Toplam skor; netlik, hazırlık ve aksiyon alınabilirlik eksenlerinden ağırlıklı olarak hesaplanır.
               </p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-4">
-                <CardLabel title="Skor" value={String(detail.application.lead_score)} />
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <CardLabel title="Toplam" value={String(detail.application.lead_score)} />
+                <CardLabel title="Netlik" value={subScore(detail.application, "clarity_score")} />
+                <CardLabel title="Hazırlık (alt)" value={subScore(detail.application, "readiness_score")} />
+                <CardLabel title="Aksiyon" value={subScore(detail.application, "actionability_score")} />
                 <CardLabel title="Segment" value={SEGMENT_LABELS[detail.application.lead_segment] ?? detail.application.lead_segment} />
                 <CardLabel title="Öncelik" value={PRIORITY_LABELS[detail.application.lead_priority] ?? detail.application.lead_priority} />
-                <CardLabel title="Hazırlık" value={READINESS_LABELS[detail.application.readiness_status] ?? detail.application.readiness_status} />
+                <CardLabel title="Hazırlık durumu" value={READINESS_LABELS[detail.application.readiness_status] ?? detail.application.readiness_status} />
               </div>
+              {detail.application.recommendation_next_action ? (
+                <div className="mt-4 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-2 text-sm text-[#1A1A1A]/75">
+                  <span className="font-semibold text-[#0B3C5D]">Önerilen sonraki adım: </span>
+                  {detail.application.recommendation_next_action}
+                </div>
+              ) : null}
             </div>
-            <InfoSection title="Başvuru Özeti">
+            <InfoSection title="Başvuru özeti">
               <p className="text-sm text-[#1A1A1A]/75">{detail.application.short_summary || "Özet bilgisi paylaşılmamış."}</p>
-              <p className="mt-2 text-sm text-[#1A1A1A]/70">Vize türü: <strong>{VISA_TYPE_LABELS[detail.application.visa_type as keyof typeof VISA_TYPE_LABELS] ?? detail.application.visa_type}</strong></p>
-              <p className="text-sm text-[#1A1A1A]/70">Hedef ülke: <strong>{detail.application.target_country || "Belirtilmemiş"}</strong></p>
-              <p className="text-sm text-[#1A1A1A]/70">Zamanlama: <strong>{detail.application.timeline || "Belirtilmemiş"}</strong></p>
+              <p className="mt-2 text-sm text-[#1A1A1A]/70">
+                Vize türü: <strong>{VISA_TYPE_LABELS[detail.application.visa_type as keyof typeof VISA_TYPE_LABELS] ?? detail.application.visa_type}</strong>
+              </p>
+              <p className="text-sm text-[#1A1A1A]/70">
+                Bölge: <strong>{detail.application.region_code || "—"}</strong>
+              </p>
+              <p className="text-sm text-[#1A1A1A]/70">
+                Hedef ülke: <strong>{detail.application.target_country || detail.application.country_name || "Belirtilmemiş"}</strong>
+              </p>
+              <p className="text-sm text-[#1A1A1A]/70">
+                Zamanlama:{" "}
+                <strong>
+                  {detail.application.timeline_bucket
+                    ? TIMELINE_BUCKET_LABELS[detail.application.timeline_bucket as keyof typeof TIMELINE_BUCKET_LABELS] ??
+                      detail.application.timeline_bucket
+                    : detail.application.timeline || "Belirtilmemiş"}
+                </strong>
+              </p>
+              {detail.application.timeline_note ? (
+                <p className="text-sm text-[#1A1A1A]/70">Not: {detail.application.timeline_note}</p>
+              ) : null}
             </InfoSection>
-            <InfoSection title="İletişim Bilgileri">
+            <InfoSection title="İletişim bilgileri">
               <p className="text-sm text-[#1A1A1A]/75">Telefon: {detail.application.phone}</p>
+              {detail.application.whatsapp ? <p className="text-sm text-[#1A1A1A]/75">WhatsApp: {detail.application.whatsapp}</p> : null}
               <p className="text-sm text-[#1A1A1A]/75">E-posta: {detail.application.email || "Belirtilmemiş"}</p>
+              {detail.application.age != null ? <p className="text-sm text-[#1A1A1A]/75">Yaş: {detail.application.age}</p> : null}
               <p className="text-sm text-[#1A1A1A]/75">Şehir: {detail.application.city || "Belirtilmemiş"}</p>
               <p className="text-sm text-[#1A1A1A]/75">Uyruk: {detail.application.nationality || "Belirtilmemiş"}</p>
+              {detail.application.preferred_contact_method ? (
+                <p className="text-sm text-[#1A1A1A]/75">
+                  İletişim tercihi:{" "}
+                  <strong>
+                    {PREFERRED_CONTACT_LABELS[detail.application.preferred_contact_method as keyof typeof PREFERRED_CONTACT_LABELS] ??
+                      detail.application.preferred_contact_method}
+                  </strong>
+                </p>
+              ) : null}
             </InfoSection>
-            <InfoSection title="Vize Türüne Göre Özel Bilgiler">
+            <InfoSection title="Vize türüne göre özel bilgiler">
               {Object.entries((detail.application.answers as Record<string, unknown>) ?? {}).length === 0 ? (
                 <p className="text-sm text-[#1A1A1A]/55">Ek soru cevabı bulunmuyor.</p>
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                   {Object.entries((detail.application.answers as Record<string, unknown>) ?? {}).map(([key, value]) => (
                     <div key={key} className="rounded-lg bg-[#F7F9FB] px-3 py-2 text-sm text-[#1A1A1A]/75">
-                      <span className="font-semibold text-[#0B3C5D]">{key}:</span> {String(value)}
+                      <span className="font-semibold text-[#0B3C5D]">{QUESTION_KEY_LABELS[key] ?? key}:</span> {String(value)}
                     </div>
                   ))}
                 </div>

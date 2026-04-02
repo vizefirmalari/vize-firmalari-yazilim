@@ -6,29 +6,53 @@ import type { LeadFileType } from "@/lib/quick-apply/types";
 
 const applicationSchema = z.object({
   firmId: z.string().uuid(),
-  visaType: z.enum(["work", "tourist", "family_reunion", "student", "not_sure"]),
-  targetCountry: z.string().trim().min(1),
+  visaType: z.enum(["work", "tourist", "family_reunion", "student", "business", "not_sure"]),
+  targetCountry: z.string().trim().optional().default(""),
+  regionCode: z.string().trim().nullable().optional(),
+  countryCode: z.string().trim().nullable().optional(),
+  countryName: z.string().trim().nullable().optional(),
+  timelineBucket: z.string().trim().nullable().optional(),
+  timelineNote: z.string().trim().optional().default(""),
   applicantName: z.string().trim().min(2),
   phone: z.string().trim().min(5),
-  email: z.string().trim().email().optional().or(z.literal("")),
+  whatsapp: z.string().trim().optional().default(""),
+  email: z
+    .string()
+    .trim()
+    .refine((s) => s === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s), "E-posta geçersiz"),
   city: z.string().trim().optional().default(""),
   nationality: z.string().trim().optional().default(""),
+  age: z.string().trim().optional().default(""),
+  preferredContactMethod: z.enum(["phone", "whatsapp", "email", "any"]).nullable().optional(),
   shortSummary: z.string().trim().optional().default(""),
   timeline: z.string().trim().optional().default(""),
   previousRefusal: z.boolean(),
   passportStatus: z.string().trim().optional().default(""),
   answers: z.record(z.string(), z.union([z.string(), z.boolean()])),
   leadScore: z.number().int().min(0).max(100),
-  leadSegment: z.enum(["hot", "warm", "low", "weak"]),
+  clarityScore: z.number().int().min(0).max(100),
+  readinessScore: z.number().int().min(0).max(100),
+  actionabilityScore: z.number().int().min(0).max(100),
+  leadSegment: z.enum(["hot", "warm", "medium", "low", "weak"]),
   leadPriority: z.enum(["cok_yuksek", "yuksek", "orta", "dusuk"]),
   readinessStatus: z.enum(["hazir", "kismen_hazir", "on_degerlendirme_gerekli"]),
   scoreReasonSummary: z.string().trim().min(10),
+  recommendationNextAction: z.string().trim().min(5),
   consentDataProcessing: z.boolean().refine((v) => v === true),
   consentContact: z.boolean().refine((v) => v === true),
 });
 
 const fileRowSchema = z.object({
-  fileType: z.enum(["passport", "identity", "cv", "diploma", "invitation_letter", "job_offer", "other"] satisfies readonly LeadFileType[]),
+  fileType: z.enum([
+    "passport",
+    "identity",
+    "cv",
+    "diploma",
+    "invitation_letter",
+    "job_offer",
+    "financial",
+    "other",
+  ] satisfies readonly LeadFileType[]),
   storagePath: z.string().trim().min(5),
   originalName: z.string().trim().min(1),
   mimeType: z.string().trim().optional(),
@@ -50,20 +74,36 @@ export async function createQuickApplicationAction(input: z.infer<typeof applica
     .from("lead_applications")
     .insert({
       firm_id: payload.firmId,
+      submitted_from: "quick_apply_wizard",
       visa_type: payload.visaType,
-      target_country: payload.targetCountry,
+      target_country: payload.targetCountry || null,
+      region_code: payload.regionCode ?? null,
+      country_code: payload.countryCode ?? null,
+      country_name: payload.countryName ?? null,
+      timeline_bucket: payload.timelineBucket ?? null,
+      timeline_note: payload.timelineNote || null,
       applicant_name: payload.applicantName,
       phone: payload.phone,
+      whatsapp: payload.whatsapp || null,
       email: payload.email || null,
       city: payload.city || null,
       nationality: payload.nationality || null,
+      age: (() => {
+        const n = Number.parseInt(payload.age, 10);
+        return Number.isFinite(n) && n > 0 && n < 130 ? n : null;
+      })(),
+      preferred_contact_method: payload.preferredContactMethod ?? null,
       short_summary: payload.shortSummary || null,
       timeline: payload.timeline || null,
       lead_score: payload.leadScore,
+      clarity_score: payload.clarityScore,
+      readiness_score: payload.readinessScore,
+      actionability_score: payload.actionabilityScore,
       lead_segment: payload.leadSegment,
       lead_priority: payload.leadPriority,
       readiness_status: payload.readinessStatus,
       score_reason_summary: payload.scoreReasonSummary,
+      recommendation_next_action: payload.recommendationNextAction,
       previous_refusal: payload.previousRefusal,
       passport_status: payload.passportStatus || null,
       answers: payload.answers,
@@ -74,6 +114,9 @@ export async function createQuickApplicationAction(input: z.infer<typeof applica
     .single();
 
   if (error || !data) {
+    if (process.env.NODE_ENV === "development" && error) {
+      console.error("[createQuickApplication]", error.message, error.code, error.details);
+    }
     return { ok: false as const, message: "Başvuru kaydedilemedi, lütfen tekrar deneyin." };
   }
 

@@ -25,7 +25,10 @@ export function FirmFeedList({ items }: { items: FeedItem[] }) {
     <div className="space-y-4">
       {items.map((item) => {
         const corporateScore = Math.round(Math.max(0, Math.min(100, Number(item.corporateness_score ?? 0))));
-        const hypeScore = Math.round(Math.max(0, Math.min(100, item.hype_score * 100)));
+        const hypeScore =
+          typeof item.firm_hype_score === "number" && Number.isFinite(item.firm_hype_score)
+            ? Math.round(item.firm_hype_score)
+            : 0;
         return (
         <article
           key={item.id}
