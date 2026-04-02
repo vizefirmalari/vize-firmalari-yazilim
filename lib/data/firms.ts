@@ -21,6 +21,7 @@ const MOCK_FIRMS: FirmRow[] = [
     corporateness_score: 88,
     manual_priority: 0,
     countries: ["Almanya", "Fransa", "İtalya"],
+    visa_regions: ["Schengen Bölgesi"],
     services: ["Vize İşlemleri"],
     phone: "+90 212 555 01 01",
     whatsapp: "+905551112233",
@@ -44,6 +45,7 @@ const MOCK_FIRMS: FirmRow[] = [
     corporateness_score: 76,
     manual_priority: 0,
     countries: ["Amerika", "Kanada"],
+    visa_regions: ["ABD", "Kanada"],
     services: ["Oturum"],
     phone: "+90 216 555 02 02",
     whatsapp: "+905559998877",
@@ -97,6 +99,11 @@ export function normalizeFirmRow(r: Record<string, unknown>): FirmRow {
   const hypeNum = numericHype(r);
   const corp = Number(r.corporateness_score ?? r.corporate_score ?? 0);
   const prio = Number(r.sort_priority ?? 0);
+  const visaRaw = r.visa_regions;
+  const visa_regions = Array.isArray(visaRaw)
+    ? (visaRaw as string[]).filter(Boolean)
+    : [];
+
   return {
     ...base,
     hype_score: Number.isFinite(hypeNum) ? hypeNum : 0,
@@ -104,6 +111,7 @@ export function normalizeFirmRow(r: Record<string, unknown>): FirmRow {
     corporateness_score: Number.isFinite(corp) ? corp : 0,
     manual_priority: Number.isFinite(prio) ? prio : 0,
     messaging_enabled: r.messaging_enabled === false ? false : true,
+    visa_regions,
   };
 }
 

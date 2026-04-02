@@ -33,6 +33,10 @@ export type FirmRow = {
   manual_priority?: number;
   short_badge?: string | null;
   countries: string[];
+  /**
+   * Ülke seçimlerinden türetilen vize bölge etiketleri (DB; `syncFirmDenormalized`).
+   */
+  visa_regions?: string[] | null;
   /** Öne çıkan ülke isimleri (varsa) */
   featured_countries?: string[] | null;
   services: string[];

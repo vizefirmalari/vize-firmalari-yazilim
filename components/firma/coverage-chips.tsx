@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import { isRegionCoverageLabel } from "@/lib/firma/split-coverage-regions-countries";
 import {
-  euFlagUrl,
   flagUrlForIso,
   getCountryFlagCodeFromName,
+  getRegionFlagsForLabel,
   logMissingCountryMapping,
-  regionUsesEuFlag,
 } from "@/lib/firma/country-flag";
 
 const CHIP_BASE =
@@ -112,33 +111,46 @@ export function RegionChip({
   className = "",
   variant,
 }: ChipProps & { regionLabel: string }) {
-  const useEu = regionUsesEuFlag(regionLabel);
-  const [euOk, setEuOk] = useState(true);
+  const codes = getRegionFlagsForLabel(regionLabel);
+  const [flagsOk, setFlagsOk] = useState(true);
 
   useEffect(() => {
-    setEuOk(true);
+    setFlagsOk(true);
   }, [regionLabel]);
 
-  const showEuFlag = useEu && euOk;
   const cls = `${chipBaseClass(variant)} ${onClick ? "cursor-pointer" : ""} ${className}`.trim();
-  const flagImgClass =
-    variant === "cardSummary"
+  const multi = codes && codes.length > 1;
+  const flagImgClass = multi
+    ? variant === "cardSummary"
+      ? "h-3 w-auto shrink-0 rounded-[2px] object-cover"
+      : "h-3.5 w-auto shrink-0 rounded-[2px] object-cover"
+    : variant === "cardSummary"
       ? "h-3.5 w-auto shrink-0 rounded-[3px] object-cover"
       : "h-4 w-auto shrink-0 rounded-[3px] object-cover";
 
+  const showFlags = Boolean(codes?.length) && flagsOk;
+
   const inner = (
     <>
-      {showEuFlag ? (
-        <img
-          src={euFlagUrl()}
-          alt=""
-          width={24}
-          height={16}
-          className={flagImgClass}
-          loading="eager"
-          decoding="async"
-          onError={() => setEuOk(false)}
-        />
+      {showFlags ? (
+        <span
+          className={`inline-flex shrink-0 items-center ${multi ? "gap-0.5" : ""}`}
+          aria-hidden
+        >
+          {codes!.map((code) => (
+            <img
+              key={code}
+              src={flagUrlForIso(code)}
+              alt=""
+              width={multi ? 20 : 24}
+              height={multi ? 12 : 16}
+              className={flagImgClass}
+              loading="eager"
+              decoding="async"
+              onError={() => setFlagsOk(false)}
+            />
+          ))}
+        </span>
       ) : (
         <RegionPinIcon compact={variant === "cardSummary"} />
       )}

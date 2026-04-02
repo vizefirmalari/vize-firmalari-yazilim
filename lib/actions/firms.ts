@@ -11,6 +11,7 @@ import {
   recalculateCorporatenessScore,
   recalculateCorporatenessScoreWithClient,
 } from "@/lib/firms/recalculate-corporateness";
+import { deriveVisaRegions } from "@/lib/visa-regions/derive";
 
 /** Yönetici paneli / cron — `WithClient` doğrudan `lib/firms/recalculate-corporateness` içinden import edin. */
 export { recalculateCorporatenessScore };
@@ -285,6 +286,7 @@ async function syncFirmDenormalized(supabase: SupabaseAdmin, firmId: string) {
   const sub = (firmRow?.sub_services as string[] | null) ?? [];
   const custom = (firmRow?.custom_services as string[] | null) ?? [];
   const services = [...new Set([...main, ...sub, ...custom])];
+  const visa_regions = deriveVisaRegions(countryNames);
 
   await supabase
     .from("firms")
@@ -292,6 +294,7 @@ async function syncFirmDenormalized(supabase: SupabaseAdmin, firmId: string) {
       countries: countryNames,
       featured_countries: featuredNames,
       services,
+      visa_regions,
       updated_at: new Date().toISOString(),
     })
     .eq("id", firmId);

@@ -6,18 +6,14 @@ import { useEffect, useMemo, useState } from "react";
 import type { FirmRow } from "@/lib/types/firm";
 import { FirmPrimaryLeftCta } from "@/components/firma/firm-primary-left-cta";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
-import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
+import { resolveFirmCoverageDisplay } from "@/lib/firma/resolve-firm-coverage";
 import { QuickApplyLauncher } from "@/components/quick-apply/quick-apply-launcher";
 import { buildQuickApplyExpertiseLine, buildQuickApplySubtitle } from "@/lib/quick-apply/firm-intro-branding";
 import {
   ServiceSummaryChip,
   SummaryMoreButton,
 } from "@/components/firma/card-summary-chips";
-import {
-  CountryChip,
-  CoverageChip,
-  RegionChip,
-} from "@/components/firma/coverage-chips";
+import { CountryChip, RegionChip } from "@/components/firma/coverage-chips";
 import {
   effectiveFirmCategoryLabel,
   orderedServiceLabelsForCardSummary,
@@ -39,13 +35,25 @@ export function FirmCard({ firm }: FirmCardProps) {
   const corporate = firm.corporateness_score;
   const hype = typeof firm.hype_score === "number" && Number.isFinite(firm.hype_score) ? firm.hype_score : 0;
   const countryPool = Array.isArray(firm.countries) ? firm.countries : [];
-  const countryCoverage = splitRegionsAndCountries(countryPool);
-  const servedCountries = countryCoverage.countries;
-  const servedRegions = countryCoverage.regions;
-  /** Kart özeti: en fazla 2 ülke/bölge + dinamik +X */
+  const coverage = resolveFirmCoverageDisplay({
+    countries: countryPool,
+    visa_regions: firm.visa_regions,
+  });
+  const servedCountries = coverage.countries;
+  const servedRegions = coverage.regions;
+  /** Kart özeti: önce bölgeler, sonra ülkeler; en fazla 2 rozet + dinamik +X */
   const CARD_SUMMARY_VISIBLE = 2;
-  const shownCountries = countryPool.slice(0, CARD_SUMMARY_VISIBLE);
-  const restCountries = Math.max(0, countryPool.length - shownCountries.length);
+  const summarySlots: Array<{ kind: "region" | "country"; label: string }> = [];
+  for (const r of servedRegions) {
+    if (summarySlots.length >= CARD_SUMMARY_VISIBLE) break;
+    summarySlots.push({ kind: "region", label: r });
+  }
+  for (const c of servedCountries) {
+    if (summarySlots.length >= CARD_SUMMARY_VISIBLE) break;
+    summarySlots.push({ kind: "country", label: c });
+  }
+  const totalCoverageItems = servedRegions.length + servedCountries.length;
+  const restCountries = Math.max(0, totalCoverageItems - summarySlots.length);
 
   const serviceSummaryList = useMemo(
     () => orderedServiceLabelsForCardSummary(firm),
@@ -54,7 +62,7 @@ export function FirmCard({ firm }: FirmCardProps) {
   const shownServices = serviceSummaryList.slice(0, CARD_SUMMARY_VISIBLE);
   const restServices = Math.max(0, serviceSummaryList.length - shownServices.length);
 
-  const singleCountryOnly = shownCountries.length === 1 && restCountries === 0;
+  const singleCoverageOnly = summarySlots.length === 1 && restCountries === 0;
   const singleServiceOnly = shownServices.length === 1 && restServices === 0;
 
   const servicePool = Array.isArray(firm.services) ? firm.services : [];
@@ -183,26 +191,39 @@ export function FirmCard({ firm }: FirmCardProps) {
           {descriptionText}
         </button>
 
-        {shownCountries.length > 0 || restCountries > 0 ? (
+        {summarySlots.length > 0 || restCountries > 0 ? (
           <div className="mt-4 w-full min-w-0">
             <div className="flex w-full min-w-0 flex-nowrap items-center gap-1.5 sm:gap-2">
-              {shownCountries.map((c, idx) => (
+              {summarySlots.map((slot, idx) => (
                 <div
-                  key={`${c}-${idx}`}
+                  key={`${slot.kind}-${slot.label}-${idx}`}
                   className={
-                    singleCountryOnly
+                    singleCoverageOnly
                       ? "min-w-0 w-auto max-w-full"
                       : "min-w-0 flex-1 basis-0 sm:max-w-50"
                   }
                 >
-                  <CoverageChip
-                    label={c}
-                    className={
-                      singleCountryOnly
-                        ? "min-w-0 justify-start"
-                        : "w-full min-w-0 justify-start"
-                    }
-                  />
+                  {slot.kind === "region" ? (
+                    <RegionChip
+                      regionLabel={slot.label}
+                      variant="cardSummary"
+                      className={
+                        singleCoverageOnly
+                          ? "min-w-0 justify-start"
+                          : "w-full min-w-0 justify-start"
+                      }
+                    />
+                  ) : (
+                    <CountryChip
+                      countryName={slot.label}
+                      variant="cardSummary"
+                      className={
+                        singleCoverageOnly
+                          ? "min-w-0 justify-start"
+                          : "w-full min-w-0 justify-start"
+                      }
+                    />
+                  )}
                 </div>
               ))}
               {restCountries > 0 ? (
@@ -210,7 +231,7 @@ export function FirmCard({ firm }: FirmCardProps) {
                   variant="country"
                   count={restCountries}
                   onClick={() => setCountriesModalOpen(true)}
-                  ariaLabel="Tüm ülkeleri görüntüle"
+                  ariaLabel="Hizmet verilen kapsamı görüntüle"
                 />
               ) : null}
             </div>

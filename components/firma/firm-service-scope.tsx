@@ -9,8 +9,6 @@ import {
 } from "@/components/firma/coverage-chips";
 
 const MAX_COUNTRIES_VISIBLE = 6;
-const MAX_MAIN_SERVICES_VISIBLE = 4;
-const MAX_SPECIALIZATION_VISIBLE = 4;
 
 type FirmServiceScopeProps = {
   regions: string[];
@@ -29,12 +27,9 @@ export function FirmServiceScope({
 }: FirmServiceScopeProps) {
   const [countriesOpen, setCountriesOpen] = useState(false);
   const [regionsOpen, setRegionsOpen] = useState(false);
-  const [mainServicesOpen, setMainServicesOpen] = useState(false);
-  const [specOpen, setSpecOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const anyModalOpen =
-    countriesOpen || regionsOpen || mainServicesOpen || specOpen || detailsOpen;
+  const anyModalOpen = countriesOpen || regionsOpen || detailsOpen;
 
   // Prevent background scroll while any modal is open.
   useEffect(() => {
@@ -48,8 +43,6 @@ export function FirmServiceScope({
 
   const idBase = useId();
   const countriesTitleId = `${idBase}-countries`;
-  const mainTitleId = `${idBase}-main`;
-  const specTitleId = `${idBase}-spec`;
   const detailsTitleId = `${idBase}-details`;
 
   const shownCountries = countries.slice(0, MAX_COUNTRIES_VISIBLE);
@@ -57,15 +50,6 @@ export function FirmServiceScope({
 
   const shownRegions = regions.slice(0, MAX_COUNTRIES_VISIBLE);
   const restRegionCount = Math.max(0, regions.length - shownRegions.length);
-
-  const shownMain = mainServices.slice(0, MAX_MAIN_SERVICES_VISIBLE);
-  const restMainCount = Math.max(0, mainServices.length - shownMain.length);
-
-  const shownSpec = specializationLabels.slice(0, MAX_SPECIALIZATION_VISIBLE);
-  const restSpecCount = Math.max(
-    0,
-    specializationLabels.length - shownSpec.length
-  );
 
   const hasCountries = countries.length > 0;
   const hasRegions = regions.length > 0;
@@ -143,7 +127,7 @@ export function FirmServiceScope({
             Sunulan hizmetler
           </h3>
           <div className="mt-3 flex flex-wrap gap-2">
-            {shownMain.map((s) => (
+            {mainServices.map((s) => (
               <span
                 key={s}
                 className="inline-flex items-center gap-2 rounded-lg bg-[#F7F9FB] px-3 py-1.5 text-sm font-medium text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10"
@@ -157,16 +141,6 @@ export function FirmServiceScope({
                 {s}
               </span>
             ))}
-            {restMainCount > 0 ? (
-              <button
-                type="button"
-                onClick={() => setMainServicesOpen(true)}
-                className="rounded-lg border border-[#0B3C5D]/12 bg-white px-3 py-1.5 text-sm font-semibold text-[#0B3C5D] shadow-sm transition hover:bg-[#F7F9FB]"
-                aria-label={`Tüm hizmetleri görüntüle, ${restMainCount} ek`}
-              >
-                +{restMainCount} hizmet
-              </button>
-            ) : null}
           </div>
         </div>
       ) : null}
@@ -177,7 +151,7 @@ export function FirmServiceScope({
             Uzmanlık vurgusu
           </h3>
           <div className="mt-3 flex flex-wrap gap-2">
-            {shownSpec.map((s) => (
+            {specializationLabels.map((s) => (
               <span
                 key={s}
                 className="inline-flex items-center rounded-lg border border-[#D9A441]/45 bg-gradient-to-b from-[#FFF9ED] to-[#FFF3DC] px-3 py-1.5 text-xs font-semibold tracking-wide text-[#0B3C5D] shadow-[0_1px_0_rgba(217,164,65,0.15)]"
@@ -185,16 +159,6 @@ export function FirmServiceScope({
                 {s}
               </span>
             ))}
-            {restSpecCount > 0 ? (
-              <button
-                type="button"
-                onClick={() => setSpecOpen(true)}
-                className="rounded-lg border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 py-1.5 text-xs font-semibold text-[#0B3C5D] transition hover:bg-[#F0F4F8]"
-                aria-label={`Tüm uzmanlık alanlarını görüntüle, ${restSpecCount} ek`}
-              >
-                +{restSpecCount} uzmanlık
-              </button>
-            ) : null}
           </div>
         </div>
       ) : null}
@@ -249,48 +213,6 @@ export function FirmServiceScope({
         <div className="flex flex-wrap gap-2">
           {regions.map((r) => (
             <RegionChip key={r} regionLabel={r} />
-          ))}
-        </div>
-      </ModalShell>
-
-      <ModalShell
-        open={mainServicesOpen}
-        onClose={() => setMainServicesOpen(false)}
-        titleId={mainTitleId}
-        title="Sunulan hizmetler"
-      >
-        <div className="flex flex-wrap gap-2">
-          {mainServices.map((s) => (
-            <span
-              key={s}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#F7F9FB] px-3 py-1.5 text-sm font-medium text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10"
-            >
-              <span
-                className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#328CC1]/10"
-                aria-hidden
-              >
-                <ServiceIcon />
-              </span>
-              {s}
-            </span>
-          ))}
-        </div>
-      </ModalShell>
-
-      <ModalShell
-        open={specOpen}
-        onClose={() => setSpecOpen(false)}
-        titleId={specTitleId}
-        title="Uzmanlık alanları"
-      >
-        <div className="flex flex-wrap gap-2">
-          {specializationLabels.map((s) => (
-            <span
-              key={s}
-              className="inline-flex items-center rounded-lg border border-[#D9A441]/45 bg-gradient-to-b from-[#FFF9ED] to-[#FFF3DC] px-3 py-1.5 text-xs font-semibold tracking-wide text-[#0B3C5D]"
-            >
-              {s}
-            </span>
           ))}
         </div>
       </ModalShell>

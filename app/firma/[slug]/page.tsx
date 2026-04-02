@@ -10,7 +10,7 @@ import { buildFirmSchemaGraph } from "@/lib/seo/firma-schema";
 import { FirmPrimaryLeftCta } from "@/components/firma/firm-primary-left-cta";
 import { FirmServiceScope } from "@/components/firma/firm-service-scope";
 import { SectionReveal } from "@/components/home/section-reveal";
-import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
+import { resolveFirmCoverageDisplay } from "@/lib/firma/resolve-firm-coverage";
 import { FirmFeedList } from "@/components/firma/firm-feed-list";
 import { getFirmFeedItems } from "@/lib/data/feed";
 import {
@@ -56,7 +56,10 @@ export default async function FirmaPage({ params }: PageProps) {
   if (!firm) notFound();
 
   const allCoverage = Array.isArray(firm.countries) ? firm.countries : [];
-  const { regions, countries } = splitRegionsAndCountries(allCoverage);
+  const { regions, countries } = resolveFirmCoverageDisplay({
+    countries: allCoverage,
+    visa_regions: firm.visa_regions,
+  });
   const cityText = [firm.city, firm.district].filter(Boolean).join(" / ");
   const locationText = [cityText, firm.hq_country].filter((x) => x && String(x).trim()).join(" · ");
   const foundedText =

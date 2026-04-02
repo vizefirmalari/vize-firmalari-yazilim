@@ -53,6 +53,41 @@ export function euFlagUrl(): string {
 }
 
 /**
+ * “Hizmet verilen bölgeler” rozetleri için bayrak(lar).
+ * Asya / Afrika: temsili birkaç ülke bayrağı (küçük çoklu gösterim).
+ */
+export function getRegionFlagsForLabel(regionLabel: string): string[] | null {
+  if (regionUsesEuFlag(regionLabel)) return ["eu"];
+
+  const compact = normalizeCountryName(regionLabel).replace(/[^a-z0-9]/g, "");
+  if (!compact) return null;
+
+  if (compact === "asya" || compact === "asia") return ["jp", "cn", "kr"];
+  if (compact === "afrika" || compact === "africa") return ["za", "eg", "ng"];
+
+  if (
+    compact.includes("dubai") ||
+    compact.includes("bae") ||
+    compact.includes("birlesikarap") ||
+    compact.includes("emirlikleri")
+  ) {
+    return ["ae"];
+  }
+
+  const direct = getCountryFlagCodeFromName(regionLabel);
+  if (direct) return [direct];
+
+  const spaced = regionLabel
+    .replace(/\s*[/\u2013\u2014]\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const alt = spaced ? getCountryFlagCodeFromName(spaced) : null;
+  if (alt) return [alt];
+
+  return null;
+}
+
+/**
  * Yaygın Türkçe / İngilizce ülke adlarından ISO kodu.
  */
 export function getCountryFlagCodeFromName(countryName: string): string | null {

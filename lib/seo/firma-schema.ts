@@ -1,10 +1,13 @@
-import { splitRegionsAndCountries } from "@/lib/firma/split-coverage-regions-countries";
+import { resolveFirmCoverageDisplay } from "@/lib/firma/resolve-firm-coverage";
 import type { FirmRow } from "@/lib/types/firm";
 
 function keywordString(firm: FirmRow): string | undefined {
   const tags = Array.isArray(firm.tags) ? firm.tags.filter(Boolean) : [];
   const allCoverage = Array.isArray(firm.countries) ? firm.countries : [];
-  const { regions, countries } = splitRegionsAndCountries(allCoverage);
+  const { regions, countries } = resolveFirmCoverageDisplay({
+    countries: allCoverage,
+    visa_regions: firm.visa_regions,
+  });
   const coverageAll = [...regions, ...countries];
 
   const keywordSet = new Set<string>();
@@ -27,7 +30,10 @@ export function buildFirmSchemaGraph(
   const ogOrLogo =
     firm.og_image_url?.trim() || firm.logo_url?.trim() || undefined;
   const allCoverage = Array.isArray(firm.countries) ? firm.countries : [];
-  const { regions, countries } = splitRegionsAndCountries(allCoverage);
+  const { regions, countries } = resolveFirmCoverageDisplay({
+    countries: allCoverage,
+    visa_regions: firm.visa_regions,
+  });
   const coverageAll = [...regions, ...countries];
   const keywords = keywordString(firm);
 

@@ -7,7 +7,7 @@ const items = (firmId: string) =>
   [
     { href: `/panel/${firmId}`, label: "Genel bakış", icon: "◈" },
     { href: `/panel/${firmId}/mesajlar`, label: "Gelen mesajlar", icon: "✉" },
-    { href: `/panel/${firmId}/formlar`, label: "Gelen formlar", icon: "▤" },
+    { href: `/panel/${firmId}/formlar`, label: "Gelen başvurular", icon: "▤" },
     { href: `/panel/${firmId}/reklam`, label: "Reklam ver", icon: "◎" },
     { href: `/panel/${firmId}/abonelik`, label: "Abonelik", icon: "◇" },
     { href: `/panel/${firmId}/hesap`, label: "Hesap güvenliği", icon: "⚙" },

@@ -24,9 +24,9 @@ export function FirmPanelStatCards({ firmId }: Props) {
     },
     {
       href: `/panel/${firmId}/formlar`,
-      label: "Gelen formlar",
+      label: "Gelen başvurular",
       value: "—",
-      hint: "Lead ve teknik sorular",
+      hint: "Hızlı başvuru lead’leri",
       icon: "▤",
     },
     {

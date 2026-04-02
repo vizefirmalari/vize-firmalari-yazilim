@@ -23,6 +23,9 @@ import {
   createInlineSubService,
 } from "@/lib/actions/filters-admin";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
+import { deriveVisaRegions } from "@/lib/visa-regions/derive";
+import { isExcludedCountryPicklistName } from "@/lib/visa-regions/picklist-exclusions";
+import { RegionChip } from "@/components/firma/coverage-chips";
 
 type Option = { id: string; name: string };
 
@@ -297,6 +300,12 @@ export function FirmForm({
       toast.error("Ülke adı yazın veya arama kutusuna girin.");
       return;
     }
+    if (isExcludedCountryPicklistName(name)) {
+      toast.error(
+        "Bu ifade bölge olarak otomatik türetilir; ülke listesine ülke olarak eklenmez."
+      );
+      return;
+    }
     setCreatingPicklist("country");
     const res = await createInlineCountry(name);
     setCreatingPicklist(null);
@@ -412,9 +421,18 @@ export function FirmForm({
     }
   }
 
-  const filteredCountries = countryOptions.filter((c) =>
-    c.name.toLocaleLowerCase("tr").includes(countryQ.toLocaleLowerCase("tr"))
+  const filteredCountries = countryOptions.filter(
+    (c) =>
+      !isExcludedCountryPicklistName(c.name) &&
+      c.name.toLocaleLowerCase("tr").includes(countryQ.toLocaleLowerCase("tr"))
   );
+
+  const previewVisaRegions = useMemo(() => {
+    const names = selectedCountries
+      .map((id) => countryOptions.find((c) => c.id === id)?.name)
+      .filter((n): n is string => Boolean(n?.trim()));
+    return deriveVisaRegions(names);
+  }, [selectedCountries, countryOptions]);
 
   const filteredSubPicker = useMemo(() => {
     const q = subServiceQ.toLocaleLowerCase("tr").trim();
@@ -1270,6 +1288,9 @@ export function FirmForm({
 
         <div className={subsection}>
           <p className={groupTitle}>Coğrafya</p>
+          <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1A1A]/45">
+            Hizmet verilen ülkeler
+          </p>
           <FieldHelp>
             Hangi ülkelerde danışmanlık verildiğini seçin; arama ve kartlarda kullanılır. Listede yoksa
             aşağıdan yeni ülke ekleyebilirsiniz (veritabanına kaydedilir ve seçilir).
@@ -1366,6 +1387,22 @@ export function FirmForm({
                 </span>
               );
             })}
+          </div>
+
+          <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1A1A]/45">
+            Hizmet verilen bölgeler
+          </p>
+          <FieldHelp>
+            Bu alan hizmet verilen ülkelere göre sistem tarafından otomatik oluşturulur.
+          </FieldHelp>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {previewVisaRegions.length ? (
+              previewVisaRegions.map((r) => <RegionChip key={r} regionLabel={r} />)
+            ) : (
+              <span className="text-xs text-[#1A1A1A]/45">
+                Ülke seçildiğinde uygun bölgeler burada listelenir.
+              </span>
+            )}
           </div>
         </div>
 
