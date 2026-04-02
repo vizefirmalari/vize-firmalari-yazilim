@@ -108,7 +108,7 @@ export function FilterSidebar({
         </h2>
 
         <div className="mt-6">
-          <p className="text-xs font-medium text-[#1A1A1A]/55">Ülke Seçimi</p>
+          <p className="text-xs font-medium text-[#1A1A1A]/55">Ülkeler</p>
           <div
             className={
               showAllCountries

@@ -15,6 +15,8 @@ type FilterSheetProps = {
   bounds: ListingRangeBounds;
   countryOptions: string[];
   resultCount: number;
+  /** Aktif filtre sayısı (başlıkta gösterilir) */
+  activeFilterCount?: number;
   onApply: () => void;
   onClear: () => void;
 };
@@ -27,6 +29,7 @@ export function FirmFilterBottomSheet({
   bounds,
   countryOptions,
   resultCount,
+  activeFilterCount = 0,
   onApply,
   onClear,
 }: FilterSheetProps) {
@@ -65,6 +68,11 @@ export function FirmFilterBottomSheet({
         <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
           <h2 id={titleId} className="text-base font-semibold text-primary">
             Filtrele
+            {activeFilterCount > 0 ? (
+              <span className="ml-1.5 tabular-nums text-sm font-semibold text-foreground/50">
+                ({activeFilterCount})
+              </span>
+            ) : null}
           </h2>
           <button
             type="button"

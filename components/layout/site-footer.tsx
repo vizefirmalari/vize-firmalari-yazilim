@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SITE_HEADER_LOGO_URL } from "@/lib/constants";
+import { PLATFORM_WHATSAPP_URL } from "@/lib/constants/contact";
 import { siteLogoAltText } from "@/lib/seo/defaults";
 
 const BRAND_DESCRIPTION_LINES =
@@ -84,25 +85,6 @@ function SocialIconLink({
     >
       {children}
     </a>
-  );
-}
-
-function SocialIconButton({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <span
-      role="img"
-      aria-label={label}
-      title={label}
-      className="inline-flex h-11 w-11 cursor-default items-center justify-center rounded-xl border border-primary/10 bg-white text-primary/45 shadow-[0_1px_2px_rgba(11,60,93,0.04)] lg:h-10 lg:w-10"
-    >
-      {children}
-    </span>
   );
 }
 
@@ -323,12 +305,18 @@ export function SiteFooter() {
                 >
                   <InstagramGlyph className="h-5 w-5" />
                 </SocialIconLink>
-                <SocialIconButton label="WhatsApp (yakında)">
+                <SocialIconLink
+                  href={PLATFORM_WHATSAPP_URL}
+                  label="WhatsApp — Vize Firmaları"
+                >
                   <WhatsAppGlyph className="h-5 w-5" />
-                </SocialIconButton>
-                <SocialIconButton label="E-posta">
+                </SocialIconLink>
+                <SocialIconLink
+                  href={`mailto:${CONTACT_EMAIL}`}
+                  label={`E-posta — ${CONTACT_EMAIL}`}
+                >
                   <EnvelopeGlyph className="h-5 w-5" />
-                </SocialIconButton>
+                </SocialIconLink>
               </div>
             </div>
           </div>

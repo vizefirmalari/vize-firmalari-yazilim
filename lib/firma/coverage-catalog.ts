@@ -286,24 +286,3 @@ export function firmMatchesRegion(firm: FirmRow, regionId: string): boolean {
   return firmMatchesRegionCountries(firm, r.countries);
 }
 
-/** Bölge + ülke seçimlerinin birleşimi (OR) */
-export function firmMatchesCoverageSelection(
-  firm: FirmRow,
-  selection: {
-    regionIds: string[];
-    countries: string[];
-  }
-): boolean {
-  const { regionIds, countries } = selection;
-  const hasAny = regionIds.length > 0 || countries.length > 0;
-  if (!hasAny) return true;
-
-  for (const id of regionIds) {
-    if (firmMatchesRegion(firm, id)) return true;
-  }
-  for (const c of countries) {
-    if (firmMatchesCountryName(firm, c)) return true;
-  }
-
-  return false;
-}

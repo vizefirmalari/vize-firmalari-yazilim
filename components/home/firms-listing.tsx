@@ -10,13 +10,19 @@ import {
   sortFirms,
   type AppliedListingFilters,
 } from "@/lib/firma/listing-filters";
+import { countActiveListingFilters } from "@/lib/firma/listing-filter-active-count";
+import { filterCountryNamesForListing } from "@/lib/firma/filter-country-options";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { isSupabaseConfigured } from "@/lib/env";
 import type { FirmRow, FirmSort } from "@/lib/types/firm";
 import { FirmCard } from "@/components/home/firm-card";
 import { FirmFilterBottomSheet, FirmSortBottomSheet } from "@/components/home/firm-listing-sheets";
 import { FirmListingFilterFields } from "@/components/home/firm-listing-filter-fields";
-import { specializationKeyFromLabel, type SpecializationKey } from "@/lib/constants/firm-specializations";
+import {
+  SPECIALIZATION_LABELS,
+  specializationKeyFromLabel,
+  type SpecializationKey,
+} from "@/lib/constants/firm-specializations";
 
 type Props = {
   initialFirms: FirmRow[];
@@ -39,7 +45,7 @@ function buildApplied(
     .filter(Boolean);
   return {
     coverage: {
-      regionIds: [],
+      visaRegionLabels: [],
       countries: [...countries],
     },
     visaTypes: [...new Set(normalizedVisaTypes)],
@@ -130,8 +136,11 @@ export function FirmsListing({
     };
   }, [router]);
 
-  const countriesSource =
-    countryList && countryList.length > 0 ? countryList : DEFAULT_COUNTRIES;
+  const countriesSource = useMemo(() => {
+    const raw =
+      countryList && countryList.length > 0 ? countryList : DEFAULT_COUNTRIES;
+    return filterCountryNamesForListing(raw);
+  }, [countryList]);
   const filtered = useMemo(
     () =>
       applyListingFilters(initialFirms, appliedFilters, bounds, query),
@@ -143,10 +152,105 @@ export function FirmsListing({
     [filtered, sort]
   );
 
+  const activeFilterCount = useMemo(
+    () => countActiveListingFilters(appliedFilters, bounds),
+    [appliedFilters, bounds]
+  );
+
+  const removableChipCount = useMemo(() => {
+    let n = appliedFilters.coverage.visaRegionLabels.length;
+    n += appliedFilters.coverage.countries.length;
+    n += appliedFilters.visaTypes.length;
+    const t = appliedFilters.trust;
+    if (t.requireTaxCertificate) n++;
+    if (t.requireLicense) n++;
+    if (t.requirePhysicalOffice) n++;
+    if (t.requireOfficeVerified) n++;
+    const s = appliedFilters.serviceMode;
+    if (s.onlineConsulting) n++;
+    if (s.officeFaceToFace) n++;
+    if (s.remoteSupport) n++;
+    if (s.weekendSupport) n++;
+    const l = appliedFilters.languagePro;
+    if (l.multilingualSupport) n++;
+    if (l.corporateDomain) n++;
+    if (appliedFilters.yearPreset !== null) n++;
+    return n;
+  }, [appliedFilters]);
+
+  const extraNonChipFilterCount = Math.max(
+    0,
+    activeFilterCount - removableChipCount
+  );
+
+  const clearCoverageChip = (kind: "region" | "country", value: string) => {
+    setAppliedFilters((prev) => {
+      if (kind === "region") {
+        return {
+          ...prev,
+          coverage: {
+            ...prev.coverage,
+            visaRegionLabels: prev.coverage.visaRegionLabels.filter(
+              (x) => x !== value
+            ),
+          },
+        };
+      }
+      return {
+        ...prev,
+        coverage: {
+          ...prev.coverage,
+          countries: prev.coverage.countries.filter((x) => x !== value),
+        },
+      };
+    });
+  };
+
+  const clearVisaChip = (key: SpecializationKey) => {
+    setAppliedFilters((prev) => ({
+      ...prev,
+      visaTypes: prev.visaTypes.filter((x) => x !== key),
+    }));
+  };
+
+  const clearTrustChip = (
+    key: keyof AppliedListingFilters["trust"]
+  ) => {
+    setAppliedFilters((prev) => ({
+      ...prev,
+      trust: { ...prev.trust, [key]: false },
+    }));
+  };
+
+  const clearServiceChip = (
+    key: keyof AppliedListingFilters["serviceMode"]
+  ) => {
+    setAppliedFilters((prev) => ({
+      ...prev,
+      serviceMode: { ...prev.serviceMode, [key]: false },
+    }));
+  };
+
+  const clearLangChip = (key: "multilingualSupport" | "corporateDomain") => {
+    setAppliedFilters((prev) => ({
+      ...prev,
+      languagePro: { ...prev.languagePro, [key]: false },
+    }));
+  };
+
+  const clearYearPresetChip = () => {
+    setAppliedFilters((prev) => ({ ...prev, yearPreset: null }));
+  };
+
   const previewCount = useMemo(
     () =>
       applyListingFilters(initialFirms, filterDraft, bounds, query).length,
     [initialFirms, filterDraft, bounds, query]
+  );
+
+  const draftFilterActiveCount = useMemo(
+    () => countActiveListingFilters(filterDraft, bounds),
+    [filterDraft, bounds]
   );
 
   const clearFilterDraft = () => {
@@ -174,6 +278,11 @@ export function FirmsListing({
             className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold text-foreground/75 shadow-sm transition hover:bg-primary/5"
           >
             Filtrele
+            {activeFilterCount > 0 ? (
+              <span className="ml-1 tabular-nums text-foreground/50">
+                ({activeFilterCount})
+              </span>
+            ) : null}
           </button>
           <button
             type="button"
@@ -188,7 +297,14 @@ export function FirmsListing({
       <div className="mt-4 grid gap-6 lg:mt-0 lg:grid-cols-[minmax(280px,360px)_1fr]">
         <aside className="premium-card hidden h-fit p-4 lg:sticky lg:top-24 lg:block">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-base font-semibold text-primary">Filtrele</h2>
+            <h2 className="text-base font-semibold text-primary">
+              Filtrele
+              {activeFilterCount > 0 ? (
+                <span className="ml-1.5 tabular-nums text-xs font-semibold text-foreground/50">
+                  ({activeFilterCount})
+                </span>
+              ) : null}
+            </h2>
             <button
               type="button"
               onClick={() =>
@@ -240,14 +356,238 @@ export function FirmsListing({
           <p className="mt-2 text-xs text-foreground/55 lg:hidden">
             Sıralama: <span className="font-medium text-foreground/80">{sortLabel}</span>
           </p>
+
+          {activeFilterCount > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {appliedFilters.coverage.visaRegionLabels.map((label) => (
+                <button
+                  key={`r-${label}`}
+                  type="button"
+                  onClick={() => clearCoverageChip("region", label)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                >
+                  <span className="max-w-[14rem] truncate">{label}</span>
+                  <span className="text-foreground/50" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ))}
+              {appliedFilters.coverage.countries.map((c) => (
+                <button
+                  key={`c-${c}`}
+                  type="button"
+                  onClick={() => clearCoverageChip("country", c)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">{c}</span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ))}
+              {appliedFilters.visaTypes.map((key) => (
+                <button
+                  key={`v-${key}`}
+                  type="button"
+                  onClick={() => clearVisaChip(key)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    {SPECIALIZATION_LABELS[key]}
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ))}
+              {appliedFilters.trust.requireTaxCertificate ? (
+                <button
+                  type="button"
+                  onClick={() => clearTrustChip("requireTaxCertificate")}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    Vergi levhası mevcut
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.trust.requireLicense ? (
+                <button
+                  type="button"
+                  onClick={() => clearTrustChip("requireLicense")}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    Lisans / yetki numarası var
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.trust.requirePhysicalOffice ? (
+                <button
+                  type="button"
+                  onClick={() => clearTrustChip("requirePhysicalOffice")}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    Fiziksel ofis var
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.trust.requireOfficeVerified ? (
+                <button
+                  type="button"
+                  onClick={() => clearTrustChip("requireOfficeVerified")}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    Doğrulanmış ofis adresi
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.serviceMode.onlineConsulting ? (
+                <button
+                  type="button"
+                  onClick={() => clearServiceChip("onlineConsulting")}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    Çevrimiçi danışmanlık
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.serviceMode.officeFaceToFace ? (
+                <button
+                  type="button"
+                  onClick={() => clearServiceChip("officeFaceToFace")}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    Ofiste / yüz yüze
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.serviceMode.remoteSupport ? (
+                <button
+                  type="button"
+                  onClick={() => clearServiceChip("remoteSupport")}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    Uzaktan destek
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.serviceMode.weekendSupport ? (
+                <button
+                  type="button"
+                  onClick={() => clearServiceChip("weekendSupport")}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    Hafta sonu desteği
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.languagePro.multilingualSupport ? (
+                <button
+                  type="button"
+                  onClick={() => clearLangChip("multilingualSupport")}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    Çok dilli destek
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.languagePro.corporateDomain ? (
+                <button
+                  type="button"
+                  onClick={() => clearLangChip("corporateDomain")}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    Kurumsal domain
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.yearPreset === "recent" ? (
+                <button
+                  type="button"
+                  onClick={clearYearPresetChip}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    En yeni (~10 yıl)
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.yearPreset === "vintage" ? (
+                <button
+                  type="button"
+                  onClick={clearYearPresetChip}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-[14rem] truncate">
+                    En eski (ilk 25 yıl)
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {extraNonChipFilterCount > 0 ? (
+                <span
+                  className="inline-flex items-center rounded-full border border-border/80 bg-primary/[0.04] px-2.5 py-1 text-xs font-medium text-foreground/65"
+                  title="Kurumsallık, hype veya kuruluş yılı aralığı filtre panelinde"
+                >
+                  +{extraNonChipFilterCount} skor / yıl kriteri
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             {sorted.map((firm) => (
               <FirmCard key={firm.id} firm={firm} />
             ))}
           </div>
           {sorted.length === 0 ? (
-            <div className="premium-card mt-4 p-8 text-center text-sm text-foreground/70">
-              Seçili filtrelere uygun firma bulunamadı.
+            <div className="premium-card mt-4 p-8 text-center text-sm leading-relaxed text-foreground/75">
+              Bu filtrelerle eşleşen firma bulunamadı. Daha geniş sonuçlar için
+              bazı bölgeleri, ülkeleri veya diğer kriterleri kaldırabilirsiniz.
             </div>
           ) : null}
         </div>
@@ -261,6 +601,7 @@ export function FirmsListing({
         bounds={bounds}
         countryOptions={countriesSource}
         resultCount={previewCount}
+        activeFilterCount={draftFilterActiveCount}
         onApply={applyFilterSheet}
         onClear={clearFilterDraft}
       />

@@ -18,6 +18,8 @@ type FirmServiceScopeProps = {
   specializationLabels: string[];
 };
 
+type ScopeModalId = "countries" | "regions" | "details" | null;
+
 export function FirmServiceScope({
   regions,
   countries,
@@ -25,11 +27,10 @@ export function FirmServiceScope({
   subServices,
   specializationLabels,
 }: FirmServiceScopeProps) {
-  const [countriesOpen, setCountriesOpen] = useState(false);
-  const [regionsOpen, setRegionsOpen] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [scopeModal, setScopeModal] = useState<ScopeModalId>(null);
+  const closeModal = () => setScopeModal(null);
 
-  const anyModalOpen = countriesOpen || regionsOpen || detailsOpen;
+  const anyModalOpen = scopeModal !== null;
 
   // Prevent background scroll while any modal is open.
   useEffect(() => {
@@ -82,7 +83,7 @@ export function FirmServiceScope({
               <li>
                 <button
                   type="button"
-                  onClick={() => setRegionsOpen(true)}
+                  onClick={() => setScopeModal("regions")}
                   className="rounded-md border border-[#D9A441]/35 bg-[#FFFBF5] px-2.5 py-1 text-xs font-semibold text-[#1A1A1A] transition hover:bg-[#FFF6E8]"
                   aria-label={`Tüm bölgeleri görüntüle, ${restRegionCount} ek`}
                 >
@@ -109,7 +110,7 @@ export function FirmServiceScope({
               <li>
                 <button
                   type="button"
-                  onClick={() => setCountriesOpen(true)}
+                  onClick={() => setScopeModal("countries")}
                   className="rounded-md border border-[#D9A441]/35 bg-[#FFFBF5] px-2.5 py-1 text-xs font-semibold text-[#1A1A1A] transition hover:bg-[#FFF6E8]"
                   aria-label={`Tüm ülkeleri görüntüle, ${restCountryCount} ek`}
                 >
@@ -173,9 +174,9 @@ export function FirmServiceScope({
         >
           <button
             type="button"
-            onClick={() => setDetailsOpen(true)}
+            onClick={() => setScopeModal("details")}
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#0B3C5D]/12 bg-[#F7F9FB] px-4 py-3 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F0F4F8] sm:w-auto sm:justify-start"
-            aria-expanded={detailsOpen}
+            aria-expanded={scopeModal === "details"}
           >
             <span>Tüm hizmet detaylarını gör</span>
             {detailSummaryText ? (
@@ -188,8 +189,8 @@ export function FirmServiceScope({
       ) : null}
 
       <ModalShell
-        open={countriesOpen}
-        onClose={() => setCountriesOpen(false)}
+        open={scopeModal === "countries"}
+        onClose={closeModal}
         titleId={countriesTitleId}
         title="Hizmet verilen ülkeler"
       >
@@ -205,8 +206,8 @@ export function FirmServiceScope({
       </ModalShell>
 
       <ModalShell
-        open={regionsOpen}
-        onClose={() => setRegionsOpen(false)}
+        open={scopeModal === "regions"}
+        onClose={closeModal}
         titleId={`${idBase}-regions`}
         title="Hizmet verilen bölgeler"
       >
@@ -218,8 +219,8 @@ export function FirmServiceScope({
       </ModalShell>
 
       <ModalShell
-        open={detailsOpen}
-        onClose={() => setDetailsOpen(false)}
+        open={scopeModal === "details"}
+        onClose={closeModal}
         titleId={detailsTitleId}
         title="Tüm Hizmet Detayları"
         size="wide"

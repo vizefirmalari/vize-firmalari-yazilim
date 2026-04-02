@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import type { AppliedListingFilters } from "@/lib/firma/listing-filters";
 import type { ListingRangeBounds } from "@/lib/firma/listing-filters";
+import { normalizeCountryKey } from "@/lib/firma/coverage-catalog";
+import { filterCountryNamesForListing } from "@/lib/firma/filter-country-options";
 import {
-  normalizeCountryKey,
-  REGIONS,
-  resolvePopularCountryRows,
-} from "@/lib/firma/coverage-catalog";
+  ALL_LISTING_VISA_REGION_LABELS,
+  POPULAR_VISA_REGION_LABELS,
+  resolvePopularCountryRowsFromConfig,
+} from "@/lib/firma/listing-filter-config";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 
 function Chevron({ open }: { open: boolean }) {
@@ -113,6 +115,92 @@ function toggleListItem<T extends string>(list: T[], item: T, checked: boolean):
   return list.filter((x) => x !== item);
 }
 
+/** Popüler + diğer bölgeler tek `space-y-2` içinde; Dubai–Avustralya arası fazla boşluk oluşmaz */
+function RegionsListBlock({
+  draft,
+  patch,
+}: {
+  draft: AppliedListingFilters;
+  patch: (partial: Partial<AppliedListingFilters>) => void;
+}) {
+  const popularSet = useMemo(() => new Set(POPULAR_VISA_REGION_LABELS), []);
+  const secondaryLabels = useMemo(
+    () => ALL_LISTING_VISA_REGION_LABELS.filter((label) => !popularSet.has(label)),
+    [popularSet]
+  );
+
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
+        Popüler bölgeler
+      </p>
+      <p className="mt-1 text-xs leading-relaxed text-foreground/50">
+        Hedef bölgenizi bir tıkla seçin; listeyi rotaya göre daraltın.
+      </p>
+      <div
+        className="mt-2 max-h-[min(240px,42vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]"
+        role="listbox"
+        aria-label="Bölgeler"
+      >
+        {POPULAR_VISA_REGION_LABELS.map((label) => (
+          <label
+            key={label}
+            className="flex min-w-0 cursor-pointer items-center gap-2 text-sm text-foreground/90"
+          >
+            <input
+              type="checkbox"
+              checked={draft.coverage.visaRegionLabels.includes(label)}
+              onChange={(e) =>
+                patch({
+                  coverage: {
+                    ...draft.coverage,
+                    visaRegionLabels: toggleListItem(
+                      draft.coverage.visaRegionLabels,
+                      label,
+                      e.target.checked
+                    ),
+                  },
+                })
+              }
+              className="accent-primary"
+            />
+            <span className="min-w-0 flex-1 truncate font-medium text-primary/95">
+              {label}
+            </span>
+          </label>
+        ))}
+        {secondaryLabels.map((label) => (
+          <label
+            key={label}
+            className="flex min-w-0 cursor-pointer items-center gap-2 text-sm text-foreground/90"
+          >
+            <input
+              type="checkbox"
+              checked={draft.coverage.visaRegionLabels.includes(label)}
+              onChange={(e) =>
+                patch({
+                  coverage: {
+                    ...draft.coverage,
+                    visaRegionLabels: toggleListItem(
+                      draft.coverage.visaRegionLabels,
+                      label,
+                      e.target.checked
+                    ),
+                  },
+                })
+              }
+              className="accent-primary"
+            />
+            <span className="min-w-0 flex-1 truncate font-medium text-primary/95">
+              {label}
+            </span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PopularCountriesBlock({
   draft,
   countryOptions,
@@ -123,13 +211,16 @@ function PopularCountriesBlock({
   patch: (partial: Partial<AppliedListingFilters>) => void;
 }) {
   const popularRows = useMemo(
-    () => resolvePopularCountryRows(countryOptions),
+    () => resolvePopularCountryRowsFromConfig(countryOptions),
     [countryOptions]
   );
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
-        Popüler Ülkeler
+        Popüler ülkeler
+      </p>
+      <p className="mt-1 text-xs leading-relaxed text-foreground/50">
+        Hedef ülke netleştikçe danışmanlık daha isabetli olur; buradan hızlıca seçin.
       </p>
       <div className="mt-2 space-y-2">
         {popularRows.map((row) => (
@@ -172,9 +263,10 @@ function CountryFullListBlock({
   patch: (partial: Partial<AppliedListingFilters>) => void;
 }) {
   const [q, setQ] = useState("");
+  const deferredQ = useDeferredValue(q);
 
   const popularRows = useMemo(
-    () => resolvePopularCountryRows(countryOptions),
+    () => resolvePopularCountryRowsFromConfig(countryOptions),
     [countryOptions]
   );
   const popularValues = useMemo(
@@ -188,18 +280,21 @@ function CountryFullListBlock({
   );
 
   const listForScroll = useMemo(() => {
-    const needle = normalizeCountryKey(q);
+    const needle = normalizeCountryKey(deferredQ);
     return sortedAtoZ.filter((c) => {
       if (popularValues.has(c)) return false;
       if (!needle) return true;
       return normalizeCountryKey(c).includes(needle);
     });
-  }, [sortedAtoZ, popularValues, q]);
+  }, [sortedAtoZ, popularValues, deferredQ]);
 
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
-        Tüm Ülkeler
+        Tüm ülkeler
+      </p>
+      <p className="mt-1 text-xs leading-relaxed text-foreground/50">
+        Yalnızca ülke adları; kıta veya bölge etiketleri üstteki bölümde.
       </p>
       <input
         type="search"
@@ -266,50 +361,41 @@ export function FirmListingFilterFields({
   const patch = (partial: Partial<AppliedListingFilters>) =>
     onChange({ ...draft, ...partial });
 
-  const coverageGroup = (
-    <div className="space-y-4">
-      <PopularCountriesBlock
-        draft={draft}
-        countryOptions={countryOptions}
-        patch={patch}
-      />
+  const countryOptionsSafe = useMemo(
+    () => filterCountryNamesForListing(countryOptions),
+    [countryOptions]
+  );
 
-      <CountryFullListBlock
-        draft={draft}
-        countryOptions={countryOptions}
-        patch={patch}
-      />
-
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
-          Bölgeler
+  const regionsAndCountriesGroup = (
+    <div className="space-y-5">
+      <div className="rounded-lg border border-border/80 bg-primary/[0.03] p-3">
+        <p className="text-sm font-semibold text-foreground">Bölgeler</p>
+        <p className="mt-1 text-xs leading-relaxed text-foreground/55">
+          Vize hizmet bölgeleri (firma kapsamına göre; ülke seçimlerinden otomatik
+          eşlenir). Ülke veya şehir adı burada değil, yalnızca bölge etiketleri.
         </p>
-        <div className="mt-2 max-h-[min(240px,40vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
-          {REGIONS.map((r) => (
-            <label
-              key={r.id}
-              className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
-            >
-              <input
-                type="checkbox"
-                checked={draft.coverage.regionIds.includes(r.id)}
-                onChange={(e) =>
-                  patch({
-                    coverage: {
-                      ...draft.coverage,
-                      regionIds: toggleListItem(
-                        draft.coverage.regionIds,
-                        r.id,
-                        e.target.checked
-                      ),
-                    },
-                  })
-                }
-                className="accent-primary"
-              />
-              <span>{r.label}</span>
-            </label>
-          ))}
+        <div className="mt-4">
+          <RegionsListBlock draft={draft} patch={patch} />
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border/80 bg-background p-3">
+        <p className="text-sm font-semibold text-foreground">Ülkeler</p>
+        <p className="mt-1 text-xs leading-relaxed text-foreground/55">
+          Yalnızca ülke adları. Kıta, bölge veya Schengen gibi etiketler için
+          yukarıdaki &quot;Bölgeler&quot; bölümünü kullanın.
+        </p>
+        <div className="mt-4 space-y-4">
+          <PopularCountriesBlock
+            draft={draft}
+            countryOptions={countryOptionsSafe}
+            patch={patch}
+          />
+          <CountryFullListBlock
+            draft={draft}
+            countryOptions={countryOptionsSafe}
+            patch={patch}
+          />
         </div>
       </div>
     </div>
@@ -529,61 +615,72 @@ export function FirmListingFilterFields({
   if (collapsible) {
     return (
       <>
-        <Collapsible title="Ülke / Bölge Seçimi">{coverageGroup}</Collapsible>
-        <Collapsible title="Vize Türü">{visaTypeBlock}</Collapsible>
-        <Collapsible title="Kurumsallık & Yasal Yapı">{trustBlock}</Collapsible>
-        <Collapsible title="Hizmet Biçimi">{serviceModeBlock}</Collapsible>
-        <Collapsible title="Dil & Profesyonellik">{langBlock}</Collapsible>
-        <Collapsible title="Kurumsallık & Hype Skoru" defaultOpen>
+        <Collapsible title="Bölgeler" defaultOpen>
+          <RegionsListBlock draft={draft} patch={patch} />
+        </Collapsible>
+        <Collapsible title="Ülkeler" defaultOpen>
+          <div className="space-y-4">
+            <PopularCountriesBlock
+              draft={draft}
+              countryOptions={countryOptionsSafe}
+              patch={patch}
+            />
+            <CountryFullListBlock
+              draft={draft}
+              countryOptions={countryOptionsSafe}
+              patch={patch}
+            />
+          </div>
+        </Collapsible>
+        <Collapsible title="Vize türü">{visaTypeBlock}</Collapsible>
+        <Collapsible title="Kurumsallık & yasal yapı">{trustBlock}</Collapsible>
+        <Collapsible title="Hizmet biçimi">{serviceModeBlock}</Collapsible>
+        <Collapsible title="Dil & profesyonellik">{langBlock}</Collapsible>
+        <Collapsible title="Kurumsallık & Hype skoru" defaultOpen>
           {scoresBlock}
         </Collapsible>
-        <Collapsible title="Kuruluş Yılı">{yearBlock}</Collapsible>
+        <Collapsible title="Kuruluş yılı">{yearBlock}</Collapsible>
       </>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm font-semibold text-foreground">
-          Ülke / Bölge Seçimi
-        </p>
-        <div className="mt-3">{coverageGroup}</div>
-      </div>
+      <div>{regionsAndCountriesGroup}</div>
 
       <div>
-        <p className="text-sm font-semibold text-foreground">Vize Türü</p>
+        <p className="text-sm font-semibold text-foreground">Vize türü</p>
         <div className="mt-3">{visaTypeBlock}</div>
       </div>
 
       <div>
         <p className="text-sm font-semibold text-foreground">
-          Kurumsallık & Yasal Yapı
+          Kurumsallık & yasal yapı
         </p>
         <div className="mt-3">{trustBlock}</div>
       </div>
 
       <div>
-        <p className="text-sm font-semibold text-foreground">Hizmet Biçimi</p>
+        <p className="text-sm font-semibold text-foreground">Hizmet biçimi</p>
         <div className="mt-3">{serviceModeBlock}</div>
       </div>
 
       <div>
         <p className="text-sm font-semibold text-foreground">
-          Dil & Profesyonellik
+          Dil & profesyonellik
         </p>
         <div className="mt-3">{langBlock}</div>
       </div>
 
       <div>
         <p className="text-sm font-semibold text-foreground">
-          Kurumsallık & Hype Skoru
+          Kurumsallık & Hype skoru
         </p>
         <div className="mt-3">{scoresBlock}</div>
       </div>
 
       <div>
-        <p className="text-sm font-semibold text-foreground">Kuruluş Yılı</p>
+        <p className="text-sm font-semibold text-foreground">Kuruluş yılı</p>
         <div className="mt-3">{yearBlock}</div>
       </div>
     </div>

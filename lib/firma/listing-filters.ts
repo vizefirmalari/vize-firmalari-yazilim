@@ -1,5 +1,5 @@
 import type { FirmRow, FirmSort } from "@/lib/types/firm";
-import { firmMatchesCoverageSelection } from "@/lib/firma/coverage-catalog";
+import { firmMatchesCoverageSelection } from "@/lib/firma/listing-coverage-match";
 import {
   SPECIALIZATION_OPTIONS,
   type SpecializationKey,
@@ -43,7 +43,8 @@ export function computeRangeBounds(firms: FirmRow[]): ListingRangeBounds {
 }
 
 export type CoverageSelection = {
-  regionIds: string[];
+  /** `visa_regions` / türetilmiş bölge etiketleri (örn. Schengen Bölgesi) */
+  visaRegionLabels: string[];
   countries: string[];
 };
 
