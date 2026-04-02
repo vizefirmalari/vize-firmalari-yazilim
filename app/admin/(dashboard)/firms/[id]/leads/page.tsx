@@ -1,7 +1,10 @@
-import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { requireAdmin } from "@/lib/auth/admin";
 import { FirmLeadApplicationCard } from "@/components/firm-panel/firm-lead-application-card";
 import { FirmLeadApplicationDetailPanel } from "@/components/firm-panel/firm-lead-application-detail-panel";
 import { FirmLeadApplicationsFilters } from "@/components/firm-panel/firm-lead-applications-filters";
+import { getFirmForAdmin } from "@/lib/data/admin-firm-detail";
 import {
   getFirmLeadApplicationDetail,
   getFirmLeadApplications,
@@ -9,8 +12,13 @@ import {
   type FirmLeadListFilters,
 } from "@/lib/data/firm-panel-leads";
 
+export const metadata = {
+  title: "Gelen başvurular (yönetici)",
+  robots: { index: false, follow: false },
+};
+
 type PageProps = {
-  params: Promise<{ firmId: string }>;
+  params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
@@ -19,10 +27,17 @@ function first(v: string | string[] | undefined): string {
   return v ?? "";
 }
 
-export default async function FirmPanelLeadsPage({ params, searchParams }: PageProps) {
-  const { firmId } = await params;
+export default async function AdminFirmLeadsPage({ params, searchParams }: PageProps) {
+  await requireAdmin();
+  const { id } = await params;
   const sp = await searchParams;
-  await requireFirmPanelAccess(firmId);
+
+  const firmRow = await getFirmForAdmin(id);
+  if (!firmRow) notFound();
+
+  const firmId = id;
+  const actionPath = `/admin/firms/${id}/leads`;
+  const hrefBase = actionPath;
 
   const filters: FirmLeadListFilters = {
     status: first(sp.status),
@@ -67,20 +82,32 @@ export default async function FirmPanelLeadsPage({ params, searchParams }: PageP
 
   const persistQueryBase = persistParams.toString();
 
+  const firmName = String(firmRow.firm.name ?? "");
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <header>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0B3C5D]/65">Gelen başvurular</p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#0B3C5D] sm:text-3xl">Hızlı başvuru kayıtları</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#1A1A1A]/65">
-          Kim başvurmuş, ne istiyor, ne kadar hazır ve lead ne kadar sıcak — tek ekranda. Yeni kayıtlar ve yüksek skor
-          önceliklidir; filtrelerle operasyon akışınıza göre daraltın.
-        </p>
-      </header>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <Link
+            href={`/admin/firms/${id}/edit`}
+            className="text-sm font-semibold text-[#0B3C5D] underline decoration-[#0B3C5D]/25 underline-offset-2 hover:decoration-[#0B3C5D]"
+          >
+            ← Firma düzenle
+          </Link>
+          <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0B3C5D]/65">Gelen başvurular</p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#0B3C5D] sm:text-3xl">Hızlı başvuru kayıtları</h1>
+          <p className="mt-1 text-sm text-[#1A1A1A]/60">{firmName}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#1A1A1A]/65">
+            Yönetici görünümü: aynı kayıtlar ve belgeler; indirme bağlantıları yalnızca oturumlu site yöneticisi veya
+            ilgili firma yetkilisi içindir.
+          </p>
+        </div>
+      </div>
 
       <FirmLeadApplicationsFilters
         key={persistQueryBase}
         firmId={firmId}
+        actionPath={actionPath}
         initial={filterInitial}
         countrySuggestions={distinct.countries}
       />
@@ -104,6 +131,7 @@ export default async function FirmPanelLeadsPage({ params, searchParams }: PageP
                   item={item}
                   selected={selectedId === item.id}
                   queryString={qs}
+                  hrefBase={hrefBase}
                 />
               );
             })

@@ -39,12 +39,20 @@ export default async function EditFirmPage({ params }: PageProps) {
             {String(detail.firm.name ?? "")}
           </p>
         </div>
-        <Link
-          href={`/admin/firms/${id}/panel`}
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-[#1A1A1A]/15 bg-white px-4 py-2 text-sm font-semibold text-[#0B3C5D] shadow-sm transition hover:bg-[#F4F6F8]"
-        >
-          Firma paneli erişimi
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/admin/firms/${id}/leads`}
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-[#1A1A1A]/15 bg-white px-4 py-2 text-sm font-semibold text-[#0B3C5D] shadow-sm transition hover:bg-[#F4F6F8]"
+          >
+            Gelen başvurular
+          </Link>
+          <Link
+            href={`/admin/firms/${id}/panel`}
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-[#1A1A1A]/15 bg-white px-4 py-2 text-sm font-semibold text-[#0B3C5D] shadow-sm transition hover:bg-[#F4F6F8]"
+          >
+            Firma paneli erişimi
+          </Link>
+        </div>
       </div>
       <FirmForm
         mode="edit"

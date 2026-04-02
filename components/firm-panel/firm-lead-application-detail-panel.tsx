@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { FirmLeadFileDownloadButton } from "@/components/firm-panel/firm-lead-file-download";
 import {
   LEAD_PRIORITY_LABELS,
   LEAD_SEGMENT_LABELS,
@@ -26,9 +27,12 @@ type FileRow = {
   file_type: string;
   original_name: string;
   uploaded_at: string;
+  storage_path: string;
 };
 
 type Props = {
+  firmId: string;
+  applicationId: string;
   application: Record<string, unknown>;
   files: FileRow[];
 };
@@ -56,7 +60,7 @@ function CardLabel({ title, value }: { title: string; value: string }) {
   );
 }
 
-export function FirmLeadApplicationDetailPanel({ application: a, files }: Props) {
+export function FirmLeadApplicationDetailPanel({ firmId, applicationId, application: a, files }: Props) {
   const visaKey = a.visa_type as VisaType;
   const timelineBucket = a.timeline_bucket as keyof typeof TIMELINE_BUCKET_LABELS | undefined;
 
@@ -144,14 +148,28 @@ export function FirmLeadApplicationDetailPanel({ application: a, files }: Props)
             {files.map((file) => (
               <div
                 key={file.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-2 text-sm text-[#1A1A1A]/80"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-2.5 text-sm text-[#1A1A1A]/80"
               >
-                <span className="font-medium text-[#0B3C5D]">{FILE_TYPE_LABELS[file.file_type] ?? file.file_type}</span>
-                <span className="min-w-0 truncate">{file.original_name}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-[#0B3C5D]">{FILE_TYPE_LABELS[file.file_type] ?? file.file_type}</p>
+                  <p className="mt-0.5 min-w-0 truncate text-xs text-[#1A1A1A]/70">{file.original_name}</p>
+                </div>
+                {file.storage_path ? (
+                  <FirmLeadFileDownloadButton
+                    firmId={firmId}
+                    applicationId={applicationId}
+                    storagePath={file.storage_path}
+                    originalName={file.original_name}
+                  />
+                ) : null}
               </div>
             ))}
           </div>
         )}
+        <p className="text-xs leading-relaxed text-[#1A1A1A]/45">
+          Dosyalar yalnızca oturumlu firma yetkilileri ve site yöneticisi tarafından güvenli bağlantı ile görüntülenebilir;
+          herkese açık bağlantı oluşturulmaz.
+        </p>
       </InfoSection>
 
       <InfoSection title="Sistem notu">

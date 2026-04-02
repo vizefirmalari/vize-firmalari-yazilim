@@ -12,6 +12,8 @@ import type { VisaType } from "@/lib/quick-apply/types";
 
 type Props = {
   firmId: string;
+  /** Varsayılan: /panel/{firmId}/formlar */
+  actionPath?: string;
   initial: {
     status: string;
     visaType: string;
@@ -27,12 +29,12 @@ type Props = {
 
 const visaKeys = Object.keys(VISA_TYPE_LABELS) as VisaType[];
 
-export function FirmLeadApplicationsFilters({ firmId, initial, countrySuggestions }: Props) {
+export function FirmLeadApplicationsFilters({ firmId, actionPath: actionPathProp, initial, countrySuggestions }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState(initial);
 
-  const actionPath = useMemo(() => `/panel/${firmId}/formlar`, [firmId]);
+  const actionPath = useMemo(() => actionPathProp ?? `/panel/${firmId}/formlar`, [actionPathProp, firmId]);
 
   const apply = useCallback(() => {
     const p = new URLSearchParams();

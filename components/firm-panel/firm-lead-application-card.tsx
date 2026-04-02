@@ -40,10 +40,13 @@ type Props = {
   item: FirmLeadListRow;
   selected: boolean;
   queryString: string;
+  /** Varsayılan: /panel/{firmId}/formlar — admin listesi için /admin/firms/{id}/leads */
+  hrefBase?: string;
 };
 
-export function FirmLeadApplicationCard({ firmId, item, selected, queryString }: Props) {
-  const href = `/panel/${firmId}/formlar${queryString ? `?${queryString}` : ""}`;
+export function FirmLeadApplicationCard({ firmId, item, selected, queryString, hrefBase }: Props) {
+  const base = hrefBase ?? `/panel/${firmId}/formlar`;
+  const href = `${base}${queryString ? `?${queryString}` : ""}`;
   const visaKey = item.visa_type as VisaType;
   const visaLabel = VISA_TYPE_LABELS[visaKey] ?? item.visa_type;
   const contact =
