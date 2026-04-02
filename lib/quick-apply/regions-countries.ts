@@ -79,6 +79,20 @@ export const ALL_COUNTRIES: CountryItem[] = [
   { code: "NO", name: "Norveç" },
 ];
 
+/**
+ * Bölge seçim kartlarında temsili bayrak (ISO 3166-1 alpha-2 veya EU).
+ * “Diğer Avrupa” için çeşitli rotaları temsilen İrlanda bayrağı kullanılır.
+ */
+export const REGION_REPRESENTATIVE_FLAG_ISO: Partial<Record<RegionId, string>> = {
+  schengen: "EU",
+  uk: "GB",
+  north_america: "US",
+  middle_east: "AE",
+  east_asia: "JP",
+  balkans: "RS",
+  other_europe: "IE",
+};
+
 /** Kartlarda öne çıkan ülkeler (bölge başına ilk sıra) */
 export const POPULAR_BY_REGION: Record<RegionId, string[]> = {
   schengen: ["DE", "NL", "FR", "IT", "ES", "BE", "AT"],

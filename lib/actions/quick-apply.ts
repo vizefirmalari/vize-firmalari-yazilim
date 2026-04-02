@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { LeadFileType } from "@/lib/quick-apply/types";
 const applicationSchema = z.object({
   firmId: z.string().uuid(),
@@ -104,13 +105,15 @@ function buildAnswersJson(
   return base;
 }
 
-function buildFullInsertRow(payload: ParsedApplication, legacyMapping: boolean) {
+function buildFullInsertRow(payload: ParsedApplication, legacyMapping: boolean, submittedByUserId: string) {
   const visa = legacyMapping ? mapLegacyVisaType(payload.visaType) : payload.visaType;
   const segment = legacyMapping ? mapLegacySegment(payload.leadSegment) : payload.leadSegment;
   const answers = buildAnswersJson(payload, { legacyMapping, embedV2Fields: false });
   return {
     firm_id: payload.firmId,
     submitted_from: "quick_apply_wizard" as const,
+    current_status: "new" as const,
+    submitted_by_user_id: submittedByUserId,
     visa_type: visa,
     target_country: payload.targetCountry || null,
     region_code: payload.regionCode ?? null,
@@ -148,13 +151,15 @@ function buildFullInsertRow(payload: ParsedApplication, legacyMapping: boolean) 
   };
 }
 
-function buildMinimalInsertRow(payload: ParsedApplication) {
+function buildMinimalInsertRow(payload: ParsedApplication, submittedByUserId: string) {
   const visa = mapLegacyVisaType(payload.visaType);
   const segment = mapLegacySegment(payload.leadSegment);
   const answers = buildAnswersJson(payload, { legacyMapping: true, embedV2Fields: true });
   return {
     firm_id: payload.firmId,
     submitted_from: "quick_apply_wizard" as const,
+    current_status: "new" as const,
+    submitted_by_user_id: submittedByUserId,
     visa_type: visa,
     target_country: payload.targetCountry || null,
     applicant_name: payload.applicantName,
@@ -203,14 +208,28 @@ export async function createQuickApplicationAction(input: z.infer<typeof applica
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false as const, message: "Sunucu bağlantısı kurulamadı." };
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.id) {
+    return {
+      ok: false as const,
+      message: "Oturum doğrulanamadı. Lütfen sayfayı yenileyip tekrar giriş yapın.",
+    };
+  }
+
   const payload = parsed.data;
+  /** insert().select() satır döndürmek için SELECT gerekir; anon kullanıcıda RLS + submitted_by (048) veya service role gerekir. */
+  const serviceRole = createSupabaseServiceRoleClient();
+  const hasServiceRole = Boolean(serviceRole);
+  const insertClient = serviceRole ?? supabase;
 
   type InsertedLead = { id: string; application_no: string; firm_id: string };
   let data: InsertedLead | null = null;
   let lastError: PgErr | null = null;
 
   const run = async (row: Record<string, unknown>) => {
-    const res = (await supabase
+    const res = (await insertClient
       .from("lead_applications")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dinamik satır (046 öncesi/sonrası uyumluluk)
       .insert(row as any)
@@ -220,14 +239,20 @@ export async function createQuickApplicationAction(input: z.infer<typeof applica
     lastError = res.error;
   };
 
-  await run(buildFullInsertRow(payload, false));
+  await run(buildFullInsertRow(payload, false, user.id));
 
   if (lastError && isCheckConstraintViolation(lastError)) {
-    await run(buildFullInsertRow(payload, true));
+    await run(buildFullInsertRow(payload, true, user.id));
   }
 
   if (lastError && isMissingColumnError(lastError)) {
-    await run(buildMinimalInsertRow(payload));
+    await run(buildMinimalInsertRow(payload, user.id));
+  }
+
+  if (lastError && isMissingColumnError(lastError) && hasServiceRole) {
+    const row = buildMinimalInsertRow(payload, user.id) as Record<string, unknown>;
+    const { submitted_by_user_id: _sb, ...withoutSubmittedBy } = row;
+    await run(withoutSubmittedBy);
   }
 
   if (lastError || !data) {

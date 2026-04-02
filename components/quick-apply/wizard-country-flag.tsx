@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { flagUrlForIso } from "@/lib/firma/country-flag";
 
+/** Görsel genişlik `flagUrlForIso` ile uyumlu olmalı (flagcdn yalnızca w20, w40, …). */
 const DIMS = {
   sm: { w: 20, box: "h-3.5 w-[22px] min-w-[22px]" },
-  md: { w: 28, box: "h-[18px] w-7 min-w-[1.75rem]" },
+  md: { w: 40, box: "h-6 w-10 min-w-[2.5rem]" },
   lg: { w: 40, box: "h-6 w-10 min-w-[2.5rem]" },
 } as const;
 

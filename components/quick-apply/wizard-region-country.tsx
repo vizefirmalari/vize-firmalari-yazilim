@@ -7,6 +7,7 @@ import {
   listCountriesInRegions,
   popularCountriesForRegions,
   REGIONS,
+  REGION_REPRESENTATIVE_FLAG_ISO,
   searchCountriesInRegions,
   type RegionId,
 } from "@/lib/quick-apply/regions-countries";
@@ -108,19 +109,34 @@ export function WizardRegionCountry({
               r.id === "unsure"
                 ? regionCodes.length === 1 && regionCodes[0] === "unsure"
                 : regionCodes.includes(r.id);
+            const flagIso = REGION_REPRESENTATIVE_FLAG_ISO[r.id];
             return (
               <button
                 key={r.id}
                 type="button"
                 onClick={() => handleRegionClick(r.id)}
-                className={`rounded-2xl border px-4 py-3.5 text-left transition ${
+                className={`flex gap-3 rounded-2xl border px-4 py-3.5 text-left transition ${
                   active
                     ? "border-[#0B3C5D] bg-[#F7F9FB] shadow-[inset_0_0_0_1px_rgba(11,60,93,0.08)]"
                     : "border-[#0B3C5D]/12 bg-[#FAFBFC] hover:border-[#0B3C5D]/28"
                 }`}
               >
-                <span className="block text-sm font-semibold text-[#0B3C5D]">{r.label}</span>
-                <span className="mt-0.5 block text-xs leading-snug text-[#1A1A1A]/55">{r.hint}</span>
+                <span className="mt-0.5 shrink-0">
+                  {flagIso ? (
+                    <WizardCountryFlag code={flagIso} size="sm" />
+                  ) : (
+                    <span
+                      className="inline-flex h-3.5 w-[22px] min-w-[22px] items-center justify-center rounded-[3px] border border-[#0B3C5D]/10 bg-[#F0F2F4] text-[10px] font-bold leading-none text-[#1A1A1A]/35"
+                      aria-hidden
+                    >
+                      ?
+                    </span>
+                  )}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-[#0B3C5D]">{r.label}</span>
+                  <span className="mt-0.5 block text-xs leading-snug text-[#1A1A1A]/55">{r.hint}</span>
+                </span>
               </button>
             );
           })}

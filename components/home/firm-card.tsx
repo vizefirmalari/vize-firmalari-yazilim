@@ -282,7 +282,7 @@ export function FirmCard({ firm }: FirmCardProps) {
           />
         ) : (
           <span className="flex items-center justify-center rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/80 py-2.5 text-center text-xs text-[#1A1A1A]/45">
-            Başvuru kapalı
+            Aktif Değil
           </span>
         )}
       </div>

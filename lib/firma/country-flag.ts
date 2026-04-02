@@ -5,11 +5,30 @@
 
 export const FLAGCDN_WIDTH = 40;
 
+/**
+ * flagcdn.com yalnızca belirli genişlikleri sunar (w20, w40, w80, …).
+ * w28 gibi ara değerler 404 verir; UI’da bayrakların düşmemesi için en yakın desteklenen genişliğe yuvarlanır.
+ * @see https://flagcdn.com/
+ */
+const FLAGCDN_ALLOWED_WIDTHS = [20, 40, 80, 160, 320, 640, 1280, 2560] as const;
+
+function snapToFlagcdnWidth(px: number): number {
+  const n = Number.isFinite(px) ? Math.max(16, Math.min(256, Math.round(px))) : FLAGCDN_WIDTH;
+  let best: (typeof FLAGCDN_ALLOWED_WIDTHS)[number] = FLAGCDN_ALLOWED_WIDTHS[0];
+  let bestDiff = Math.abs(best - n);
+  for (const w of FLAGCDN_ALLOWED_WIDTHS) {
+    const d = Math.abs(w - n);
+    if (d < bestDiff) {
+      best = w;
+      bestDiff = d;
+    }
+  }
+  return best;
+}
+
 /** flagcdn.com — `widthPx` genişliğe göre (örn. 20, 40) PNG */
 export function flagUrlForIso(iso: string, widthPx: number = FLAGCDN_WIDTH): string {
-  const w = Number.isFinite(widthPx)
-    ? Math.max(16, Math.min(256, Math.round(widthPx)))
-    : FLAGCDN_WIDTH;
+  const w = snapToFlagcdnWidth(widthPx);
   return `https://flagcdn.com/w${w}/${iso.toLowerCase()}.png`;
 }
 

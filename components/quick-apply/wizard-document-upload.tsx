@@ -173,52 +173,86 @@ export function WizardDocumentUpload({ files, onAdd, onRemove, onChangeType }: P
           <p className="mt-1 text-xs text-[#1A1A1A]/55">İsterseniz bu adımı atlayıp devam edebilirsiniz; belge eklemek değerlendirmeyi hızlandırır.</p>
         </div>
       ) : (
-        <ul className="space-y-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1A1A]/45">Yüklenen dosyalar</p>
-          {files.map((item, index) => (
-            <li
-              key={`${index}-${item.file.name}-${item.file.size}-${item.file.lastModified}`}
-              className="rounded-2xl border border-[#0B3C5D]/12 bg-white p-4 shadow-[0_1px_3px_rgba(11,60,93,0.05)]"
+        <div className="space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1A1A]/45">
+              Yüklenen dosyalar
+            </p>
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="inline-flex shrink-0 items-center justify-center rounded-xl border border-[#0B3C5D] bg-[#0B3C5D] px-4 py-2 text-xs font-semibold text-white shadow-[0_2px_8px_rgba(11,60,93,0.2)] transition hover:bg-[#0a3550] sm:py-1.5"
             >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-[#0B3C5D]">{item.file.name}</p>
-                  <p className="text-xs text-[#1A1A1A]/50">{formatSize(item.file.size)}</p>
+              Dosya ekle
+            </button>
+          </div>
+          <ul className="space-y-3">
+            {files.map((item, index) => (
+              <li
+                key={`${index}-${item.file.name}-${item.file.size}-${item.file.lastModified}`}
+                className="rounded-2xl border border-[#0B3C5D]/12 bg-white p-4 shadow-[0_1px_3px_rgba(11,60,93,0.05)]"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-[#0B3C5D]">{item.file.name}</p>
+                    <p className="text-xs text-[#1A1A1A]/50">{formatSize(item.file.size)}</p>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:items-end" onClick={(e) => e.stopPropagation()}>
+                    <label className="sr-only" htmlFor={`${inputId}-type-${index}`}>
+                      Belge türü
+                    </label>
+                    <select
+                      id={`${inputId}-type-${index}`}
+                      value={item.fileType}
+                      onChange={(e) => {
+                        const next = e.target.value as LeadFileType;
+                        onChangeType?.(index, next);
+                      }}
+                      className="w-full rounded-lg border border-[#0B3C5D]/20 px-2 py-1.5 text-xs font-medium text-[#0B3C5D] outline-none focus:border-[#0B3C5D] sm:w-auto sm:min-w-[200px]"
+                    >
+                      {FILE_TYPES.map((key) => (
+                        <option key={key} value={key}>
+                          {FILE_TYPE_LABELS[key]}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="flex flex-wrap gap-2 sm:justify-end">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          inputRef.current?.click();
+                        }}
+                        className="rounded-lg border border-[#0B3C5D]/20 bg-white px-3 py-1.5 text-xs font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
+                      >
+                        Dosya ekle
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemove(index);
+                        }}
+                        className="rounded-lg border border-[#0B3C5D]/20 px-3 py-1.5 text-xs font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
+                      >
+                        Kaldır
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-2 sm:items-end" onClick={(e) => e.stopPropagation()}>
-                  <label className="sr-only" htmlFor={`${inputId}-type-${index}`}>
-                    Belge türü
-                  </label>
-                  <select
-                    id={`${inputId}-type-${index}`}
-                    value={item.fileType}
-                    onChange={(e) => {
-                      const next = e.target.value as LeadFileType;
-                      onChangeType?.(index, next);
-                    }}
-                    className="w-full rounded-lg border border-[#0B3C5D]/20 px-2 py-1.5 text-xs font-medium text-[#0B3C5D] outline-none focus:border-[#0B3C5D] sm:w-auto sm:min-w-[200px]"
-                  >
-                    {FILE_TYPES.map((key) => (
-                      <option key={key} value={key}>
-                        {FILE_TYPE_LABELS[key]}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemove(index);
-                    }}
-                    className="self-start rounded-lg border border-[#0B3C5D]/20 px-3 py-1.5 text-xs font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB] sm:self-end"
-                  >
-                    Kaldır
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+          <div className="flex justify-center pt-1">
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="text-sm font-semibold text-[#0B3C5D] underline decoration-[#0B3C5D]/25 underline-offset-2 hover:decoration-[#0B3C5D]"
+            >
+              Başka dosya ekle
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
