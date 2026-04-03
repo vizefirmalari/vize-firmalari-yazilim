@@ -69,16 +69,14 @@ export function FirmCard({ firm }: FirmCardProps) {
   const quickApplyOk = firm.quick_apply_enabled !== false && firm.has_active_panel_member === true;
   const socialOk = firm.social_buttons_enabled !== false;
 
-  const descriptionText =
-    firm.short_description ?? firm.description ?? "Bu firma için açıklama yakında eklenecek.";
-  /** Modalda tam metin: varsa uzun `description`, yoksa kısa özet veya yedek. */
-  const descriptionFullText = (() => {
+  /** Kart önizlemesi (2 satır) ve “Hakkında” popup: önce uzun metin, yoksa kısa özet. */
+  const aboutText = (() => {
     const long = firm.description?.trim();
     if (long) return long;
     return (
       firm.short_description ??
       firm.description ??
-      "Bu firma için açıklama yakında eklenecek."
+      "Bu firma hakkında metin yakında eklenecek."
     );
   })();
 
@@ -196,9 +194,9 @@ export function FirmCard({ firm }: FirmCardProps) {
           type="button"
           onClick={() => setAboutTextModalOpen(true)}
           className="w-full cursor-pointer text-left text-sm leading-relaxed text-[#1A1A1A]/75 line-clamp-2 sm:text-[0.9375rem]"
-          aria-label="Açıklamayı tam olarak görüntüle"
+          aria-label="Hakkında metnini tam olarak görüntüle"
         >
-          {descriptionText}
+          {aboutText}
         </button>
 
         {summarySlots.length > 0 || restCountries > 0 ? (
@@ -404,13 +402,13 @@ export function FirmCard({ firm }: FirmCardProps) {
         processSupport={subProcessAndSupport}
         tags={labelTags}
       />
-      <FirmAboutDescriptionModal
+      <FirmAboutModal
         open={aboutTextModalOpen}
         onClose={() => setAboutTextModalOpen(false)}
         firmName={firm.name}
         logoUrl={firm.logo_url}
         logoAlt={firm.logo_alt_text?.trim() || `${firm.name} logosu`}
-        description={descriptionFullText}
+        bodyText={aboutText}
       />
     </article>
   );
@@ -544,7 +542,7 @@ function CardContextModalHeader({
   );
 }
 
-/** Firma kartı “Açıklama” alt sayfası — kapsam modallarıyla aynı üst şerit ve tipografi hiyerarşisi; logo + isim + alt başlık. */
+/** Firma kartı “Hakkında” popup — logo + firma adı + alt başlık; kapsam modallarıyla aynı üst şerit. */
 function AboutModalHeader({
   firmName,
   subtitle,
@@ -862,22 +860,22 @@ function ServiceGroup({
   );
 }
 
-function FirmAboutDescriptionModal({
+function FirmAboutModal({
   open,
   onClose,
   firmName,
   logoUrl,
   logoAlt,
-  description,
+  bodyText,
 }: {
   open: boolean;
   onClose: () => void;
   firmName: string;
   logoUrl: string | null;
   logoAlt: string;
-  description: string;
+  bodyText: string;
 }) {
-  const subtitle = "Açıklama";
+  const subtitle = "Hakkında";
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(open);
 
@@ -910,11 +908,10 @@ function FirmAboutDescriptionModal({
       />
 
       {/*
-        CountriesRegionsModal ile aynı premium kabuk (max-w-2xl, rounded-2xl, gölge).
-        Mobil: alt sekme (h-16) + safe-area için ek alt padding; gövde yüksekliği
-        min(78vh, …) ile uzun metin için okunaklı ve taşmayı önler.
+        CountriesRegionsModal ile aynı premium kabuk; mobil ve masaüstünde ortalanır.
+        Gövde: 78vh üst sınır + güvenli alan (çentik / home indicator).
       */}
-      <div className="relative flex h-full w-full items-end justify-center p-3 pb-[max(0.75rem,calc(4rem+env(safe-area-inset-bottom,0px)+0.75rem))] md:items-center md:pb-3">
+      <div className="relative flex h-full w-full items-center justify-center p-3 sm:p-4">
         <div
           className={`w-full max-w-2xl overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 ${
             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
@@ -932,11 +929,9 @@ function FirmAboutDescriptionModal({
             onClose={onClose}
           />
 
-          <div
-            className="max-h-[min(78vh,calc(100dvh-4rem-env(safe-area-inset-bottom,0px)-6.5rem))] overflow-y-auto overscroll-contain px-4 py-5 md:max-h-[78vh]"
-          >
+          <div className="max-h-[min(78vh,calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-2.5rem))] overflow-y-auto overscroll-contain px-4 py-5">
             <p className="whitespace-pre-wrap text-sm leading-[1.7] text-[#1A1A1A]/75">
-              {description}
+              {bodyText}
             </p>
           </div>
         </div>

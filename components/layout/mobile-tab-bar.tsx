@@ -16,7 +16,7 @@ type TabItem = {
 };
 
 const TABS: TabItem[] = [
-  { href: "/", label: "Ana Sayfa", icon: "⌂", match: (p) => p === "/" },
+  { href: "/", label: "Vize Firmaları", icon: "⌂", match: (p) => p === "/" },
   { href: "/#firmalar", label: "Keşfet", icon: "◫", match: (p) => p === "/" },
   { href: "/akis", label: "Akış", icon: "✦", isCenter: true, match: (p) => p.startsWith("/akis") },
   { href: "/mesajlar", label: "Mesajlar", icon: "✉", match: (p) => p.startsWith("/mesajlar") },
