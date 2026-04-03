@@ -23,6 +23,18 @@ import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
 
+/** Kartta yalnızca kısa açıklama; uzun metin firma detay sayfasında. `description` yoksa kısaltılmış önizleme. */
+const CARD_ABOUT_SNIPPET_MAX = 220;
+
+function truncateFirmAboutSnippet(text: string, max: number): string {
+  const t = text.trim();
+  if (t.length <= max) return t;
+  const slice = t.slice(0, max);
+  const lastSpace = slice.lastIndexOf(" ");
+  const head = lastSpace > 32 ? slice.slice(0, lastSpace) : slice.trimEnd();
+  return `${head}…`;
+}
+
 type FirmCardProps = {
   firm: FirmRow;
 };
@@ -71,16 +83,20 @@ export function FirmCard({ firm }: FirmCardProps) {
     firm.quick_apply_enabled !== false && firm.has_active_panel_member === false;
   const socialOk = firm.social_buttons_enabled !== false;
 
-  /** Kart önizlemesi (2 satır) ve “Hakkında” popup: önce uzun metin, yoksa kısa özet. */
-  const aboutText = (() => {
-    const long = firm.description?.trim();
-    if (long) return long;
-    return (
-      firm.short_description ??
-      firm.description ??
-      "Bu firma hakkında metin yakında eklenecek."
-    );
-  })();
+  const shortAbout = firm.short_description?.trim() ?? "";
+  const detailedAbout = firm.description?.trim() ?? "";
+
+  const cardAboutText =
+    shortAbout ||
+    (detailedAbout ? truncateFirmAboutSnippet(detailedAbout, CARD_ABOUT_SNIPPET_MAX) : "") ||
+    "Bu firma hakkında metin yakında eklenecek.";
+
+  /** Modal: tam kısa metin; yalnızca uzun açıklama varsa karttakiyle aynı kısaltma + firma sayfası linki. */
+  const aboutModalBodyText =
+    shortAbout ||
+    (detailedAbout ? truncateFirmAboutSnippet(detailedAbout, CARD_ABOUT_SNIPPET_MAX) : cardAboutText);
+
+  const showFirmPageDetailLink = Boolean(detailedAbout);
 
   const specializationLabels = useMemo(() => {
     const f = firm as unknown as Record<string, unknown>;
@@ -196,9 +212,9 @@ export function FirmCard({ firm }: FirmCardProps) {
           type="button"
           onClick={() => setAboutTextModalOpen(true)}
           className="w-full cursor-pointer text-left text-sm leading-relaxed text-[#1A1A1A]/75 line-clamp-2 sm:text-[0.9375rem]"
-          aria-label="Hakkında metnini tam olarak görüntüle"
+          aria-label="Hakkında özetini aç"
         >
-          {aboutText}
+          {cardAboutText}
         </button>
 
         {summarySlots.length > 0 || restCountries > 0 ? (
@@ -418,9 +434,11 @@ export function FirmCard({ firm }: FirmCardProps) {
         open={aboutTextModalOpen}
         onClose={() => setAboutTextModalOpen(false)}
         firmName={firm.name}
+        firmSlug={firm.slug}
         logoUrl={firm.logo_url}
         logoAlt={firm.logo_alt_text?.trim() || `${firm.name} logosu`}
-        bodyText={aboutText}
+        bodyText={aboutModalBodyText}
+        showFirmPageDetailLink={showFirmPageDetailLink}
       />
     </article>
   );
@@ -876,16 +894,20 @@ function FirmAboutModal({
   open,
   onClose,
   firmName,
+  firmSlug,
   logoUrl,
   logoAlt,
   bodyText,
+  showFirmPageDetailLink,
 }: {
   open: boolean;
   onClose: () => void;
   firmName: string;
+  firmSlug: string;
   logoUrl: string | null;
   logoAlt: string;
   bodyText: string;
+  showFirmPageDetailLink: boolean;
 }) {
   const subtitle = "Hakkında";
   const [mounted, setMounted] = useState(open);
@@ -945,6 +967,17 @@ function FirmAboutModal({
             <p className="whitespace-pre-wrap text-sm leading-[1.7] text-[#1A1A1A]/75">
               {bodyText}
             </p>
+            {showFirmPageDetailLink ? (
+              <p className="mt-4 border-t border-[#0B3C5D]/10 pt-4">
+                <Link
+                  href={`/firma/${firmSlug}`}
+                  onClick={onClose}
+                  className="text-sm font-semibold text-[#328CC1] underline-offset-4 hover:underline"
+                >
+                  Detaylı açıklamayı firma sayfasında görüntüle
+                </Link>
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
