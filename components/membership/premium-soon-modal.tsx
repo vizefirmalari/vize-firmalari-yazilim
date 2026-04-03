@@ -25,12 +25,12 @@ export function PremiumSoonModal({ open, onClose, onContinueFree }: Props) {
         className="relative z-[101] m-4 w-full max-w-md rounded-2xl border border-border bg-white p-6 shadow-[0_24px_64px_rgba(11,60,93,0.18)] sm:p-8"
       >
         <h2 id="premium-soon-title" className="text-lg font-bold text-primary sm:text-xl">
-          Ücretli Planlar Yakında Aktif
+          Ücretli Paketler Hazırlanıyor
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-foreground/75">
-          Pro ve Business paketleri için ödeme entegrasyonu hazırlanmaktadır. Şimdilik ücretsiz vitrin başvurusu ile
-          platforma katılabilirsiniz. Ödeme sistemi aktif olduğunda ücretli paketlerde ödeme sonrası aynı başvuru formu
-          açılacaktır.
+          Pro ve Business paketleri için ödeme entegrasyonu şu anda hazırlık aşamasındadır. Şimdilik ücretsiz vitrin
+          başvurusu ile platforma katılabilirsiniz. Ödeme sistemi aktif olduğunda ücretli paket seçimlerinden sonra aynı
+          sayfada başvuru formu ile devam edilecektir.
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
           <button

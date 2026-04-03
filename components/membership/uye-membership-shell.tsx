@@ -37,7 +37,7 @@ function PlaceholderIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
-        d="M9 12h6M9 16h6M8 5h8l1 3H7l1-3zM6 8h12v11a2 2 0 01-2 2H8a2 2 0 01-2-2V8z"
+        d="M4 6h16v12H4V6zm2 2v8h12V8H6zm3 2h6M9 14h4"
         stroke="currentColor"
         strokeWidth="1.75"
         strokeLinecap="round"
@@ -45,12 +45,6 @@ function PlaceholderIcon({ className }: { className?: string }) {
       />
     </svg>
   );
-}
-
-function selectedPackageLabel(plan: PlanId | null): string {
-  if (plan === "pro") return "Pro";
-  if (plan === "business") return "Business";
-  return "Ücretsiz Vitrin";
 }
 
 function UyePlanPriceBlock({
@@ -98,7 +92,7 @@ function UyePlanPriceBlock({
 }
 
 export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
-  const formWrapRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
   const placeholderRef = useRef<HTMLDivElement>(null);
 
   const [billing, setBilling] = useState<BillingPeriod>("monthly");
@@ -113,7 +107,7 @@ export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
 
   const scrollToForm = () => {
     window.setTimeout(() => {
-      formWrapRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
   };
 
@@ -125,7 +119,7 @@ export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
 
   const scrollToStickyTarget = () => {
     if (isFormVisible) {
-      formWrapRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
       placeholderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -144,6 +138,10 @@ export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
 
   const handlePlanCta = (plan: UyePagePlanDef) => {
     if (plan.id === "free") {
+      if (selectedPlan === "free" && isFormVisible) {
+        scrollToForm();
+        return;
+      }
       openFreeForm();
       return;
     }
@@ -170,11 +168,11 @@ export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
       >
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <h2 id="uye-plan-baslik" className="text-center text-xl font-bold tracking-tight text-primary sm:text-2xl">
-            Başvuru öncesi paket seçimi
+            Size uygun paketi seçin
           </h2>
           <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-foreground/70">
-            Önce paketinizi seçin. Ücretsiz vitrin ile hemen başvuru formunu açabilirsiniz; ücretli planlarda ödeme
-            tamamlandığında aynı form ile devam edilecektir.
+            Ücretsiz vitrin ile arama motorlarında görünür olun; Pro ve Business ile panel, lead yönetimi, mesajlaşma ve
+            büyüme araçlarına geçiş yapın. Ücretsiz pakette formu anında açabilirsiniz.
           </p>
 
           <div className="mx-auto mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-6">
@@ -210,31 +208,29 @@ export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col gap-4 lg:grid lg:grid-cols-3 lg:gap-5">
+          <div className="mt-8 flex flex-col gap-4 lg:grid lg:grid-cols-3 lg:items-stretch lg:gap-5">
             {UYE_PAGE_PLANS.map((plan) => {
               const isRec = plan.variant === "recommended";
               const isStrong = plan.variant === "strong";
               const isFree = plan.id === "free";
               const showY = billing === "yearly" && !isFree;
-              /** Ücretsiz kartta toggle yıllık/aylık metnini gösterir; ücretli kartlarda yıllık fiyat için */
               const blockBilling: BillingPeriod = isFree ? billing : showY ? "yearly" : "monthly";
               const freeSelected = isFree && selectedPlan === "free" && isFormVisible;
 
-              const shell =
-                isFree
-                  ? "border-primary/20 bg-primary/[0.04] pt-6"
-                  : isRec
-                    ? "border-primary/40 pt-7 ring-2 ring-primary/15"
-                    : isStrong
-                      ? "border-primary/28 bg-primary/[0.045] pt-7 ring-1 ring-primary/12"
-                      : "border-border pt-6";
+              const shell = isFree
+                ? "border-primary/22 bg-primary/[0.045] pt-6 hover:border-primary/30 hover:bg-primary/[0.06]"
+                : isRec
+                  ? "border-primary/42 pt-7 ring-2 ring-primary/14 hover:border-primary/50 hover:ring-primary/22"
+                  : isStrong
+                    ? "border-primary/30 bg-primary/[0.05] pt-7 ring-1 ring-primary/14 hover:border-primary/38 hover:shadow-[0_14px_44px_rgba(11,60,93,0.11)]"
+                    : "border-border pt-6";
 
-              const activeRing = freeSelected ? " ring-2 ring-primary/35 ring-offset-2 ring-offset-background" : "";
+              const activeRing = freeSelected ? " ring-2 ring-primary/38 ring-offset-2 ring-offset-background" : "";
 
               return (
                 <article
                   key={plan.id}
-                  className={`relative flex flex-col rounded-2xl border bg-white px-5 pb-5 shadow-[0_4px_24px_rgba(11,60,93,0.07)] transition duration-200 ${shell}${activeRing}`}
+                  className={`relative flex h-full flex-col rounded-2xl border bg-white px-5 pb-5 shadow-[0_4px_24px_rgba(11,60,93,0.07)] transition-all duration-200 hover:z-[1] hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(11,60,93,0.11)] ${shell}${activeRing}`}
                 >
                   {plan.badge ? (
                     <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-accent/30 bg-accent/18 px-3 py-1 text-[10px] font-bold tracking-wide text-foreground">
@@ -246,22 +242,20 @@ export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
                     <span className="absolute right-3 top-3 rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/55">
                       Yakında
                     </span>
-                  ) : freeSelected ? (
-                    <span className="absolute right-3 top-3 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
-                      Seçildi
-                    </span>
                   ) : null}
 
-                  <h3 className="min-h-8 pr-16 text-lg font-bold text-primary">{plan.title}</h3>
-                  <p className="mt-1 text-sm font-medium leading-snug text-foreground/75">{plan.subtitle}</p>
+                  <h3 className={`min-h-8 text-lg font-bold text-primary ${!isFree ? "pr-16" : ""}`}>{plan.title}</h3>
+                  <p className="mt-1 text-sm font-medium leading-snug text-foreground/78">{plan.subtitle}</p>
 
-                  <div className="mt-4 min-h-[4.25rem]">
+                  <div className="mt-4 min-h-[4.25rem] shrink-0">
                     <UyePlanPriceBlock plan={plan} billing={blockBilling} showYearlyBadge={showYearlyBadge} />
                   </div>
 
-                  <p className="mt-3 flex-1 text-sm leading-relaxed text-foreground/72">{plan.description}</p>
+                  <p className="mt-3 min-h-[4.5rem] text-sm leading-relaxed text-foreground/72 sm:min-h-[5rem]">
+                    {plan.description}
+                  </p>
 
-                  <ul className="mt-4 space-y-2 border-t border-border/80 pt-4 text-sm text-foreground/80">
+                  <ul className="mt-4 flex flex-1 flex-col gap-2 border-t border-border/80 pt-4 text-sm text-foreground/82">
                     {plan.features.map((f) => (
                       <li key={f} className="flex gap-2">
                         <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -270,19 +264,22 @@ export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
                     ))}
                   </ul>
 
-                  <div className="mt-5">
+                  <div className="mt-auto pt-5">
                     <button
                       type="button"
                       onClick={() => handlePlanCta(plan)}
+                      aria-pressed={isFree && freeSelected ? true : undefined}
                       className={`flex min-h-11 w-full items-center justify-center rounded-2xl px-4 text-sm font-semibold transition ${
-                        isFree
-                          ? "border border-primary/25 bg-white text-primary shadow-sm hover:bg-primary/5"
-                          : isRec
-                            ? "bg-primary text-white shadow-sm hover:bg-[#082f49]"
-                            : "border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
+                        isFree && freeSelected
+                          ? "cursor-pointer border border-primary/35 bg-primary/10 text-primary shadow-sm hover:bg-primary/14"
+                          : isFree
+                            ? "border border-primary/28 bg-white text-primary shadow-sm hover:bg-primary/5"
+                            : isRec
+                              ? "bg-primary text-white shadow-sm hover:bg-[#082f49]"
+                              : "border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
                       }`}
                     >
-                      {plan.ctaLabel}
+                      {isFree && freeSelected ? "Seçildi" : plan.ctaLabel}
                     </button>
                   </div>
                 </article>
@@ -291,8 +288,8 @@ export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
           </div>
 
           <p className="mx-auto mt-6 max-w-2xl text-center text-xs leading-relaxed text-foreground/55">
-            Pro ve Business için ödeme entegrasyonu hazırlanmaktadır. Aktif olduğunda ödeme sonrası bu sayfadaki aynı
-            başvuru formu ile devam edebileceksiniz.
+            Pro ve Business ödemesi yakında bu sayfada tamamlanacak; ardından aynı başvuru formu ile kayıt sürecine
+            devam edebileceksiniz.
           </p>
         </div>
       </section>
@@ -310,22 +307,34 @@ export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
           {!isFormVisible ? (
             <div
               ref={placeholderRef}
-              className="rounded-2xl border border-dashed border-border bg-white/90 p-6 text-center shadow-sm sm:p-8"
+              className="rounded-2xl border border-border bg-white p-6 text-center shadow-[0_4px_28px_rgba(11,60,93,0.07)] sm:p-8"
             >
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/8 text-primary">
                 <PlaceholderIcon className="h-6 w-6" />
               </div>
-              <p className="mt-4 text-base font-bold text-primary">Başvuru formu paket seçiminizden sonra açılır</p>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-foreground/70">
-                Ücretsiz vitrin başvurusu için ücretsiz paketi seçin. Ücretli paketlerde ise ödeme entegrasyonu
-                tamamlandığında ödeme sonrası aynı form ile devam edilecektir.
+              <p className="mt-4 text-base font-bold text-primary sm:text-lg">Firmanız için en uygun paketi seçin</p>
+              <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-foreground/72">
+                Ücretsiz vitrin ile hemen başvurabilir, ücretli paketlerle ise panel, lead yönetimi, mesajlaşma ve büyüme
+                araçlarına erişebilirsiniz.
               </p>
+              <Link
+                href="#uye-plan-secimi"
+                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#082f49]"
+              >
+                Paketleri incele
+              </Link>
             </div>
           ) : (
-            <div ref={formWrapRef} className="uye-form-reveal">
-              <p className="mb-4 rounded-xl border border-border bg-white px-3 py-2 text-center text-xs font-semibold text-foreground/80">
-                Seçilen paket: {selectedPackageLabel(selectedPlan)}
-              </p>
+            <div ref={formRef} className="uye-form-reveal">
+              {selectedPlan === "free" ? (
+                <div className="mb-5 rounded-2xl border border-border bg-white p-4 text-left shadow-sm sm:p-5">
+                  <p className="text-sm font-bold text-primary sm:text-base">Ücretsiz Vitrin Başvurusu</p>
+                  <p className="mt-2 text-xs leading-relaxed text-foreground/75 sm:text-sm">
+                    Bu başvuru ücretsiz vitrin paketi için alınır. Yönetim incelemesi sonrası uygun bulunan firmalar
+                    manuel olarak yayına alınır.
+                  </p>
+                </div>
+              ) : null}
               <BusinessMembershipForm />
             </div>
           )}
@@ -345,7 +354,7 @@ export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
             onClick={scrollToStickyTarget}
             className="flex min-h-11 flex-[2] items-center justify-center rounded-xl bg-primary text-sm font-semibold text-white shadow-sm"
           >
-            {isFormVisible ? "Forma git" : "Başvuru alanı"}
+            {isFormVisible ? "Forma git" : "Paket seç"}
           </button>
         </div>
       </div>
