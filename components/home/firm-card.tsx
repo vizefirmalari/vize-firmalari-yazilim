@@ -71,6 +71,16 @@ export function FirmCard({ firm }: FirmCardProps) {
 
   const descriptionText =
     firm.short_description ?? firm.description ?? "Bu firma için açıklama yakında eklenecek.";
+  /** Modalda tam metin: varsa uzun `description`, yoksa kısa özet veya yedek. */
+  const descriptionFullText = (() => {
+    const long = firm.description?.trim();
+    if (long) return long;
+    return (
+      firm.short_description ??
+      firm.description ??
+      "Bu firma için açıklama yakında eklenecek."
+    );
+  })();
 
   const specializationLabels = useMemo(() => {
     const f = firm as unknown as Record<string, unknown>;
@@ -394,11 +404,13 @@ export function FirmCard({ firm }: FirmCardProps) {
         processSupport={subProcessAndSupport}
         tags={labelTags}
       />
-      <TextModal
+      <FirmAboutDescriptionModal
         open={aboutTextModalOpen}
-        title="Açıklama"
-        text={descriptionText}
         onClose={() => setAboutTextModalOpen(false)}
+        firmName={firm.name}
+        logoUrl={firm.logo_url}
+        logoAlt={firm.logo_alt_text?.trim() || `${firm.name} logosu`}
+        description={descriptionFullText}
       />
     </article>
   );
@@ -528,6 +540,66 @@ function CardContextModalHeader({
       >
         Kapat
       </button>
+    </div>
+  );
+}
+
+/** Firma kartı “Açıklama” alt sayfası — kapsam modallarıyla aynı üst şerit ve tipografi hiyerarşisi; logo + isim + alt başlık. */
+function AboutModalHeader({
+  firmName,
+  subtitle,
+  logoUrl,
+  logoAlt,
+  initialsText,
+  onClose,
+}: {
+  firmName: string;
+  subtitle: string;
+  logoUrl: string | null;
+  logoAlt: string;
+  initialsText: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="sticky top-0 z-10 shrink-0 border-b border-[#0B3C5D]/10 bg-white px-4 py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-[#F7F9FB] ring-1 ring-[#0B3C5D]/8">
+            {logoUrl ? (
+              <Image
+                src={logoUrl}
+                alt={logoAlt}
+                fill
+                sizes="48px"
+                className="object-contain object-center p-1.5"
+              />
+            ) : (
+              <span
+                className="flex h-full w-full items-center justify-center text-sm font-bold tracking-tight text-[#0B3C5D]"
+                aria-hidden
+              >
+                {initialsText}
+              </span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1 pt-0.5 text-left">
+            <p className="text-lg font-semibold leading-snug text-[#0B3C5D]">
+              {firmName}
+            </p>
+            <p className="mt-0.5 text-xs font-medium text-[#1A1A1A]/55">
+              {subtitle}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 rounded-lg border border-[#0B3C5D]/15 bg-white px-3 py-1 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
+          aria-label="Kapat"
+        >
+          Kapat
+        </button>
+      </div>
     </div>
   );
 }
@@ -790,47 +862,81 @@ function ServiceGroup({
   );
 }
 
-function TextModal({
+function FirmAboutDescriptionModal({
   open,
-  title,
-  text,
   onClose,
+  firmName,
+  logoUrl,
+  logoAlt,
+  description,
 }: {
   open: boolean;
-  title: string;
-  text: string;
   onClose: () => void;
+  firmName: string;
+  logoUrl: string | null;
+  logoAlt: string;
+  description: string;
 }) {
-  if (!open) return null;
+  const subtitle = "Açıklama";
+  const [mounted, setMounted] = useState(open);
+  const [visible, setVisible] = useState(open);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      requestAnimationFrame(() => setVisible(true));
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+
+    setVisible(false);
+    const t = window.setTimeout(() => setMounted(false), 200);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
+  if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-9999">
       <div
-        className="absolute inset-0 bg-black/40"
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
+          visible ? "opacity-100" : "opacity-0"
+        }`}
         onClick={onClose}
         aria-hidden
       />
-      <div className="relative mx-auto flex h-full w-full max-w-2xl items-end p-3 sm:items-center">
+
+      {/*
+        CountriesRegionsModal ile aynı premium kabuk (max-w-2xl, rounded-2xl, gölge).
+        Mobil: alt sekme (h-16) + safe-area için ek alt padding; gövde yüksekliği
+        min(78vh, …) ile uzun metin için okunaklı ve taşmayı önler.
+      */}
+      <div className="relative flex h-full w-full items-end justify-center p-3 pb-[max(0.75rem,calc(4rem+env(safe-area-inset-bottom,0px)+0.75rem))] md:items-center md:pb-3">
         <div
-          className="w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)]"
+          className={`w-full max-w-2xl overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 ${
+            visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+          }`}
           role="dialog"
           aria-modal="true"
-          aria-label={title}
+          aria-label={`${firmName} — ${subtitle}`}
         >
-          <div className="flex items-center justify-between gap-3 border-b border-[#0B3C5D]/10 px-4 py-3">
-            <h3 className="text-sm font-semibold text-[#0B3C5D]">{title}</h3>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-[#0B3C5D]/15 bg-white px-3 py-1 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
-              aria-label="Kapat"
-            >
-              Kapat
-            </button>
-          </div>
-          <div className="max-h-[70vh] overflow-y-auto px-4 py-4">
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#1A1A1A]/75">
-              {text}
+          <AboutModalHeader
+            firmName={firmName}
+            subtitle={subtitle}
+            logoUrl={logoUrl}
+            logoAlt={logoAlt}
+            initialsText={initials(firmName)}
+            onClose={onClose}
+          />
+
+          <div
+            className="max-h-[min(78vh,calc(100dvh-4rem-env(safe-area-inset-bottom,0px)-6.5rem))] overflow-y-auto overscroll-contain px-4 py-5 md:max-h-[78vh]"
+          >
+            <p className="whitespace-pre-wrap text-sm leading-[1.7] text-[#1A1A1A]/75">
+              {description}
             </p>
           </div>
         </div>
