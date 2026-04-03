@@ -1,4 +1,5 @@
 import type { FirmFilters, FirmRow, FirmSort } from "@/lib/types/firm";
+import type { FirmPlanType } from "@/lib/subscriptions/plan-types";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
@@ -31,6 +32,7 @@ const MOCK_FIRMS: FirmRow[] = [
     status: "published",
     created_at: new Date().toISOString(),
     has_active_panel_member: true,
+    subscription_plan: "pro",
   },
   {
     id: "00000000-0000-0000-0000-000000000002",
@@ -55,6 +57,7 @@ const MOCK_FIRMS: FirmRow[] = [
     status: "published",
     created_at: new Date().toISOString(),
     has_active_panel_member: true,
+    subscription_plan: "pro",
   },
 ];
 
@@ -113,6 +116,13 @@ export function normalizeFirmRow(r: Record<string, unknown>): FirmRow {
     messaging_enabled: r.messaging_enabled === false ? false : true,
     visa_regions,
   };
+}
+
+function parseFirmPlanRaw(raw: unknown): FirmPlanType {
+  if (raw === "pro" || raw === "business") return raw;
+  if (raw === "starter") return "pro";
+  if (raw === "growth" || raw === "enterprise") return "business";
+  return "free";
 }
 
 function parseList(param: string | string[] | undefined): string[] {
@@ -337,22 +347,26 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
     normalizeFirmRow(row as Record<string, unknown>)
   );
 
-  const { data: panelRows, error: panelErr } = await supabase.rpc(
-    "published_firm_ids_with_active_panel"
-  );
-  if (panelErr) {
-    console.error(
-      "[getFirms] published_firm_ids_with_active_panel",
-      panelErr.message
-    );
+  const { data: planRows, error: planErr } = await supabase.rpc("batch_firm_plan_types", {
+    p_firm_ids: rows.map((r) => r.id),
+  });
+  if (planErr) {
+    console.error("[getFirms] batch_firm_plan_types", planErr.message);
   }
-  const panelSet = new Set<string>(
-    (panelRows ?? []).map((row: { firm_id: string }) => String(row.firm_id))
+  const planById = new Map<string, FirmPlanType>(
+    (planRows ?? []).map((row: { firm_id: string; plan_type: string }) => [
+      String(row.firm_id),
+      parseFirmPlanRaw(row.plan_type),
+    ])
   );
-  rows = rows.map((r) => ({
-    ...r,
-    has_active_panel_member: panelSet.has(r.id),
-  }));
+  rows = rows.map((r) => {
+    const subscription_plan = planById.get(r.id) ?? "free";
+    return {
+      ...r,
+      subscription_plan,
+      has_active_panel_member: subscription_plan !== "free",
+    };
+  });
 
   if (filters.visaTypes.length > 0) {
     const selected = new Set<SpecializationKey>(
@@ -419,17 +433,18 @@ export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {
   if (!data) return null;
 
   let firm = normalizeFirmRow(data as Record<string, unknown>);
-  const { data: hasPanel, error: panelErr } = await supabase.rpc(
-    "firm_has_active_panel_member",
-    { p_firm_id: data.id }
-  );
-  if (panelErr) {
-    console.error(
-      "[getFirmBySlug] firm_has_active_panel_member",
-      panelErr.message
-    );
+  const { data: planRaw, error: planErr } = await supabase.rpc("firm_current_plan_type", {
+    p_firm_id: data.id,
+  });
+  if (planErr) {
+    console.error("[getFirmBySlug] firm_current_plan_type", planErr.message);
   }
-  firm = { ...firm, has_active_panel_member: Boolean(hasPanel) };
+  const subscription_plan = parseFirmPlanRaw(planRaw);
+  firm = {
+    ...firm,
+    subscription_plan,
+    has_active_panel_member: subscription_plan !== "free",
+  };
   return firm;
 }
 

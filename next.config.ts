@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: "/firma-panel", destination: "/panel", permanent: false },
+      { source: "/firma-panel/:path*", destination: "/panel/:path*", permanent: false },
+    ];
+  },
   images: {
     remotePatterns: [
       {

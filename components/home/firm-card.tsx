@@ -67,6 +67,8 @@ export function FirmCard({ firm }: FirmCardProps) {
 
   const servicePool = Array.isArray(firm.services) ? firm.services : [];
   const quickApplyOk = firm.quick_apply_enabled !== false && firm.has_active_panel_member === true;
+  const quickApplyUpgradeOnly =
+    firm.quick_apply_enabled !== false && firm.has_active_panel_member === false;
   const socialOk = firm.social_buttons_enabled !== false;
 
   /** Kart önizlemesi (2 satır) ve “Hakkında” popup: önce uzun metin, yoksa kısa özet. */
@@ -286,6 +288,16 @@ export function FirmCard({ firm }: FirmCardProps) {
             firmLogoUrl={firm.logo_url}
             firmExpertiseLine={buildQuickApplyExpertiseLine(firm)}
             firmSubtitle={buildQuickApplySubtitle(firm)}
+            buttonClassName="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
+          />
+        ) : quickApplyUpgradeOnly ? (
+          <QuickApplyLauncher
+            firmId={firm.id}
+            firmName={firm.name}
+            firmLogoUrl={firm.logo_url}
+            firmExpertiseLine={buildQuickApplyExpertiseLine(firm)}
+            firmSubtitle={buildQuickApplySubtitle(firm)}
+            upgradeOnly
             buttonClassName="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
           />
         ) : (

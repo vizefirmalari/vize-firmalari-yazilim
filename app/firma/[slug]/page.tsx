@@ -112,6 +112,8 @@ export default async function FirmaPage({ params }: PageProps) {
     (typeof firm.office_count === "number" && firm.office_count > 0);
 
   const quickApplyOk = firm.quick_apply_enabled !== false && firm.has_active_panel_member === true;
+  const quickApplyUpgradeOnly =
+    firm.quick_apply_enabled !== false && firm.has_active_panel_member === false;
 
   const messagingCtaActive =
     firm.messaging_enabled === true && firm.has_active_panel_member === true;
@@ -568,6 +570,16 @@ export default async function FirmaPage({ params }: PageProps) {
                       firmLogoUrl={firm.logo_url}
                       firmExpertiseLine={buildQuickApplyExpertiseLine(firm)}
                       firmSubtitle={buildQuickApplySubtitle(firm)}
+                      buttonClassName="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-center text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
+                    />
+                  ) : quickApplyUpgradeOnly ? (
+                    <QuickApplyLauncher
+                      firmId={firm.id}
+                      firmName={firm.name}
+                      firmLogoUrl={firm.logo_url}
+                      firmExpertiseLine={buildQuickApplyExpertiseLine(firm)}
+                      firmSubtitle={buildQuickApplySubtitle(firm)}
+                      upgradeOnly
                       buttonClassName="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-center text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
                     />
                   ) : (

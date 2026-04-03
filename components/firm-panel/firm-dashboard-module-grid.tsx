@@ -10,6 +10,8 @@ import { FIRM_DASHBOARD_MODULES } from "@/lib/firm-panel/dashboard-modules";
 type Props = {
   firmId: string;
   initialHiddenModuleIds: string[];
+  /** Verilmezse tüm modüller listelenir (geri uyumluluk). */
+  allowedModuleIds?: string[];
 };
 
 const STATUS_CLASS: Record<string, string> = {
@@ -29,15 +31,19 @@ const STATUS_LABEL: Record<string, string> = {
 export function FirmDashboardModuleGrid({
   firmId,
   initialHiddenModuleIds,
+  allowedModuleIds,
 }: Props) {
   const router = useRouter();
   const [hiddenIds, setHiddenIds] = useState<string[]>(initialHiddenModuleIds);
   const [isPending, startTransition] = useTransition();
 
-  const visibleModules = useMemo(
-    () => FIRM_DASHBOARD_MODULES.filter((m) => !hiddenIds.includes(m.id)),
-    [hiddenIds]
-  );
+  const visibleModules = useMemo(() => {
+    const allowed =
+      allowedModuleIds && allowedModuleIds.length > 0
+        ? FIRM_DASHBOARD_MODULES.filter((m) => allowedModuleIds.includes(m.id))
+        : FIRM_DASHBOARD_MODULES;
+    return allowed.filter((m) => !hiddenIds.includes(m.id));
+  }, [hiddenIds, allowedModuleIds]);
 
   const hideModule = (id: string) => {
     const next = [...new Set([...hiddenIds, id])];

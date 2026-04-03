@@ -1,3 +1,5 @@
+import type { FirmPlanType } from "@/lib/subscriptions/plan-types";
+
 export type FirmRow = {
   id: string;
   name: string;
@@ -138,8 +140,13 @@ export type FirmRow = {
   quick_apply_enabled?: boolean | null;
   /** false: mesajlaşma CTA kapalı; aksi (true / eksik): mesajlaşma açık (panel şartı ayrı). */
   messaging_enabled?: boolean | null;
-  /** En az bir aktif firma panel üyesi var mı (public RPC ile doldurulur). */
+  /**
+   * Geçerli ücretli abonelik (public RPC; eski ad korunur).
+   * Hızlı başvuru / mesajlaşma CTA için kullanılır.
+   */
   has_active_panel_member?: boolean;
+  /** batch_firm_plan_types / firm_current_plan_type ile doldurulur. */
+  subscription_plan?: FirmPlanType;
   social_buttons_enabled?: boolean | null;
 };
 

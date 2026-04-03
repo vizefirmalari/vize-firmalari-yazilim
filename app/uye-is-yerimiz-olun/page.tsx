@@ -3,6 +3,11 @@ import { buildPublicDocumentMetadata } from "@/lib/seo/public-document-metadata"
 
 export const metadata = buildPublicDocumentMetadata("uye-is-yerimiz-olun");
 
-export default function Page() {
-  return <UyeIsYerimizOlunPage />;
+type PageProps = {
+  searchParams: Promise<{ odeme?: string }>;
+};
+
+export default async function Page({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  return <UyeIsYerimizOlunPage scrollToFormOnPayment={sp.odeme === "basarili"} />;
 }

@@ -1,5 +1,6 @@
 import { FirmPanelMessagesShell } from "@/components/messaging/firm-panel-messages-shell";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
+import { requireFirmPlanAtLeast } from "@/lib/subscriptions/require-plan";
 import { loadFirmInboxRows, loadFirmMessageStats } from "@/lib/messaging/server/inbox-firm";
 import { loadConversationMessagesDetailed } from "@/lib/messaging/server/messages-detailed";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -14,6 +15,7 @@ export default async function FirmPanelMessagesPage({ params, searchParams }: Pa
   const { firmId } = await params;
   const { c: conversationId } = await searchParams;
   await requireFirmPanelAccess(firmId);
+  await requireFirmPlanAtLeast(firmId, "pro");
 
   const supabase = await createSupabaseServerClient();
   let currentUserId = "";

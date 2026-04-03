@@ -1,26 +1,30 @@
 import Link from "next/link";
 
+import { planMeets, type FirmPlanType } from "@/lib/subscriptions/plan-types";
+
 type Stat = {
   href: string;
   label: string;
   value: string;
   hint: string;
   icon: string;
+  minPlan?: Exclude<FirmPlanType, "free">;
 };
 
-type Props = { firmId: string };
+type Props = { firmId: string; planType: FirmPlanType };
 
 /**
  * Özet kartları — modüller bağlandıkça sayılar gerçek veriye bağlanır.
  */
-export function FirmPanelStatCards({ firmId }: Props) {
-  const stats: Stat[] = [
+export function FirmPanelStatCards({ firmId, planType }: Props) {
+  const all: Stat[] = [
     {
       href: `/panel/${firmId}/mesajlar`,
       label: "Gelen mesajlar",
       value: "—",
       hint: "Canlı mesajlaşma yakında",
       icon: "✉",
+      minPlan: "pro",
     },
     {
       href: `/panel/${firmId}/formlar`,
@@ -28,6 +32,7 @@ export function FirmPanelStatCards({ firmId }: Props) {
       value: "—",
       hint: "Hızlı başvuru lead’leri",
       icon: "▤",
+      minPlan: "pro",
     },
     {
       href: `/panel/${firmId}/reklam`,
@@ -35,6 +40,7 @@ export function FirmPanelStatCards({ firmId }: Props) {
       value: "Başlat",
       hint: "Görünürlük ve kampanyalar",
       icon: "◎",
+      minPlan: "business",
     },
     {
       href: `/panel/${firmId}/abonelik`,
@@ -44,6 +50,8 @@ export function FirmPanelStatCards({ firmId }: Props) {
       icon: "◇",
     },
   ];
+
+  const stats = all.filter((s) => !s.minPlan || planMeets(planType, s.minPlan));
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">

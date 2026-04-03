@@ -5,6 +5,8 @@ import { FirmDashboardModuleGrid } from "@/components/firm-panel/firm-dashboard-
 import { FirmPanelStatCards } from "@/components/firm-panel/firm-panel-stat-cards";
 import { buildFirmPanelConnectionCode } from "@/lib/firm-panel/connection-code";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
+import { allowedDashboardModuleIdsForPlan } from "@/lib/subscriptions/dashboard-modules-for-plan";
+import { getFirmPlanTypeForPanel } from "@/lib/subscriptions/firm-plan-server";
 import { getFirmPanelAnnouncementsForUser } from "@/lib/data/firm-panel-announcements";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -13,6 +15,8 @@ type PageProps = { params: Promise<{ firmId: string }> };
 export default async function FirmPanelOverviewPage({ params }: PageProps) {
   const { firmId } = await params;
   const membership = await requireFirmPanelAccess(firmId);
+  const planType = await getFirmPlanTypeForPanel(firmId);
+  const allowedModuleIds = allowedDashboardModuleIdsForPlan(planType);
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) notFound();
@@ -175,7 +179,11 @@ export default async function FirmPanelOverviewPage({ params }: PageProps) {
         </article>
       </section>
 
-      <FirmDashboardModuleGrid firmId={firmId} initialHiddenModuleIds={hiddenModuleIds} />
+      <FirmDashboardModuleGrid
+        firmId={firmId}
+        initialHiddenModuleIds={hiddenModuleIds}
+        allowedModuleIds={allowedModuleIds}
+      />
 
       <section className="space-y-4">
         <div className="flex items-end justify-between gap-3">
@@ -184,7 +192,7 @@ export default async function FirmPanelOverviewPage({ params }: PageProps) {
           </h2>
         </div>
         {/* Gelen mesajlar ve Gelen formlar kartları bilinçli olarak aynen korunur. */}
-        <FirmPanelStatCards firmId={firmId} />
+        <FirmPanelStatCards firmId={firmId} planType={planType} />
       </section>
 
       <section className="rounded-2xl border border-[#1A1A1A]/8 bg-white p-6 shadow-sm sm:p-8">

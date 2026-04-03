@@ -54,7 +54,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (pathname.startsWith("/panel")) {
+  if (pathname.startsWith("/panel") || pathname.startsWith("/abonelik-sec")) {
     if (!user) {
       const next = `${pathname}${request.nextUrl.search}`;
       return withPrivateNoIndex(

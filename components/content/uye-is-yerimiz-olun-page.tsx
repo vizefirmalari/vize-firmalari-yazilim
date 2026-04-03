@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { BusinessMembershipForm } from "@/components/forms/business-membership-form";
+import { UyeMembershipShell } from "@/components/membership/uye-membership-shell";
 
 const benefitCards = [
   {
@@ -38,7 +38,12 @@ const benefitCards = [
   },
 ] as const;
 
-export function UyeIsYerimizOlunPage() {
+type UyePageProps = {
+  /** Ödeme tamamlandıktan sonra forma kaydır (URL: ?odeme=basarili) */
+  scrollToFormOnPayment?: boolean;
+};
+
+export function UyeIsYerimizOlunPage({ scrollToFormOnPayment }: UyePageProps) {
   return (
     <>
       <SiteHeader />
@@ -140,19 +145,7 @@ export function UyeIsYerimizOlunPage() {
           </div>
         </section>
 
-        {/* Form */}
-        <section
-          id="basvuru"
-          className="border-t border-border/60 bg-surface/50 py-12 sm:py-16"
-          aria-labelledby="basvuru-baslik"
-        >
-          <div className="mx-auto max-w-xl px-4 sm:px-6 lg:px-8">
-            <h2 id="basvuru-baslik" className="sr-only">
-              Üyelik başvurusu
-            </h2>
-            <BusinessMembershipForm />
-          </div>
-        </section>
+        <UyeMembershipShell scrollToFormOnPayment={scrollToFormOnPayment} />
 
         {/* Kısa hukuki not */}
         <section className="mx-auto max-w-3xl px-4 pb-14 pt-2 sm:px-6 lg:px-8 lg:pb-16">

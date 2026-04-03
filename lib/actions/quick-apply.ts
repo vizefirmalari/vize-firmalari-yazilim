@@ -219,6 +219,17 @@ export async function createQuickApplicationAction(input: z.infer<typeof applica
   }
 
   const payload = parsed.data;
+
+  const { data: firmAllowsLeads, error: subErr } = await supabase.rpc("firm_has_active_panel_member", {
+    p_firm_id: payload.firmId,
+  });
+  if (subErr || !firmAllowsLeads) {
+    return {
+      ok: false as const,
+      message: "Bu firma için başvuru şu an alınamıyor. Lütfen iletişim kanallarını kullanın.",
+    };
+  }
+
   /** insert().select() satır döndürmek için SELECT gerekir; anon kullanıcıda RLS + submitted_by (048) veya service role gerekir. */
   const serviceRole = createSupabaseServiceRoleClient();
   const hasServiceRole = Boolean(serviceRole);

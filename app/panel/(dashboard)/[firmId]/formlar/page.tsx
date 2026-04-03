@@ -1,4 +1,5 @@
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
+import { requireFirmPlanAtLeast } from "@/lib/subscriptions/require-plan";
 import { FirmLeadApplicationCard } from "@/components/firm-panel/firm-lead-application-card";
 import { FirmLeadApplicationDetailPanel } from "@/components/firm-panel/firm-lead-application-detail-panel";
 import { FirmLeadApplicationsFilters } from "@/components/firm-panel/firm-lead-applications-filters";
@@ -23,6 +24,7 @@ export default async function FirmPanelLeadsPage({ params, searchParams }: PageP
   const { firmId } = await params;
   const sp = await searchParams;
   await requireFirmPanelAccess(firmId);
+  await requireFirmPlanAtLeast(firmId, "pro");
 
   const filters: FirmLeadListFilters = {
     status: first(sp.status),

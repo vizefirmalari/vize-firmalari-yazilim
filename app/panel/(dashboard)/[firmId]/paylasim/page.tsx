@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { ShareCenterPanel } from "@/components/firm-panel/share-center-panel";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
+import { requireFirmPlanAtLeast } from "@/lib/subscriptions/require-plan";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -10,6 +11,7 @@ type PageProps = { params: Promise<{ firmId: string }> };
 export default async function FirmShareCenterPage({ params }: PageProps) {
   const { firmId } = await params;
   await requireFirmPanelAccess(firmId);
+  await requireFirmPlanAtLeast(firmId, "business");
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) notFound();

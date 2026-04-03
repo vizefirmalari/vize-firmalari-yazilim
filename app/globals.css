@@ -113,7 +113,29 @@ body {
   animation: qa-intro-fade-in 0.45s ease-out both;
 }
 
+/* Üye iş yeri — başvuru formu görünür olduğunda */
+@keyframes uye-form-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.uye-form-reveal {
+  animation: uye-form-reveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .uye-form-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
   .qa-intro-fade-up,
   .qa-intro-fade-in {
     animation: none !important;
