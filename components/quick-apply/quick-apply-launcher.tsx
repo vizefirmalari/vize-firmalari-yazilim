@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { trackQuickApplyEventAction } from "@/lib/actions/quick-apply";
 import { QuickApplyWizard } from "@/components/quick-apply/quick-apply-wizard";
-import { QuickApplyUpgradeModal } from "@/components/quick-apply/quick-apply-upgrade-modal";
 import {
   consumeWizardAutoOpen,
   loadWizardDraft,
@@ -44,10 +43,6 @@ type LauncherProps = {
   firmSubtitle?: string | null;
   disabled?: boolean;
   buttonClassName?: string;
-  /**
-   * true: sihirbaz yerine ücretsiz paket bilgilendirmesi (vitrin firması).
-   */
-  upgradeOnly?: boolean;
 };
 
 export function QuickApplyLauncher({
@@ -58,17 +53,14 @@ export function QuickApplyLauncher({
   firmSubtitle,
   disabled,
   buttonClassName,
-  upgradeOnly,
 }: LauncherProps) {
   const pathname = usePathname() || "/";
   const [open, setOpen] = useState(false);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [resumeDraft, setResumeDraft] = useState<WizardDraftPayload | null>(null);
   const [resumedAfterLogin, setResumedAfterLogin] = useState(false);
   const [instanceKey, setInstanceKey] = useState(0);
 
   useEffect(() => {
-    if (upgradeOnly) return;
     if (!consumeWizardAutoOpen(firmId)) return;
     const d = loadWizardDraft(firmId);
     if (!d) return;
@@ -76,14 +68,10 @@ export function QuickApplyLauncher({
     setResumedAfterLogin(true);
     setOpen(true);
     setInstanceKey((k) => k + 1);
-  }, [firmId, upgradeOnly]);
+  }, [firmId]);
 
   const openWizard = async () => {
     if (disabled) return;
-    if (upgradeOnly) {
-      setUpgradeOpen(true);
-      return;
-    }
     setResumeDraft(null);
     setResumedAfterLogin(false);
     setOpen(true);
@@ -111,12 +99,6 @@ export function QuickApplyLauncher({
       >
         Hızlı Başvur
       </button>
-
-      <QuickApplyUpgradeModal
-        open={upgradeOpen}
-        firmName={firmName}
-        onClose={() => setUpgradeOpen(false)}
-      />
 
       {open ? (
         <div className="fixed inset-0 z-120 flex items-end justify-center bg-[#1A1A1A]/45 p-3 sm:items-center">

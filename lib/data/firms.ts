@@ -359,12 +359,21 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
       parseFirmPlanRaw(row.plan_type),
     ])
   );
+
+  const { data: panelRows, error: panelErr } = await supabase.rpc("published_firm_ids_with_active_panel");
+  if (panelErr) {
+    console.error("[getFirms] published_firm_ids_with_active_panel", panelErr.message);
+  }
+  const panelIdSet = new Set(
+    (panelRows ?? []).map((row: { firm_id: string }) => String(row.firm_id))
+  );
+
   rows = rows.map((r) => {
     const subscription_plan = planById.get(r.id) ?? "free";
     return {
       ...r,
       subscription_plan,
-      has_active_panel_member: subscription_plan !== "free",
+      has_active_panel_member: panelIdSet.has(r.id),
     };
   });
 
@@ -440,10 +449,18 @@ export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {
     console.error("[getFirmBySlug] firm_current_plan_type", planErr.message);
   }
   const subscription_plan = parseFirmPlanRaw(planRaw);
+
+  const { data: hasPanel, error: panelErr } = await supabase.rpc("firm_has_active_panel_member", {
+    p_firm_id: data.id,
+  });
+  if (panelErr) {
+    console.error("[getFirmBySlug] firm_has_active_panel_member", panelErr.message);
+  }
+
   firm = {
     ...firm,
     subscription_plan,
-    has_active_panel_member: subscription_plan !== "free",
+    has_active_panel_member: Boolean(hasPanel),
   };
   return firm;
 }

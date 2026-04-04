@@ -63,7 +63,7 @@ export async function getFirmPanelMemberships(): Promise<FirmPanelMembership[]> 
 
 /**
  * Belirli bir firmaya panel erişimi yoksa ana panel listesine yönlendirir.
- * Geçerli ücretli abonelik yoksa `/abonelik-sec` sayfasına yönlendirir (ücretsiz vitrin paketi).
+ * Yetki `firm_panel_members` üzerinden doğrulanır; plan kısıtları alt sayfalarda ayrı guard ile uygulanır.
  */
 export async function requireFirmPanelAccess(
   firmId: string
@@ -72,17 +72,6 @@ export async function requireFirmPanelAccess(
   const hit = list.find((m) => m.firmId === firmId);
   if (!hit) {
     redirect("/panel");
-  }
-
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) {
-    redirect("/panel");
-  }
-  const { data: hasPaid, error } = await supabase.rpc("firm_has_active_panel_member", {
-    p_firm_id: firmId,
-  });
-  if (error || !hasPaid) {
-    redirect(`/abonelik-sec?firmId=${encodeURIComponent(firmId)}`);
   }
 
   return hit;
