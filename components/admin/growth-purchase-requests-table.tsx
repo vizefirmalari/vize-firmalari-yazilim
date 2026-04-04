@@ -16,6 +16,10 @@ export type PurchaseRow = {
   payment_status: string;
   created_at: string;
   firm_name: string;
+  billing_full_name: string | null;
+  billing_email: string | null;
+  billing_phone: string | null;
+  transfer_description: string | null;
 };
 
 function firmNameFromJoin(
@@ -38,6 +42,10 @@ export function GrowthPurchaseRequestsTable({ rows }: { rows: Record<string, unk
     payment_status: String(r.payment_status),
     created_at: String(r.created_at),
     firm_name: firmNameFromJoin(r.firms as { name: string } | { name: string }[] | null),
+    billing_full_name: r.billing_full_name != null ? String(r.billing_full_name) : null,
+    billing_email: r.billing_email != null ? String(r.billing_email) : null,
+    billing_phone: r.billing_phone != null ? String(r.billing_phone) : null,
+    transfer_description: r.transfer_description != null ? String(r.transfer_description) : null,
   }));
 
   function run(fn: () => Promise<{ ok: boolean; error?: string }>) {
@@ -55,6 +63,7 @@ export function GrowthPurchaseRequestsTable({ rows }: { rows: Record<string, unk
           <tr>
             <th className="px-4 py-3">Firma</th>
             <th className="px-4 py-3">Hizmet</th>
+            <th className="px-4 py-3">Fatura / iletişim</th>
             <th className="px-4 py-3">Talep</th>
             <th className="px-4 py-3">Ödeme</th>
             <th className="px-4 py-3">Tarih</th>
@@ -66,6 +75,20 @@ export function GrowthPurchaseRequestsTable({ rows }: { rows: Record<string, unk
             <tr key={r.id} className="border-b border-[#0B3C5D]/08">
               <td className="px-4 py-2 font-medium text-[#0B3C5D]">{r.firm_name}</td>
               <td className="px-4 py-2 text-[#1A1A1A]/70">{r.service_title}</td>
+              <td className="max-w-[220px] px-4 py-2 text-xs text-[#1A1A1A]/65">
+                {r.billing_full_name || r.billing_email || r.billing_phone ? (
+                  <div className="space-y-0.5">
+                    {r.billing_full_name ? <p className="font-medium text-[#1A1A1A]/80">{r.billing_full_name}</p> : null}
+                    {r.billing_email ? <p>{r.billing_email}</p> : null}
+                    {r.billing_phone ? <p>{r.billing_phone}</p> : null}
+                    {r.transfer_description ? (
+                      <p className="break-words font-mono text-[11px] text-[#1A1A1A]/50">{r.transfer_description}</p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <span className="text-[#1A1A1A]/40">—</span>
+                )}
+              </td>
               <td className="px-4 py-2 text-xs">{r.status}</td>
               <td className="px-4 py-2 text-xs">{r.payment_status}</td>
               <td className="px-4 py-2 text-xs text-[#1A1A1A]/55">

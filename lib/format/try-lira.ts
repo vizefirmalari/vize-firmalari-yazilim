@@ -15,3 +15,13 @@ export function growthPriceLineFromSnapshots(
   if (s) return `Kurulum ${s}`;
   return `Aylık ${m!}`;
 }
+
+/** Vitrin: özel fiyatlı ürünlerde tutar gösterilmez. */
+export function growthServicePriceLine(
+  setup: number | null | undefined,
+  monthly: number | null | undefined,
+  isCustomPrice: boolean | null | undefined
+): string {
+  if (isCustomPrice) return "Fiyat teklif üzerinden";
+  return growthPriceLineFromSnapshots(setup, monthly);
+}

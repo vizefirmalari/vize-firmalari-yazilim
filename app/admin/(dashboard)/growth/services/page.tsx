@@ -17,7 +17,9 @@ export default async function AdminGrowthServicesPage() {
 
   const { data } = await supabase
     .from("growth_services")
-    .select("id,slug,title,is_active,is_featured,setup_price,monthly_price,sort_order,growth_service_categories(name)")
+    .select(
+      "id,slug,title,is_active,is_featured,is_custom_price,setup_price,monthly_price,sort_order,growth_service_categories(name)"
+    )
     .order("sort_order", { ascending: true })
     .order("title", { ascending: true });
 
@@ -63,10 +65,12 @@ export default async function AdminGrowthServicesPage() {
                 const catName = Array.isArray(cat) ? cat[0]?.name : cat?.name;
                 const setup = r.setup_price as number | null;
                 const monthly = r.monthly_price as number | null;
-                const price =
-                  setup != null || monthly != null
+                const custom = Boolean(r.is_custom_price);
+                const price = custom
+                  ? "Teklif üzerinden"
+                  : setup != null || monthly != null
                     ? `${setup != null ? `${setup}₺ kurulum` : ""}${setup != null && monthly != null ? " · " : ""}${monthly != null ? `${monthly}₺ ay` : ""}`
-                    : "Teklif";
+                    : "Teklif üzerinden";
                 return (
                   <tr key={String(r.id)} className="border-b border-[#0B3C5D]/08">
                     <td className="px-4 py-2 font-medium text-[#0B3C5D]">{String(r.title)}</td>

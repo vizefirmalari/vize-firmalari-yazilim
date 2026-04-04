@@ -94,6 +94,34 @@ export async function adminDeleteGrowthCategory(
   return { ok: true };
 }
 
+function normalizePackageIncludes(lines: string[]): string[] {
+  const out: string[] = [];
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) continue;
+    out.push(t.slice(0, 200));
+    if (out.length >= 25) break;
+  }
+  return out;
+}
+
+export async function adminDeleteGrowthService(
+  id: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await adminDb();
+  if (!supabase) return { ok: false, error: "Bağlantı yok." };
+
+  const { error } = await supabase.from("growth_services").delete().eq("id", id);
+  if (error) {
+    if (error.code === "23503") {
+      return { ok: false, error: "Bu hizmete bağlı talep veya abonelik kaydı var; önce pasifleştirin veya kayıtları çözün." };
+    }
+    return { ok: false, error: "Silinemedi." };
+  }
+  revalidatePath("/admin/growth/services");
+  return { ok: true };
+}
+
 export async function adminSaveGrowthService(input: {
   id?: string;
   category_id: string;
@@ -103,6 +131,8 @@ export async function adminSaveGrowthService(input: {
   long_description?: string | null;
   setup_price: number | null;
   monthly_price: number | null;
+  is_custom_price: boolean;
+  package_includes: string[];
   is_active: boolean;
   is_featured: boolean;
   badge?: string | null;
@@ -118,6 +148,8 @@ export async function adminSaveGrowthService(input: {
   const slugRaw = input.slug?.trim() || slugifyGrowth(title);
   if (!slugRaw) return { ok: false, error: "Slug gerekli." };
 
+  const includes = normalizePackageIncludes(input.package_includes);
+
   const row = {
     category_id: input.category_id,
     slug: slugRaw,
@@ -126,6 +158,8 @@ export async function adminSaveGrowthService(input: {
     long_description: input.long_description?.trim() || null,
     setup_price: input.setup_price,
     monthly_price: input.monthly_price,
+    is_custom_price: input.is_custom_price,
+    package_includes: includes,
     is_active: input.is_active,
     is_featured: input.is_featured,
     badge: input.badge?.trim() || null,

@@ -81,7 +81,7 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
       supabase
         .from("growth_purchase_requests")
         .select(
-          "id,firm_id,service_id,service_title,setup_price_snapshot,monthly_price_snapshot,status,payment_status,firm_note,created_at"
+          "id,firm_id,service_id,service_title,setup_price_snapshot,monthly_price_snapshot,status,payment_status,firm_note,billing_full_name,billing_email,billing_phone,transfer_description,created_at"
         )
         .eq("firm_id", firmId)
         .order("created_at", { ascending: false }),
@@ -264,6 +264,23 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
                       Talep tarihi: <span className="font-medium text-[#1A1A1A]/75">{startLabel}</span>
                     </p>
                     <p className="mt-2 text-sm font-medium text-[#1A1A1A]/70">{pkg}</p>
+                    {o.transfer_description ? (
+                      <p className="mt-2 break-words text-xs text-[#1A1A1A]/55">
+                        Havale açıklaması:{" "}
+                        <span className="font-mono font-medium text-[#1A1A1A]/70">{o.transfer_description}</span>
+                      </p>
+                    ) : null}
+                    {o.billing_full_name ? (
+                      <p className="mt-1 text-xs text-[#1A1A1A]/55">
+                        Fatura: <span className="font-medium text-[#1A1A1A]/70">{o.billing_full_name}</span>
+                        {o.billing_email ? (
+                          <>
+                            {" · "}
+                            <span className="text-[#1A1A1A]/65">{o.billing_email}</span>
+                          </>
+                        ) : null}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                     <Link

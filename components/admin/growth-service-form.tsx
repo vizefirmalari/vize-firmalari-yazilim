@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { adminSaveGrowthService } from "@/lib/actions/growth-admin";
+import { adminDeleteGrowthService, adminSaveGrowthService } from "@/lib/actions/growth-admin";
 
 type Cat = { id: string; name: string };
 
@@ -16,6 +16,8 @@ type Initial = {
   long_description: string | null;
   setup_price: number | null;
   monthly_price: number | null;
+  is_custom_price: boolean;
+  package_includes: string[] | null;
   is_active: boolean;
   is_featured: boolean;
   badge: string | null;
@@ -29,9 +31,15 @@ function numOrNull(v: string): number | null {
   return Number.isFinite(n) ? Math.max(0, Math.round(n)) : null;
 }
 
+function includesToText(arr: string[] | null | undefined): string {
+  if (!arr?.length) return "";
+  return arr.join("\n");
+}
+
 export function GrowthServiceForm({ categories, initial }: { categories: Cat[]; initial: Initial | null }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [deletePending, startDelete] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
 
   const [categoryId, setCategoryId] = useState(initial?.category_id ?? categories[0]?.id ?? "");
@@ -41,6 +49,8 @@ export function GrowthServiceForm({ categories, initial }: { categories: Cat[]; 
   const [longDescription, setLongDescription] = useState(initial?.long_description ?? "");
   const [setup, setSetup] = useState(initial?.setup_price != null ? String(initial.setup_price) : "");
   const [monthly, setMonthly] = useState(initial?.monthly_price != null ? String(initial.monthly_price) : "");
+  const [isCustomPrice, setIsCustomPrice] = useState(initial?.is_custom_price ?? false);
+  const [includesText, setIncludesText] = useState(includesToText(initial?.package_includes ?? null));
   const [isActive, setIsActive] = useState(initial?.is_active ?? true);
   const [isFeatured, setIsFeatured] = useState(initial?.is_featured ?? false);
   const [badge, setBadge] = useState(initial?.badge ?? "");
@@ -53,6 +63,7 @@ export function GrowthServiceForm({ categories, initial }: { categories: Cat[]; 
       setMsg("Kategori seçin.");
       return;
     }
+    const packageLines = includesText.split(/\r?\n/).map((l) => l.trim());
     startTransition(async () => {
       const res = await adminSaveGrowthService({
         id: initial?.id,
@@ -63,6 +74,8 @@ export function GrowthServiceForm({ categories, initial }: { categories: Cat[]; 
         long_description: longDescription || null,
         setup_price: numOrNull(setup),
         monthly_price: numOrNull(monthly),
+        is_custom_price: isCustomPrice,
+        package_includes: packageLines.filter(Boolean),
         is_active: isActive,
         is_featured: isFeatured,
         badge: badge || null,
@@ -78,6 +91,23 @@ export function GrowthServiceForm({ categories, initial }: { categories: Cat[]; 
       } else {
         router.refresh();
       }
+    });
+  }
+
+  function onDelete() {
+    if (!initial?.id) return;
+    if (!confirm("Bu hizmeti kalıcı olarak silmek istiyor musunuz? Bağlı talep/abonelik varsa silme başarısız olur.")) {
+      return;
+    }
+    setMsg(null);
+    startDelete(async () => {
+      const res = await adminDeleteGrowthService(initial.id);
+      if (!res.ok) {
+        setMsg(res.error);
+        return;
+      }
+      router.push("/admin/growth/services");
+      router.refresh();
     });
   }
 
@@ -146,6 +176,17 @@ export function GrowthServiceForm({ categories, initial }: { categories: Cat[]; 
         />
       </div>
 
+      <div>
+        <label className="text-xs font-semibold text-[#1A1A1A]/55">Paket içeriği (her satır bir madde; kartta listelenir)</label>
+        <textarea
+          value={includesText}
+          onChange={(e) => setIncludesText(e.target.value)}
+          rows={4}
+          placeholder={"Örnek:\nWebsite\nWhatsApp Bot"}
+          className="mt-1 w-full rounded-xl border border-[#0B3C5D]/15 px-3 py-2 text-sm"
+        />
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="text-xs font-semibold text-[#1A1A1A]/55">Kurulum (TL, boş = yok)</label>
@@ -166,6 +207,11 @@ export function GrowthServiceForm({ categories, initial }: { categories: Cat[]; 
           />
         </div>
       </div>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={isCustomPrice} onChange={(e) => setIsCustomPrice(e.target.checked)} />
+        Özel fiyat (vitrinde tutar yerine “teklif üzerinden”)
+      </label>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -198,13 +244,25 @@ export function GrowthServiceForm({ categories, initial }: { categories: Cat[]; 
         </label>
       </div>
 
-      <button
-        type="submit"
-        disabled={pending || !categories.length}
-        className="rounded-xl bg-[#0B3C5D] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-      >
-        {pending ? "Kaydediliyor…" : "Kaydet"}
-      </button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          type="submit"
+          disabled={pending || !categories.length}
+          className="rounded-xl bg-[#0B3C5D] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {pending ? "Kaydediliyor…" : "Kaydet"}
+        </button>
+        {initial?.id ? (
+          <button
+            type="button"
+            disabled={deletePending}
+            onClick={onDelete}
+            className="rounded-xl border border-[#1A1A1A]/20 px-5 py-2.5 text-sm font-semibold text-[#1A1A1A]/70 transition hover:bg-[#F4F6F8] disabled:opacity-50"
+          >
+            {deletePending ? "Siliniyor…" : "Hizmeti sil"}
+          </button>
+        ) : null}
+      </div>
     </form>
   );
 }

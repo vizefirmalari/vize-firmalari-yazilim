@@ -17,7 +17,9 @@ export default async function AdminGrowthPurchaseRequestsPage() {
 
   const { data } = await supabase
     .from("growth_purchase_requests")
-    .select("id,firm_id,service_title,status,payment_status,created_at,firms(name)")
+    .select(
+      "id,firm_id,service_title,status,payment_status,created_at,billing_full_name,billing_email,billing_phone,transfer_description,firms(name)"
+    )
     .order("created_at", { ascending: false });
 
   return (

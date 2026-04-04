@@ -1,19 +1,30 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { GrowthHeroIllustration } from "@/components/firm-panel/growth/growth-hero-illustration";
 import { GrowthCategoriesSection } from "@/components/firm-panel/growth/growth-categories-section";
 import { loadActiveGrowthCatalog } from "@/lib/data/growth-catalog";
+import { getGrowthPaymentBankInfo } from "@/lib/firm-panel/growth-payment-config";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type PageProps = { params: Promise<{ firmId: string }> };
 
+function GrowthCatalogFallback() {
+  return (
+    <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-10 text-center shadow-sm">
+      <p className="text-sm font-medium text-[#1A1A1A]/65">Katalog yükleniyor…</p>
+    </div>
+  );
+}
+
 export default async function FirmGrowthHubPage({ params }: PageProps) {
   const { firmId } = await params;
-  await requireFirmPanelAccess(firmId);
+  const membership = await requireFirmPanelAccess(firmId);
 
   const supabase = await createSupabaseServerClient();
   const catalog = supabase ? await loadActiveGrowthCatalog(supabase) : [];
+  const bank = getGrowthPaymentBankInfo();
   const firstCatWithServices = catalog.find((c) => c.services.length > 0);
 
   return (
@@ -59,18 +70,25 @@ export default async function FirmGrowthHubPage({ params }: PageProps) {
         </p>
         <ul className="mt-4 grid gap-2 text-sm text-[#1A1A1A]/70 sm:grid-cols-3">
           <li className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-2 font-medium">
-            Facebook + Instagram reklam
+            Google ve Meta reklam yönetimi
           </li>
           <li className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-2 font-medium">
-            Platform içi görünürlük
+            Yapay zekâ botları ve otomasyon
           </li>
           <li className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-2 font-medium">
-            Organik + ücretli erişim
+            Web, içerik ve premium sistemler
           </li>
         </ul>
       </section>
 
-      <GrowthCategoriesSection firmId={firmId} categories={catalog} />
+      <Suspense fallback={<GrowthCatalogFallback />}>
+        <GrowthCategoriesSection
+          firmId={firmId}
+          firmName={membership.firmName}
+          bank={bank}
+          categories={catalog}
+        />
+      </Suspense>
 
       <p className="rounded-2xl border border-[#0B3C5D]/10 bg-white px-4 py-3 text-center text-sm font-medium text-[#1A1A1A]/70 shadow-sm">
         Rakipleriniz dijital sistemlerle daha fazla müşteriye ulaşıyor.{" "}

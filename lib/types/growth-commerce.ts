@@ -16,6 +16,8 @@ export type GrowthServiceRow = {
   long_description: string | null;
   setup_price: number | null;
   monthly_price: number | null;
+  is_custom_price: boolean;
+  package_includes: string[];
   is_active: boolean;
   is_featured: boolean;
   badge: string | null;
@@ -36,6 +38,10 @@ export type GrowthPurchaseRequestRow = {
   status: string;
   payment_status: string;
   firm_note: string | null;
+  billing_full_name: string | null;
+  billing_email: string | null;
+  billing_phone: string | null;
+  transfer_description: string | null;
   created_at: string;
 };
 
