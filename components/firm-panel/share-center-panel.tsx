@@ -38,7 +38,7 @@ const TOOLS: readonly ShareCenterTool[] = [
       "Firma profilinizi daha güçlü gösterir",
     ],
     dailyLimit: "Günde 5 adet",
-    hypePoints: 50,
+    hypePoints: 25,
     actionLabel: "Blog oluştur",
   },
   {

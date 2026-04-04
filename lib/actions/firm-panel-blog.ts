@@ -208,23 +208,15 @@ export async function saveFirmBlogPost(
   }
 
   if (status === "published") {
-      const { data: postRow } = await adminSupabase
-      .from("firm_blog_posts")
-      .select("hype_points_awarded")
-      .eq("id", savedId)
-      .maybeSingle();
-
-    if (!postRow?.hype_points_awarded) {
-      const { error: hypeErr } = await supabase.rpc("record_firm_share_hype", {
-        p_firm_id: firmId,
-        p_share_type: "blog",
-        p_payload: { source: "firm_blog_publish", post_id: savedId, slug },
-      });
-      if (!hypeErr) {
-        await adminSupabase
-          .from("firm_blog_posts")
-          .update({ hype_points_awarded: true, hype_points_value: 50 })
-          .eq("id", savedId);
+    const { data: hypeResult, error: hypeErr } = await supabase.rpc("award_firm_blog_post_hype", {
+      p_post_id: savedId,
+    });
+    if (hypeErr) {
+      console.error("[saveFirmBlogPost] award_firm_blog_post_hype", hypeErr.message);
+    } else {
+      const payload = (hypeResult ?? {}) as { ok?: boolean; reason?: string };
+      if (payload.ok === false && process.env.NODE_ENV === "development") {
+        console.info("[saveFirmBlogPost] hype not applied:", payload.reason);
       }
     }
   }
