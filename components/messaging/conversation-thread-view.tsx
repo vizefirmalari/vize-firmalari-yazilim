@@ -20,6 +20,8 @@ type Props = {
   headerDetail?: string;
   headerLogoUrl?: string | null;
   onBackMobile?: () => void;
+  /** Firma paneli masaüstü: dış kart zaten border/radius; iç çift kutu ve kırpılmayı önler. */
+  embedInSplitPanel?: boolean;
 };
 
 /**
@@ -34,6 +36,7 @@ export function ConversationThreadView({
   headerDetail,
   headerLogoUrl,
   onBackMobile,
+  embedInSplitPanel = false,
 }: Props) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
@@ -161,8 +164,13 @@ export function ConversationThreadView({
     el.scrollTo({ top, left: 0, behavior: "smooth" });
   };
 
+  const rootShell =
+    embedInSplitPanel
+      ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#0B3C5D]/10 bg-[#F8F9FA] max-md:rounded-none max-md:border-0 max-md:bg-[#F0F2F4] lg:rounded-none lg:border-0"
+      : "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#0B3C5D]/10 bg-[#F8F9FA] max-md:rounded-none max-md:border-0 max-md:bg-[#F0F2F4]";
+
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#0B3C5D]/10 bg-[#F8F9FA] max-md:rounded-none max-md:border-0 max-md:bg-[#F0F2F4]">
+    <div className={rootShell}>
       <ConversationThreadHeader
         title={headerTitle}
         subtitle={headerSubtitle}
@@ -172,7 +180,7 @@ export function ConversationThreadView({
         typingText={typingText}
         onBack={onBackMobile}
       />
-      <div className="relative min-h-0 flex-1">
+      <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
         <div
           ref={scrollAreaRef}
           className="absolute inset-0 touch-pan-y overflow-y-auto overscroll-contain contain-[layout] [overflow-anchor:none]"
@@ -201,7 +209,7 @@ export function ConversationThreadView({
         ) : null}
       </div>
       <div
-        className="relative z-20 shrink-0 border-t border-[#0B3C5D]/08 bg-white px-2.5 py-2 shadow-[0_-6px_24px_rgba(11,60,93,0.06)] transition-[padding-bottom] duration-200 ease-out sm:px-4 sm:py-2.5 sm:shadow-none md:shadow-none"
+        className="relative z-20 shrink-0 flex-none border-t border-[#0B3C5D]/08 bg-white px-2.5 py-2 shadow-[0_-6px_24px_rgba(11,60,93,0.06)] transition-[padding-bottom] duration-200 ease-out sm:px-4 sm:py-2.5 sm:shadow-none md:shadow-none"
         style={{
           paddingBottom:
             keyboardInsetPx > 0

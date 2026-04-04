@@ -160,7 +160,7 @@ export function FirmPanelMessagesShell({
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col space-y-5 overflow-hidden lg:max-h-[min(100dvh-8rem,900px)]">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-5 overflow-hidden lg:min-h-0">
       <div className="shrink-0">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0B3C5D]/55">
           Gelen mesajlar
@@ -175,7 +175,7 @@ export function FirmPanelMessagesShell({
         <StatCard label="Açık konuşma" value={initialStats.openConversationCount} variant="default" />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:min-h-[min(100dvh-16rem,720px)] lg:flex-row lg:rounded-xl lg:border lg:border-[#0B3C5D]/10 lg:bg-white lg:shadow-[0_2px_16px_rgba(11,60,93,0.05)]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:min-h-0 lg:flex-row lg:items-stretch lg:rounded-xl lg:border lg:border-[#0B3C5D]/10 lg:bg-white lg:shadow-[0_2px_16px_rgba(11,60,93,0.05)]">
         <aside
           className={`flex min-h-0 w-full flex-col overflow-hidden border-[#0B3C5D]/10 lg:max-w-[400px] lg:shrink-0 lg:border-r ${
             showMobileThread ? "hidden lg:flex" : "flex"
@@ -280,19 +280,22 @@ export function FirmPanelMessagesShell({
         </aside>
 
         <section
-          className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden ${showMobileThread ? "flex" : "hidden lg:flex"}`}
+          className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:min-h-0 ${showMobileThread ? "flex" : "hidden lg:flex"}`}
         >
           {conversationId && currentUserId ? (
-            <ConversationThreadView
-              conversationId={conversationId}
-              currentUserId={currentUserId}
-              initialMessages={initialMessages}
-              headerTitle={displayName}
-              headerSubtitle="Kullanıcı"
-              headerDetail={activeRow?.user_email ?? undefined}
-              headerLogoUrl={activeRow?.user_avatar_url ?? null}
-              onBackMobile={() => router.push(`/panel/${firmId}/mesajlar`, { scroll: false })}
-            />
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:min-h-0">
+              <ConversationThreadView
+                conversationId={conversationId}
+                currentUserId={currentUserId}
+                initialMessages={initialMessages}
+                headerTitle={displayName}
+                headerSubtitle="Kullanıcı"
+                headerDetail={activeRow?.user_email ?? undefined}
+                headerLogoUrl={activeRow?.user_avatar_url ?? null}
+                onBackMobile={() => router.push(`/panel/${firmId}/mesajlar`, { scroll: false })}
+                embedInSplitPanel
+              />
+            </div>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center border-t border-[#0B3C5D]/08 bg-[#FAFBFC] px-5 py-14 text-center lg:border-t-0 lg:py-20">
               <EmptyInboxIllustration />
