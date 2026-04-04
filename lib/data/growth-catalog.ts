@@ -3,14 +3,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GrowthCatalogCategory, GrowthServiceRow } from "@/lib/types/growth-commerce";
 
 /**
- * İşini Büyüt vitrin: aktif hizmetler, kategori sırasına göre.
+ * İşini Büyüt vitrin: aktif kategoriler + aktif hizmetler.
  */
 export async function loadActiveGrowthCatalog(
   supabase: SupabaseClient
 ): Promise<GrowthCatalogCategory[]> {
   const { data: cats, error: cErr } = await supabase
     .from("growth_service_categories")
-    .select("id,name,icon,sort_order")
+    .select("id,name,slug,icon,sort_order,is_active")
+    .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 
@@ -21,7 +22,7 @@ export async function loadActiveGrowthCatalog(
   const { data: svcs, error: sErr } = await supabase
     .from("growth_services")
     .select(
-      "id,category_id,title,description,long_description,setup_price,monthly_price,is_active,is_featured,badge,sort_order"
+      "id,category_id,slug,title,short_description,long_description,setup_price,monthly_price,is_active,is_featured,badge,sort_order"
     )
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
@@ -51,7 +52,7 @@ export async function loadGrowthServiceById(
   const { data, error } = await supabase
     .from("growth_services")
     .select(
-      "id,category_id,title,description,long_description,setup_price,monthly_price,is_active,is_featured,badge,sort_order"
+      "id,category_id,slug,title,short_description,long_description,setup_price,monthly_price,is_active,is_featured,badge,sort_order"
     )
     .eq("id", serviceId)
     .maybeSingle();

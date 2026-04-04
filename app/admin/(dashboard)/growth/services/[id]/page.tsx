@@ -24,7 +24,7 @@ export default async function AdminGrowthServiceEditPage({ params }: PageProps) 
     supabase
       .from("growth_services")
       .select(
-        "id,category_id,title,description,long_description,setup_price,monthly_price,is_active,is_featured,badge,sort_order"
+        "id,category_id,slug,title,short_description,long_description,setup_price,monthly_price,is_active,is_featured,badge,sort_order"
       )
       .eq("id", id)
       .maybeSingle(),

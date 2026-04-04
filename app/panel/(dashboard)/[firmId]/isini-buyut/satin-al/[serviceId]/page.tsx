@@ -43,7 +43,7 @@ export default async function FirmGrowthCheckoutPage({ params }: PageProps) {
 
       <section className="rounded-2xl border border-[#0B3C5D]/12 bg-white p-6 shadow-sm">
         <h2 className="text-base font-bold text-[#0B3C5D]">{service.title}</h2>
-        <p className="mt-2 text-sm text-[#1A1A1A]/65">{service.description}</p>
+        <p className="mt-2 text-sm text-[#1A1A1A]/65">{service.short_description}</p>
         <p className="mt-3 text-sm font-semibold text-[#0B3C5D]">{priceLine}</p>
       </section>
 

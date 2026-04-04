@@ -23,7 +23,7 @@ export function GrowthServiceCard({ firmId, service }: Props) {
     >
       <div className="min-w-0 flex-1">
         <h3 className="text-base font-bold tracking-tight text-[#0B3C5D]">{service.title}</h3>
-        <p className="mt-2 text-sm leading-relaxed text-[#1A1A1A]/65">{service.description}</p>
+        <p className="mt-2 text-sm leading-relaxed text-[#1A1A1A]/65">{service.short_description}</p>
         <p className="mt-3 text-sm font-semibold text-[#0B3C5D]">{priceLine}</p>
         {badge ? (
           <p className="mt-2 inline-block rounded-full bg-[#F4F6F8] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#1A1A1A]/55">

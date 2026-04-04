@@ -17,7 +17,7 @@ export default async function AdminGrowthServicesPage() {
 
   const { data } = await supabase
     .from("growth_services")
-    .select("id,title,is_active,is_featured,setup_price,monthly_price,sort_order,growth_service_categories(name)")
+    .select("id,slug,title,is_active,is_featured,setup_price,monthly_price,sort_order,growth_service_categories(name)")
     .order("sort_order", { ascending: true })
     .order("title", { ascending: true });
 
@@ -43,6 +43,7 @@ export default async function AdminGrowthServicesPage() {
           <thead className="border-b border-[#0B3C5D]/10 bg-[#F7F9FB] text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/50">
             <tr>
               <th className="px-4 py-3">Başlık</th>
+              <th className="px-4 py-3">Slug</th>
               <th className="px-4 py-3">Kategori</th>
               <th className="px-4 py-3">Durum</th>
               <th className="px-4 py-3">Fiyat</th>
@@ -52,7 +53,7 @@ export default async function AdminGrowthServicesPage() {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-[#1A1A1A]/50">
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-[#1A1A1A]/50">
                   Henüz hizmet yok. Yeni hizmet ekleyin.
                 </td>
               </tr>
@@ -69,6 +70,7 @@ export default async function AdminGrowthServicesPage() {
                 return (
                   <tr key={String(r.id)} className="border-b border-[#0B3C5D]/08">
                     <td className="px-4 py-2 font-medium text-[#0B3C5D]">{String(r.title)}</td>
+                    <td className="px-4 py-2 font-mono text-xs text-[#1A1A1A]/55">{String(r.slug ?? "—")}</td>
                     <td className="px-4 py-2 text-[#1A1A1A]/65">{catName ?? "—"}</td>
                     <td className="px-4 py-2">
                       {r.is_active ? (

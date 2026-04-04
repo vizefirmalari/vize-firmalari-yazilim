@@ -1,15 +1,18 @@
 export type GrowthServiceCategoryRow = {
   id: string;
   name: string;
+  slug: string;
   icon: string;
   sort_order: number;
+  is_active: boolean;
 };
 
 export type GrowthServiceRow = {
   id: string;
   category_id: string;
+  slug: string;
   title: string;
-  description: string;
+  short_description: string;
   long_description: string | null;
   setup_price: number | null;
   monthly_price: number | null;

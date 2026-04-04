@@ -20,7 +20,7 @@ export default async function FirmGrowthServiceDetailPage({ params }: PageProps)
 
   const priceLine = growthPriceLineFromSnapshots(service.setup_price, service.monthly_price);
   const badge = service.badge?.trim() || null;
-  const body = (service.long_description || service.description).trim();
+  const body = (service.long_description || service.short_description).trim();
 
   return (
     <div className="space-y-6">

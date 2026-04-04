@@ -17,7 +17,7 @@ export default async function AdminGrowthCategoriesPage() {
 
   const { data } = await supabase
     .from("growth_service_categories")
-    .select("id,name,icon,sort_order")
+    .select("id,name,slug,icon,sort_order,is_active")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 
@@ -27,7 +27,18 @@ export default async function AdminGrowthCategoriesPage() {
         <h1 className="text-2xl font-bold tracking-tight text-[#0B3C5D]">Hizmet kategorileri</h1>
         <p className="mt-1 text-sm text-[#1A1A1A]/60">Firma panelindeki İşini Büyüt sayfasında blok başlıkları olarak görünür.</p>
       </div>
-      <GrowthCategoriesManager rows={(data ?? []) as { id: string; name: string; icon: string; sort_order: number }[]} />
+      <GrowthCategoriesManager
+        rows={
+          (data ?? []) as {
+            id: string;
+            name: string;
+            slug: string;
+            icon: string;
+            sort_order: number;
+            is_active: boolean;
+          }[]
+        }
+      />
     </div>
   );
 }

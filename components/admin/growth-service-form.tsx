@@ -10,8 +10,9 @@ type Cat = { id: string; name: string };
 type Initial = {
   id: string;
   category_id: string;
+  slug: string;
   title: string;
-  description: string;
+  short_description: string;
   long_description: string | null;
   setup_price: number | null;
   monthly_price: number | null;
@@ -35,7 +36,8 @@ export function GrowthServiceForm({ categories, initial }: { categories: Cat[]; 
 
   const [categoryId, setCategoryId] = useState(initial?.category_id ?? categories[0]?.id ?? "");
   const [title, setTitle] = useState(initial?.title ?? "");
-  const [description, setDescription] = useState(initial?.description ?? "");
+  const [slug, setSlug] = useState(initial?.slug ?? "");
+  const [shortDescription, setShortDescription] = useState(initial?.short_description ?? "");
   const [longDescription, setLongDescription] = useState(initial?.long_description ?? "");
   const [setup, setSetup] = useState(initial?.setup_price != null ? String(initial.setup_price) : "");
   const [monthly, setMonthly] = useState(initial?.monthly_price != null ? String(initial.monthly_price) : "");
@@ -55,8 +57,9 @@ export function GrowthServiceForm({ categories, initial }: { categories: Cat[]; 
       const res = await adminSaveGrowthService({
         id: initial?.id,
         category_id: categoryId,
+        slug: slug.trim() || undefined,
         title,
-        description,
+        short_description: shortDescription,
         long_description: longDescription || null,
         setup_price: numOrNull(setup),
         monthly_price: numOrNull(monthly),
@@ -113,11 +116,21 @@ export function GrowthServiceForm({ categories, initial }: { categories: Cat[]; 
       </div>
 
       <div>
+        <label className="text-xs font-semibold text-[#1A1A1A]/55">Slug (boş bırakılırsa başlıktan üretilir)</label>
+        <input
+          value={slug}
+          onChange={(e) => setSlug(e.target.value)}
+          placeholder="ornek-hizmet-slug"
+          className="mt-1 w-full rounded-xl border border-[#0B3C5D]/15 px-3 py-2 font-mono text-sm"
+        />
+      </div>
+
+      <div>
         <label className="text-xs font-semibold text-[#1A1A1A]/55">Kısa açıklama (kart)</label>
         <textarea
           required
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          value={shortDescription}
+          onChange={(e) => setShortDescription(e.target.value)}
           rows={3}
           className="mt-1 w-full rounded-xl border border-[#0B3C5D]/15 px-3 py-2 text-sm"
         />

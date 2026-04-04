@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireAdmin } from "@/lib/auth/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { slugifyGrowth } from "@/lib/slug/growth-slug";
 
 async function adminDb() {
   await requireAdmin();
@@ -15,8 +16,10 @@ async function adminDb() {
 export async function adminSaveGrowthCategory(input: {
   id?: string;
   name: string;
+  slug?: string;
   icon: string;
   sort_order: number;
+  is_active: boolean;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const supabase = await adminDb();
   if (!supabase) return { ok: false, error: "Bağlantı yok." };
@@ -24,16 +27,24 @@ export async function adminSaveGrowthCategory(input: {
   const name = input.name.trim();
   if (!name) return { ok: false, error: "Kategori adı gerekli." };
 
+  const slugRaw = input.slug?.trim() || slugifyGrowth(name);
+  if (!slugRaw) return { ok: false, error: "Slug gerekli." };
+
   if (input.id) {
     const { error } = await supabase
       .from("growth_service_categories")
       .update({
         name,
+        slug: slugRaw,
         icon: input.icon.trim() || "◆",
         sort_order: input.sort_order,
+        is_active: input.is_active,
       })
       .eq("id", input.id);
-    if (error) return { ok: false, error: "Kaydedilemedi." };
+    if (error) {
+      if (error.code === "23505") return { ok: false, error: "Bu slug zaten kullanılıyor." };
+      return { ok: false, error: "Kaydedilemedi." };
+    }
     revalidatePath("/admin/growth/categories");
     revalidatePath("/admin/growth/services");
     return { ok: true, id: input.id };
@@ -43,13 +54,18 @@ export async function adminSaveGrowthCategory(input: {
     .from("growth_service_categories")
     .insert({
       name,
+      slug: slugRaw,
       icon: input.icon.trim() || "◆",
       sort_order: input.sort_order,
+      is_active: input.is_active,
     })
     .select("id")
     .single();
 
-  if (error || !data) return { ok: false, error: "Oluşturulamadı." };
+  if (error || !data) {
+    if (error?.code === "23505") return { ok: false, error: "Bu slug zaten kullanılıyor." };
+    return { ok: false, error: "Oluşturulamadı." };
+  }
   revalidatePath("/admin/growth/categories");
   revalidatePath("/admin/growth/services");
   return { ok: true, id: data.id as string };
@@ -81,8 +97,9 @@ export async function adminDeleteGrowthCategory(
 export async function adminSaveGrowthService(input: {
   id?: string;
   category_id: string;
+  slug?: string;
   title: string;
-  description: string;
+  short_description: string;
   long_description?: string | null;
   setup_price: number | null;
   monthly_price: number | null;
@@ -95,13 +112,17 @@ export async function adminSaveGrowthService(input: {
   if (!supabase) return { ok: false, error: "Bağlantı yok." };
 
   const title = input.title.trim();
-  const description = input.description.trim();
-  if (!title || !description) return { ok: false, error: "Başlık ve açıklama gerekli." };
+  const shortDescription = input.short_description.trim();
+  if (!title || !shortDescription) return { ok: false, error: "Başlık ve kısa açıklama gerekli." };
+
+  const slugRaw = input.slug?.trim() || slugifyGrowth(title);
+  if (!slugRaw) return { ok: false, error: "Slug gerekli." };
 
   const row = {
     category_id: input.category_id,
+    slug: slugRaw,
     title,
-    description,
+    short_description: shortDescription,
     long_description: input.long_description?.trim() || null,
     setup_price: input.setup_price,
     monthly_price: input.monthly_price,
@@ -113,14 +134,20 @@ export async function adminSaveGrowthService(input: {
 
   if (input.id) {
     const { error } = await supabase.from("growth_services").update(row).eq("id", input.id);
-    if (error) return { ok: false, error: "Kaydedilemedi." };
+    if (error) {
+      if (error.code === "23505") return { ok: false, error: "Bu slug zaten kullanılıyor." };
+      return { ok: false, error: "Kaydedilemedi." };
+    }
     revalidatePath("/admin/growth/services");
     revalidatePath(`/admin/growth/services/${input.id}`);
     return { ok: true, id: input.id };
   }
 
   const { data, error } = await supabase.from("growth_services").insert(row).select("id").single();
-  if (error || !data) return { ok: false, error: "Oluşturulamadı." };
+  if (error || !data) {
+    if (error?.code === "23505") return { ok: false, error: "Bu slug zaten kullanılıyor." };
+    return { ok: false, error: "Oluşturulamadı." };
+  }
   const id = data.id as string;
   revalidatePath("/admin/growth/services");
   return { ok: true, id };
