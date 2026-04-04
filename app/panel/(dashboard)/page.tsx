@@ -8,7 +8,7 @@ export default async function PanelHomePage() {
 
   if (memberships.length === 0) {
     return (
-      <div className="min-h-screen bg-[#F4F6F8] text-[#1A1A1A]">
+      <div className="min-h-dvh bg-[#F4F6F8] text-[#1A1A1A]">
         <header className="border-b border-[#1A1A1A]/10 bg-white">
           <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
             <div>
@@ -61,7 +61,7 @@ export default async function PanelHomePage() {
 
   // Birden fazla firma: yalnızca seçim listesi
   return (
-    <div className="min-h-screen bg-[#F4F6F8] text-[#1A1A1A]">
+    <div className="min-h-dvh bg-[#F4F6F8] text-[#1A1A1A]">
       <header className="border-b border-[#1A1A1A]/10 bg-white">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <div>

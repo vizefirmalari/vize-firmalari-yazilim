@@ -3,28 +3,25 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { planMeets, type FirmPlanType } from "@/lib/subscriptions/plan-types";
-
 type NavItem = {
   href: string;
   label: string;
   icon: string;
-  minPlan?: Exclude<FirmPlanType, "free">;
 };
 
-function buildNavItems(firmId: string, plan: FirmPlanType): NavItem[] {
-  const all: NavItem[] = [
+function buildNavItems(firmId: string): NavItem[] {
+  return [
     { href: `/panel/${firmId}`, label: "Genel bakış", icon: "◈" },
-    { href: `/panel/${firmId}/mesajlar`, label: "Gelen mesajlar", icon: "✉", minPlan: "pro" },
-    { href: `/panel/${firmId}/formlar`, label: "Gelen başvurular", icon: "▤", minPlan: "pro" },
-    { href: `/panel/${firmId}/reklam`, label: "Reklam ver", icon: "◎", minPlan: "business" },
+    { href: `/panel/${firmId}/mesajlar`, label: "Gelen mesajlar", icon: "✉" },
+    { href: `/panel/${firmId}/formlar`, label: "Gelen başvurular", icon: "▤" },
+    { href: `/panel/${firmId}/paylasim`, label: "Paylaşım", icon: "✦" },
+    { href: `/panel/${firmId}/reklam`, label: "Reklam ver", icon: "◎" },
     { href: `/panel/${firmId}/abonelik`, label: "Abonelik", icon: "◇" },
     { href: `/panel/${firmId}/hesap`, label: "Hesap güvenliği", icon: "⚙" },
   ];
-  return all.filter((item) => !item.minPlan || planMeets(plan, item.minPlan));
 }
 
-type Props = { firmId: string; planType: FirmPlanType };
+type Props = { firmId: string };
 
 function formatCompactBadge(count: number): string {
   return count > 99 ? "99+" : String(count);
@@ -32,11 +29,10 @@ function formatCompactBadge(count: number): string {
 
 export function FirmPanelNav({
   firmId,
-  planType,
   unreadMessagesCount = 0,
 }: Props & { unreadMessagesCount?: number }) {
   const pathname = usePathname();
-  const nav = buildNavItems(firmId, planType);
+  const nav = buildNavItems(firmId);
 
   return (
     <nav

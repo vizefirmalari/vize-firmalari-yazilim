@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import { FirmBlogEditorForm } from "@/components/firm-panel/firm-blog-editor-form";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
-import { requireFirmPlanAtLeast } from "@/lib/subscriptions/require-plan";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -42,7 +41,6 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
   const { firmId } = await params;
   const sp = await searchParams;
   await requireFirmPanelAccess(firmId);
-  await requireFirmPlanAtLeast(firmId, "business");
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) notFound();

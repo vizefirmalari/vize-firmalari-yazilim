@@ -1,5 +1,4 @@
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
-import { requireFirmPlanAtLeast } from "@/lib/subscriptions/require-plan";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getAdReachSummary, getSocialSummary, type SocialMetricRow } from "@/lib/data/ad-reach";
@@ -10,7 +9,6 @@ type PageProps = { params: Promise<{ firmId: string }> };
 export default async function FirmPanelAdsPage({ params }: PageProps) {
   const { firmId } = await params;
   await requireFirmPanelAccess(firmId);
-  await requireFirmPlanAtLeast(firmId, "business");
   const supabase =
     createSupabaseServiceRoleClient() ?? (await createSupabaseServerClient());
 

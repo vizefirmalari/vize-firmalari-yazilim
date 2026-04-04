@@ -1,30 +1,26 @@
 import Link from "next/link";
 
-import { planMeets, type FirmPlanType } from "@/lib/subscriptions/plan-types";
-
 type Stat = {
   href: string;
   label: string;
   value: string;
   hint: string;
   icon: string;
-  minPlan?: Exclude<FirmPlanType, "free">;
 };
 
-type Props = { firmId: string; planType: FirmPlanType };
+type Props = { firmId: string };
 
 /**
  * Özet kartları — modüller bağlandıkça sayılar gerçek veriye bağlanır.
  */
-export function FirmPanelStatCards({ firmId, planType }: Props) {
-  const all: Stat[] = [
+export function FirmPanelStatCards({ firmId }: Props) {
+  const stats: Stat[] = [
     {
       href: `/panel/${firmId}/mesajlar`,
       label: "Gelen mesajlar",
       value: "—",
-      hint: "Canlı mesajlaşma yakında",
+      hint: "Platform içi mesaj kutusu",
       icon: "✉",
-      minPlan: "pro",
     },
     {
       href: `/panel/${firmId}/formlar`,
@@ -32,7 +28,6 @@ export function FirmPanelStatCards({ firmId, planType }: Props) {
       value: "—",
       hint: "Hızlı başvuru lead’leri",
       icon: "▤",
-      minPlan: "pro",
     },
     {
       href: `/panel/${firmId}/reklam`,
@@ -40,18 +35,15 @@ export function FirmPanelStatCards({ firmId, planType }: Props) {
       value: "Başlat",
       hint: "Görünürlük ve kampanyalar",
       icon: "◎",
-      minPlan: "business",
     },
     {
       href: `/panel/${firmId}/abonelik`,
       label: "Abonelik",
       value: "İncele",
-      hint: "Paket ve faturalama",
+      hint: "Daha fazla görünürlük için yükselt",
       icon: "◇",
     },
   ];
-
-  const stats = all.filter((s) => !s.minPlan || planMeets(planType, s.minPlan));
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">

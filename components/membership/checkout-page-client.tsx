@@ -43,7 +43,7 @@ export function CheckoutPageClient() {
 
   if (!plan) {
     return (
-      <div className="min-h-screen bg-background px-4 py-12 sm:px-6">
+      <div className="min-h-dvh bg-background px-4 py-12 sm:px-6">
         <div className="mx-auto max-w-lg rounded-2xl border border-border bg-white p-8 shadow-sm">
           <h1 className="text-lg font-bold text-primary">Plan bulunamadı</h1>
           <p className="mt-2 text-sm text-foreground/70">
@@ -59,7 +59,7 @@ export function CheckoutPageClient() {
   }
 
   return (
-    <div className="min-h-screen bg-surface/80 pb-12 pt-8">
+    <div className="min-h-dvh bg-surface/80 pb-12 pt-8">
       <div className="mx-auto max-w-lg px-4 sm:px-6">
         <Link
           href="/uye-is-yerimiz-olun#uye-plan-secimi"

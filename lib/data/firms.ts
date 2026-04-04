@@ -1,5 +1,6 @@
 import type { FirmFilters, FirmRow, FirmSort } from "@/lib/types/firm";
 import type { FirmPlanType } from "@/lib/subscriptions/plan-types";
+import { compareFirmRowsWithPlanVisibility } from "@/lib/subscriptions/plan-visibility";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
@@ -234,7 +235,7 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
       case "hype_asc":
         return hype(a) - hype(b);
       case "corp_desc":
-        return b.corporateness_score - a.corporateness_score;
+        return compareFirmRowsWithPlanVisibility(a, b, "corp_desc");
       case "corp_asc":
         return a.corporateness_score - b.corporateness_score;
       case "newest":
@@ -246,7 +247,7 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
           new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
       case "hype_score_desc":
-        return hype(b) - hype(a);
+        return compareFirmRowsWithPlanVisibility(a, b, "hype_score_desc");
       case "founded_year_desc": {
         const fa = a.founded_year;
         const fb = b.founded_year;
@@ -269,11 +270,7 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
         return a.name.localeCompare(b.name, "tr");
       case "hype_desc":
       default:
-        if (b.corporateness_score !== a.corporateness_score) {
-          return b.corporateness_score - a.corporateness_score;
-        }
-        if (hype(b) !== hype(a)) return hype(b) - hype(a);
-        return mp(b) - mp(a);
+        return compareFirmRowsWithPlanVisibility(a, b, "hype_desc");
     }
   });
 
@@ -376,6 +373,11 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
       has_active_panel_member: panelIdSet.has(r.id),
     };
   });
+
+  if (filters.sort === "hype_desc" || filters.sort === "hype_score_desc" || filters.sort === "corp_desc") {
+    const s = filters.sort;
+    rows.sort((a, b) => compareFirmRowsWithPlanVisibility(a, b, s));
+  }
 
   if (filters.visaTypes.length > 0) {
     const selected = new Set<SpecializationKey>(

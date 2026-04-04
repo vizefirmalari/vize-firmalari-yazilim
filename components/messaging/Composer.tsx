@@ -142,7 +142,7 @@ export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx =
           rows={1}
           enterKeyHint="send"
           disabled={!canSend}
-          className={`min-h-[2.75rem] flex-1 resize-none rounded-2xl border border-[#0B3C5D]/10 bg-white px-3 py-2 text-[0.8125rem] leading-snug text-[#1A1A1A] outline-none transition-[border-color,box-shadow,max-height] scroll-my-0 placeholder:text-[13px] placeholder:text-[#1A1A1A]/30 focus:border-[#0B3C5D]/25 focus:ring-[3px] focus:ring-[#0B3C5D]/07 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-[3rem] sm:max-h-[min(40vh,14rem)] sm:resize-y sm:rounded-xl sm:border-[#0B3C5D]/12 sm:px-3.5 sm:py-2.5 sm:text-sm sm:leading-relaxed sm:placeholder:text-sm sm:placeholder:text-[#1A1A1A]/38 sm:focus:border-[#0B3C5D]/28 sm:focus:ring-2 sm:focus:ring-[#0B3C5D]/10 sm:disabled:opacity-45 ${mobileTextareaMax}`}
+          className={`min-h-[2.75rem] flex-1 resize-none overflow-y-auto rounded-2xl border border-[#0B3C5D]/10 bg-white px-3 py-2 text-[0.8125rem] leading-snug text-[#1A1A1A] outline-none transition-[border-color,box-shadow,max-height] scroll-my-0 placeholder:text-[13px] placeholder:text-[#1A1A1A]/30 focus:border-[#0B3C5D]/25 focus:ring-[3px] focus:ring-[#0B3C5D]/07 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-[3rem] sm:max-h-[min(40vh,14rem)] sm:rounded-xl sm:border-[#0B3C5D]/12 sm:px-3.5 sm:py-2.5 sm:text-sm sm:leading-relaxed sm:placeholder:text-sm sm:placeholder:text-[#1A1A1A]/38 sm:focus:border-[#0B3C5D]/28 sm:focus:ring-2 sm:focus:ring-[#0B3C5D]/10 sm:disabled:opacity-45 ${mobileTextareaMax}`}
         />
         <div className="flex shrink-0 flex-row items-end gap-1.5 sm:gap-2">
           <input

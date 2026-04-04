@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { MessagingViewportScrollLock } from "@/components/messaging/messaging-viewport-scroll-lock";
 import { UserMessagesShell } from "@/components/messaging/user-messages-shell";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -57,7 +58,7 @@ export default async function MesajlarPage({ searchParams }: PageProps) {
     });
     if (ensureErr || !ensured || typeof ensured !== "string") {
       return (
-        <div className="flex min-h-screen flex-col">
+        <div className="flex min-h-dvh flex-col">
           <SiteHeader />
           <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
             <h1 className="text-xl font-semibold text-[#0B3C5D]">Mesajlar</h1>
@@ -103,6 +104,7 @@ export default async function MesajlarPage({ searchParams }: PageProps) {
           : "min-h-dvh"
       }`}
     >
+      {mobileThreadFocus ? <MessagingViewportScrollLock active /> : null}
       <SiteHeader />
       <main
         className={`mx-auto flex w-full max-w-6xl flex-col ${

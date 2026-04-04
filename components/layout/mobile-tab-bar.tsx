@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
 const HIDE_PREFIXES = ["/admin", "/panel", "/auth"];
 const HIDE_PATHS = ["/giris", "/kayit", "/sifre-unuttum", "/sifre-yenile"];
@@ -23,15 +23,23 @@ const TABS: TabItem[] = [
   { href: "/hesabim", label: "Profil", icon: "◉", match: (p) => p.startsWith("/hesabim") },
 ];
 
-export function MobileTabBar() {
+function MobileTabBarInner() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [hasNewFlow, setHasNewFlow] = useState(false);
 
   const hidden = useMemo(() => {
     if (!pathname) return true;
     if (HIDE_PATHS.includes(pathname)) return true;
-    return HIDE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+    if (HIDE_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return true;
+    return false;
   }, [pathname]);
+
+  /** Aktif konuşmada tam ekran sohbet; alt çubuk composer’ı kapatıyordu + body scroll üretiyordu. */
+  const hideForActiveMesajlarThread = useMemo(() => {
+    if (!pathname?.startsWith("/mesajlar")) return false;
+    return Boolean(searchParams.get("c")?.trim());
+  }, [pathname, searchParams]);
 
   useEffect(() => {
     if (hidden) return;
@@ -62,7 +70,7 @@ export function MobileTabBar() {
     };
   }, [pathname, hidden]);
 
-  if (hidden) return null;
+  if (hidden || hideForActiveMesajlarThread) return null;
 
   return (
     <>
@@ -107,6 +115,14 @@ export function MobileTabBar() {
         </div>
       </nav>
     </>
+  );
+}
+
+export function MobileTabBar() {
+  return (
+    <Suspense fallback={null}>
+      <MobileTabBarInner />
+    </Suspense>
   );
 }
 

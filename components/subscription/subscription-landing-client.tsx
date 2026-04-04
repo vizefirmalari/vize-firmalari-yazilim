@@ -129,7 +129,7 @@ export function SubscriptionLandingClient({ firmName, needLabel, firmId }: Props
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary/70">Firma aboneliği</p>
@@ -161,8 +161,9 @@ export function SubscriptionLandingClient({ firmName, needLabel, firmId }: Props
               ) : null}
               {needLabel ? (
                 <p className="mt-2 rounded-xl border border-primary/12 bg-surface px-4 py-3 text-sm text-foreground/80">
-                  Bu işlem için <span className="font-semibold text-primary">{needLabel}</span> veya üzeri bir plan
-                  uygundur.
+                  <span className="font-semibold text-primary">{needLabel}</span> paketi görünürlük ve sıralama
+                  açısından daha güçlüdür. Tüm panel özellikleri her planda açıktır; yükseltme ile daha fazla trafik ve
+                  öne çıkma elde edersiniz.
                 </p>
               ) : null}
             </div>
@@ -183,15 +184,15 @@ export function SubscriptionLandingClient({ firmName, needLabel, firmId }: Props
               <ul className="mx-auto mt-8 max-w-xl space-y-3 text-left text-sm text-foreground/80 sm:text-[0.9375rem]">
                 <li className="flex gap-3 rounded-2xl border border-border bg-white px-4 py-3 shadow-sm">
                   <CheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Gerçek başvuru (lead) sistemi</span>
+                  <span>Tüm firmalar tam panel erişimine sahip — aktivasyon anında</span>
                 </li>
                 <li className="flex gap-3 rounded-2xl border border-border bg-white px-4 py-3 shadow-sm">
                   <CheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>SEO ve Google görünürlüğü</span>
+                  <span>Ücretli paketler listelerde sıralama ve görünürlük gücünü artırır</span>
                 </li>
                 <li className="flex gap-3 rounded-2xl border border-border bg-white px-4 py-3 shadow-sm">
                   <CheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Tek panelden tüm süreç yönetimi</span>
+                  <span>Business ile sponsorlu yerleşim ve promosyon önceliği</span>
                 </li>
               </ul>
               <div className="mt-8">
@@ -342,7 +343,9 @@ export function SubscriptionLandingClient({ firmName, needLabel, firmId }: Props
         {/* 4. Karşılaştırma */}
         <section id="karsilastir" ref={compareSectionRef} className="border-t border-border bg-white py-12 sm:py-16">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <h2 className="text-center text-xl font-bold text-primary sm:text-2xl">Tüm Özellikleri Karşılaştırın</h2>
+            <h2 className="text-center text-xl font-bold text-primary sm:text-2xl">
+              Panel erişimi ve görünürlük farkları
+            </h2>
             <div className="mt-8 overflow-x-auto rounded-2xl border border-border shadow-sm">
               <table className="w-full min-w-[520px] border-collapse text-sm">
                 <thead>

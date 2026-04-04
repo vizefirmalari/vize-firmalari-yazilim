@@ -49,7 +49,7 @@ export function UyeIsYerimizOlunPage({ scrollToFormOnPayment }: UyePageProps) {
       <SiteHeader />
       <main className="flex-1 bg-background">
         {/* Hero */}
-        <section className="border-b border-border/60 bg-gradient-to-b from-surface to-background">
+        <section className="border-b border-border/60 bg-linear-to-b from-surface to-background">
           <div className="mx-auto max-w-5xl px-4 pb-14 pt-10 sm:px-6 sm:pb-16 sm:pt-14 lg:px-8 lg:pb-20">
             <p className="text-center text-xs font-semibold uppercase tracking-[0.16em] text-primary/55">
               Firma ortaklığı
@@ -84,7 +84,19 @@ export function UyeIsYerimizOlunPage({ scrollToFormOnPayment }: UyePageProps) {
               </p>
             </div>
 
-            <ul className="mx-auto mt-8 max-w-3xl space-y-3 text-left text-sm leading-relaxed text-foreground/85 sm:text-[0.9375rem]">
+            <div className="mx-auto mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <Link
+                href="#uye-basvuru-alani"
+                className="inline-flex min-h-12 w-full max-w-sm items-center justify-center rounded-2xl bg-primary px-6 text-sm font-semibold text-white shadow-[0_8px_28px_rgba(11,60,93,0.22)] transition hover:bg-[#082f49] sm:w-auto sm:max-w-none"
+              >
+                Ön başvuru formuna git
+              </Link>
+              <p className="max-w-xs text-center text-xs text-foreground/55 sm:text-left">
+                Form ücretsizdir; yayın yönetim onayına bağlıdır.
+              </p>
+            </div>
+
+            <ul className="mx-auto mt-10 max-w-3xl space-y-3 text-left text-sm leading-relaxed text-foreground/85 sm:text-[0.9375rem]">
               <HeroCheck>
                 <strong className="font-semibold text-foreground">Sıfır komisyon</strong> — müşteriden
                 platform adına ücret alınmaz.
@@ -118,20 +130,23 @@ export function UyeIsYerimizOlunPage({ scrollToFormOnPayment }: UyePageProps) {
           </div>
         </section>
 
+        <UyeMembershipShell scrollToFormOnPayment={scrollToFormOnPayment} />
+
         {/* Avantaj kartları */}
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
           <h2 className="text-center text-xl font-bold tracking-tight text-primary sm:text-2xl">
-            Neden şimdi?
+            Yayında sizi neler bekliyor?
           </h2>
           <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-foreground/65 sm:text-base">
-            Aşağıdaki faydalar, onaylanıp yayına alındıktan sonraki üye iş yeri deneyimini özetler. Ön başvuru formu bu
-            özellikleri tek başına açmaz.
+            Aşağıdaki faydalar, onaylanıp yayına alındıktan sonra ücretsiz sunulan üye iş yeri deneyimini özetler. Ön
+            başvuru formu bu özellikleri tek başına açmaz; yönetim onayı sonrası geçerlidir.
           </p>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
-            {benefitCards.map((c) => (
+            {benefitCards.map((c, i) => (
               <div
                 key={c.title}
-                className="flex flex-col rounded-2xl border border-primary/10 bg-white p-5 shadow-[0_4px_24px_rgba(11,60,93,0.06)] transition hover:border-primary/18 hover:shadow-[0_8px_32px_rgba(11,60,93,0.09)] sm:p-6"
+                className="uye-benefit-card flex flex-col rounded-2xl border border-primary/10 bg-white p-5 shadow-[0_4px_24px_rgba(11,60,93,0.06)] transition hover:border-primary/18 hover:shadow-[0_8px_32px_rgba(11,60,93,0.09)] sm:p-6"
+                style={{ animationDelay: `${100 + i * 70}ms` }}
               >
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/8 text-primary">
                   <c.icon className="h-5 w-5" />
@@ -144,8 +159,6 @@ export function UyeIsYerimizOlunPage({ scrollToFormOnPayment }: UyePageProps) {
             ))}
           </div>
         </section>
-
-        <UyeMembershipShell scrollToFormOnPayment={scrollToFormOnPayment} />
 
         {/* Kısa hukuki not */}
         <section className="mx-auto max-w-3xl px-4 pb-14 pt-2 sm:px-6 lg:px-8 lg:pb-16">

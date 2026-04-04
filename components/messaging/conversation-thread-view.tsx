@@ -37,6 +37,7 @@ export function ConversationThreadView({
 }: Props) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
+  const [showJumpToBottom, setShowJumpToBottom] = useState(false);
   const keyboardInsetPx = useVisualViewportKeyboardInset();
   const [peerLastReadMessageId, setPeerLastReadMessageId] = useState<string | null>(null);
   const { messages, setMessages, remoteTypingUserId, peerOnline, emitTyping } = useConversationRealtime({
@@ -47,6 +48,7 @@ export function ConversationThreadView({
 
   useEffect(() => {
     isNearBottomRef.current = true;
+    setShowJumpToBottom(false);
   }, [conversationId]);
 
   useEffect(() => {
@@ -87,13 +89,22 @@ export function ConversationThreadView({
     const el = scrollAreaRef.current;
     if (!el) return;
     const NEAR_BOTTOM_PX = 96;
+    let raf = 0;
     const syncNearBottom = () => {
-      const { scrollTop, scrollHeight, clientHeight } = el;
-      isNearBottomRef.current = scrollHeight - scrollTop - clientHeight <= NEAR_BOTTOM_PX;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const { scrollTop, scrollHeight, clientHeight } = el;
+        const near = scrollHeight - scrollTop - clientHeight <= NEAR_BOTTOM_PX;
+        isNearBottomRef.current = near;
+        setShowJumpToBottom(!near);
+      });
     };
     syncNearBottom();
     el.addEventListener("scroll", syncNearBottom, { passive: true });
-    return () => el.removeEventListener("scroll", syncNearBottom);
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener("scroll", syncNearBottom);
+    };
   }, [conversationId]);
 
   const lastMessage = messages[messages.length - 1];
@@ -143,6 +154,13 @@ export function ConversationThreadView({
     );
   };
 
+  const scrollThreadToEndSmooth = () => {
+    const el = scrollAreaRef.current;
+    if (!el) return;
+    const top = Math.max(0, el.scrollHeight - el.clientHeight);
+    el.scrollTo({ top, left: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#0B3C5D]/10 bg-[#F8F9FA] max-md:rounded-none max-md:border-0 max-md:bg-[#F0F2F4]">
       <ConversationThreadHeader
@@ -154,21 +172,36 @@ export function ConversationThreadView({
         typingText={typingText}
         onBack={onBackMobile}
       />
-      <div
-        ref={scrollAreaRef}
-        className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain contain-[layout] [overflow-anchor:none]"
-      >
-        <div className="min-h-full min-w-0 overflow-x-hidden [overflow-anchor:none]">
-          <MessagingThreadBody
-            messages={messages}
-            currentUserId={currentUserId}
-            peerLastReadMessageId={peerLastReadMessageId}
-            onSoftDeleteMessage={handleLocalSoftDelete}
-          />
+      <div className="relative min-h-0 flex-1">
+        <div
+          ref={scrollAreaRef}
+          className="absolute inset-0 touch-pan-y overflow-y-auto overscroll-contain contain-[layout] [overflow-anchor:none]"
+        >
+          <div className="min-h-full min-w-0 overflow-x-hidden [overflow-anchor:none]">
+            <MessagingThreadBody
+              messages={messages}
+              currentUserId={currentUserId}
+              peerLastReadMessageId={peerLastReadMessageId}
+              onSoftDeleteMessage={handleLocalSoftDelete}
+            />
+          </div>
         </div>
+        {showJumpToBottom ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center max-md:bottom-2">
+            <button
+              type="button"
+              onClick={() => scrollThreadToEndSmooth()}
+              className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-[#0B3C5D]/14 bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#0B3C5D] shadow-md shadow-[#0B3C5D]/08 backdrop-blur-sm transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/28"
+              aria-label="En alta kaydır"
+            >
+              <span aria-hidden>↓</span>
+              Yeni mesajlar
+            </button>
+          </div>
+        ) : null}
       </div>
       <div
-        className="shrink-0 border-t border-[#0B3C5D]/08 bg-white px-2.5 py-2 shadow-[0_-6px_24px_rgba(11,60,93,0.06)] transition-[padding-bottom] duration-200 ease-out sm:px-4 sm:py-2.5 sm:shadow-none md:shadow-none"
+        className="relative z-20 shrink-0 border-t border-[#0B3C5D]/08 bg-white px-2.5 py-2 shadow-[0_-6px_24px_rgba(11,60,93,0.06)] transition-[padding-bottom] duration-200 ease-out sm:px-4 sm:py-2.5 sm:shadow-none md:shadow-none"
         style={{
           paddingBottom:
             keyboardInsetPx > 0

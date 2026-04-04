@@ -192,7 +192,21 @@ export default async function FirmPanelOverviewPage({ params }: PageProps) {
           </h2>
         </div>
         {/* Gelen mesajlar ve Gelen formlar kartları bilinçli olarak aynen korunur. */}
-        <FirmPanelStatCards firmId={firmId} planType={planType} />
+        {planType !== "business" ? (
+          <div className="rounded-2xl border border-[#0B3C5D]/12 bg-[#FFFCF7] px-4 py-3 text-sm text-[#1A1A1A]/80">
+            <Link
+              href={`/panel/${firmId}/abonelik`}
+              className="font-semibold text-[#0B3C5D] underline-offset-2 hover:underline"
+            >
+              Daha fazla görünürlük için yükselt
+            </Link>
+            <span className="text-[#1A1A1A]/55">
+              {" "}
+              — Liste önceliği, sponsorlu yerleşim ve promosyon araçlarında üst katmanlar.
+            </span>
+          </div>
+        ) : null}
+        <FirmPanelStatCards firmId={firmId} />
       </section>
 
       <section className="rounded-2xl border border-[#1A1A1A]/8 bg-white p-6 shadow-sm sm:p-8">

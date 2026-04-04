@@ -38,12 +38,13 @@ export function BusinessMembershipForm() {
     >
       <div className="mb-8 border-b border-border/80 pb-6">
         <h2 className="text-lg font-bold tracking-tight text-primary sm:text-xl">
-          Başvuru formu
+          Ücretsiz ön başvuru formu
         </h2>
         <p className={`${authMutedClass} mt-2 max-w-xl`}>
           Bu form yalnızca <strong className="font-semibold text-foreground/90">ön başvuru</strong> içindir. Kayıt
           otomatik olarak yayına alınmaz; yönetim inceleyip uygun görürse firma kaydı{" "}
-          <strong className="font-semibold text-foreground/90">ayrıca ve manuel</strong> oluşturulur.
+          <strong className="font-semibold text-foreground/90">ayrıca ve manuel</strong> oluşturulur. Onay sonrası
+          panel ve vitrin araçları için ayrı ücret talep edilmez.
         </p>
         <div
           className="mt-4 rounded-xl border border-primary/12 bg-surface/80 p-3 text-xs leading-relaxed text-foreground/75 sm:text-[0.8125rem]"

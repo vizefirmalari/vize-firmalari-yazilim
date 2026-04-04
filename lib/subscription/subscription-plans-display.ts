@@ -22,8 +22,13 @@ export const SUBSCRIPTION_PLANS: readonly PlanCardDef[] = [
     name: "Free",
     priceMonthly: 0,
     priceYearly: null,
-    tagline: "Vitrin profiliniz ve temel SEO görünürlüğü; ön başvuru formu ile talep bırakın.",
-    features: ["Yayın profili + SEO", "İletişim bilgileri görünürlüğü", "Ön başvuru formu"],
+    tagline:
+      "Tüm panel araçları dahil; vitrin ve temel görünürlük. Daha fazla sıralama ve trafik için üst paketlere geçin.",
+    features: [
+      "Tam firma paneli (mesaj, lead, dosya, paylaşım)",
+      "Yayın profili ve SEO uyumlu sayfa",
+      "Listelerde standart görünürlük",
+    ],
     ctaLabel: "Forma Git",
     variant: "free",
     yearlyUnavailable: true,
@@ -33,13 +38,13 @@ export const SUBSCRIPTION_PLANS: readonly PlanCardDef[] = [
     name: "Pro",
     priceMonthly: 2990,
     priceYearly: 29900,
-    tagline: "Lead ve iletişimi tek panelden yönetin; danışanlarla doğrudan bağlantı kurun.",
+    tagline:
+      "Aynı tam panel erişimi; aramalarda ve listelerde güçlü sıralama desteği ile daha çok görünürlük.",
     features: [
-      "Firma paneli",
-      "Lead (başvuru) yönetimi",
-      "Mesajlaşma",
-      "CV / evrak alma",
-      "İletişim butonları",
+      "Tüm Free içerikleri",
+      "Liste ve arama sıralamasında öncelik artışı",
+      "Daha yüksek trafik ve dönüşüm potansiyeli",
+      "Operasyonel araçlarda tam erişim (zaten dahil)",
     ],
     ctaLabel: "Bu Planı Seç",
     variant: "recommended",
@@ -49,35 +54,35 @@ export const SUBSCRIPTION_PLANS: readonly PlanCardDef[] = [
     name: "Business",
     priceMonthly: 7990,
     priceYearly: 79900,
-    tagline: "Görünürlük, içerik ve reklam ile müşteri kazanımını büyütün.",
+    tagline:
+      "Maksimum görünürlük: sponsorlu yerleşim, öne çıkma ve promosyon katmanları ile üst düzey maruz kalma.",
     features: [
-      "Tüm Pro özellikleri",
-      "Öne çıkma ve liste önceliği",
-      "Akışta paylaşım",
-      "Blog ve SEO içerik",
-      "Reklam ve kampanya alanları",
+      "Tüm Pro görünürlük artışları",
+      "Sponsorlu vitrin ve öncelikli yerleşim",
+      "Reklam ve kampanya araçlarında üst katman",
+      "Marka ve trafik büyümesi odağı",
     ],
     ctaLabel: "Bu Planı Seç",
     variant: "strong",
   },
 ] as const;
 
+/** Karşılaştırma: panel özellikleri her planda açık; fark görünürlük ve promosyonda. */
 export const COMPARISON_ROWS: readonly {
   label: string;
   free: boolean;
   pro: boolean;
   business: boolean;
 }[] = [
-  { label: "Firma paneli", free: false, pro: true, business: true },
-  { label: "Lead sistemi", free: false, pro: true, business: true },
-  { label: "Mesajlaşma", free: false, pro: true, business: true },
-  { label: "Dosya alma", free: false, pro: true, business: true },
-  { label: "Öne çıkma", free: false, pro: false, business: true },
-  { label: "Akış paylaşımı", free: false, pro: false, business: true },
-  { label: "Blog", free: false, pro: false, business: true },
-  { label: "SEO içerik", free: true, pro: true, business: true },
-  { label: "Reklam", free: false, pro: false, business: true },
-  { label: "Ana sayfa görünürlüğü", free: false, pro: false, business: true },
+  { label: "Firma paneli (tam erişim)", free: true, pro: true, business: true },
+  { label: "Mesajlaşma", free: true, pro: true, business: true },
+  { label: "Lead / başvuru yönetimi", free: true, pro: true, business: true },
+  { label: "Dosya ve evrak alma", free: true, pro: true, business: true },
+  { label: "Akış ve blog paylaşımı", free: true, pro: true, business: true },
+  { label: "Profil düzenleme", free: true, pro: true, business: true },
+  { label: "Liste / arama sıralamasında destek", free: false, pro: true, business: true },
+  { label: "Sponsorlu ve öne çıkan yerleşim", free: false, pro: false, business: true },
+  { label: "Promosyon ve reklam önceliği", free: false, pro: true, business: true },
 ];
 
 export function formatTl(n: number): string {
