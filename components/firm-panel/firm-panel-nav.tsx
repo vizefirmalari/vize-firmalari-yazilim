@@ -13,10 +13,12 @@ function buildNavItems(firmId: string): NavItem[] {
   return [
     { href: `/panel/${firmId}`, label: "Genel bakış", icon: "◈" },
     { href: `/panel/${firmId}/mesajlar`, label: "Gelen mesajlar", icon: "✉" },
+    { href: `/panel/${firmId}/yonetici-mesaj`, label: "Yönetici ile Mesajlaş", icon: "◉" },
     { href: `/panel/${firmId}/formlar`, label: "Gelen başvurular", icon: "▤" },
     { href: `/panel/${firmId}/paylasim`, label: "Paylaşım", icon: "✦" },
+    { href: `/panel/${firmId}/isini-buyut`, label: "İşini Büyüt", icon: "↑" },
     { href: `/panel/${firmId}/reklam`, label: "Reklam ver", icon: "◎" },
-    { href: `/panel/${firmId}/abonelik`, label: "Abonelik", icon: "◇" },
+    { href: `/panel/${firmId}/abonelik`, label: "Abonelikler", icon: "◇" },
     { href: `/panel/${firmId}/hesap`, label: "Hesap güvenliği", icon: "⚙" },
   ];
 }

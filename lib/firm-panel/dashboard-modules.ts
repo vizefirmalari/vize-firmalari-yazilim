@@ -20,6 +20,14 @@ export const FIRM_DASHBOARD_MODULES: readonly FirmDashboardModule[] = [
     href: "/panel/{firmId}/paylasim",
   },
   {
+    id: "grow-business",
+    title: "İşini Büyüt",
+    description: "Reklam, otomasyon ve yazılım paketleriyle daha fazla müşteriye ulaşın.",
+    status: "aktif",
+    actionLabel: "Keşfet",
+    href: "/panel/{firmId}/isini-buyut",
+  },
+  {
     id: "buy-ads",
     title: "Reklam Satın Al",
     description: "Sponsorlu görünüm ve öne çıkarma paketleri.",
@@ -29,8 +37,8 @@ export const FIRM_DASHBOARD_MODULES: readonly FirmDashboardModule[] = [
   },
   {
     id: "subscription",
-    title: "Abonelik",
-    description: "Paket, kullanım ve yenileme durumlarınızı yönetin.",
+    title: "Abonelikler",
+    description: "Platform planı ve satın aldığınız büyüme hizmetlerini takip edin.",
     status: "aktif",
     actionLabel: "Yönet",
     href: "/panel/{firmId}/abonelik",

@@ -13,6 +13,8 @@ const nav = [
     icon: "◆",
   },
   { href: "/admin/firm-panel", label: "Firma panel", icon: "▣" },
+  { href: "/admin/growth", label: "İşini Büyüt", icon: "↑" },
+  { href: "/admin/firm-admin-messages", label: "Firma — yönetim sohbeti", icon: "✉" },
   { href: "/admin/filters/countries", label: "Ülkeler", icon: "⌖" },
   { href: "/admin/filters/services", label: "İşlem türleri", icon: "☰" },
   { href: "/admin/blog-categories", label: "Blog kategorileri", icon: "✦" },

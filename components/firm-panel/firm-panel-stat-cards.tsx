@@ -38,9 +38,9 @@ export function FirmPanelStatCards({ firmId }: Props) {
     },
     {
       href: `/panel/${firmId}/abonelik`,
-      label: "Abonelik",
+      label: "Abonelikler",
       value: "İncele",
-      hint: "Daha fazla görünürlük için yükselt",
+      hint: "Plan ve satın aldığınız hizmetler",
       icon: "◇",
     },
   ];
