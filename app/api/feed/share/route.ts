@@ -8,6 +8,10 @@ export async function POST(req: Request) {
 
   const service = createSupabaseServiceRoleClient();
   if (service) {
+    const { data: blogRow } = await service.from("firm_blog_posts").select("id").eq("id", postId).maybeSingle();
+    if (!blogRow?.id) {
+      return NextResponse.json({ ok: true });
+    }
     const supabase = await createSupabaseServerClient();
     const {
       data: { user },

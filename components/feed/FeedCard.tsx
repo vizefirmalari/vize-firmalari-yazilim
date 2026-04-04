@@ -1,8 +1,10 @@
 import type { FeedItem } from "@/lib/data/feed";
 import { FeedCardActions } from "@/components/feed/FeedCardActions";
 import { FeedCardContent } from "@/components/feed/FeedCardContent";
+import { FeedCardFeedPostBody } from "@/components/feed/FeedCardFeedPostBody";
 import { FeedCardHeader } from "@/components/feed/FeedCardHeader";
 import { FeedCardImage } from "@/components/feed/FeedCardImage";
+import { FeedCardImageCarousel } from "@/components/feed/FeedCardImageCarousel";
 
 export function FeedCard({
   item,
@@ -19,6 +21,14 @@ export function FeedCard({
       ? Math.round(item.firm_hype_score)
       : 0;
 
+  const isFeedPost = item.type === "feed_post";
+  const carouselUrls =
+    isFeedPost && Array.isArray(item.image_urls) && item.image_urls.length > 0
+      ? item.image_urls
+      : item.image_url
+        ? [item.image_url]
+        : [];
+
   return (
     <article className="mx-auto w-full max-w-[720px] overflow-hidden rounded-3xl bg-white p-0 shadow-[0_8px_28px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.1)]">
       <FeedCardHeader
@@ -27,12 +37,30 @@ export function FeedCard({
         companySlug={item.company_slug}
         createdAt={item.created_at}
       />
-      <FeedCardImage imageUrl={item.image_url} alt={item.title} targetUrl={item.target_url} postId={item.id} />
-      <FeedCardContent
-        title={item.title}
-        description={item.description}
-        targetUrl={item.target_url}
-      />
+      {isFeedPost ? (
+        <FeedCardImageCarousel
+          urls={carouselUrls}
+          alt={`${item.company_name} gönderi görseli`}
+          targetUrl={item.target_url}
+        />
+      ) : (
+        <FeedCardImage
+          imageUrl={item.image_url}
+          alt={item.title}
+          targetUrl={item.target_url}
+          postId={item.id}
+        />
+      )}
+      {isFeedPost ? (
+        <FeedCardFeedPostBody
+          text={item.description}
+          targetUrl={item.target_url}
+          ctaButtons={item.cta_buttons ?? []}
+          tags={item.tags}
+        />
+      ) : (
+        <FeedCardContent title={item.title} description={item.description} targetUrl={item.target_url} />
+      )}
       <FeedCardActions
         postId={item.id}
         initialLiked={item.is_liked}
@@ -42,6 +70,9 @@ export function FeedCard({
         hypeScore={hypeSkoru}
         liveLikeCount={liveLikeCount}
         onLiveLikeCountChange={onLiveLikeCountChange}
+        likesEnabled={item.likes_enabled !== false}
+        detailCtaLabel={isFeedPost ? "Firma profili" : "Detayı Gör"}
+        recordEngagement={!isFeedPost}
       />
     </article>
   );

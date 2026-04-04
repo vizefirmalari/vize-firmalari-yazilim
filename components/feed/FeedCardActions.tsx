@@ -13,6 +13,9 @@ export function FeedCardActions({
   hypeScore,
   liveLikeCount,
   onLiveLikeCountChange,
+  likesEnabled = true,
+  detailCtaLabel = "Detayı Gör",
+  recordEngagement = true,
 }: {
   postId: string;
   initialLiked: boolean;
@@ -22,12 +25,17 @@ export function FeedCardActions({
   hypeScore: number;
   liveLikeCount?: number;
   onLiveLikeCountChange?: (count: number) => void;
+  likesEnabled?: boolean;
+  detailCtaLabel?: string;
+  /** Blog gönderileri için etkileşim kaydı; akış gönderisinde kapalı. */
+  recordEngagement?: boolean;
 }) {
   const [liked, setLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [animating, setAnimating] = useState(false);
 
   const onLike = async () => {
+    if (!likesEnabled) return;
     setAnimating(true);
     const optimisticLiked = !liked;
     setLiked(optimisticLiked);
@@ -52,22 +60,26 @@ export function FeedCardActions({
     if (navigator.share && isMobileLike) {
       try {
         await navigator.share({ url: shareUrl });
-        void fetch("/api/feed/share", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ postId }),
-          keepalive: true,
-        });
+        if (recordEngagement) {
+          void fetch("/api/feed/share", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ postId }),
+            keepalive: true,
+          });
+        }
         return;
       } catch {}
     }
     await navigator.clipboard.writeText(shareUrl);
-    void fetch("/api/feed/share", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ postId }),
-      keepalive: true,
-    });
+    if (recordEngagement) {
+      void fetch("/api/feed/share", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ postId }),
+        keepalive: true,
+      });
+    }
     toast.success("Bağlantı kopyalandı");
   };
 
@@ -109,20 +121,22 @@ export function FeedCardActions({
           <span className="inline-flex shrink-0 items-center rounded-lg px-1.5 text-xs font-semibold text-[#1A1A1A]/65">
             Hype Puanı: <span className="ml-1 tabular-nums text-[#1A1A1A]">{hypeScore}</span>
           </span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              void onLike();
-            }}
-            className={`inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-medium transition ${
-              liked ? "text-[#dc2626]" : "text-[#6b7280]"
-            } ${animating ? "scale-110" : "scale-100"} opacity-80 hover:opacity-100`}
-          >
-            <span aria-hidden>❤️</span>
-            <span>{liveLikeCount ?? likeCount}</span>
-          </button>
+          {likesEnabled ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void onLike();
+              }}
+              className={`inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-medium transition ${
+                liked ? "text-[#dc2626]" : "text-[#6b7280]"
+              } ${animating ? "scale-110" : "scale-100"} opacity-80 hover:opacity-100`}
+            >
+              <span aria-hidden>❤️</span>
+              <span>{liveLikeCount ?? likeCount}</span>
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={(e) => {
@@ -140,7 +154,7 @@ export function FeedCardActions({
           href={targetUrl}
           className="inline-flex min-h-9 shrink-0 items-center rounded-xl bg-[#0B3C5D] px-3.5 py-2 text-xs font-semibold text-white shadow-[0_6px_14px_rgba(11,60,93,0.25)] hover:bg-[#0A3552]"
         >
-          Detayı Gör
+          {detailCtaLabel}
         </Link>
       </div>
     </div>

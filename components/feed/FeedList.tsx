@@ -39,7 +39,7 @@ export function FeedList({ initialItems, hasMoreInitial, adPool, queryString, ha
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useFeedLikesRealtime({
-    postIds: items.map((x) => x.id),
+    postIds: items.filter((x) => x.type === "blog").map((x) => x.id),
     onCount: (postId, count) => {
       setLiveLikeMap((prev) => ({ ...prev, [postId]: count }));
     },

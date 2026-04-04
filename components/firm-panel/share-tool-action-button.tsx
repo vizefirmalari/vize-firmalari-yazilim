@@ -7,7 +7,7 @@ import { recordFirmPanelShareAction } from "@/lib/actions/firm-panel-share";
 
 type Props = {
   firmId: string;
-  tool: "blog" | "post" | "campaign" | "video";
+  tool: "campaign" | "video";
   actionLabel: string;
   disabled?: boolean;
 };
@@ -22,8 +22,6 @@ export function ShareToolActionButton({ firmId, tool, actionLabel, disabled = fa
     setMessage(null);
     startTransition(async () => {
       const titleByTool: Record<Props["tool"], string> = {
-        blog: "Panelden blog paylaşımı",
-        post: "Panelden gönderi paylaşımı",
         campaign: "Panelden kampanya paylaşımı",
         video: "Panelden video paylaşımı",
       };

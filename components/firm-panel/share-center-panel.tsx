@@ -1,5 +1,8 @@
-import { ShareToolActionButton } from "@/components/firm-panel/share-tool-action-button";
+"use client";
+
 import Link from "next/link";
+
+import { ShareToolActionButton } from "@/components/firm-panel/share-tool-action-button";
 
 type ShareCenterTool = {
   id: "blog" | "video" | "post" | "campaign";
@@ -62,18 +65,19 @@ const TOOLS: readonly ShareCenterTool[] = [
   },
   {
     id: "post",
-    title: "Gönderi Paylaş",
+    title: "Akış Gönderisi",
     status: "Hazır",
-    description: "Kısa duyurular, güncellemeler ve firma görünürlüğü için hızlı paylaşım alanı.",
+    description:
+      "Kısa duyuru, güncelleme veya görselli akış gönderisi oluşturun. Gönderi yalnızca yayınlandığında akışta görünür ve hype puanınıza katkı sağlar.",
     advantage: [
-      "Hızlı yayınlama",
-      "Akışta aktif görünme",
-      "Firma adınızı ve logonuzu daha sık gösterme",
-      "Güncel kalma hissi verme",
+      "Taslak kaydı ve yayın ayrımı",
+      "Metin, görsel, bağlantı ve etiket desteği",
+      "Yayında +25 hype (gönderi başına bir kez)",
+      "Blogdan daha hafif, akış odaklı düzen",
     ],
     dailyLimit: "Günde 10 adet",
     hypePoints: 25,
-    actionLabel: "Gönderi paylaş",
+    actionLabel: "Gönderi oluştur",
   },
   {
     id: "campaign",
@@ -115,12 +119,6 @@ function StatusBadge({
 }
 
 function ShareToolCard({ firmId, tool }: { firmId: string; tool: ShareCenterTool }) {
-  const toolTypeMap: Record<ShareCenterTool["id"], "blog" | "post" | "campaign" | "video"> = {
-    blog: "blog",
-    post: "post",
-    campaign: "campaign",
-    video: "video",
-  };
   return (
     <article className="group relative overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(11,60,93,0.1)] sm:p-5">
       <div className="pointer-events-none absolute -right-8 -top-10 h-20 w-20 rounded-full bg-[#0B3C5D]/6 transition group-hover:scale-110" />
@@ -174,15 +172,27 @@ function ShareToolCard({ firmId, tool }: { firmId: string; tool: ShareCenterTool
             >
               {tool.actionLabel}
             </Link>
+          ) : tool.id === "post" ? (
+            <Link
+              href={`/firma-panel/${firmId}/gonderi-olustur`}
+              className={`inline-flex min-h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                tool.disabled
+                  ? "pointer-events-none border border-[#1A1A1A]/15 bg-[#EEF1F4] text-[#1A1A1A]/55"
+                  : "bg-[#0B3C5D] text-white hover:bg-[#0A3552]"
+              }`}
+              aria-disabled={tool.disabled}
+            >
+              {tool.actionLabel}
+            </Link>
           ) : (
             <ShareToolActionButton
               firmId={firmId}
-              tool={toolTypeMap[tool.id]}
+              tool={tool.id === "campaign" ? "campaign" : "video"}
               actionLabel={tool.actionLabel}
               disabled={tool.disabled}
             />
           )}
-          {!tool.disabled && tool.id !== "blog" ? (
+          {!tool.disabled && tool.id !== "blog" && tool.id !== "post" ? (
             <p className="mt-1 text-[11px] text-[#1A1A1A]/55">
               Bu işlem şu an demo paylaşım kaydı oluşturur ve hype puanını senkron günceller.
             </p>

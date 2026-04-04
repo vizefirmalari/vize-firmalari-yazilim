@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-type ShareToolType = "blog" | "post" | "campaign" | "video";
+type ShareToolType = "campaign" | "video";
 
 export async function recordFirmPanelShareAction(input: {
   firmId: string;
@@ -16,7 +16,7 @@ export async function recordFirmPanelShareAction(input: {
   if (!firmId) return { ok: false, error: "Geçersiz firma." };
 
   const tool = input.tool;
-  if (!["blog", "post", "campaign", "video"].includes(tool)) {
+  if (!["campaign", "video"].includes(tool)) {
     return { ok: false, error: "Geçersiz paylaşım türü." };
   }
 
