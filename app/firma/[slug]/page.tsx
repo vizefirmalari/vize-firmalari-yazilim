@@ -17,18 +17,16 @@ import {
   normalizeLegacyServiceLabels,
   SPECIALIZATION_OPTIONS,
 } from "@/lib/constants/firm-specializations";
-import { PLATFORM_WHATSAPP_PHONE, PLATFORM_WHATSAPP_URL } from "@/lib/constants/contact";
-import { QuickApplyLauncher } from "@/components/quick-apply/quick-apply-launcher";
+import { buildWhatsappWaMeUrl } from "@/lib/contact/whatsapp-wa-me";
+import {
+  QuickApplyInactiveButton,
+  QuickApplyLauncher,
+} from "@/components/quick-apply/quick-apply-launcher";
 import { buildQuickApplyExpertiseLine, buildQuickApplySubtitle } from "@/lib/quick-apply/firm-intro-branding";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
-
-function whatsappHref(raw: string): string {
-  void raw;
-  return PLATFORM_WHATSAPP_URL;
-}
 
 export async function generateStaticParams() {
   const slugs = await getAllFirmSlugs();
@@ -145,6 +143,8 @@ export default async function FirmaPage({ params }: PageProps) {
 
   const showPhone = firm.show_phone !== false;
   const showWhatsapp = firm.show_whatsapp !== false;
+  const firmWhatsappLabel = firm.whatsapp?.trim() ?? "";
+  const firmWhatsappHref = firmWhatsappLabel ? buildWhatsappWaMeUrl(firmWhatsappLabel) : null;
   const showEmail = firm.show_email !== false;
   const showWebsite = firm.show_website !== false;
   const showAddress = firm.show_address !== false;
@@ -583,9 +583,7 @@ export default async function FirmaPage({ params }: PageProps) {
                       buttonClassName="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-center text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
                     />
                   ) : (
-                    <span className="flex items-center justify-center rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/80 py-2.5 text-center text-xs text-[#1A1A1A]/45">
-                      Aktif Değil
-                    </span>
+                    <QuickApplyInactiveButton />
                   )}
                 </div>
               </div>
@@ -596,9 +594,7 @@ export default async function FirmaPage({ params }: PageProps) {
                     id="iletisim"
                     className="scroll-mt-28 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-6"
                   >
-                  <h2 className="text-lg font-semibold text-[#0B3C5D]">
-                    İletişim ({PLATFORM_WHATSAPP_PHONE} - WhatsApp)
-                  </h2>
+                  <h2 className="text-lg font-semibold text-[#0B3C5D]">İletişim</h2>
                   <ul className="mt-4 space-y-3 text-sm">
                   {showPhone && firm.phone ? (
                     <li>
@@ -613,19 +609,23 @@ export default async function FirmaPage({ params }: PageProps) {
                       </a>
                     </li>
                   ) : null}
-                  {showWhatsapp && firm.whatsapp ? (
+                  {showWhatsapp && firmWhatsappLabel ? (
                     <li>
                       <span className="font-medium text-[#1A1A1A]/55">
                         WhatsApp
                       </span>
-                      <a
-                        href={whatsappHref(firm.whatsapp)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-1 block font-semibold text-[#328CC1] hover:underline"
-                      >
-                        {PLATFORM_WHATSAPP_PHONE} (WhatsApp)
-                      </a>
+                      {firmWhatsappHref ? (
+                        <a
+                          href={firmWhatsappHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 block font-semibold text-[#328CC1] hover:underline"
+                        >
+                          {firmWhatsappLabel}
+                        </a>
+                      ) : (
+                        <span className="mt-1 block font-semibold text-[#1A1A1A]/80">{firmWhatsappLabel}</span>
+                      )}
                     </li>
                   ) : null}
                   {showEmail && firm.email ? (

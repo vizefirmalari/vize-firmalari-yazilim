@@ -146,3 +146,6 @@ premium
 SEO açısından güçlü
 ticari başarıya uygun
 Amaç yalnızca çalışan bir sistem üretmek değil, rakiplerinden daha güçlü görünen ve daha iyi çalışan bir dijital ürün oluşturmaktır.
+16) Firma verisi ve platform iletişimi
+Yönetim panelinden girilen firma bilgilerine (iletişim, WhatsApp, metinler vb.) asla platform varsayılanı veya genel iletişim numarası karıştırılmamalı; firma her yerde kendi kaydıyla listelenir ve gösterilir.
+`PLATFORM_WHATSAPP_PHONE` / `PLATFORM_WHATSAPP_URL` yalnızca site footer sosyal ikonları ve açıkça kurumsal platform sayfaları için kullanılır; firma kartı, firma detay, firma modalları veya firma tipinde veri gösteren bileşenlerde kullanılmamalıdır.

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SITE_HEADER_LOGO_URL } from "@/lib/constants";
-import { PLATFORM_WHATSAPP_URL } from "@/lib/constants/contact";
+import { PLATFORM_WHATSAPP_PHONE, PLATFORM_WHATSAPP_URL } from "@/lib/constants/contact";
 import { siteLogoAltText } from "@/lib/seo/defaults";
 
 const BRAND_DESCRIPTION_LINES =
@@ -307,7 +307,7 @@ export function SiteFooter() {
                 </SocialIconLink>
                 <SocialIconLink
                   href={PLATFORM_WHATSAPP_URL}
-                  label="WhatsApp — Vize Firmaları"
+                  label={`WhatsApp — Vize Firmaları (${PLATFORM_WHATSAPP_PHONE})`}
                 >
                   <WhatsAppGlyph className="h-5 w-5" />
                 </SocialIconLink>

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useId, useMemo, useState } from "react";
-import { PLATFORM_WHATSAPP_PHONE, PLATFORM_WHATSAPP_URL } from "@/lib/constants/contact";
+import { buildWhatsappWaMeUrl } from "@/lib/contact/whatsapp-wa-me";
 
 type FirmContactData = {
   slug: string;
@@ -26,11 +26,6 @@ function websiteHref(raw: string): string {
   if (!t) return "#";
   if (/^https?:\/\//i.test(t)) return t;
   return `https://${t}`;
-}
-
-function whatsappHref(raw: string): string {
-  void raw;
-  return PLATFORM_WHATSAPP_URL;
 }
 
 export function FirmContactSheet({ firm }: { firm: FirmContactData }) {
@@ -59,6 +54,9 @@ export function FirmContactSheet({ firm }: { firm: FirmContactData }) {
     [firm]
   );
 
+  const waLabel = firm.whatsapp?.trim() ?? "";
+  const waHref = waLabel ? buildWhatsappWaMeUrl(waLabel) : null;
+
   return (
     <>
       <button
@@ -66,7 +64,7 @@ export function FirmContactSheet({ firm }: { firm: FirmContactData }) {
         onClick={() => setOpen(true)}
         className="rounded-xl bg-[#0B3C5D] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0A3552]"
       >
-        Firma iletişim ({PLATFORM_WHATSAPP_PHONE} - WhatsApp)
+        Firma iletişim
       </button>
 
       {open ? (
@@ -126,10 +124,14 @@ export function FirmContactSheet({ firm }: { firm: FirmContactData }) {
                 <p className="text-xs font-semibold uppercase tracking-wide text-[#0B3C5D]/70">İletişim Bilgileri</p>
                 <div className="mt-2 grid gap-2 text-sm text-[#1A1A1A]/80">
                   {firm.phone ? <a href={`tel:${firm.phone.replace(/\s/g, "")}`} className="hover:underline">Telefon: {firm.phone}</a> : null}
-                  {firm.whatsapp ? (
-                    <a href={whatsappHref(firm.whatsapp)} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                      WhatsApp: {PLATFORM_WHATSAPP_PHONE}
-                    </a>
+                  {waLabel ? (
+                    waHref ? (
+                      <a href={waHref} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        WhatsApp: {waLabel}
+                      </a>
+                    ) : (
+                      <span>WhatsApp: {waLabel}</span>
+                    )
                   ) : null}
                   {firm.email ? <a href={`mailto:${firm.email}`} className="break-all hover:underline">E-posta: {firm.email}</a> : null}
                   {firm.website ? (

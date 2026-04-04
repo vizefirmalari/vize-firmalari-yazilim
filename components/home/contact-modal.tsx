@@ -2,18 +2,13 @@
 
 import { useEffect, useId } from "react";
 import type { FirmRow } from "@/lib/types/firm";
-import { PLATFORM_WHATSAPP_PHONE, PLATFORM_WHATSAPP_URL } from "@/lib/constants/contact";
+import { buildWhatsappWaMeUrl } from "@/lib/contact/whatsapp-wa-me";
 
 type ContactModalProps = {
   firm: FirmRow;
   open: boolean;
   onClose: () => void;
 };
-
-function whatsappHref(raw: string): string {
-  void raw;
-  return PLATFORM_WHATSAPP_URL;
-}
 
 function websiteHref(raw: string): string {
   const t = raw.trim();
@@ -35,6 +30,9 @@ export function ContactModal({ firm, open, onClose }: ContactModalProps) {
   }, [open, onClose]);
 
   if (!open) return null;
+
+  const waLabel = firm.whatsapp?.trim() ?? "";
+  const waHref = waLabel ? buildWhatsappWaMeUrl(waLabel) : null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center">
@@ -86,14 +84,18 @@ export function ContactModal({ firm, open, onClose }: ContactModalProps) {
               <p className="text-xs font-medium uppercase tracking-wide text-[#1A1A1A]/50">
                 WhatsApp
               </p>
-              <a
-                href={whatsappHref(firm.whatsapp)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1 inline-flex text-base font-medium text-[#328CC1] underline-offset-4 hover:underline"
-              >
-                {PLATFORM_WHATSAPP_PHONE} (WhatsApp)
-              </a>
+              {waHref ? (
+                <a
+                  href={waHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex text-base font-medium text-[#328CC1] underline-offset-4 hover:underline"
+                >
+                  {waLabel}
+                </a>
+              ) : (
+                <span className="mt-1 inline-flex text-base font-medium text-[#1A1A1A]/80">{waLabel}</span>
+              )}
             </li>
           ) : null}
           {firm.email && firm.show_email !== false ? (

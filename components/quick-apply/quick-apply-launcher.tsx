@@ -11,6 +11,26 @@ import {
   type WizardDraftPayload,
 } from "@/lib/quick-apply/wizard-draft";
 
+/** Hızlı başvuru kapalı firmalar: aktif butonla aynı hücre düzeni, pasif + rozet. */
+export function QuickApplyInactiveButton({ className }: { className?: string }) {
+  return (
+    <button
+      type="button"
+      disabled
+      aria-label="Hızlı Başvur bu firma için şu anda kullanılamıyor"
+      className={
+        className ??
+        "flex min-h-11 w-full cursor-not-allowed flex-col items-center justify-center gap-0.5 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/90 py-2.5 text-center opacity-95"
+      }
+    >
+      <span className="text-sm font-semibold text-[#1A1A1A]/48">Hızlı Başvur</span>
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-[#1A1A1A]/40">
+        Aktif Değil
+      </span>
+    </button>
+  );
+}
+
 type LauncherProps = {
   firmId: string;
   firmName: string;
@@ -57,6 +77,7 @@ export function QuickApplyLauncher({
   }, [firmId, upgradeOnly]);
 
   const openWizard = async () => {
+    if (disabled) return;
     if (upgradeOnly) {
       setUpgradeOpen(true);
       return;

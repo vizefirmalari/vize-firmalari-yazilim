@@ -7,7 +7,10 @@ import type { FirmRow } from "@/lib/types/firm";
 import { FirmPrimaryLeftCta } from "@/components/firma/firm-primary-left-cta";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
 import { resolveFirmCoverageDisplay } from "@/lib/firma/resolve-firm-coverage";
-import { QuickApplyLauncher } from "@/components/quick-apply/quick-apply-launcher";
+import {
+  QuickApplyInactiveButton,
+  QuickApplyLauncher,
+} from "@/components/quick-apply/quick-apply-launcher";
 import { buildQuickApplyExpertiseLine, buildQuickApplySubtitle } from "@/lib/quick-apply/firm-intro-branding";
 import {
   ServiceSummaryChip,
@@ -317,9 +320,7 @@ export function FirmCard({ firm }: FirmCardProps) {
             buttonClassName="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
           />
         ) : (
-          <span className="flex items-center justify-center rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/80 py-2.5 text-center text-xs text-[#1A1A1A]/45">
-            Aktif Değil
-          </span>
+          <QuickApplyInactiveButton />
         )}
       </div>
 
