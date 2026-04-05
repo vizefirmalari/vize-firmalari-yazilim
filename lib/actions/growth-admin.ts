@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireAdmin } from "@/lib/auth/admin";
+import { sendChatMessage } from "@/lib/actions/chat-message";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { slugifyGrowth } from "@/lib/slug/growth-slug";
 
@@ -187,10 +188,35 @@ export async function adminSaveGrowthService(input: {
   return { ok: true, id };
 }
 
-export async function adminSetGrowthPurchaseRequest(input: {
+export type AdminGrowthPurchaseStatus =
+  | "pending"
+  | "under_review"
+  | "approved"
+  | "activated"
+  | "completed"
+  | "cancelled";
+
+export type AdminGrowthPaymentStatus = "waiting" | "reported" | "verified" | "rejected";
+
+function revalidateGrowthPurchasePaths(firmId: string | null | undefined, purchaseId?: string) {
+  revalidatePath("/admin");
+  revalidatePath("/admin/growth/purchase-requests");
+  if (purchaseId) {
+    revalidatePath(`/admin/growth/purchase-requests/${purchaseId}`);
+  }
+  if (firmId) {
+    revalidatePath(`/panel/${firmId}/abonelik`);
+    revalidatePath(`/panel/${firmId}/satinalma-gecmisi`);
+    if (purchaseId) {
+      revalidatePath(`/panel/${firmId}/satinalma-gecmisi/${purchaseId}`);
+    }
+  }
+}
+
+export async function adminPatchGrowthPurchaseRequest(input: {
   id: string;
-  status: "pending" | "approved" | "rejected";
-  payment_status: "waiting" | "paid";
+  status?: AdminGrowthPurchaseStatus;
+  payment_status?: AdminGrowthPaymentStatus;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const supabase = await adminDb();
   if (!supabase) return { ok: false, error: "Bağlantı yok." };
@@ -201,22 +227,43 @@ export async function adminSetGrowthPurchaseRequest(input: {
     .eq("id", input.id)
     .maybeSingle();
 
-  const { error } = await supabase
-    .from("growth_purchase_requests")
-    .update({
-      status: input.status,
-      payment_status: input.payment_status,
-    })
-    .eq("id", input.id);
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (input.status !== undefined) patch.status = input.status;
+  if (input.payment_status !== undefined) patch.payment_status = input.payment_status;
+
+  const { error } = await supabase.from("growth_purchase_requests").update(patch).eq("id", input.id);
 
   if (error) return { ok: false, error: "Güncellenemedi." };
-  revalidatePath("/admin/growth/purchase-requests");
-  if (row?.firm_id) {
-    revalidatePath(`/panel/${row.firm_id}/abonelik`);
-  }
+  revalidateGrowthPurchasePaths(row?.firm_id as string | undefined, input.id);
   return { ok: true };
 }
 
+/** @deprecated Eski API; yeni ekranlar adminPatchGrowthPurchaseRequest kullanır */
+export async function adminSetGrowthPurchaseRequest(input: {
+  id: string;
+  status: "pending" | "approved" | "rejected";
+  payment_status: "waiting" | "paid";
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const statusMap: Record<string, AdminGrowthPurchaseStatus> = {
+    pending: "pending",
+    approved: "approved",
+    rejected: "cancelled",
+  };
+  const payMap: Record<string, AdminGrowthPaymentStatus> = {
+    waiting: "waiting",
+    paid: "verified",
+  };
+  return adminPatchGrowthPurchaseRequest({
+    id: input.id,
+    status: statusMap[input.status] ?? "pending",
+    payment_status: payMap[input.payment_status] ?? "waiting",
+  });
+}
+
+/**
+ * Abonelikli hizmet: firm_service_subscriptions + talep activated.
+ * Tek seferlik: abonelik satırı oluşturmadan talep completed + ödeme verified.
+ */
 export async function adminActivateGrowthFromPurchase(
   purchaseRequestId: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -225,49 +272,127 @@ export async function adminActivateGrowthFromPurchase(
 
   const { data: req, error: rErr } = await supabase
     .from("growth_purchase_requests")
-    .select("id,firm_id,service_id,service_title,setup_price_snapshot,monthly_price_snapshot,status")
+    .select(
+      "id,firm_id,service_id,service_title,setup_price_snapshot,monthly_price_snapshot,is_subscription,status"
+    )
     .eq("id", purchaseRequestId)
     .maybeSingle();
 
   if (rErr || !req) return { ok: false, error: "Talep bulunamadı." };
-
-  const today = new Date().toISOString().slice(0, 10);
-
-  const { error: sErr } = await supabase.from("firm_service_subscriptions").insert({
-    firm_id: req.firm_id as string,
-    service_id: req.service_id as string,
-    service_title: req.service_title as string,
-    setup_price_snapshot: req.setup_price_snapshot as number | null,
-    monthly_price_snapshot: req.monthly_price_snapshot as number | null,
-    status: "active",
-    start_date: today,
-    end_date: null,
-    purchase_request_id: purchaseRequestId,
-  });
-
-  if (sErr) {
-    if (sErr.code === "23505") {
-      return { ok: false, error: "Bu firma için bu hizmette zaten aktif abonelik var." };
-    }
-    return { ok: false, error: "Abonelik oluşturulamadı." };
+  if (req.status === "cancelled") {
+    return { ok: false, error: "İptal edilmiş talep için işlem yapılamaz." };
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+  const isSub = Boolean(req.is_subscription);
+
+  if (isSub) {
+    const billingCycle =
+      (req.monthly_price_snapshot as number | null) != null &&
+      (req.monthly_price_snapshot as number) > 0
+        ? "monthly"
+        : "once";
+
+    const { error: sErr } = await supabase.from("firm_service_subscriptions").insert({
+      firm_id: req.firm_id as string,
+      service_id: req.service_id as string,
+      service_title: req.service_title as string,
+      setup_price_snapshot: req.setup_price_snapshot as number | null,
+      monthly_price_snapshot: req.monthly_price_snapshot as number | null,
+      billing_cycle: billingCycle,
+      status: "active",
+      start_date: today,
+      end_date: null,
+      purchase_request_id: purchaseRequestId,
+    });
+
+    if (sErr) {
+      if (sErr.code === "23505") {
+        return { ok: false, error: "Bu firma için bu hizmette zaten aktif abonelik var." };
+      }
+      return { ok: false, error: "Abonelik oluşturulamadı." };
+    }
+  }
+
+  const nextStatus: AdminGrowthPurchaseStatus = isSub ? "activated" : "completed";
   const { error: uErr } = await supabase
     .from("growth_purchase_requests")
-    .update({ status: "approved", payment_status: "paid" })
+    .update({
+      status: nextStatus,
+      payment_status: "verified",
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", purchaseRequestId);
 
-  if (uErr) return { ok: false, error: "Talep güncellenemedi (abonelik oluşturuldu; talebi elle kontrol edin)." };
+  if (uErr) {
+    return { ok: false, error: "Talep güncellenemedi (kayıtları kontrol edin)." };
+  }
 
-  revalidatePath("/admin/growth/purchase-requests");
   revalidatePath("/admin/growth/subscriptions");
-  revalidatePath(`/panel/${req.firm_id as string}/abonelik`);
+  revalidateGrowthPurchasePaths(req.firm_id as string, purchaseRequestId);
+  return { ok: true };
+}
+
+export async function adminMarkGrowthPurchaseNotificationsRead(
+  purchaseId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await adminDb();
+  if (!supabase) return { ok: false, error: "Bağlantı yok." };
+
+  const { error } = await supabase
+    .from("admin_notifications")
+    .update({ is_read: true })
+    .eq("related_purchase_id", purchaseId);
+
+  if (error) return { ok: false, error: "Bildirim güncellenemedi." };
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+export async function adminSendGrowthPurchaseChatMessage(input: {
+  firmId: string;
+  purchaseId: string;
+  body: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await adminDb();
+  if (!supabase) return { ok: false, error: "Bağlantı yok." };
+
+  const { data: pr, error: pErr } = await supabase
+    .from("growth_purchase_requests")
+    .select("id,firm_id")
+    .eq("id", input.purchaseId)
+    .eq("firm_id", input.firmId)
+    .maybeSingle();
+
+  if (pErr || !pr) return { ok: false, error: "Talep bulunamadı." };
+
+  const { error: rpcErr } = await supabase.rpc("ensure_firm_admin_conversation", {
+    p_firm_id: input.firmId,
+  });
+  if (rpcErr) return { ok: false, error: "Sohbet kanalı açılamadı." };
+
+  const { data: conv, error: cErr } = await supabase
+    .from("conversations")
+    .select("id")
+    .eq("firm_id", input.firmId)
+    .eq("kind", "firm_admin")
+    .maybeSingle();
+
+  if (cErr || !conv?.id) return { ok: false, error: "Sohbet bulunamadı." };
+
+  const res = await sendChatMessage(String(conv.id), input.body, {
+    relatedGrowthPurchaseId: input.purchaseId,
+  });
+  if (!res.ok) return { ok: false, error: res.error };
+
+  revalidatePath("/admin/firm-admin-messages");
+  revalidatePath(`/panel/${input.firmId}/yonetici-mesaj`);
   return { ok: true };
 }
 
 export async function adminUpdateFirmServiceSubscription(input: {
   id: string;
-  status?: "active" | "passive" | "waiting";
+  status?: "active" | "paused" | "pending" | "expired" | "cancelled";
   start_date?: string | null;
   end_date?: string | null;
 }): Promise<{ ok: true } | { ok: false; error: string }> {

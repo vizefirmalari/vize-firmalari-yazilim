@@ -13,9 +13,16 @@ type Props = {
   conversationId: string;
   currentUserId: string;
   initialMessages: MessageWithAttachment[];
+  purchaseContext?: { id: string; serviceTitle: string } | null;
 };
 
-export function FirmAdminMessagesShell({ firmId, conversationId, currentUserId, initialMessages }: Props) {
+export function FirmAdminMessagesShell({
+  firmId,
+  conversationId,
+  currentUserId,
+  initialMessages,
+  purchaseContext,
+}: Props) {
   const router = useRouter();
 
   const onInboxPing = useCallback(() => {
@@ -45,6 +52,18 @@ export function FirmAdminMessagesShell({ firmId, conversationId, currentUserId, 
         </aside>
 
         <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {purchaseContext ? (
+            <div className="border-b border-[#0B3C5D]/10 bg-[#F7F9FB] px-4 py-3 text-xs text-[#1A1A1A]/70 lg:px-5">
+              <p className="font-semibold text-[#0B3C5D]">Satın alma bağlamı</p>
+              <p className="mt-1">
+                {purchaseContext.serviceTitle}
+                <span className="ml-2 font-mono text-[11px] text-[#1A1A1A]/50">#{purchaseContext.id.slice(0, 8)}</span>
+              </p>
+              <p className="mt-1 text-[#1A1A1A]/55">
+                Bu sohbet tek kanaldır; mesajlarınızda talep numarasını belirtmeniz yeterli.
+              </p>
+            </div>
+          ) : null}
           {currentUserId ? (
             <ConversationThreadView
               conversationId={conversationId}

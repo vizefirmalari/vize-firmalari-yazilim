@@ -105,7 +105,7 @@ function SubscriptionRow({ row, onDone }: { row: SubRow; onDone: () => void }) {
             startTransition(async () => {
               const res = await adminUpdateFirmServiceSubscription({
                 id: row.id,
-                status: "passive",
+                status: "paused",
               });
               if (res.ok) onDone();
               else alert(res.error);

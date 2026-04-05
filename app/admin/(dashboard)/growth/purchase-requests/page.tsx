@@ -18,16 +18,16 @@ export default async function AdminGrowthPurchaseRequestsPage() {
   const { data } = await supabase
     .from("growth_purchase_requests")
     .select(
-      "id,firm_id,service_title,status,payment_status,created_at,billing_full_name,billing_email,billing_phone,transfer_description,firms(name)"
+      "id,firm_id,service_title,status,payment_status,is_subscription,created_at,billing_full_name,billing_email,billing_phone,transfer_description,firms(name,logo_url)"
     )
     .order("created_at", { ascending: false });
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-[#0B3C5D]">Satın alma talepleri</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-[#0B3C5D]">Yeni hizmet satın alımları</h1>
         <p className="mt-1 text-sm text-[#1A1A1A]/60">
-          Onay / red / ödeme durumu ve tek tıkla aktif abonelik oluşturma.
+          Talepler, fatura bilgileri ve ödeme durumu; detaydan tam operasyon ve firmaya mesaj.
         </p>
       </div>
       <GrowthPurchaseRequestsTable rows={(data ?? []) as Record<string, unknown>[]} />

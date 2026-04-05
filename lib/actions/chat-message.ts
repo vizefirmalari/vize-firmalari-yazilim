@@ -5,7 +5,11 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 /**
  * Metin mesajı gönderir; RLS katılımcı ve sender_id doğrular.
  */
-export async function sendChatMessage(conversationId: string, body: string) {
+export async function sendChatMessage(
+  conversationId: string,
+  body: string,
+  options?: { relatedGrowthPurchaseId?: string | null }
+) {
   const text = body.trim();
   if (!text) {
     return { ok: false as const, error: "Mesaj boş olamaz." };
@@ -24,16 +28,16 @@ export async function sendChatMessage(conversationId: string, body: string) {
     return { ok: false as const, error: "Oturum gerekli." };
   }
 
-  const { data, error } = await supabase
-    .from("messages")
-    .insert({
-      conversation_id: conversationId,
-      sender_id: user.id,
-      kind: "text",
-      body: text,
-    })
-    .select("id")
-    .single();
+  const row: Record<string, unknown> = {
+    conversation_id: conversationId,
+    sender_id: user.id,
+    kind: "text",
+    body: text,
+  };
+  const pr = options?.relatedGrowthPurchaseId?.trim();
+  if (pr) row.related_growth_purchase_id = pr;
+
+  const { data, error } = await supabase.from("messages").insert(row).select("id").single();
 
   if (error) {
     return { ok: false as const, error: error.message };

@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 
 import { buildGrowthTransferDescription } from "@/lib/firm-panel/growth-transfer-description";
+import { getGrowthPaymentBankInfo } from "@/lib/firm-panel/growth-payment-config";
 import { loadGrowthServiceById } from "@/lib/data/growth-catalog";
+import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const MAX = {
@@ -15,6 +17,8 @@ const MAX = {
   phone: 40,
   address: 2000,
 } as const;
+
+const OPEN_PURCHASE_STATUSES = ["pending", "under_review", "approved"] as const;
 
 function normalizeTaxNumber(raw: string): string {
   return raw.replace(/\D/g, "");
@@ -42,6 +46,27 @@ export type GrowthPurchaseBillingInput = {
   phone: string;
   address: string;
 };
+
+function snapshotPayload(input: {
+  categoryName: string | null;
+  companyName: string;
+  companyLogoUrl: string | null;
+  shortDescription: string | null;
+  isSubscription: boolean;
+  bank: ReturnType<typeof getGrowthPaymentBankInfo>;
+}) {
+  return {
+    category_snapshot: input.categoryName,
+    company_name_snapshot: input.companyName,
+    company_logo_snapshot: input.companyLogoUrl,
+    service_short_description_snapshot: input.shortDescription,
+    is_subscription: input.isSubscription,
+    payment_iban_snapshot: input.bank.iban,
+    payment_receiver_name_snapshot: input.bank.accountHolder,
+    payment_bank_name_snapshot: input.bank.bankName,
+    payment_type_label: "Banka havalesi / EFT",
+  };
+}
 
 export async function submitGrowthPurchaseRequest(input: {
   firmId: string;
@@ -88,9 +113,11 @@ export async function submitGrowthPurchaseRequest(input: {
     return { ok: false, error: "Fatura adresi gerekli." };
   }
 
+  await requireFirmPanelAccess(input.firmId);
+
   const { data: firmRow, error: fErr } = await supabase
     .from("firms")
-    .select("name")
+    .select("name,logo_url")
     .eq("id", input.firmId)
     .maybeSingle();
 
@@ -99,13 +126,31 @@ export async function submitGrowthPurchaseRequest(input: {
   }
 
   const firmDisplayName = String(firmRow.name).trim() || "Firma";
+  const firmLogoUrl = firmRow.logo_url != null ? String(firmRow.logo_url) : null;
 
   const service = await loadGrowthServiceById(supabase, input.serviceId);
   if (!service || !service.is_active) {
     return { ok: false, error: "Bu hizmet şu an satışa kapalı." };
   }
 
+  const { data: catRow } = await supabase
+    .from("growth_service_categories")
+    .select("name")
+    .eq("id", service.category_id)
+    .maybeSingle();
+
+  const categoryName = catRow?.name != null ? String(catRow.name).trim() : null;
+  const bank = getGrowthPaymentBankInfo();
   const transferDescription = buildGrowthTransferDescription(service.title, firmDisplayName);
+  const isSubscription = (service.monthly_price ?? 0) > 0;
+  const snaps = snapshotPayload({
+    categoryName,
+    companyName: firmDisplayName,
+    companyLogoUrl: firmLogoUrl,
+    shortDescription: service.short_description?.trim() || null,
+    isSubscription,
+    bank,
+  });
 
   const billingPayload = {
     billing_full_name: fullName,
@@ -123,7 +168,7 @@ export async function submitGrowthPurchaseRequest(input: {
     .select("id")
     .eq("firm_id", input.firmId)
     .eq("service_id", input.serviceId)
-    .eq("status", "pending")
+    .in("status", [...OPEN_PURCHASE_STATUSES])
     .maybeSingle();
 
   if (pErr) {
@@ -135,6 +180,7 @@ export async function submitGrowthPurchaseRequest(input: {
       .from("growth_purchase_requests")
       .update({
         ...billingPayload,
+        ...snaps,
         service_title: service.title,
         setup_price_snapshot: service.setup_price,
         monthly_price_snapshot: service.monthly_price,
@@ -147,6 +193,9 @@ export async function submitGrowthPurchaseRequest(input: {
     }
     revalidatePath(`/panel/${input.firmId}/abonelik`);
     revalidatePath(`/panel/${input.firmId}/isini-buyut`);
+    revalidatePath(`/panel/${input.firmId}/satinalma-gecmisi`);
+    revalidatePath("/admin/growth/purchase-requests");
+    revalidatePath("/admin");
     return { ok: true };
   }
 
@@ -160,16 +209,61 @@ export async function submitGrowthPurchaseRequest(input: {
     payment_status: "waiting",
     firm_note: null,
     ...billingPayload,
+    ...snaps,
   });
 
   if (iErr) {
     if (iErr.code === "23505") {
-      return { ok: false, error: "Bu hizmet için zaten bekleyen bir talebiniz var." };
+      return { ok: false, error: "Bu hizmet için zaten açık bir talebiniz var." };
     }
     return { ok: false, error: "Talep oluşturulamadı." };
   }
 
   revalidatePath(`/panel/${input.firmId}/abonelik`);
   revalidatePath(`/panel/${input.firmId}/isini-buyut`);
+  revalidatePath(`/panel/${input.firmId}/satinalma-gecmisi`);
+  revalidatePath("/admin/growth/purchase-requests");
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+/** Firma: havale yaptığını bildirir → ödeme durumu reported */
+export async function reportGrowthPaymentSubmitted(input: {
+  firmId: string;
+  purchaseId: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireFirmPanelAccess(input.firmId);
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "Oturum bağlantısı kurulamadı." };
+
+  const { data: row, error: qErr } = await supabase
+    .from("growth_purchase_requests")
+    .select("id,payment_status,status")
+    .eq("id", input.purchaseId)
+    .eq("firm_id", input.firmId)
+    .maybeSingle();
+
+  if (qErr || !row) return { ok: false, error: "Kayıt bulunamadı." };
+  if (row.status === "cancelled" || row.status === "completed") {
+    return { ok: false, error: "Bu talep için ödeme bildirimi yapılamaz." };
+  }
+  if (row.payment_status === "verified") {
+    return { ok: false, error: "Ödeme zaten doğrulanmış." };
+  }
+
+  const { error: uErr } = await supabase
+    .from("growth_purchase_requests")
+    .update({ payment_status: "reported", updated_at: new Date().toISOString() })
+    .eq("id", input.purchaseId)
+    .eq("firm_id", input.firmId);
+
+  if (uErr) return { ok: false, error: "Güncellenemedi." };
+
+  revalidatePath(`/panel/${input.firmId}/abonelik`);
+  revalidatePath(`/panel/${input.firmId}/satinalma-gecmisi`);
+  revalidatePath(`/panel/${input.firmId}/satinalma-gecmisi/${input.purchaseId}`);
+  revalidatePath("/admin/growth/purchase-requests");
+  revalidatePath(`/admin/growth/purchase-requests/${input.purchaseId}`);
+  revalidatePath("/admin");
   return { ok: true };
 }

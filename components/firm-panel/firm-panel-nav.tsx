@@ -17,6 +17,7 @@ function buildNavItems(firmId: string): NavItem[] {
     { href: `/panel/${firmId}/formlar`, label: "Gelen başvurular", icon: "▤" },
     { href: `/panel/${firmId}/paylasim`, label: "Paylaşım", icon: "✦" },
     { href: `/panel/${firmId}/isini-buyut`, label: "İşini Büyüt", icon: "↑" },
+    { href: `/panel/${firmId}/satinalma-gecmisi`, label: "Satın alma geçmişi", icon: "▣" },
     { href: `/panel/${firmId}/reklam`, label: "Reklam ver", icon: "◎" },
     { href: `/panel/${firmId}/abonelik`, label: "Abonelikler", icon: "◇" },
     { href: `/panel/${firmId}/hesap`, label: "Hesap güvenliği", icon: "⚙" },

@@ -1,6 +1,12 @@
 import Link from "next/link";
 
 import { growthPriceLineFromSnapshots } from "@/lib/format/try-lira";
+import {
+  growthBillingCycleLabel,
+  growthPaymentStatusLabel,
+  growthPurchaseStatusLabel,
+  growthServiceSubscriptionStatusLabel,
+} from "@/lib/growth/growth-purchase-labels";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
@@ -40,23 +46,24 @@ function billingDisplayName(bt: string): string {
 }
 
 function subStatusLabel(status: string): { label: string; tone: "ok" | "wait" | "muted" } {
-  if (status === "active") return { label: "Aktif", tone: "ok" };
-  if (status === "waiting") return { label: "Bekliyor", tone: "wait" };
-  if (status === "passive") return { label: "Pasif", tone: "muted" };
-  return { label: status, tone: "muted" };
+  const label = growthServiceSubscriptionStatusLabel(status);
+  if (status === "active") return { label, tone: "ok" };
+  if (status === "pending") return { label, tone: "wait" };
+  return { label, tone: "muted" };
 }
 
 function purchaseVisible(p: GrowthPurchaseRequestRow): boolean {
-  if (p.status === "pending") return true;
-  if (p.status === "approved" && p.payment_status === "waiting") return true;
+  if (["pending", "under_review", "approved"].includes(p.status)) return true;
+  if (p.status === "activated" && p.payment_status === "waiting") return true;
   return false;
 }
 
 function purchaseLabel(p: GrowthPurchaseRequestRow): { label: string; tone: "ok" | "wait" | "muted" } {
-  if (p.status === "rejected") return { label: "Reddedildi", tone: "muted" };
-  if (p.status === "pending") return { label: "Bekliyor", tone: "wait" };
-  if (p.payment_status === "waiting") return { label: "Onaylandı · ödeme bekleniyor", tone: "wait" };
-  return { label: "İşlemde", tone: "wait" };
+  if (p.status === "cancelled") return { label: growthPurchaseStatusLabel(p.status), tone: "muted" };
+  return {
+    label: `${growthPurchaseStatusLabel(p.status)} · ${growthPaymentStatusLabel(p.payment_status)}`,
+    tone: "wait",
+  };
 }
 
 export default async function FirmPanelSubscriptionsPage({ params }: PageProps) {
@@ -74,14 +81,14 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
       supabase
         .from("firm_service_subscriptions")
         .select(
-          "id,firm_id,service_id,service_title,setup_price_snapshot,monthly_price_snapshot,status,start_date,end_date,created_at"
+          "id,firm_id,service_id,service_title,setup_price_snapshot,monthly_price_snapshot,status,billing_cycle,start_date,end_date,purchase_request_id,created_at"
         )
         .eq("firm_id", firmId)
         .order("created_at", { ascending: false }),
       supabase
         .from("growth_purchase_requests")
         .select(
-          "id,firm_id,service_id,service_title,setup_price_snapshot,monthly_price_snapshot,status,payment_status,firm_note,billing_full_name,billing_email,billing_phone,transfer_description,created_at"
+          "id,firm_id,service_id,service_title,setup_price_snapshot,monthly_price_snapshot,status,payment_status,is_subscription,firm_note,billing_full_name,billing_email,billing_phone,transfer_description,created_at"
         )
         .eq("firm_id", firmId)
         .order("created_at", { ascending: false }),
@@ -156,13 +163,24 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
 
         {!hasGrowthActivity ? (
           <div className="mt-4 rounded-2xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-8 text-center">
-            <p className="text-sm font-medium text-[#1A1A1A]/70">Henüz aktif bir hizmetiniz bulunmuyor.</p>
-            <Link
-              href={`/panel/${firmId}/isini-buyut`}
-              className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0B3C5D] px-5 text-sm font-semibold text-white transition hover:bg-[#0A3552]"
-            >
-              İşini Büyüt
-            </Link>
+            <p className="text-sm font-medium text-[#1A1A1A]/70">Aktif aboneliğiniz bulunmuyor.</p>
+            <p className="mt-2 text-xs text-[#1A1A1A]/50">
+              Açık satın alma talebiniz yoksa aşağıdan vitrine gidebilir veya geçmiş kayıtlarınızı görüntüleyebilirsiniz.
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Link
+                href={`/panel/${firmId}/isini-buyut`}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0B3C5D] px-5 text-sm font-semibold text-white transition hover:bg-[#0A3552]"
+              >
+                İşini Büyüt
+              </Link>
+              <Link
+                href={`/panel/${firmId}/satinalma-gecmisi`}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#0B3C5D]/20 bg-white px-5 text-sm font-semibold text-[#0B3C5D] transition hover:bg-white"
+              >
+                Satın alma geçmişi
+              </Link>
+            </div>
           </div>
         ) : (
           <ul className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -181,6 +199,10 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
                 year: "numeric",
               });
               const pkg = growthPriceLineFromSnapshots(o.setup_price_snapshot, o.monthly_price_snapshot);
+              const cycle = o.billing_cycle || "monthly";
+              const adminMsgHref = o.purchase_request_id
+                ? `/panel/${firmId}/yonetici-mesaj?purchase=${encodeURIComponent(o.purchase_request_id)}`
+                : `/panel/${firmId}/yonetici-mesaj`;
               return (
                 <li
                   key={`sub-${o.id}`}
@@ -195,6 +217,10 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
                       <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${toneClass}`}>
                         {st.label}
                       </span>
+                    </p>
+                    <p className="mt-1 text-xs text-[#1A1A1A]/55">
+                      Yenileme:{" "}
+                      <span className="font-medium text-[#1A1A1A]/75">{growthBillingCycleLabel(cycle)}</span>
                     </p>
                     <p className="mt-2 text-xs text-[#1A1A1A]/55">
                       Başlangıç: <span className="font-medium text-[#1A1A1A]/75">{startLabel}</span>
@@ -221,10 +247,10 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
                       Detay
                     </Link>
                     <Link
-                      href={`/panel/${firmId}/yonetici-mesaj`}
+                      href={adminMsgHref}
                       className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-[#0B3C5D] px-3 text-sm font-semibold text-white transition hover:bg-[#0A3552]"
                     >
-                      Yönet
+                      Yönetici ile Mesajlaş
                     </Link>
                   </div>
                 </li>
@@ -290,10 +316,10 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
                       Detay
                     </Link>
                     <Link
-                      href={`/panel/${firmId}/yonetici-mesaj`}
+                      href={`/panel/${firmId}/yonetici-mesaj?purchase=${encodeURIComponent(o.id)}`}
                       className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-[#0B3C5D] px-3 text-sm font-semibold text-white transition hover:bg-[#0A3552]"
                     >
-                      Yönet
+                      Yönetici ile Mesajlaş
                     </Link>
                   </div>
                 </li>

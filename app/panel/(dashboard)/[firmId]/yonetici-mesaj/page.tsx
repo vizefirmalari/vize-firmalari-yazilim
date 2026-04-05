@@ -5,10 +5,14 @@ import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { MessageWithAttachment } from "@/lib/messaging/types";
 
-type PageProps = { params: Promise<{ firmId: string }> };
+type PageProps = {
+  params: Promise<{ firmId: string }>;
+  searchParams: Promise<{ purchase?: string }>;
+};
 
-export default async function FirmAdminChatPage({ params }: PageProps) {
+export default async function FirmAdminChatPage({ params, searchParams }: PageProps) {
   const { firmId } = await params;
+  const { purchase: purchaseParam } = await searchParams;
   await requireFirmPanelAccess(firmId);
 
   const supabase = await createSupabaseServerClient();
@@ -34,6 +38,20 @@ export default async function FirmAdminChatPage({ params }: PageProps) {
     }
   }
 
+  let purchaseContext: { id: string; serviceTitle: string } | null = null;
+  const purchaseId = purchaseParam?.trim();
+  if (purchaseId && supabase) {
+    const { data: pr } = await supabase
+      .from("growth_purchase_requests")
+      .select("id,service_title")
+      .eq("id", purchaseId)
+      .eq("firm_id", firmId)
+      .maybeSingle();
+    if (pr?.id && pr.service_title) {
+      purchaseContext = { id: String(pr.id), serviceTitle: String(pr.service_title) };
+    }
+  }
+
   if (!conversationId) {
     return (
       <div className="rounded-2xl border border-[#0B3C5D]/12 bg-white p-8 text-center shadow-sm">
@@ -50,6 +68,7 @@ export default async function FirmAdminChatPage({ params }: PageProps) {
       conversationId={conversationId}
       currentUserId={currentUserId}
       initialMessages={initialMessages}
+      purchaseContext={purchaseContext}
     />
   );
 }

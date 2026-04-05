@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+type SidebarProps = {
+  growthPurchaseUnreadCount?: number;
+};
+
 const nav = [
   { href: "/admin", label: "Genel Bakış", icon: "◎" },
   { href: "/admin/firms", label: "Firmalar", icon: "▤" },
@@ -23,7 +27,11 @@ const nav = [
   { href: "/admin/contact-popup", label: "İletişim popup", icon: "✉" },
 ];
 
-export function AdminSidebar() {
+function formatCompactBadge(count: number): string {
+  return count > 99 ? "99+" : String(count);
+}
+
+export function AdminSidebar({ growthPurchaseUnreadCount = 0 }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -55,7 +63,14 @@ export function AdminSidebar() {
               <span className="text-base opacity-80" aria-hidden>
                 {item.icon}
               </span>
-              {item.label}
+              <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                <span className="truncate">{item.label}</span>
+                {item.href === "/admin/growth" && growthPurchaseUnreadCount > 0 ? (
+                  <span className="shrink-0 rounded-full bg-[#D9A441] px-2 py-0.5 text-[10px] font-bold leading-none text-[#1A1A1A]">
+                    {formatCompactBadge(growthPurchaseUnreadCount)}
+                  </span>
+                ) : null}
+              </span>
             </Link>
           );
         })}
