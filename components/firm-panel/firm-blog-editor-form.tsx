@@ -27,6 +27,7 @@ import {
   sanitizeFirmBlogPastedHtml,
 } from "@/lib/blog/firm-blog-body-html";
 import { FirmBlogHorizontalRule } from "@/lib/blog/firm-blog-horizontal-rule";
+import { splitBodyForMiddleAd } from "@/lib/blog/split-body-for-middle-ad";
 
 type Props = {
   firmId: string;
@@ -303,6 +304,14 @@ export function FirmBlogEditorForm({
   const wordCount = useMemo(
     () => bodyPlainState.split(/\s+/).map((s) => s.trim()).filter(Boolean).length,
     [bodyPlainState]
+  );
+  const publishPreviewHtml = useMemo(
+    () => sanitizeFirmBlogBodyRichForStorage(bodyRichState || ""),
+    [bodyRichState]
+  );
+  const publishSplit = useMemo(
+    () => splitBodyForMiddleAd(publishPreviewHtml),
+    [publishPreviewHtml]
   );
   const titleLen = title.trim().length;
   const metaLen = metaDescription.trim().length;
@@ -1049,6 +1058,43 @@ export function FirmBlogEditorForm({
                 overflow-x: hidden;
               }
             `}</style>
+            <div className="mt-4 space-y-3 rounded-2xl border border-[#0B3C5D]/12 bg-[#F4F7FA]/60 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#0B3C5D]/80">
+                Yayın sayfası kart önizlemesi
+              </p>
+              <p className="text-[11px] leading-relaxed text-[#1A1A1A]/60">
+                Uzun yazılarda gövde, paragraf sayısına göre ortadan ikiye bölünür; arada orta reklam alanı
+                olabilir. Aşağıdaki düzen canlı sitedeki kartlarla aynıdır — bölünme noktasında cümlenin kopmaması
+                için paragrafları buna göre düzenleyin.
+              </p>
+              <div className="space-y-5">
+                <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
+                  <div
+                    className="tiptap-public text-sm leading-relaxed"
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        publishSplit.first.trim() || "<p><em>Henüz paragraf yok.</em></p>",
+                    }}
+                  />
+                </section>
+                {publishSplit.second ? (
+                  <>
+                    <div
+                      className="rounded-2xl border border-dashed border-[#0B3C5D]/20 bg-white/90 px-4 py-3 text-center text-[11px] text-[#1A1A1A]/50"
+                      aria-hidden
+                    >
+                      Orta alan (reklam veya boşluk — yayında içerik seçimine göre)
+                    </div>
+                    <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
+                      <div
+                        className="tiptap-public text-sm leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: publishSplit.second }}
+                      />
+                    </section>
+                  </>
+                ) : null}
+              </div>
+            </div>
             <p className="mt-1 text-xs text-[#1A1A1A]/55">
               Kısa paragraflar kullanın, H2 ve H3 ile içeriği bölümlere ayırın, madde/numaralı
               listelerle okunabilirliği artırın, onay-kare-daire listeleriyle önemli noktaları

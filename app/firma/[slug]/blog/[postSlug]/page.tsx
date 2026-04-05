@@ -13,6 +13,7 @@ import { RelatedPostsInfinite } from "@/components/blog/related-posts-infinite";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { normalizeBlogCtaButtons } from "@/lib/blog/cta-buttons";
+import { splitBodyForMiddleAd } from "@/lib/blog/split-body-for-middle-ad";
 import { pickWeightedAd, type BlogAdRow } from "@/lib/blog/ads";
 import { getSiteUrl } from "@/lib/env";
 import { resolveFirmBlogPostOgImage, resolveToAbsoluteImageUrl } from "@/lib/seo/blog-og-image";
@@ -71,15 +72,6 @@ function includesTarget(list: string[] | null | undefined, value: string | null 
   if (!Array.isArray(list) || list.length === 0) return true;
   if (!value) return false;
   return list.includes(value);
-}
-
-function splitBodyForMiddleAd(html: string): { first: string; second: string } {
-  const parts = html.split("</p>");
-  if (parts.length <= 3) return { first: html, second: "" };
-  const mid = Math.floor(parts.length / 2);
-  const first = `${parts.slice(0, mid).join("</p>")}</p>`;
-  const second = `${parts.slice(mid).join("</p>")}`;
-  return { first, second };
 }
 
 async function getPublishedPostBySlug(
