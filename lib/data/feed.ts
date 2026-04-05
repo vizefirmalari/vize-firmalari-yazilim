@@ -1,4 +1,5 @@
 import type { BlogCtaButton } from "@/lib/blog/cta-buttons";
+import { parseInstantMs } from "@/lib/datetime/parse-instant";
 import { resolveFeedPostCtaButtons } from "@/lib/data/feed-post-cta-buttons";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
@@ -55,7 +56,8 @@ const WEIGHTS = {
 };
 
 function hoursAgo(date: string): number {
-  const ts = new Date(date).getTime();
+  const ts = parseInstantMs(date);
+  if (!Number.isFinite(ts)) return 0;
   return Math.max(0, (Date.now() - ts) / (1000 * 60 * 60));
 }
 

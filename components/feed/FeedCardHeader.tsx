@@ -1,18 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-function formatRelativeTime(input: string): string {
-  const now = Date.now();
-  const ts = new Date(input).getTime();
-  const diff = Math.max(0, now - ts);
-  const min = Math.floor(diff / 60000);
-  if (min < 1) return "şimdi";
-  if (min < 60) return `${min} dk önce`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr} saat önce`;
-  const day = Math.floor(hr / 24);
-  return `${day}g önce`;
-}
+import { FeedCardRelativeTime } from "@/components/feed/feed-card-relative-time";
 
 export function FeedCardHeader({
   logoUrl,
@@ -36,7 +25,7 @@ export function FeedCardHeader({
             {companyName}
           </Link>
           <div className="flex items-center gap-1.5 text-[12px] text-[#6b7280]">
-            <span>{formatRelativeTime(createdAt)}</span>
+            <FeedCardRelativeTime iso={createdAt} />
           </div>
         </div>
       </div>

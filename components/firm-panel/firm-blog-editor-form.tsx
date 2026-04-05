@@ -26,6 +26,7 @@ import {
   sanitizeFirmBlogBodyRichForStorage,
   sanitizeFirmBlogPastedHtml,
 } from "@/lib/blog/firm-blog-body-html";
+import { formatDateTimeLocalValue, isoToDateTimeLocalValue } from "@/lib/datetime/datetime-local";
 import { FirmBlogHorizontalRule } from "@/lib/blog/firm-blog-horizontal-rule";
 import { splitBodyForMiddleAd } from "@/lib/blog/split-body-for-middle-ad";
 
@@ -166,15 +167,13 @@ export function FirmBlogEditorForm({
   const [metaDescription, setMetaDescription] = useState(initialPost?.meta_description ?? "");
   const [flowDescription, setFlowDescription] = useState(initialPost?.summary ?? "");
   const [scheduledAt, setScheduledAt] = useState(
-    initialPost?.scheduled_at ? initialPost.scheduled_at.slice(0, 16) : ""
+    initialPost?.scheduled_at ? isoToDateTimeLocalValue(initialPost.scheduled_at) : ""
   );
-  const [publishAt, setPublishAt] = useState(
-    initialPost?.published_at
-      ? initialPost.published_at.slice(0, 16)
-      : initialPost?.scheduled_at
-        ? initialPost.scheduled_at.slice(0, 16)
-        : new Date().toISOString().slice(0, 16)
-  );
+  const [publishAt, setPublishAt] = useState(() => {
+    if (initialPost?.published_at) return isoToDateTimeLocalValue(initialPost.published_at);
+    if (initialPost?.scheduled_at) return isoToDateTimeLocalValue(initialPost.scheduled_at);
+    return formatDateTimeLocalValue(new Date());
+  });
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(initialPost?.tags ?? []);
   const [categoryId, setCategoryId] = useState<string>(initialPost?.category_id ?? "");
