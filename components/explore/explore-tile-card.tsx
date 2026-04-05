@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { ExploreEuStarBadge } from "@/components/explore/explore-eu-star-badge";
 import { ExploreTileArt } from "@/components/explore/explore-tile-art";
+import { FlagIcon } from "@/components/explore/flag-icon";
 import type { ExploreCategoryDef, ExploreVisualType } from "@/lib/explore/explore-types";
 import {
   CARD_VARIANT_GRID,
@@ -69,12 +71,19 @@ export function ExploreTileCard({ category, firmCount, showCount }: Props) {
         <ExploreTileArt id={theme.decorationId} className="h-full w-full" />
       </div>
 
-      {theme.flagBadgeStyle ? (
+      {theme.flagIso || theme.euStarBadge ? (
         <div
-          className="pointer-events-none absolute right-3 top-3 z-[2] h-7 w-9 rounded-lg shadow-[0_4px_14px_rgba(0,0,0,0.35)] ring-2 ring-white/25"
-          style={theme.flagBadgeStyle}
+          className="pointer-events-none absolute right-3 top-3 z-[2] md:right-3.5 md:top-3.5"
           aria-hidden
-        />
+        >
+          <div className="rounded-lg border border-white/45 bg-white/22 p-1 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4),0_2px_12px_rgba(0,0,0,0.22)] backdrop-blur-[6px] md:p-1.5">
+            {theme.euStarBadge ? (
+              <ExploreEuStarBadge size="sm" />
+            ) : theme.flagIso ? (
+              <FlagIcon country={theme.flagIso} size="sm" variant="bordered" />
+            ) : null}
+          </div>
+        </div>
       ) : null}
 
       <div className="relative z-[3] flex flex-col gap-1.5">

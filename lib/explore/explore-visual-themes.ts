@@ -1,5 +1,5 @@
-import type { CSSProperties } from "react";
 import type { ExploreCardVariant, ExploreVisualType } from "@/lib/explore/explore-types";
+import type { ExploreFlagIso } from "@/lib/explore/flag-iso";
 
 /**
  * Keşfet kart dekorasyonları — `ExploreTileArt` ile eşleşir.
@@ -35,8 +35,10 @@ export type ExploreThemeDef = {
   overlayClass: string;
   /** Sağ üst ışık lekesi */
   orbClass?: string;
-  /** Köşe rozet — soyut çok renkli şerit (bayrak tonları) */
-  flagBadgeStyle?: CSSProperties;
+  /** ISO 3166-1 alpha-2 bayrak — yalnızca ülke kartları; SVG `FlagIcon` */
+  flagIso?: ExploreFlagIso;
+  /** Schengen: bayrak yerine AB yıldız halkası */
+  euStarBadge?: boolean;
   decorationId: ExploreDecorationId;
   shadowClass: string;
   /** İnce doku / grain */
@@ -70,10 +72,7 @@ export const EXPLORE_VISUAL_THEMES: Record<string, ExploreThemeDef> = {
       "bg-[linear-gradient(152deg,#031f2e_0%,#0B3C5D_38%,#143d52_62%,#3d3518_88%,#8a7630_100%)]",
     overlayClass: "bg-gradient-to-t from-black/60 via-black/20 to-black/5",
     orbClass: "bg-[radial-gradient(circle_at_70%_0%,rgba(217,164,65,0.35),transparent_55%)]",
-    flagBadgeStyle: {
-      background:
-        "linear-gradient(180deg, #00732F 0%, #00732F 28%, #FFFFFF 28%, #FFFFFF 56%, #000000 56%, #000000 78%, #CE1126 78%)",
-    },
+    flagIso: "ae",
     decorationId: "dubai",
     shadowClass: SHADOW_DEEP,
     grainClass: GRAIN,
@@ -89,16 +88,7 @@ export const EXPLORE_VISUAL_THEMES: Record<string, ExploreThemeDef> = {
       "bg-[linear-gradient(145deg,#050a18_0%,#0B1f3d_35%,#0B3C5D_65%,#1e2a4a_100%)]",
     overlayClass: "bg-gradient-to-t from-black/58 via-black/15 to-transparent",
     orbClass: "bg-[radial-gradient(circle_at_85%_10%,rgba(200,40,40,0.22),transparent_45%)]",
-    flagBadgeStyle: {
-      background: `conic-gradient(
-        from 0deg at 50% 50%,
-        #012169 0deg 90deg,
-        #FFFFFF 90deg 180deg,
-        #C8102E 180deg 270deg,
-        #FFFFFF 270deg 360deg
-      )`,
-      opacity: 0.92,
-    },
+    flagIso: "gb",
     decorationId: "uk",
     shadowClass: SHADOW_DEEP,
     grainClass: GRAIN,
@@ -112,12 +102,9 @@ export const EXPLORE_VISUAL_THEMES: Record<string, ExploreThemeDef> = {
     cardVariant: "hero",
     baseClass:
       "bg-[linear-gradient(160deg,#041a2e_0%,#0a3a6d_40%,#0B3C5D_70%,#1a4f8c_100%)]",
-    overlayClass: "bg-gradient-to-t from-black/55 via-blue-950/20 to-transparent",
+    overlayClass: "bg-gradient-to-t from-black/55 via-black/20 to-transparent",
     orbClass: "bg-[radial-gradient(circle_at_20%_0%,rgba(100,160,255,0.25),transparent_50%)]",
-    flagBadgeStyle: {
-      background: "linear-gradient(135deg, #003399 0%, #003399 100%)",
-      boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.35)",
-    },
+    euStarBadge: true,
     decorationId: "schengen",
     shadowClass: SHADOW_DEEP,
     grainClass: GRAIN,
@@ -133,13 +120,7 @@ export const EXPLORE_VISUAL_THEMES: Record<string, ExploreThemeDef> = {
       "bg-[linear-gradient(148deg,#050c1a_0%,#0B1f3d_40%,#152a50_75%,#3a1a1a_100%)]",
     overlayClass: "bg-gradient-to-t from-black/56 via-black/25 to-transparent",
     orbClass: "bg-[radial-gradient(circle_at_90%_15%,rgba(200,50,50,0.28),transparent_42%)]",
-    flagBadgeStyle: {
-      background: `linear-gradient(180deg, 
-        #B22234 0%, #B22234 14.28%, #FFFFFF 14.28%, #FFFFFF 28.56%,
-        #B22234 28.56%, #B22234 42.84%, #FFFFFF 42.84%, #FFFFFF 57.12%,
-        #B22234 57.12%, #B22234 71.4%, #FFFFFF 71.4%, #FFFFFF 85.68%,
-        #B22234 85.68%, #B22234 100%)`,
-    },
+    flagIso: "us",
     decorationId: "usa",
     shadowClass: SHADOW_SOFT,
     grainClass: GRAIN,
@@ -155,9 +136,7 @@ export const EXPLORE_VISUAL_THEMES: Record<string, ExploreThemeDef> = {
       "bg-[linear-gradient(165deg,#0a1628_0%,#0B3C5D_50%,#4a1818_95%,#6b2020_100%)]",
     overlayClass: "bg-gradient-to-t from-black/52 via-black/15 to-white/5",
     orbClass: "bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.12),transparent_50%)]",
-    flagBadgeStyle: {
-      background: "linear-gradient(90deg, #FF0000 0%, #FF0000 30%, #FFFFFF 30%, #FFFFFF 70%, #FF0000 70%)",
-    },
+    flagIso: "ca",
     decorationId: "canada",
     shadowClass: SHADOW_SOFT,
     grainClass: GRAIN,
@@ -173,9 +152,7 @@ export const EXPLORE_VISUAL_THEMES: Record<string, ExploreThemeDef> = {
       "bg-[linear-gradient(165deg,#0c2848_0%,#1a5a8a_45%,#e8f0f8_130%)]",
     overlayClass: "bg-gradient-to-t from-black/50 via-primary/25 to-white/12",
     orbClass: "bg-[radial-gradient(circle_at_30%_10%,rgba(255,255,255,0.35),transparent_45%)]",
-    flagBadgeStyle: {
-      background: "linear-gradient(180deg, #0D5EAF 50%, #FFFFFF 50%)",
-    },
+    flagIso: "gr",
     decorationId: "greece",
     shadowClass: SHADOW_SOFT,
     grainClass: GRAIN,
@@ -191,9 +168,7 @@ export const EXPLORE_VISUAL_THEMES: Record<string, ExploreThemeDef> = {
       "bg-[linear-gradient(155deg,#061426_0%,#0B3C5D_55%,#1a3a5c_100%)]",
     overlayClass: "bg-gradient-to-t from-black/54 via-black/20 to-transparent",
     orbClass: "bg-[radial-gradient(circle_at_70%_100%,rgba(200,60,60,0.2),transparent_50%)]",
-    flagBadgeStyle: {
-      background: "linear-gradient(135deg, #012169 40%, #FFFFFF 40%, #E4002B 100%)",
-    },
+    flagIso: "au",
     decorationId: "australia",
     shadowClass: SHADOW_SOFT,
     grainClass: GRAIN,
@@ -210,9 +185,6 @@ export const EXPLORE_VISUAL_THEMES: Record<string, ExploreThemeDef> = {
     overlayClass: "bg-gradient-to-t from-black/55 via-black/22 to-transparent",
     orbClass:
       "bg-[radial-gradient(ellipse_at_100%_0%,rgba(180,50,50,0.2),transparent_50%),radial-gradient(ellipse_at_0%_100%,rgba(200,200,220,0.12),transparent_45%)]",
-    flagBadgeStyle: {
-      background: "linear-gradient(90deg, #B22234 0%, #FFFFFF 50%, #FF0000 100%)",
-    },
     decorationId: "north-america",
     shadowClass: SHADOW_SOFT,
     grainClass: GRAIN,

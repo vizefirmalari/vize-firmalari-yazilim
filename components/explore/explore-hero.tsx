@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { ExploreEuStarBadge } from "@/components/explore/explore-eu-star-badge";
 import { ExploreTileArt } from "@/components/explore/explore-tile-art";
+import { FlagIcon } from "@/components/explore/flag-icon";
 import type { ExploreThemeDef } from "@/lib/explore/explore-visual-themes";
 
 type Props = {
@@ -42,12 +44,19 @@ export function ExploreHero({
         >
           <ExploreTileArt id={theme.decorationId} className="h-full w-full" />
         </div>
-        {theme.flagBadgeStyle ? (
+        {theme.flagIso || theme.euStarBadge ? (
           <div
-            className="pointer-events-none absolute right-4 top-[4.5rem] z-[1] h-7 w-10 rounded-md shadow-md ring-2 ring-white/25 md:right-6 md:top-1/2 md:h-9 md:w-12 md:-translate-y-1/2 md:rounded-lg md:shadow-lg"
-            style={theme.flagBadgeStyle}
+            className="pointer-events-none absolute right-4 top-[4.5rem] z-[1] md:right-6 md:top-1/2 md:-translate-y-1/2"
             aria-hidden
-          />
+          >
+            <div className="rounded-lg border border-white/45 bg-white/22 p-1.5 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4),0_2px_12px_rgba(0,0,0,0.2)] backdrop-blur-[6px]">
+              {theme.euStarBadge ? (
+                <ExploreEuStarBadge size="md" />
+              ) : theme.flagIso ? (
+                <FlagIcon country={theme.flagIso} size="md" variant="bordered" />
+              ) : null}
+            </div>
+          </div>
         ) : null}
         <div className="container-shell relative z-[2] py-9 md:py-11">
           {backHref ? (
