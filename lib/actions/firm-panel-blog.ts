@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sanitizeFirmBlogBodyRichForStorage } from "@/lib/blog/firm-blog-body-html";
 import { normalizeBlogCtaButtons } from "@/lib/blog/cta-buttons";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -76,7 +77,7 @@ export async function saveFirmBlogPost(
   const categoryId = payload.categoryId.trim();
   const summary = payload.summary.trim();
   const metaDescription = payload.metaDescription.trim();
-  const bodyRich = payload.bodyRich.trim();
+  const bodyRich = sanitizeFirmBlogBodyRichForStorage(payload.bodyRich.trim());
   const bodyPlainText = payload.bodyPlainText.trim();
   const words = bodyPlainText.split(/\s+/).map((s) => s.trim()).filter(Boolean).length;
   const faqItems = payload.faqItems

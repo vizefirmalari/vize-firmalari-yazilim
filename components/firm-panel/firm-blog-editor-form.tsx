@@ -22,6 +22,11 @@ import {
 } from "@/lib/blog/cta-buttons";
 import { createFirmBlogCategory } from "@/lib/actions/firm-blog-category";
 import { saveFirmBlogPost, uploadFirmBlogCoverImage } from "@/lib/actions/firm-panel-blog";
+import {
+  sanitizeFirmBlogBodyRichForStorage,
+  sanitizeFirmBlogPastedHtml,
+} from "@/lib/blog/firm-blog-body-html";
+import { FirmBlogHorizontalRule } from "@/lib/blog/firm-blog-horizontal-rule";
 
 type Props = {
   firmId: string;
@@ -188,7 +193,11 @@ export function FirmBlogEditorForm({
   const [relatedVisaTypes, setRelatedVisaTypes] = useState<string[]>(
     initialPost?.related_visa_types ?? []
   );
-  const [bodyRichState, setBodyRichState] = useState(initialPost?.body_rich ?? "<p></p>");
+  const initialEditorHtml = useMemo(
+    () => sanitizeFirmBlogBodyRichForStorage((initialPost?.body_rich ?? "<p></p>").trim() || "<p></p>"),
+    [initialPost?.id, initialPost?.body_rich]
+  );
+  const [bodyRichState, setBodyRichState] = useState(initialEditorHtml);
   const [bodyPlainState, setBodyPlainState] = useState("");
   const [coverUploading, setCoverUploading] = useState(false);
   const [coverAspectWarn, setCoverAspectWarn] = useState<string | null>(null);
@@ -237,35 +246,42 @@ export function FirmBlogEditorForm({
 
   const editor = useEditor(
     {
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        heading: false,
-        bulletList: false,
-        orderedList: false,
-        listItem: false,
-      }),
-      Heading.configure({ levels: [2, 3] }),
-      StyledBulletList,
-      OrderedList,
-      ListItem,
-      Underline,
-      Link.configure({ openOnClick: false }),
-      Placeholder.configure({
-        placeholder:
-          "Giriş paragrafı ile başlayın. Ardından H2/H3 başlıklarla şartlar, belgeler, süreç adımları ve SSS bölümlerini yapılandırın.",
-      }),
-    ],
-    content: initialPost?.body_rich || "<p></p>",
-    editorProps: {
-      attributes: {
-        class:
-          "min-h-[320px] rounded-b-xl border border-t-0 border-[#1A1A1A]/12 bg-white px-4 py-3 text-sm leading-relaxed text-[#1A1A1A] outline-none",
+      immediatelyRender: false,
+      extensions: [
+        StarterKit.configure({
+          heading: false,
+          bulletList: false,
+          orderedList: false,
+          listItem: false,
+          horizontalRule: false,
+        }),
+        FirmBlogHorizontalRule,
+        Heading.configure({ levels: [2, 3] }),
+        StyledBulletList,
+        OrderedList,
+        ListItem,
+        Underline,
+        Link.configure({ openOnClick: false }),
+        Placeholder.configure({
+          placeholder:
+            "Giriş paragrafı ile başlayın. Ardından H2/H3 başlıklarla şartlar, belgeler, süreç adımları ve SSS bölümlerini yapılandırın.",
+        }),
+      ],
+      content: initialEditorHtml,
+      editorProps: {
+        attributes: {
+          class:
+            "min-h-[320px] rounded-b-xl border border-t-0 border-[#1A1A1A]/12 bg-white px-4 py-3 text-sm leading-relaxed text-[#1A1A1A] outline-none",
+        },
+        transformPastedHTML: (html) => sanitizeFirmBlogPastedHtml(html),
       },
     },
-    },
-    []
+    [initialEditorHtml]
   );
+
+  useEffect(() => {
+    setBodyRichState(initialEditorHtml);
+  }, [initialEditorHtml]);
 
   useEffect(() => {
     if (!editor) return;
@@ -932,6 +948,11 @@ export function FirmBlogEditorForm({
                   active={editor?.isActive("bulletList", { listStyle: "circle" })}
                   onClick={() => applyBulletListStyle("circle")}
                 />
+                <ToolbarButton
+                  label="Ayırıcı"
+                  active={editor?.isActive("horizontalRule")}
+                  onClick={() => editor?.chain().focus().setHorizontalRule().run()}
+                />
               </div>
             </div>
             <div className="editor-wrapper min-w-0 max-w-full overflow-x-hidden">
@@ -1018,6 +1039,11 @@ export function FirmBlogEditorForm({
                 color: #0f8a2d;
                 font-weight: 700;
                 font-size: 0.9em;
+              }
+              .tiptap hr.vf-blog-divider {
+                border: 0;
+                border-top: 1px solid rgba(26, 26, 26, 0.14);
+                margin: 1rem 0;
               }
               body {
                 overflow-x: hidden;

@@ -246,3 +246,9 @@ body {
   color: #0f8a2d;
   font-weight: 700;
 }
+
+.tiptap-public hr.vf-blog-divider {
+  border: 0;
+  border-top: 1px solid rgba(26, 26, 26, 0.14);
+  margin: 1.25rem 0;
+}

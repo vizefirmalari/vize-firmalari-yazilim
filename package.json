@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "verify:firm-blog-html": "tsx scripts/verify-firm-blog-body-html.ts",
     "verify:visa-regions": "tsx scripts/verify-visa-regions-scenarios.ts",
     "backfill:visa-regions": "tsx scripts/backfill-visa-regions.ts"
   },
@@ -16,6 +17,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.100.0",
+    "@tiptap/extension-horizontal-rule": "^3.21.0",
     "@tiptap/extension-image": "^3.21.0",
     "@tiptap/extension-link": "^3.21.0",
     "@tiptap/extension-placeholder": "^3.21.0",
