@@ -7,9 +7,9 @@ import { buildGrowthTransferDescription } from "@/lib/firm-panel/growth-transfer
 import { growthServicePriceLine } from "@/lib/format/try-lira";
 
 export type GrowthPurchaseModalBank = {
-  iban: string | null;
-  accountHolder: string | null;
-  bankName: string | null;
+  iban: string;
+  accountHolder: string;
+  bankName: string;
 };
 
 type ServiceMini = {
@@ -61,7 +61,7 @@ export function GrowthPurchaseModal({ open, onClose, firmId, firmName, service, 
   const [descCopied, setDescCopied] = useState(false);
 
   const transferDescription = buildGrowthTransferDescription(service.title, firmName);
-  const ibanDisplay = bank.iban?.replace(/\s/g, "") ?? "";
+  const ibanDisplay = bank.iban.replace(/\s/g, "");
   const priceLine = growthServicePriceLine(service.setup_price, service.monthly_price, service.is_custom_price);
 
   const reset = useCallback(() => {
@@ -330,38 +330,29 @@ export function GrowthPurchaseModal({ open, onClose, firmId, firmName, service, 
                 Havale/EFT için aşağıdaki bilgileri kullanın. Açıklama alanına yazacağınız metni aynen kopyalayın.
               </p>
 
-              {ibanDisplay ? (
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/50">IBAN</p>
-                  <p className="mt-1 break-all font-mono text-sm font-semibold tracking-wide text-[#1A1A1A]">
-                    {ibanDisplay}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={onCopyIban}
-                    className="mt-2 inline-flex min-h-10 items-center justify-center rounded-xl border border-[#0B3C5D]/20 bg-white px-4 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
-                  >
-                    {ibanCopied ? "Kopyalandı" : "IBAN’ı kopyala"}
-                  </button>
-                </div>
-              ) : (
-                <p className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-2 text-sm text-[#1A1A1A]/65">
-                  IBAN henüz yapılandırılmadı. Ödeme bilgisi için yönetici mesajlaşmasından destek alabilirsiniz.
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/50">IBAN</p>
+                <p className="mt-1 break-all font-mono text-sm font-semibold tracking-wide text-[#1A1A1A]">
+                  {ibanDisplay}
                 </p>
-              )}
+                <button
+                  type="button"
+                  onClick={onCopyIban}
+                  disabled={!ibanDisplay}
+                  className="mt-2 inline-flex min-h-10 items-center justify-center rounded-xl border border-[#0B3C5D]/20 bg-white px-4 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {ibanCopied ? "Kopyalandı" : "IBAN’ı kopyala"}
+                </button>
+              </div>
 
-              {bank.bankName ? (
-                <p className="text-sm text-[#1A1A1A]/65">
-                  <span className="font-semibold text-[#1A1A1A]/80">Banka: </span>
-                  {bank.bankName}
-                </p>
-              ) : null}
+              <p className="text-sm text-[#1A1A1A]/65">
+                <span className="font-semibold text-[#1A1A1A]/80">Banka: </span>
+                {bank.bankName}
+              </p>
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/50">Alıcı</p>
-                <p className="mt-1 text-sm font-semibold text-[#1A1A1A]">
-                  {bank.accountHolder?.trim() || "—"}
-                </p>
+                <p className="mt-1 text-sm font-semibold text-[#1A1A1A]">{bank.accountHolder.trim()}</p>
               </div>
 
               <div>

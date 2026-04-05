@@ -22,6 +22,8 @@ type Props = {
   onBackMobile?: () => void;
   /** Firma paneli masaüstü: dış kart zaten border/radius; iç çift kutu ve kırpılmayı önler. */
   embedInSplitPanel?: boolean;
+  /** Firma — yönetici sohbeti: kompakt başlık, açık mesaj zemini, tam yükseklik flex. */
+  firmAdminLayout?: boolean;
 };
 
 /**
@@ -37,6 +39,7 @@ export function ConversationThreadView({
   headerLogoUrl,
   onBackMobile,
   embedInSplitPanel = false,
+  firmAdminLayout = false,
 }: Props) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
@@ -164,10 +167,13 @@ export function ConversationThreadView({
     el.scrollTo({ top, left: 0, behavior: "smooth" });
   };
 
-  const rootShell =
-    embedInSplitPanel
+  const rootShell = firmAdminLayout
+    ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white max-md:rounded-xl max-md:border max-md:border-[#0B3C5D]/10 max-md:shadow-sm lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none"
+    : embedInSplitPanel
       ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#0B3C5D]/10 bg-[#F8F9FA] max-md:rounded-none max-md:border-0 max-md:bg-[#F0F2F4] lg:rounded-none lg:border-0"
       : "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#0B3C5D]/10 bg-[#F8F9FA] max-md:rounded-none max-md:border-0 max-md:bg-[#F0F2F4]";
+
+  const threadBackdrop = firmAdminLayout ? "bg-[#F0F2F5]" : "";
 
   return (
     <div className={rootShell}>
@@ -179,8 +185,10 @@ export function ConversationThreadView({
         statusText={statusText}
         typingText={typingText}
         onBack={onBackMobile}
+        density={firmAdminLayout ? "compact" : "default"}
+        showOverflowMenu={firmAdminLayout}
       />
-      <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
+      <div className={`relative min-h-0 min-w-0 flex-1 overflow-hidden ${threadBackdrop}`}>
         <div
           ref={scrollAreaRef}
           className="absolute inset-0 touch-pan-y overflow-y-auto overscroll-contain contain-[layout] [overflow-anchor:none]"

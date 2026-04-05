@@ -20,6 +20,7 @@ import {
   type BlogCtaButton,
   type BlogCtaPlatform,
 } from "@/lib/blog/cta-buttons";
+import { createFirmBlogCategory } from "@/lib/actions/firm-blog-category";
 import { saveFirmBlogPost, uploadFirmBlogCoverImage } from "@/lib/actions/firm-panel-blog";
 
 type Props = {
@@ -193,6 +194,13 @@ export function FirmBlogEditorForm({
   const [coverAspectWarn, setCoverAspectWarn] = useState<string | null>(null);
   const [coverLocalPreview, setCoverLocalPreview] = useState<string>("");
   const [coverPendingFile, setCoverPendingFile] = useState<File | null>(null);
+  const [localCategories, setLocalCategories] = useState(categoryOptions);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [categoryAdding, setCategoryAdding] = useState(false);
+
+  useEffect(() => {
+    setLocalCategories(categoryOptions);
+  }, [categoryOptions]);
 
   useEffect(() => {
     if (slugTouched) return;
@@ -440,6 +448,36 @@ export function FirmBlogEditorForm({
       list[nextIdx] = temp;
       return list.map((x, i) => ({ ...x, sort_order: i }));
     });
+
+  const addBlogCategory = () => {
+    const label = newCategoryName.trim();
+    if (label.length < 2) return;
+    setCategoryAdding(true);
+    setMessage(null);
+    setMessageTone(null);
+    startTransition(async () => {
+      try {
+        const res = await createFirmBlogCategory(firmId, label);
+        if (!res.ok) {
+          setMessage(res.error);
+          setMessageTone("error");
+          return;
+        }
+        setLocalCategories((prev) => {
+          const next = [...prev, { id: res.id, name: res.name, slug: res.slug }];
+          next.sort((a, b) => a.name.localeCompare(b.name, "tr"));
+          return next;
+        });
+        setCategoryId(res.id);
+        setNewCategoryName("");
+        setMessage(`"${res.name}" kategorisi eklendi ve seçildi.`);
+        setMessageTone("success");
+        router.refresh();
+      } finally {
+        setCategoryAdding(false);
+      }
+    });
+  };
 
   const save = (nextMode: "draft" | "scheduled" | "published") => {
     if (!editor) return;
@@ -721,7 +759,7 @@ export function FirmBlogEditorForm({
               className="mt-1.5 w-full rounded-xl border border-[#1A1A1A]/14 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#0B3C5D]/30"
             >
               <option value="">Kategori seçin</option>
-              {categoryOptions.map((category) => (
+              {localCategories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
@@ -730,6 +768,32 @@ export function FirmBlogEditorForm({
             <p className={`mt-1 text-xs ${categoryId ? "text-[#067647]" : "text-[#B42318]"}`}>
               Yayın için zorunlu alan.
             </p>
+            <div className="mt-3 space-y-2 rounded-xl border border-[#1A1A1A]/10 bg-[#F7F9FB] p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0B3C5D]/70">
+                Yeni kategori
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value.slice(0, 80))}
+                  placeholder="Örn: Özel danışmanlık"
+                  disabled={categoryAdding}
+                  className="min-w-0 flex-1 rounded-xl border border-[#1A1A1A]/14 bg-white px-3 py-2.5 text-sm text-[#1A1A1A] outline-none focus:border-[#0B3C5D]/30 disabled:opacity-60"
+                />
+                <button
+                  type="button"
+                  disabled={categoryAdding || newCategoryName.trim().length < 2}
+                  onClick={addBlogCategory}
+                  className="shrink-0 rounded-xl border border-[#1A1A1A]/15 bg-white px-4 py-2.5 text-sm font-semibold text-[#0B3C5D] hover:bg-[#EEF2F6] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {categoryAdding ? "Ekleniyor..." : "Ekle"}
+                </button>
+              </div>
+              <p className="text-xs text-[#1A1A1A]/55">
+                Eklediğiniz kategori blog kategori listesine eklenir; diğer firmalar da yazılarında kullanabilir.
+              </p>
+            </div>
           </div>
 
           <div className="space-y-3">
