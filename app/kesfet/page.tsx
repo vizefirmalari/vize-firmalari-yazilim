@@ -50,7 +50,7 @@ export default async function KesfetPage() {
       <SiteHeader />
       <ExploreHero
         title="Vize türüne veya hedef ülkeye göre keşfedin"
-        description="Hizmet kapsamına göre sınıflandırılmış firmaları görüntüleyin; size uygun danışmanlık alanını seçin."
+        description="Hizmet kapsamına göre sınıflandırılmış danışmanlık alanlarını görüntüleyin; hedefinize uygun firmaları daha hızlı bulun."
       />
       <main className="flex-1 bg-background">
         <div className="container-shell">

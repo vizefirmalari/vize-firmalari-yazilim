@@ -11,7 +11,6 @@ type Props = {
 };
 
 export function ExploreTileGrid({ counts }: Props) {
-  let globalVariant = 0;
   let anyVisible = false;
 
   const sections = EXPLORE_SECTIONS.map((section) => {
@@ -42,19 +41,15 @@ export function ExploreTileGrid({ counts }: Props) {
                 <p className="mt-1 text-sm text-foreground/65">{section.subtitle}</p>
               ) : null}
             </div>
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
-              {tiles.map(({ cat, n }) => {
-                const vi = globalVariant++;
-                return (
-                  <ExploreTileCard
-                    key={`${section.id}-${cat.slug}`}
-                    category={cat}
-                    firmCount={n}
-                    showCount
-                    variantIndex={vi}
-                  />
-                );
-              })}
+            <div className="grid grid-cols-2 gap-3 md:gap-[0.95rem]">
+              {tiles.map(({ cat, n }) => (
+                <ExploreTileCard
+                  key={`${section.id}-${cat.slug}`}
+                  category={cat}
+                  firmCount={n}
+                  showCount
+                />
+              ))}
             </div>
           </section>
         );

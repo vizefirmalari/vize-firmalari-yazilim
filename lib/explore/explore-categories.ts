@@ -16,7 +16,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Dubai ve Birleşik Arap Emirlikleri vize süreçlerinde destek veren firmalar aşağıda listelenmiştir. Profilleri inceleyerek size uygun danışmanlığı seçebilirsiniz.",
     sectionId: "popular",
     sectionOrder: 10,
-    tileSize: "large",
+    themeKey: "country-dubai",
     priority: 90,
     minFirmCount: 1,
     match: {
@@ -42,7 +42,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "İngiltere vizesi ve ilgili süreçlerde hizmet veren firmalar aşağıdadır. Karşılaştırarak iletişime geçebilirsiniz.",
     sectionId: "popular",
     sectionOrder: 20,
-    tileSize: "large",
+    themeKey: "country-uk",
     priority: 88,
     minFirmCount: 1,
     match: {
@@ -67,7 +67,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Schengen vizesi ve Avrupa seyahat süreçlerinde destek sunan firmalar listelenmiştir.",
     sectionId: "popular",
     sectionOrder: 30,
-    tileSize: "large",
+    themeKey: "region-schengen",
     priority: 92,
     minFirmCount: 1,
     match: {
@@ -84,7 +84,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Amerika Birleşik Devletleri vize süreçlerinde danışmanlık veren firmalar aşağıdadır.",
     sectionId: "popular",
     sectionOrder: 40,
-    tileSize: "medium",
+    themeKey: "country-usa",
     priority: 86,
     minFirmCount: 1,
     match: {
@@ -109,7 +109,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Kanada vizesi ve ilgili başvuru süreçlerinde hizmet veren firmalar listelenmiştir.",
     sectionId: "popular",
     sectionOrder: 50,
-    tileSize: "medium",
+    themeKey: "country-canada",
     priority: 84,
     minFirmCount: 1,
     match: {
@@ -126,7 +126,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Yunanistan vizesi ve ilgili danışmanlık sunan firmalar aşağıda yer almaktadır.",
     sectionId: "popular",
     sectionOrder: 60,
-    tileSize: "medium",
+    themeKey: "country-greece",
     priority: 72,
     minFirmCount: 1,
     match: {
@@ -142,7 +142,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Çalışma vizesi süreçlerinde destek veren firmalar aşağıda listelenmiştir.",
     sectionId: "visa_type",
     sectionOrder: 10,
-    tileSize: "medium",
+    themeKey: "visa-work",
     priority: 80,
     minFirmCount: 1,
     match: {
@@ -158,7 +158,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Öğrenci vizesi danışmanlığı sunan firmaları inceleyebilirsiniz.",
     sectionId: "visa_type",
     sectionOrder: 20,
-    tileSize: "medium",
+    themeKey: "visa-student",
     priority: 78,
     minFirmCount: 1,
     match: {
@@ -174,7 +174,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Turistik vize süreçlerinde yardımcı olan firmalar aşağıdadır.",
     sectionId: "visa_type",
     sectionOrder: 30,
-    tileSize: "small",
+    themeKey: "visa-tourist",
     priority: 70,
     minFirmCount: 1,
     match: {
@@ -190,7 +190,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "İş ve ticari vize danışmanlığı veren firmalar listelenmiştir.",
     sectionId: "visa_type",
     sectionOrder: 40,
-    tileSize: "small",
+    themeKey: "visa-business",
     priority: 74,
     minFirmCount: 1,
     match: {
@@ -206,7 +206,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Aile birleşimi ve benzeri başvurularda destek sunan firmalar aşağıdadır.",
     sectionId: "visa_type",
     sectionOrder: 50,
-    tileSize: "small",
+    themeKey: "visa-family",
     priority: 76,
     minFirmCount: 1,
     match: {
@@ -222,7 +222,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Eğitim vizesi ve yurtdışı eğitim danışmanlığı sunan firmaları keşfedin.",
     sectionId: "visa_type",
     sectionOrder: 60,
-    tileSize: "small",
+    themeKey: "visa-education",
     priority: 75,
     minFirmCount: 1,
     match: {
@@ -245,7 +245,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Oturum ve ikamet süreçlerinde hizmet veren firmalar aşağıda listelenmiştir.",
     sectionId: "process",
     sectionOrder: 10,
-    tileSize: "medium",
+    themeKey: "process-residence",
     priority: 68,
     minFirmCount: 1,
     match: {
@@ -260,7 +260,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Red sonrası süreçler ve itirazlarda danışmanlık veren firmalar listelenmiştir.",
     sectionId: "process",
     sectionOrder: 20,
-    tileSize: "medium",
+    themeKey: "process-appeal",
     priority: 73,
     minFirmCount: 1,
     match: {
@@ -276,7 +276,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Evrak hazırlığı ve başvuru süreç yönetiminde destek sunan firmalar aşağıdadır.",
     sectionId: "process",
     sectionOrder: 30,
-    tileSize: "small",
+    themeKey: "process-docs",
     priority: 62,
     minFirmCount: 1,
     match: {
@@ -299,7 +299,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Randevu planlama ve takibi konusunda hizmet veren firmalar listelenmiştir.",
     sectionId: "process",
     sectionOrder: 40,
-    tileSize: "small",
+    themeKey: "process-appointment",
     priority: 58,
     minFirmCount: 1,
     match: {
@@ -314,7 +314,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Konsolosluk işlemleri ve yazışmalarda yardımcı olan firmalar aşağıdadır.",
     sectionId: "process",
     sectionOrder: 50,
-    tileSize: "small",
+    themeKey: "process-consulate",
     priority: 60,
     minFirmCount: 1,
     match: {
@@ -329,7 +329,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Kuzey Amerika vizelerinde hizmet veren firmalar aşağıda yer almaktadır.",
     sectionId: "regional",
     sectionOrder: 30,
-    tileSize: "medium",
+    themeKey: "region-north-america",
     priority: 82,
     minFirmCount: 1,
     match: {
@@ -346,7 +346,7 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
       "Avustralya vizesi danışmanlığı sunan firmalar listelenmiştir.",
     sectionId: "regional",
     sectionOrder: 60,
-    tileSize: "small",
+    themeKey: "country-australia",
     priority: 64,
     minFirmCount: 1,
     match: {

@@ -6,7 +6,11 @@ export type ExploreSectionId =
   | "process"
   | "regional";
 
-export type ExploreTileSize = "large" | "medium" | "small";
+/** Kart ızgarasında kolon / yükseklik ritmi (Windows-tile hissi). */
+export type ExploreCardVariant = "hero" | "wide" | "square" | "compact";
+
+/** Görsel aile: ülke / bölge kartları destinasyon; vize ve süreç kartları daha soyut. */
+export type ExploreVisualType = "country" | "region" | "visa_type" | "process";
 
 /**
  * Bir keşfet kategorisinin firmayla eşleşme kuralları (OR mantığı: herhangi biri yeterli).
@@ -32,7 +36,11 @@ export type ExploreCategoryDef = {
   sectionId: ExploreSectionId;
   /** Aynı bölüm içi sıra */
   sectionOrder: number;
-  tileSize: ExploreTileSize;
+  /**
+   * Görsel tema anahtarı — `lib/explore/explore-visual-themes.ts` içinde tanımlı.
+   * Ülke/bölge/vize/süreç kartları buradan ayrışır.
+   */
+  themeKey: string;
   /** Global öncelik (yüksek = önce) */
   priority: number;
   match: ExploreMatchRule;

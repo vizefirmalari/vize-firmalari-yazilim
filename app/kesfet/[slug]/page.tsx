@@ -10,6 +10,7 @@ import {
   getExploreCategoryBySlug,
   listExploreSlugs,
 } from "@/lib/explore/explore-categories";
+import { resolveExploreTheme } from "@/lib/explore/explore-visual-themes";
 import { filterFirmsByExploreCategory } from "@/lib/explore/explore-match";
 import { getFirms, parseFirmFilters } from "@/lib/data/firms";
 import {
@@ -67,6 +68,8 @@ export default async function KesfetSlugPage({ params }: PageProps) {
   const category = getExploreCategoryBySlug(slug);
   if (!category) notFound();
 
+  const exploreTheme = resolveExploreTheme(category.themeKey);
+
   const filters = parseFirmFilters({});
   const allFirms = await getFirms(filters);
   const matched = filterFirmsByExploreCategory(allFirms, category);
@@ -77,6 +80,8 @@ export default async function KesfetSlugPage({ params }: PageProps) {
     <>
       <SiteHeader />
       <ExploreHero
+        mode="category"
+        theme={exploreTheme}
         title={category.label}
         description={category.listIntro}
         backHref="/kesfet"
