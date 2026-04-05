@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { getSiteUrl, isSupabaseConfigured } from "@/lib/env";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
+import { listExploreSlugs } from "@/lib/explore/explore-categories";
 import { listPublicDocumentPages } from "@/lib/seo/public-routes";
 
 export type SitemapUrl = {
@@ -155,7 +156,14 @@ export async function getIndexableUrlsBySection(section: SitemapSection): Promis
   const nowIso = new Date().toISOString();
 
   if (section === "static") {
-    const staticPaths = ["/", "/akis", ...listPublicDocumentPages().map((p) => p.path)];
+    const explorePaths = listExploreSlugs().map((slug) => `/kesfet/${slug}`);
+    const staticPaths = [
+      "/",
+      "/akis",
+      "/kesfet",
+      ...explorePaths,
+      ...listPublicDocumentPages().map((p) => p.path),
+    ];
     return dedupeUrls(
       staticPaths.map((path) => ({
         loc: normalizeCanonicalUrl(path),
