@@ -15,6 +15,8 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { normalizeBlogCtaButtons } from "@/lib/blog/cta-buttons";
 import { pickWeightedAd, type BlogAdRow } from "@/lib/blog/ads";
 import { getSiteUrl } from "@/lib/env";
+import { resolveFirmBlogPostOgImage, resolveToAbsoluteImageUrl } from "@/lib/seo/blog-og-image";
+import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
 
 type Props = {
   params: Promise<{ slug: string; postSlug: string }>;
@@ -78,14 +80,6 @@ function splitBodyForMiddleAd(html: string): { first: string; second: string } {
   const first = `${parts.slice(0, mid).join("</p>")}</p>`;
   const second = `${parts.slice(mid).join("</p>")}`;
   return { first, second };
-}
-
-function toAbsoluteUrl(input: string | null | undefined): string | null {
-  const value = String(input ?? "").trim();
-  if (!value) return null;
-  if (/^https?:\/\//i.test(value)) return value;
-  const site = getSiteUrl().replace(/\/$/, "");
-  return `${site}/${value.replace(/^\//, "")}`;
 }
 
 async function getPublishedPostBySlug(
@@ -160,23 +154,47 @@ export async function generateMetadata({ params }: Props) {
 
   const siteUrl = getSiteUrl().replace(/\/$/, "");
   const canonical = `${siteUrl}/firma/${resolvedSlug}/blog/${postSlug}`;
-  const ogImage = toAbsoluteUrl(post.cover_image_url) ?? `${siteUrl}/og-default.jpg`;
+  const og = resolveFirmBlogPostOgImage({
+    coverImageUrl: post.cover_image_url,
+    coverImageAlt: post.cover_image_alt,
+    title: String(post.title ?? ""),
+  });
+  const desc = String(post.meta_description ?? "").trim() || String(post.summary ?? "").trim();
   return {
+    metadataBase: new URL(`${siteUrl}/`),
     title: String(post.title),
-    description: String(post.meta_description ?? ""),
+    description: desc,
     alternates: { canonical },
     openGraph: {
       title: String(post.title),
-      description: String(post.meta_description ?? ""),
+      description: desc,
       url: canonical,
-      images: [{ url: ogImage }],
+      siteName: SITE_BRAND_NAME,
+      locale: "tr_TR",
       type: "article",
+      publishedTime: post.published_at ?? undefined,
+      modifiedTime: post.published_at ?? undefined,
+      images: [
+        {
+          url: og.url,
+          width: og.width,
+          height: og.height,
+          alt: og.alt,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: String(post.title),
-      description: String(post.meta_description ?? ""),
-      images: [ogImage],
+      description: desc,
+      images: [
+        {
+          url: og.url,
+          width: og.width,
+          height: og.height,
+          alt: og.alt,
+        },
+      ],
     },
   };
 }
@@ -263,6 +281,14 @@ export default async function BlogDetailPage({ params }: Props) {
   const bottomAd = pickWeightedAd(bottomPool, `${post.id}-bottom-${daySeed}`);
 
   const canonical = `${getSiteUrl().replace(/\/$/, "")}/firma/${resolvedFirmSlug}/blog/${postSlug}`;
+  const shareOg = resolveFirmBlogPostOgImage({
+    coverImageUrl: post.cover_image_url,
+    coverImageAlt: post.cover_image_alt,
+    title: String(post.title ?? ""),
+  });
+  const publisherLogoUrl =
+    resolveToAbsoluteImageUrl(firm?.logo_url != null ? String(firm.logo_url) : null) ??
+    resolveToAbsoluteImageUrl(postCompanyLogo != null ? String(postCompanyLogo) : null);
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -270,13 +296,15 @@ export default async function BlogDetailPage({ params }: Props) {
     description: post.meta_description,
     datePublished: post.published_at,
     dateModified: post.published_at,
-    image: post.cover_image_url ? [post.cover_image_url] : [],
+    image: [shareOg.url],
     mainEntityOfPage: canonical,
     author: { "@type": "Organization", name: String(firm?.name ?? postCompanyName ?? "") },
     publisher: {
       "@type": "Organization",
       name: String(firm?.name ?? postCompanyName ?? ""),
-      logo: post.cover_image_url ? { "@type": "ImageObject", url: post.cover_image_url } : undefined,
+      logo: publisherLogoUrl
+        ? { "@type": "ImageObject", url: publisherLogoUrl }
+        : undefined,
     },
   };
   const faqSchema = post.faq_schema_json && typeof post.faq_schema_json === "object" ? post.faq_schema_json : null;
