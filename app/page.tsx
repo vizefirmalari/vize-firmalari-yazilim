@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { FirmsListing } from "@/components/home/firms-listing";
 import { HeroSection } from "@/components/home/hero-section";
+import { HomepageDiscoveryLayer } from "@/components/home/homepage-discovery-layer";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getFirms, parseFirmFilters } from "@/lib/data/firms";
@@ -63,12 +64,19 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const sp = await searchParams;
   const filters = parseFirmFilters(sp);
 
-  const listingFirms = await getFirms({
-    q: filters.q,
-    countries: filters.countries,
-    visaTypes: filters.visaTypes,
-    sort: filters.sort,
-  });
+  const emptyFilters = parseFirmFilters({});
+  const listingMatchesDiscoveryPool =
+    !filters.q.trim() &&
+    filters.countries.length === 0 &&
+    filters.visaTypes.length === 0 &&
+    filters.cities.length === 0 &&
+    filters.mainServices.length === 0 &&
+    !filters.exploreFocusSlug;
+
+  const listingFirms = await getFirms(filters);
+  const discoveryFirms = listingMatchesDiscoveryPool
+    ? listingFirms
+    : await getFirms(emptyFilters);
 
   const cms = await getHomepageSettings();
   const dbCountries = await getPublicFilterCountries();
@@ -79,6 +87,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   }
   if (filters.visaTypes.length) {
     hiddenParams.visaTypes = filters.visaTypes.join(",");
+  }
+  if (filters.cities.length) {
+    hiddenParams.cities = filters.cities.join(",");
+  }
+  if (filters.mainServices.length) {
+    hiddenParams.mainServices = filters.mainServices.join(",");
+  }
+  if (filters.exploreFocusSlug) {
+    hiddenParams.hedef = filters.exploreFocusSlug;
   }
   if (filters.sort !== "hype_desc") {
     hiddenParams.sort = filters.sort;
@@ -114,13 +131,18 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           initialFirms={listingFirms}
           initialCountries={filters.countries}
           initialVisaTypes={filters.visaTypes}
+          initialCities={filters.cities}
+          initialMainServices={filters.mainServices}
+          initialExploreFocusSlug={filters.exploreFocusSlug}
           initialSort={filters.sort}
           query={filters.q}
           countryList={countryListForListing}
           featuredTitle={
             cms?.featured_section_title?.trim() || undefined
           }
-        />
+        >
+          <HomepageDiscoveryLayer firms={discoveryFirms} />
+        </FirmsListing>
       </main>
       <SiteFooter />
     </>

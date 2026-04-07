@@ -1,0 +1,184 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useMemo } from "react";
+import type { FirmRow } from "@/lib/types/firm";
+import { FirmPrimaryLeftCta } from "@/components/firma/firm-primary-left-cta";
+import { ScoreInfoButton } from "@/components/home/score-info-button";
+import {
+  QuickApplyInactiveButton,
+  QuickApplyLauncher,
+} from "@/components/quick-apply/quick-apply-launcher";
+import {
+  buildQuickApplyExpertiseLine,
+  buildQuickApplySubtitle,
+} from "@/lib/quick-apply/firm-intro-branding";
+import { effectiveFirmCategoryLabel } from "@/lib/firma/listing-filter-options";
+import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
+
+const CORP_INFO =
+  "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
+
+const ABOUT_MAX = 120;
+
+function truncateAbout(text: string, max: number): string {
+  const t = text.trim();
+  if (t.length <= max) return t;
+  const slice = t.slice(0, max);
+  const lastSpace = slice.lastIndexOf(" ");
+  const head = lastSpace > 24 ? slice.slice(0, lastSpace) : slice.trimEnd();
+  return `${head}…`;
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return (parts[0]![0]! + parts[1]![0]!).toUpperCase();
+}
+
+export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
+  const corporate = firm.corporateness_score;
+  const hype =
+    typeof firm.hype_score === "number" && Number.isFinite(firm.hype_score)
+      ? firm.hype_score
+      : 0;
+  const quickApplyOk =
+    firm.quick_apply_enabled !== false &&
+    firm.has_active_panel_member === true;
+
+  const shortAbout = firm.short_description?.trim() ?? "";
+  const detailedAbout = firm.description?.trim() ?? "";
+  const cardAbout =
+    shortAbout ||
+    (detailedAbout ? truncateAbout(detailedAbout, ABOUT_MAX) : "") ||
+    "Bu firma hakkında metin yakında eklenecek.";
+
+  const firmType = effectiveFirmCategoryLabel(firm);
+  const cityLine = firm.city?.trim() ?? "";
+
+  const specLabels = useMemo(() => {
+    const r = firm as unknown as Record<string, unknown>;
+    return SPECIALIZATION_OPTIONS.filter(({ key }) => Boolean(r[key])).map(
+      ({ label }) => label
+    );
+  }, [firm]);
+
+  const badgeLine = [firm.short_badge?.trim(), firmType, cityLine]
+    .filter(Boolean)
+    .join(" · ");
+
+  const specShown = specLabels.slice(0, 4);
+  const specMore = Math.max(0, specLabels.length - specShown.length);
+
+  return (
+    <article className="flex h-full min-w-[min(100vw-2.5rem,20rem)] max-w-80 shrink-0 flex-col rounded-2xl border border-border bg-background p-4 shadow-[0_8px_30px_rgba(11,60,93,0.08)] sm:min-w-76 sm:max-w-84 sm:p-5">
+      <div className="flex gap-3">
+        <div className="relative h-18 w-18 shrink-0 overflow-hidden rounded-xl bg-surface ring-1 ring-primary/8">
+          {firm.logo_url ? (
+            <Image
+              src={firm.logo_url}
+              alt={firm.logo_alt_text?.trim() || `${firm.name} logosu`}
+              fill
+              sizes="72px"
+              className="object-contain object-center p-1.5"
+              loading="lazy"
+            />
+          ) : (
+            <span
+              className="flex h-full w-full items-center justify-center text-lg font-bold text-primary"
+              aria-hidden
+            >
+              {initials(firm.name)}
+            </span>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-bold leading-snug text-primary">
+            {firm.name}
+          </h3>
+          {badgeLine ? (
+            <p className="mt-1 line-clamp-2 text-[10px] font-medium leading-tight text-foreground/50">
+              {badgeLine}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-foreground/75">
+        {cardAbout}
+      </p>
+
+      <div className="mt-3 space-y-2">
+        <div>
+          <div className="flex items-center justify-between gap-2 text-[11px] font-medium text-foreground/60">
+            <span className="inline-flex items-center gap-0.5">
+              Kurumsallık
+              <ScoreInfoButton label="Kurumsallık Skoru hakkında" text={CORP_INFO} />
+            </span>
+            <span className="tabular-nums text-foreground/80">
+              {corporate}/100
+            </span>
+          </div>
+          <div
+            className="mt-1 h-1 overflow-hidden rounded-full bg-primary/10"
+            role="progressbar"
+            aria-valuenow={corporate}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div
+              className="h-full rounded-full bg-[#D9A441]"
+              style={{ width: `${corporate}%` }}
+            />
+          </div>
+        </div>
+        <p className="text-[11px] font-semibold text-foreground/60">
+          Hype: <span className="tabular-nums text-foreground">{hype}</span>
+        </p>
+      </div>
+
+      {specShown.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {specShown.map((l) => (
+            <span
+              key={l}
+              className="inline-flex rounded-full bg-[#D9A441]/15 px-2 py-0.5 text-[10px] font-semibold text-[#1A1A1A] ring-1 ring-[#D9A441]/25"
+            >
+              {l}
+            </span>
+          ))}
+          {specMore > 0 ? (
+            <span className="inline-flex rounded-full bg-foreground/6 px-2 py-0.5 text-[10px] font-semibold text-foreground/55">
+              +{specMore}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid flex-1 grid-cols-2 gap-2">
+        <FirmPrimaryLeftCta firm={firm} />
+        {quickApplyOk ? (
+          <QuickApplyLauncher
+            firmId={firm.id}
+            firmName={firm.name}
+            firmLogoUrl={firm.logo_url}
+            firmExpertiseLine={buildQuickApplyExpertiseLine(firm)}
+            firmSubtitle={buildQuickApplySubtitle(firm)}
+            buttonClassName="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
+          />
+        ) : (
+          <QuickApplyInactiveButton />
+        )}
+      </div>
+
+      <Link
+        href={`/firma/${firm.slug}`}
+        className="mt-3 block text-center text-sm font-semibold text-secondary underline-offset-4 hover:underline"
+      >
+        Firma sayfası
+      </Link>
+    </article>
+  );
+}

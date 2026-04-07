@@ -166,5 +166,11 @@ export type FirmFilters = {
   q: string;
   countries: string[];
   visaTypes: string[];
+  /** Şehir adı(ları); `cities` URL parametresi (virgülle) */
+  cities: string[];
+  /** Ana hizmet / hizmet etiketi; `mainServices` URL parametresi */
+  mainServices: string[];
+  /** Keşfet kategorisi ile aynı eşleşme motoru (`hedef` URL parametresi, slug) */
+  exploreFocusSlug: string | null;
   sort: FirmSort;
 };

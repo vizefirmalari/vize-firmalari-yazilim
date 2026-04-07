@@ -8,6 +8,8 @@ import {
   SPECIALIZATION_OPTIONS,
   type SpecializationKey,
 } from "@/lib/constants/firm-specializations";
+import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
+import { firmMatchesExploreCategory } from "@/lib/explore/explore-match";
 
 const MOCK_FIRMS: FirmRow[] = [
   {
@@ -168,6 +170,35 @@ function firmMatchesQuery(r: FirmRow, rawQuery: string): boolean {
   return false;
 }
 
+function normalizeTr(s: string): string {
+  return s.trim().toLocaleLowerCase("tr");
+}
+
+function firmMatchesCityFilter(firm: FirmRow, cities: string[]): boolean {
+  if (cities.length === 0) return true;
+  const fc = firm.city?.trim();
+  if (!fc) return false;
+  const n = normalizeTr(fc);
+  return cities.some((c) => normalizeTr(c) === n);
+}
+
+function firmMatchesMainServicesFilter(firm: FirmRow, labels: string[]): boolean {
+  if (labels.length === 0) return true;
+  const pool: string[] = [];
+  for (const arr of [firm.main_services, firm.services, firm.sub_services]) {
+    if (!Array.isArray(arr)) continue;
+    for (const x of arr) {
+      if (typeof x === "string" && x.trim()) pool.push(normalizeTr(x));
+    }
+  }
+  if (!pool.length) return false;
+  return labels.some((label) => {
+    const want = normalizeTr(label);
+    if (!want) return false;
+    return pool.some((p) => p === want || p.includes(want) || want.includes(p));
+  });
+}
+
 export function parseFirmFilters(searchParams: {
   [key: string]: string | string[] | undefined;
 }): FirmFilters {
@@ -192,10 +223,23 @@ export function parseFirmFilters(searchParams: {
       : legacyServicesRaw
           .map((s) => specializationKeyFromLabel(s))
           .filter((s): s is SpecializationKey => Boolean(s));
+
+  const hedefRaw =
+    typeof searchParams.hedef === "string"
+      ? searchParams.hedef.trim()
+      : Array.isArray(searchParams.hedef)
+        ? String(searchParams.hedef[0] ?? "").trim()
+        : "";
+  const exploreFocusSlug =
+    hedefRaw && getExploreCategoryBySlug(hedefRaw) ? hedefRaw : null;
+
   return {
     q,
     countries: parseList(searchParams.countries),
     visaTypes,
+    cities: parseList(searchParams.cities),
+    mainServices: parseList(searchParams.mainServices),
+    exploreFocusSlug,
     sort,
   };
 }
@@ -226,6 +270,21 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
           Boolean((r as unknown as Record<string, unknown>)[key])
       );
     });
+  }
+
+  if (f.cities.length > 0) {
+    out = out.filter((r) => firmMatchesCityFilter(r, f.cities));
+  }
+
+  if (f.mainServices.length > 0) {
+    out = out.filter((r) => firmMatchesMainServicesFilter(r, f.mainServices));
+  }
+
+  if (f.exploreFocusSlug) {
+    const cat = getExploreCategoryBySlug(f.exploreFocusSlug);
+    if (cat) {
+      out = out.filter((r) => firmMatchesExploreCategory(r, cat));
+    }
   }
 
   out.sort((a, b) => {
@@ -392,6 +451,21 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
           Boolean((r as unknown as Record<string, unknown>)[key])
       );
     });
+  }
+
+  if (filters.cities.length > 0) {
+    rows = rows.filter((r) => firmMatchesCityFilter(r, filters.cities));
+  }
+
+  if (filters.mainServices.length > 0) {
+    rows = rows.filter((r) => firmMatchesMainServicesFilter(r, filters.mainServices));
+  }
+
+  if (filters.exploreFocusSlug) {
+    const cat = getExploreCategoryBySlug(filters.exploreFocusSlug);
+    if (cat) {
+      rows = rows.filter((r) => firmMatchesExploreCategory(r, cat));
+    }
   }
 
   if (filters.q) {

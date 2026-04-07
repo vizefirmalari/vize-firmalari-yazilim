@@ -1,5 +1,7 @@
 import type { FirmRow, FirmSort } from "@/lib/types/firm";
 import { firmMatchesCoverageSelection } from "@/lib/firma/listing-coverage-match";
+import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
+import { firmMatchesExploreCategory } from "@/lib/explore/explore-match";
 import {
   SPECIALIZATION_OPTIONS,
   type SpecializationKey,
@@ -69,9 +71,44 @@ export type LanguageProFlags = {
 
 export type YearPreset = null | "recent" | "vintage";
 
+function normalizeTr(s: string): string {
+  return s.trim().toLocaleLowerCase("tr");
+}
+
+function firmMatchesCityLabels(firm: FirmRow, cities: string[]): boolean {
+  if (cities.length === 0) return true;
+  const fc = firm.city?.trim();
+  if (!fc) return false;
+  const n = normalizeTr(fc);
+  return cities.some((c) => normalizeTr(c) === n);
+}
+
+function firmMatchesMainServiceLabels(firm: FirmRow, labels: string[]): boolean {
+  if (labels.length === 0) return true;
+  const pool: string[] = [];
+  for (const arr of [firm.main_services, firm.services, firm.sub_services]) {
+    if (!Array.isArray(arr)) continue;
+    for (const x of arr) {
+      if (typeof x === "string" && x.trim()) pool.push(normalizeTr(x));
+    }
+  }
+  if (!pool.length) return false;
+  return labels.some((label) => {
+    const want = normalizeTr(label);
+    if (!want) return false;
+    return pool.some((p) => p === want || p.includes(want) || want.includes(p));
+  });
+}
+
 export type AppliedListingFilters = {
   coverage: CoverageSelection;
   visaTypes: SpecializationKey[];
+  /** URL / vitrin — şehir adları */
+  cities: string[];
+  /** URL / vitrin — ana hizmet veya hizmet satırı etiketi */
+  mainServiceLabels: string[];
+  /** Keşfet slug ile aynı eşleşme */
+  exploreFocusSlug: string | null;
   trust: TrustFilterFlags;
   serviceMode: ServiceModeFlags;
   languagePro: LanguageProFlags;
@@ -83,6 +120,42 @@ export type AppliedListingFilters = {
   yearMax: number;
   yearPreset: YearPreset;
 };
+
+/** Vitrin sayımı ve yeni taslaklar için tam varsayılan filtre */
+export function createDefaultAppliedListingFilters(
+  bounds: ListingRangeBounds
+): AppliedListingFilters {
+  return {
+    coverage: { visaRegionLabels: [], countries: [] },
+    visaTypes: [],
+    cities: [],
+    mainServiceLabels: [],
+    exploreFocusSlug: null,
+    trust: {
+      requireTaxCertificate: false,
+      requireLicense: false,
+      requirePhysicalOffice: false,
+      requireOfficeVerified: false,
+    },
+    serviceMode: {
+      onlineConsulting: false,
+      officeFaceToFace: false,
+      remoteSupport: false,
+      weekendSupport: false,
+    },
+    languagePro: {
+      multilingualSupport: false,
+      corporateDomain: false,
+    },
+    corpMin: bounds.corp.min,
+    corpMax: bounds.corp.max,
+    hypeMin: bounds.hype.min,
+    hypeMax: bounds.hype.max,
+    yearMin: bounds.year.min,
+    yearMax: bounds.year.max,
+    yearPreset: null,
+  };
+}
 
 function yearFilterIsFull(
   f: AppliedListingFilters,
@@ -166,6 +239,15 @@ export function applyListingFilters(
 
   return firms.filter((firm) => {
     if (!firmMatchesCoverageSelection(firm, f.coverage)) return false;
+
+    if (!firmMatchesCityLabels(firm, f.cities)) return false;
+
+    if (!firmMatchesMainServiceLabels(firm, f.mainServiceLabels)) return false;
+
+    if (f.exploreFocusSlug) {
+      const cat = getExploreCategoryBySlug(f.exploreFocusSlug);
+      if (cat && !firmMatchesExploreCategory(firm, cat)) return false;
+    }
 
     if (f.visaTypes.length > 0) {
       const active = new Set(
