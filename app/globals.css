@@ -63,19 +63,7 @@ body {
   color: var(--foreground);
 }
 
-/* Ana sayfa - öne çıkan firmalar: CTA buton yüksekliği eşitleme */
-.featured-showcase-card-fix article > div.mt-4.grid {
-  min-height: 3.5rem;
-}
-
-.featured-showcase-card-fix article > div.mt-4.grid > * {
-  min-height: 3.5rem;
-}
-
-.featured-showcase-card-fix article > div.mt-4.grid > * > * {
-  height: 100%;
-}
-
+/* Ana sayfa - öne çıkan firmalar: etiket satırı + CTA */
 .featured-showcase-card-fix article .firm-spec-tags {
   min-height: 2.25rem;
   align-content: flex-start;
@@ -83,6 +71,25 @@ body {
 
 .featured-showcase-card-fix article .firm-cta-grid {
   margin-top: auto !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+/* İki CTA eşit genişlik (50/50); yükseklik içerikten */
+.featured-showcase-card-fix article .firm-cta-secondary,
+.featured-showcase-card-fix article .firm-cta-primary {
+  min-height: 2.75rem;
+}
+
+.featured-showcase-card-fix article .firm-cta-secondary button,
+.featured-showcase-card-fix article .firm-cta-secondary a[role="button"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.featured-showcase-card-fix article .firm-cta-primary > button,
+.featured-showcase-card-fix article .firm-cta-primary > div[role="status"] {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Dokunmatikte mavi flash azaltılır; odak hâlâ klavye ile görünür */

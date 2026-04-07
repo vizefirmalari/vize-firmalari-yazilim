@@ -16,6 +16,7 @@ import {
 } from "@/lib/quick-apply/firm-intro-branding";
 import { effectiveFirmCategoryLabel } from "@/lib/firma/listing-filter-options";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
+import { FirmOfficeCityBadge } from "@/components/firma/firm-office-city-badge";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -56,7 +57,7 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
     "Bu firma hakkında metin yakında eklenecek.";
 
   const firmType = effectiveFirmCategoryLabel(firm);
-  const cityLine = firm.city?.trim() ?? "";
+  const officeCity = firm.city?.trim() ?? "";
 
   const specLabels = useMemo(() => {
     const r = firm as unknown as Record<string, unknown>;
@@ -65,16 +66,19 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
     );
   }, [firm]);
 
-  const badgeLine = [firm.short_badge?.trim(), firmType, cityLine]
-    .filter(Boolean)
-    .join(" · ");
+  const badgeLine = [firm.short_badge?.trim(), firmType].filter(Boolean).join(" · ");
 
   const specShown = specLabels.slice(0, 4);
   const specMore = Math.max(0, specLabels.length - specShown.length);
 
   return (
-    <article className="flex h-full min-w-[min(100vw-2.5rem,20rem)] max-w-80 shrink-0 flex-col rounded-2xl border border-border bg-background p-4 shadow-[0_8px_30px_rgba(11,60,93,0.08)] sm:min-w-76 sm:max-w-84 sm:p-5">
-      <div className="flex gap-3">
+    <article className="relative flex h-full min-w-[min(100vw-2.5rem,20rem)] max-w-80 shrink-0 flex-col rounded-2xl border border-border bg-background p-4 shadow-[0_8px_30px_rgba(11,60,93,0.08)] sm:min-w-76 sm:max-w-84 sm:p-5">
+      <div className="pointer-events-none absolute right-3 top-3 z-10 flex justify-end sm:right-4 sm:top-4">
+        <FirmOfficeCityBadge city={firm.city} />
+      </div>
+      <div
+        className={`flex gap-3 ${officeCity ? "pt-0.5 pr-19 sm:pr-28" : ""}`}
+      >
         <div className="relative h-18 w-18 shrink-0 overflow-hidden rounded-xl bg-surface ring-1 ring-primary/8">
           {firm.logo_url ? (
             <Image
@@ -155,20 +159,24 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
         ) : null}
       </div>
 
-      <div className="firm-cta-grid mt-4 grid flex-1 grid-cols-2 gap-2">
-        <FirmPrimaryLeftCta firm={firm} />
-        {quickApplyOk ? (
-          <QuickApplyLauncher
-            firmId={firm.id}
-            firmName={firm.name}
-            firmLogoUrl={firm.logo_url}
-            firmExpertiseLine={buildQuickApplyExpertiseLine(firm)}
-            firmSubtitle={buildQuickApplySubtitle(firm)}
-            buttonClassName="flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
-          />
-        ) : (
-          <QuickApplyInactiveButton />
-        )}
+      <div className="firm-cta-grid mt-4 grid flex-1 grid-cols-2 gap-2 *:min-w-0">
+        <div className="firm-cta-secondary flex flex-col justify-center">
+          <FirmPrimaryLeftCta firm={firm} />
+        </div>
+        <div className="firm-cta-primary flex flex-col justify-center">
+          {quickApplyOk ? (
+            <QuickApplyLauncher
+              firmId={firm.id}
+              firmName={firm.name}
+              firmLogoUrl={firm.logo_url}
+              firmExpertiseLine={buildQuickApplyExpertiseLine(firm)}
+              firmSubtitle={buildQuickApplySubtitle(firm)}
+              buttonClassName="flex w-full items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f]"
+            />
+          ) : (
+            <QuickApplyInactiveButton />
+          )}
+        </div>
       </div>
 
       <Link

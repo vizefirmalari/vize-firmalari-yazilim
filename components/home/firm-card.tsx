@@ -22,6 +22,7 @@ import {
   orderedServiceLabelsForCardSummary,
 } from "@/lib/firma/listing-filter-options";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
+import { FirmOfficeCityBadge } from "@/components/firma/firm-office-city-badge";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -129,7 +130,10 @@ export function FirmCard({ firm }: FirmCardProps) {
     mainCategories.length > 0 ? mainCategories : servicePool;
 
   return (
-    <article className="flex h-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-[#0B3C5D]/10 bg-white px-4 py-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)] sm:px-5">
+    <article className="relative flex h-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-[#0B3C5D]/10 bg-white px-4 py-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)] sm:px-5">
+      <div className="pointer-events-none absolute right-3 top-3 z-10 flex justify-end sm:right-4 sm:top-4">
+        <FirmOfficeCityBadge city={firm.city} />
+      </div>
       <div className="flex flex-col items-center text-center">
         <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-3 shadow-[0_2px_14px_rgba(11,60,93,0.08)] sm:rounded-xl sm:p-3.5">
           <div className="relative box-border flex h-[92px] w-[92px] items-center justify-center rounded-xl bg-[#F7F9FB] p-2 ring-1 ring-[#0B3C5D]/8 sm:h-[96px] sm:w-[96px] sm:p-2.5">
