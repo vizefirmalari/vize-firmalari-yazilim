@@ -1,4 +1,4 @@
-import { SITE_HEADER_LOGO_URL } from "@/lib/constants";
+import { absoluteUrl } from "@/lib/seo/canonical";
 
 /** Kanonik marka adı — başlık, OG siteName, şema */
 export const SITE_BRAND_NAME = "Vize Firmaları";
@@ -12,10 +12,10 @@ export const SITE_DEFAULT_DESCRIPTION =
   "Vize danışmanlık firmalarını karşılaştırın; Kurumsallık Skoru, hizmetler ve iletişim bilgileri tek yerde. Doğru firmayı bulmanıza yardımcı olan karşılaştırma ve danışmanlık platformu.";
 
 /**
- * Varsayılan OG / Twitter görseli — mutlaka mutlak URL (Storage CDN).
- * Sayfa özel görseli yoksa zincirin son halkası.
+ * Varsayılan OG / Twitter / Organization.logo — `public/og-share.png`.
+ * Önbellek kırılması için sorgu parametresi; başlık logosundan bağımsız.
  */
-export const SITE_DEFAULT_OG_IMAGE_URL = SITE_HEADER_LOGO_URL;
+export const SITE_DEFAULT_OG_IMAGE_URL = `${absoluteUrl("/og-share.png")}?v=20260408`;
 
 export function siteLogoAltText(): string {
   return `${SITE_BRAND_NAME} logosu`;
