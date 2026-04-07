@@ -55,15 +55,13 @@ export function DestinationFlagBadge({
 }) {
   const s = SIZES[size];
   const code = iso?.trim().toLowerCase();
-  const [broken, setBroken] = useState(false);
   const [inlineFailed, setInlineFailed] = useState(false);
 
   const src = useMemo(() => {
     if (!code || code.length !== 2) return null;
-    return broken
-      ? inlineFallbackFlag(code)
-      : `https://flagcdn.com/w${s.img}/${code}.png`;
-  }, [code, broken, s.img]);
+    // Keep flags stable in production by avoiding external image hosts.
+    return inlineFallbackFlag(code);
+  }, [code, s.img]);
 
   if (!src || inlineFailed) {
     const emoji = code ? codeToFlagEmoji(code) : "";
@@ -94,10 +92,6 @@ export function DestinationFlagBadge({
         loading="lazy"
         draggable={false}
         onError={() => {
-          if (!broken) {
-            setBroken(true);
-            return;
-          }
           setInlineFailed(true);
         }}
       />
