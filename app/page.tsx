@@ -97,7 +97,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   if (filters.exploreFocusSlug) {
     hiddenParams.hedef = filters.exploreFocusSlug;
   }
-  if (filters.sort !== "hype_desc") {
+  if (filters.sort !== "name_asc") {
     hiddenParams.sort = filters.sort;
   }
 

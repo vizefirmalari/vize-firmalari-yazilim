@@ -139,25 +139,23 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
         </p>
       </div>
 
-      {specShown.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {specShown.map((l) => (
-            <span
-              key={l}
-              className="inline-flex rounded-full bg-[#D9A441]/15 px-2 py-0.5 text-[10px] font-semibold text-[#1A1A1A] ring-1 ring-[#D9A441]/25"
-            >
-              {l}
-            </span>
-          ))}
-          {specMore > 0 ? (
-            <span className="inline-flex rounded-full bg-foreground/6 px-2 py-0.5 text-[10px] font-semibold text-foreground/55">
-              +{specMore}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
+      <div className="firm-spec-tags mt-3 flex flex-wrap gap-1.5">
+        {specShown.map((l) => (
+          <span
+            key={l}
+            className="inline-flex rounded-full bg-[#D9A441]/15 px-2 py-0.5 text-[10px] font-semibold text-[#1A1A1A] ring-1 ring-[#D9A441]/25"
+          >
+            {l}
+          </span>
+        ))}
+        {specMore > 0 ? (
+          <span className="inline-flex rounded-full bg-foreground/6 px-2 py-0.5 text-[10px] font-semibold text-foreground/55">
+            +{specMore}
+          </span>
+        ) : null}
+      </div>
 
-      <div className="mt-4 grid flex-1 grid-cols-2 gap-2">
+      <div className="firm-cta-grid mt-4 grid flex-1 grid-cols-2 gap-2">
         <FirmPrimaryLeftCta firm={firm} />
         {quickApplyOk ? (
           <QuickApplyLauncher

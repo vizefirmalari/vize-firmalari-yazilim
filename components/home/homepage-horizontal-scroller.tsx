@@ -82,11 +82,11 @@ export function HomepageHorizontalScroller({
     : "scroll-smooth";
 
   const btnBase =
-    "relative z-2 hidden h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/75 bg-background/65 text-primary shadow-sm backdrop-blur-sm transition md:inline-flex";
+    "relative z-2 hidden h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/60 text-primary shadow-sm backdrop-blur-sm transition md:inline-flex";
 
   return (
-    <div className={`flex w-full min-w-0 items-stretch gap-1 md:gap-1.5 ${className}`}>
-      <div className="hidden w-8 shrink-0 md:flex md:items-center md:justify-center">
+    <div className={`flex w-full min-w-0 items-stretch gap-0.5 md:gap-1 ${className}`}>
+      <div className="hidden w-7 shrink-0 md:flex md:items-center md:justify-center">
         <button
           type="button"
           onClick={() => scrollByDir(-1)}
@@ -94,7 +94,7 @@ export function HomepageHorizontalScroller({
           aria-label="Önceki"
           className={`${btnBase} ${
             canLeft
-              ? "opacity-55 hover:border-primary/28 hover:bg-background/85 hover:opacity-100"
+              ? "opacity-50 hover:border-primary/28 hover:bg-background/85 hover:opacity-100"
               : "cursor-default opacity-25"
           }`}
         >
@@ -104,11 +104,11 @@ export function HomepageHorizontalScroller({
 
       <div className="relative min-w-0 flex-1">
         <div
-          className="pointer-events-none absolute inset-y-1 left-0 z-1 w-6 bg-linear-to-r from-background via-background/88 to-transparent md:w-7"
+          className="pointer-events-none absolute inset-y-1 left-0 z-1 w-5 bg-linear-to-r from-background via-background/88 to-transparent md:w-6"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-y-1 right-0 z-1 w-6 bg-linear-to-l from-background via-background/88 to-transparent md:w-7"
+          className="pointer-events-none absolute inset-y-1 right-0 z-1 w-5 bg-linear-to-l from-background via-background/88 to-transparent md:w-6"
           aria-hidden
         />
 
@@ -119,14 +119,14 @@ export function HomepageHorizontalScroller({
         >
           <div
             ref={innerRef}
-            className={`flex w-max min-w-full ${gapClass} py-1 pl-1.5 pr-1.5 md:pl-2 md:pr-2`}
+            className={`flex w-max min-w-full ${gapClass} py-1 pl-1 pr-1 md:pl-1.5 md:pr-1.5`}
           >
             {children}
           </div>
         </div>
       </div>
 
-      <div className="hidden w-8 shrink-0 md:flex md:items-center md:justify-center">
+      <div className="hidden w-7 shrink-0 md:flex md:items-center md:justify-center">
         <button
           type="button"
           onClick={() => scrollByDir(1)}
@@ -134,7 +134,7 @@ export function HomepageHorizontalScroller({
           aria-label="Sonraki"
           className={`${btnBase} ${
             canRight
-              ? "opacity-55 hover:border-primary/28 hover:bg-background/85 hover:opacity-100"
+              ? "opacity-50 hover:border-primary/28 hover:bg-background/85 hover:opacity-100"
               : "cursor-default opacity-25"
           }`}
         >

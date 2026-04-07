@@ -2,13 +2,15 @@ import { HomepageDestinationShowcase } from "@/components/home/homepage-destinat
 import { HomepageDiscoverySection } from "@/components/home/homepage-discovery-section";
 import { HomepageHorizontalScroller } from "@/components/home/homepage-horizontal-scroller";
 import { HomepageQuickDiscoverStrip } from "@/components/home/homepage-quick-discover-strip";
-import { HomepageServiceVitrinCard } from "@/components/home/homepage-service-vitrin-card";
-import { HomepageSpecialtyVitrinCard } from "@/components/home/homepage-specialty-vitrin-card";
+import { HomepageServiceCompactGrid } from "@/components/home/homepage-service-compact-grid";
+import { HomepageSpecialtyVisualGrid } from "@/components/home/homepage-specialty-visual-grid";
+import { FeaturedFirmCard } from "@/components/home/featured-firm-card";
 import {
   buildHomeDestinationCards,
   buildHomeMainServiceTiles,
   buildHomeQuickDiscoverItems,
   buildHomeSpecialtyCards,
+  getFeaturedFirmsForHome,
 } from "@/lib/homepage/discovery-model";
 import type { FirmRow } from "@/lib/types/firm";
 
@@ -17,11 +19,15 @@ export function HomepageDiscoveryLayer({ firms }: { firms: FirmRow[] }) {
   const destinations = buildHomeDestinationCards(firms);
   const specialties = buildHomeSpecialtyCards(firms);
   const serviceTiles = buildHomeMainServiceTiles(firms);
+  const featured = getFeaturedFirmsForHome(firms, 12).filter(
+    (firm) => firm.name.trim().toLocaleLowerCase("tr") !== "vize firmaları"
+  ).slice(0, 8);
 
   const hasBodyBlocks =
     destinations.length > 0 ||
     specialties.length > 0 ||
-    serviceTiles.length > 0;
+    serviceTiles.length > 0 ||
+    featured.length > 0;
 
   return (
     <div className="w-full border-b border-border/80 bg-linear-to-b from-surface/18 via-background/55 to-background pb-4 pt-9 md:pb-8 md:pt-11">
@@ -29,7 +35,7 @@ export function HomepageDiscoveryLayer({ firms }: { firms: FirmRow[] }) {
         <HomepageDiscoverySection
           id="hizli-kesif"
           title="Hızlı keşif"
-          description="Temel yönlere dokunarak listeyi hemen daraltın."
+          description="Kısa yollarla doğrudan filtreli listeye geçin."
           seeAllHref="/kesfet"
         >
           <HomepageQuickDiscoverStrip items={quickItems} />
@@ -52,14 +58,10 @@ export function HomepageDiscoveryLayer({ firms }: { firms: FirmRow[] }) {
               <HomepageDiscoverySection
                 id="uzmanlik"
                 title="Uzmanlık alanına göre"
-                description="Başvuru türünüze uygun uzmanlık etiketleriyle ilerleyin."
+                description="Başvuru niyeti odaklı koleksiyonları inceleyin."
                 seeAllHref="/kesfet"
               >
-                <HomepageHorizontalScroller gapClass="gap-4 md:gap-4">
-                  {specialties.map((c) => (
-                    <HomepageSpecialtyVitrinCard key={c.id} card={c} />
-                  ))}
-                </HomepageHorizontalScroller>
+                <HomepageSpecialtyVisualGrid cards={specialties} />
               </HomepageDiscoverySection>
             ) : null}
 
@@ -67,12 +69,25 @@ export function HomepageDiscoveryLayer({ firms }: { firms: FirmRow[] }) {
               <HomepageDiscoverySection
                 id="hizmet-turu"
                 title="İşlem türüne göre"
-                description="Randevu, evrak, hukuki süreç veya konsolosluk ihtiyacınıza göre seçin."
+                description="Süreç, evrak ve danışmanlık hizmet koleksiyonları."
                 seeAllHref="/kesfet"
               >
-                <HomepageHorizontalScroller gapClass="gap-4 md:gap-4">
-                  {serviceTiles.map((t) => (
-                    <HomepageServiceVitrinCard key={t.id} tile={t} />
+                <HomepageServiceCompactGrid tiles={serviceTiles} />
+              </HomepageDiscoverySection>
+            ) : null}
+
+            {featured.length > 0 ? (
+              <HomepageDiscoverySection
+                id="one-cikan"
+                title="Öne çıkan bölüm"
+                description="Firma kartları değişmeden, vitrinde öne çıkan seçkiler."
+                seeAllHref="/?sort=corp_desc#firmalar"
+              >
+                <HomepageHorizontalScroller gapClass="gap-4 md:gap-5">
+                  {featured.map((f) => (
+                    <div key={f.id} className="featured-showcase-card-fix shrink-0 snap-start">
+                      <FeaturedFirmCard firm={f} />
+                    </div>
                   ))}
                 </HomepageHorizontalScroller>
               </HomepageDiscoverySection>

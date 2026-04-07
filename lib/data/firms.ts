@@ -65,7 +65,7 @@ const MOCK_FIRMS: FirmRow[] = [
 ];
 
 function normalizeSort(sort: string | undefined): FirmSort {
-  if (!sort) return "hype_desc";
+  if (!sort) return "name_asc";
   const legacy: Record<string, FirmSort> = {
     trust_desc: "hype_desc",
     trust_asc: "hype_asc",
@@ -84,7 +84,7 @@ function normalizeSort(sort: string | undefined): FirmSort {
     "name_asc",
   ];
   if (allowed.includes(sort as FirmSort)) return sort as FirmSort;
-  return "hype_desc";
+  return "name_asc";
 }
 
 /**

@@ -79,7 +79,7 @@ export function getDestinationVisual(
       imageUrls: mergeUrls(
         [
           u("photo-1496442226666-8d4d0e62e6e9"),
-          u("photo-1485738422979-f5c462d49f74"),
+          u("photo-1485871981521-5b1fd3805eee"),
         ],
         [u("photo-1501594907352-04cda38ebc29")]
       ),
@@ -89,7 +89,7 @@ export function getDestinationVisual(
     "kanada-vizesi": {
       flagIso: "ca",
       imageUrls: mergeUrls(
-        [u("photo-1517935702655-ce394b619419"), u("photo-1519832974636-27d5c6b5381c")],
+        [u("photo-1505761671935-60b3a7427bad"), u("photo-1517935702655-ce394b619419")],
         [u("photo-1464822759023-fed622ff2c3b")]
       ),
       gradientClassName: gradientEu,
@@ -110,7 +110,7 @@ export function getDestinationVisual(
     "yunanistan-vizesi": {
       flagIso: "gr",
       imageUrls: mergeUrls(
-        [u("photo-1533105079780-92b9be482077"), u("photo-1603565816030-6b389eeb23cb")],
+        [u("photo-1570077188670-e3a8d69ac5ff"), u("photo-1533105079780-92b9be482077")],
         EU_FALLBACKS
       ),
       gradientClassName: gradientMed,
@@ -119,7 +119,7 @@ export function getDestinationVisual(
     "avustralya-vizesi": {
       flagIso: "au",
       imageUrls: mergeUrls(
-        [u("photo-1523482580672-f109ba8cb9be"), u("photo-1506905925346-21bda4d32df4")],
+        [u("photo-1523428096881-5bd79d043006"), u("photo-1523482580672-f109ba8cb9be")],
         [u("photo-1501594907352-04cda38ebc29")]
       ),
       gradientClassName: gradientWarm,
@@ -129,12 +129,107 @@ export function getDestinationVisual(
 
   if (slugMap[cardId]) return slugMap[cardId]!;
 
+  // Country-based explicit mapping (c-*) to avoid ambiguous title matching.
+  const countryTitle =
+    cardId.startsWith("c-") ? cardId.slice(2).trim().toLocaleLowerCase("tr") : "";
+  const ISO_BY_COUNTRY_TITLE: Record<string, string> = {
+    almanya: "de",
+    fransa: "fr",
+    hollanda: "nl",
+    ingiltere: "gb",
+    "birleşik krallık": "gb",
+    "birlesik krallik": "gb",
+    abd: "us",
+    amerika: "us",
+    "amerika birleşik devletleri": "us",
+    "amerika birlesik devletleri": "us",
+    kanada: "ca",
+    dubai: "ae",
+    bae: "ae",
+    "birleşik arap emirlikleri": "ae",
+    "birlesik arap emirlikleri": "ae",
+    yunanistan: "gr",
+    avustralya: "au",
+    italya: "it",
+    ispanya: "es",
+    portekiz: "pt",
+    belçika: "be",
+    "belcika": "be",
+    isvicre: "ch",
+    "isviçre": "ch",
+    avusturya: "at",
+    isvec: "se",
+    "isveç": "se",
+    norvec: "no",
+    "norveç": "no",
+    danimarka: "dk",
+    finlandiya: "fi",
+    polonya: "pl",
+    cekya: "cz",
+    "çekya": "cz",
+    macaristan: "hu",
+    romanya: "ro",
+    bulgaristan: "bg",
+    hirvatistan: "hr",
+    slovenya: "si",
+    slovakya: "sk",
+    irlanda: "ie",
+    malta: "mt",
+    guneykore: "kr",
+    "güneykore": "kr",
+    japonya: "jp",
+  };
+  if (countryTitle) {
+    if (countryTitle === "almanya") {
+      return {
+        flagIso: "de",
+        imageUrls: mergeUrls(
+          [u("photo-1467269204594-9661b134dd2b"), u("photo-1560969184-10fe8719e047")],
+          EU_FALLBACKS
+        ),
+        gradientClassName: gradientEu,
+        tintClassName: "from-[#202020]/18 via-[#c31f2b]/8 to-transparent",
+      };
+    }
+    if (countryTitle === "fransa") {
+      return {
+        flagIso: "fr",
+        imageUrls: mergeUrls(
+          [u("photo-1502602898657-3e91760cbb34"), u("photo-1499856871958-5b9627625c12")],
+          EU_FALLBACKS
+        ),
+        gradientClassName: gradientEu,
+        tintClassName: "from-[#1d4e8a]/20 via-[#b81f30]/8 to-transparent",
+      };
+    }
+    if (countryTitle === "hollanda") {
+      return {
+        flagIso: "nl",
+        imageUrls: mergeUrls(
+          [u("photo-1534351590666-13e3e96b5017"), u("photo-1512470875652-80ce9acd813b")],
+          EU_FALLBACKS
+        ),
+        gradientClassName: gradientEu,
+        tintClassName: "from-[#1c4b81]/22 via-[#f45b5b]/6 to-transparent",
+      };
+    }
+    const countryIso = ISO_BY_COUNTRY_TITLE[countryTitle];
+    if (countryIso) {
+      return {
+        flagIso: countryIso,
+        imageUrls: mergeUrls([], EU_FALLBACKS),
+        gradientClassName: gradientPrimary,
+        tintClassName: "from-[#1d395c]/20 via-[#328cc1]/8 to-transparent",
+      };
+    }
+  }
+
   const t = title.toLowerCase();
-  if (cardId.startsWith("c-") || t.includes("almanya")) {
+  if (t.includes("almanya")) {
     return {
       flagIso: "de",
       imageUrls: mergeUrls(
-        [u("photo-1467269204594-9661b134dd2b"), u("photo-1595867818082-083862f3d630")],
+        [u("photo-1467269204594-9661b134dd2b"), u("photo-1560969184-10fe8719e047")],
         EU_FALLBACKS
       ),
       gradientClassName: gradientEu,
@@ -159,11 +254,77 @@ export function getDestinationVisual(
     return {
       flagIso: "nl",
       imageUrls: mergeUrls(
-        [u("photo-1512470875652-80ce9acd813b"), u("photo-1583422409516-2895a77efded")],
+        [u("photo-1534351590666-13e3e96b5017"), u("photo-1512470875652-80ce9acd813b")],
         EU_FALLBACKS
       ),
       gradientClassName: gradientEu,
       tintClassName: "from-[#1c4b81]/22 via-[#f45b5b]/6 to-transparent",
+    };
+  }
+  if (t.includes("ingiltere")) {
+    return {
+      flagIso: "gb",
+      imageUrls: mergeUrls(
+        [u("photo-1513635269976-596ae28d538f"), u("photo-1529655683826-aba9b3e77383")],
+        EU_FALLBACKS
+      ),
+      gradientClassName: gradientEu,
+      tintClassName: "from-[#132d53]/28 via-[#a11830]/10 to-transparent",
+    };
+  }
+  if (t.includes("amerika") || t.includes("abd")) {
+    return {
+      flagIso: "us",
+      imageUrls: mergeUrls(
+        [u("photo-1496442226666-8d4d0e62e6e9"), u("photo-1485871981521-5b1fd3805eee")],
+        [u("photo-1501594907352-04cda38ebc29")]
+      ),
+      gradientClassName: gradientWarm,
+      tintClassName: "from-[#1e3a6d]/26 via-[#b22234]/8 to-transparent",
+    };
+  }
+  if (t.includes("kanada")) {
+    return {
+      flagIso: "ca",
+      imageUrls: mergeUrls(
+        [u("photo-1505761671935-60b3a7427bad"), u("photo-1517935702655-ce394b619419")],
+        [u("photo-1464822759023-fed622ff2c3b")]
+      ),
+      gradientClassName: gradientEu,
+      tintClassName: "from-[#7b1f23]/16 via-[#1e355a]/10 to-transparent",
+    };
+  }
+  if (t.includes("dubai") || t.includes("bae")) {
+    return {
+      flagIso: "ae",
+      imageUrls: mergeUrls(
+        [u("photo-1512453979798-5ea266f8880c"), u("photo-1582672060674-bc2bd808a8b5")],
+        [u("photo-1518684079-3c830dcef090")]
+      ),
+      gradientClassName: gradientDesert,
+      tintClassName: "from-[#5a3f1c]/28 via-[#1f324d]/10 to-transparent",
+    };
+  }
+  if (t.includes("yunanistan")) {
+    return {
+      flagIso: "gr",
+      imageUrls: mergeUrls(
+        [u("photo-1570077188670-e3a8d69ac5ff"), u("photo-1533105079780-92b9be482077")],
+        EU_FALLBACKS
+      ),
+      gradientClassName: gradientMed,
+      tintClassName: "from-[#2f7fb8]/22 via-[#ffffff]/6 to-transparent",
+    };
+  }
+  if (t.includes("avustralya")) {
+    return {
+      flagIso: "au",
+      imageUrls: mergeUrls(
+        [u("photo-1523428096881-5bd79d043006"), u("photo-1523482580672-f109ba8cb9be")],
+        [u("photo-1501594907352-04cda38ebc29")]
+      ),
+      gradientClassName: gradientWarm,
+      tintClassName: "from-[#1f3b67]/24 via-[#223a62]/8 to-transparent",
     };
   }
 

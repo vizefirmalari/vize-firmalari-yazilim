@@ -21,6 +21,15 @@ const INLINE_FLAG_BY_CODE: Record<string, string> = {
   au: "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 56'%3E%3Crect width='80' height='56' fill='%23012169'/%3E%3Crect width='36' height='24' fill='%23012169'/%3E%3Cpath d='M0 0l36 24M36 0L0 24' stroke='%23fff' stroke-width='5'/%3E%3Crect x='15' width='6' height='24' fill='%23fff'/%3E%3Crect y='9' width='36' height='6' fill='%23fff'/%3E%3Crect x='16' width='4' height='24' fill='%23c8102e'/%3E%3Crect y='10' width='36' height='4' fill='%23c8102e'/%3E%3Ccircle cx='60' cy='30' r='4' fill='%23fff'/%3E%3C/svg%3E",
 };
 
+function codeToFlagEmoji(code: string): string {
+  if (!/^[a-z]{2}$/i.test(code)) return "";
+  const up = code.toUpperCase();
+  const base = 0x1f1e6;
+  const first = up.charCodeAt(0) - 65 + base;
+  const second = up.charCodeAt(1) - 65 + base;
+  return String.fromCodePoint(first, second);
+}
+
 function inlineFallbackFlag(code: string): string {
   const known = INLINE_FLAG_BY_CODE[code];
   if (known) return known;
@@ -47,6 +56,7 @@ export function DestinationFlagBadge({
   const s = SIZES[size];
   const code = iso?.trim().toLowerCase();
   const [broken, setBroken] = useState(false);
+  const [inlineFailed, setInlineFailed] = useState(false);
 
   const src = useMemo(() => {
     if (!code || code.length !== 2) return null;
@@ -55,13 +65,18 @@ export function DestinationFlagBadge({
       : `https://flagcdn.com/w${s.img}/${code}.png`;
   }, [code, broken, s.img]);
 
-  if (!src) {
+  if (!src || inlineFailed) {
+    const emoji = code ? codeToFlagEmoji(code) : "";
     return (
       <span
         className={`inline-flex ${s.box} items-center justify-center rounded-[0.45rem] border border-white/55 bg-background/90 shadow-[0_4px_12px_rgba(11,60,93,0.22)] ring-1 ring-black/10 backdrop-blur-md`}
         title={title}
       >
-        <VitrinIconGlobe className="h-[55%] w-[55%] text-primary" />
+        {emoji ? (
+          <span className="text-[0.72rem] leading-none">{emoji}</span>
+        ) : (
+          <VitrinIconGlobe className="h-[55%] w-[55%] text-primary" />
+        )}
         <span className="sr-only">{title}</span>
       </span>
     );
@@ -81,7 +96,9 @@ export function DestinationFlagBadge({
         onError={() => {
           if (!broken) {
             setBroken(true);
+            return;
           }
+          setInlineFailed(true);
         }}
       />
     </span>

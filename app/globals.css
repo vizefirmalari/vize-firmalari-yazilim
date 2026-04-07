@@ -63,6 +63,28 @@ body {
   color: var(--foreground);
 }
 
+/* Ana sayfa - öne çıkan firmalar: CTA buton yüksekliği eşitleme */
+.featured-showcase-card-fix article > div.mt-4.grid {
+  min-height: 3.5rem;
+}
+
+.featured-showcase-card-fix article > div.mt-4.grid > * {
+  min-height: 3.5rem;
+}
+
+.featured-showcase-card-fix article > div.mt-4.grid > * > * {
+  height: 100%;
+}
+
+.featured-showcase-card-fix article .firm-spec-tags {
+  min-height: 2.25rem;
+  align-content: flex-start;
+}
+
+.featured-showcase-card-fix article .firm-cta-grid {
+  margin-top: auto !important;
+}
+
 /* Dokunmatikte mavi flash azaltılır; odak hâlâ klavye ile görünür */
 @media (pointer: coarse) {
   a,

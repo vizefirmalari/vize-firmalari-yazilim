@@ -18,7 +18,7 @@ export function HomepageDiscoverySection({
 }) {
   return (
     <section id={id} className="scroll-mt-28">
-      <div className="mb-5 flex flex-col gap-2.5 px-0.5 sm:flex-row sm:items-end sm:justify-between md:mb-7 md:px-0">
+      <div className="mb-6 flex flex-col gap-2.5 px-0.5 sm:flex-row sm:items-end sm:justify-between md:mb-8 md:px-0">
         <div className="min-w-0">
           <h2 className="text-lg font-bold tracking-tight text-primary md:text-[1.22rem]">{title}</h2>
           <p className="mt-1 text-sm leading-relaxed text-foreground/62">

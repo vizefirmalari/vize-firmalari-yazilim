@@ -94,7 +94,7 @@ export function FirmsListing({
   initialCities = [],
   initialMainServices = [],
   initialExploreFocusSlug = null,
-  initialSort = "hype_desc",
+  initialSort = "name_asc",
   query = "",
   countryList,
   featuredTitle = "Tüm Firmalar",
@@ -322,11 +322,11 @@ export function FirmsListing({
   };
 
   const sortLabel =
-    LISTING_SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "Önerilen";
+    LISTING_SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "Firma adına göre (A-Z)";
 
   const resetToCleanHome = () => {
     setAppliedFilters(buildApplied(bounds, [], [], [], [], null));
-    setSort("hype_desc");
+    setSort("name_asc");
     router.replace("/#firmalar", { scroll: false });
   };
 

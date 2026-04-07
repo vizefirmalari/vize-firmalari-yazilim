@@ -2,8 +2,7 @@ import Link from "next/link";
 import { DestinationEditorialImage } from "@/components/home/destination-editorial-image";
 import { DestinationFlagBadge } from "@/components/home/destination-flag-badge";
 import { HomepageHorizontalScroller } from "@/components/home/homepage-horizontal-scroller";
-import type { DestinationSlide, HomeLinkCard } from "@/lib/homepage/discovery-model";
-import { buildDestinationSlides } from "@/lib/homepage/discovery-model";
+import type { HomeLinkCard } from "@/lib/homepage/discovery-model";
 import { getDestinationVisual } from "@/lib/homepage/vitrin-assets";
 
 function countLabel(n: number) {
@@ -53,83 +52,41 @@ function DestinationPhotoLayers({
   );
 }
 
-function DestinationLargeCard({ card }: { card: HomeLinkCard }) {
+function DestinationGridCard({
+  card,
+  featured,
+}: {
+  card: HomeLinkCard;
+  featured: boolean;
+}) {
   const v = getDestinationVisual(card.id, card.title);
-  return (
-    <Link
-      href={card.href}
-      className="group relative flex h-46 w-[min(100%,16.5rem)] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-3xl shadow-[0_14px_44px_rgba(11,60,93,0.2)] ring-1 ring-white/15 transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_52px_rgba(11,60,93,0.28)] md:h-55 md:w-68"
-    >
-      <DestinationPhotoLayers
-        imageUrls={v.imageUrls}
-        gradientClassName={v.gradientClassName}
-        tintClassName={v.tintClassName}
-        sizes="(max-width: 768px) 280px, 360px"
-      />
-      <div className="absolute right-3 top-3 z-2 md:right-3.5 md:top-3.5">
-        <DestinationFlagBadge iso={v.flagIso} title={card.title} size="lg" />
-      </div>
-      <div className="relative z-1 flex min-h-[44%] flex-col justify-end bg-linear-to-t from-black/60 via-black/25 to-transparent px-4 pb-4.5 pt-10 md:px-5 md:pb-5 md:pt-11">
-        <h3 className="line-clamp-2 text-lg font-bold leading-tight tracking-tight text-white md:text-[1.22rem]">
-          {card.title}
-        </h3>
-        <p className="mt-1 text-xs font-medium tabular-nums text-white/82 md:text-sm">
-          {countLabel(card.count)}
-        </p>
-      </div>
-    </Link>
-  );
-}
+  const sizeClass = featured ? "col-span-2 row-span-2" : "col-span-1 row-span-1";
+  const titleClass = featured
+    ? "text-lg md:text-[1.22rem]"
+    : "text-sm md:text-[0.95rem]";
+  const metaClass = featured
+    ? "text-xs md:text-sm"
+    : "text-[11px]";
 
-function DestinationSmallCard({ card }: { card: HomeLinkCard }) {
-  const v = getDestinationVisual(card.id, card.title);
   return (
     <Link
       href={card.href}
-      className="group relative flex h-30 w-full shrink-0 flex-col justify-end overflow-hidden rounded-2xl shadow-[0_8px_28px_rgba(11,60,93,0.16)] ring-1 ring-white/12 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(11,60,93,0.22)] md:h-32"
+      className={`group relative flex h-full w-full flex-col justify-end overflow-hidden rounded-2xl shadow-[0_10px_30px_rgba(11,60,93,0.16)] ring-1 ring-white/15 transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_44px_rgba(11,60,93,0.24)] ${sizeClass}`}
     >
       <DestinationPhotoLayers
         imageUrls={v.imageUrls}
         gradientClassName={v.gradientClassName}
         tintClassName={v.tintClassName}
-        sizes="200px"
+        sizes={featured ? "(max-width: 768px) 320px, 560px" : "220px"}
       />
-      <div className="absolute right-2 top-2 z-2 md:right-2.5 md:top-2.5">
-        <DestinationFlagBadge iso={v.flagIso} title={card.title} size="sm" />
-      </div>
-      <div className="relative z-1 flex min-h-[48%] flex-col justify-end bg-linear-to-t from-black/62 via-black/24 to-transparent px-3 pb-2.5 pt-8">
-        <h3 className="line-clamp-2 text-xs font-bold leading-snug text-white md:text-sm">
-          {card.title}
-        </h3>
-        <p className="mt-0.5 text-[10px] font-semibold tabular-nums text-white/80 md:text-[11px]">
-          {countLabel(card.count)}
-        </p>
-      </div>
-    </Link>
-  );
-}
-
-function DestinationMediumCard({ card }: { card: HomeLinkCard }) {
-  const v = getDestinationVisual(card.id, card.title);
-  return (
-    <Link
-      href={card.href}
-      className="group relative flex h-30 w-40 shrink-0 snap-start flex-col justify-end overflow-hidden rounded-2xl shadow-[0_10px_34px_rgba(11,60,93,0.18)] ring-1 ring-white/12 transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_42px_rgba(11,60,93,0.24)] md:h-32 md:w-44"
-    >
-      <DestinationPhotoLayers
-        imageUrls={v.imageUrls}
-        gradientClassName={v.gradientClassName}
-        tintClassName={v.tintClassName}
-        sizes="240px"
-      />
-      <div className="absolute right-2.5 top-2.5 z-2">
+      <div className="absolute right-3 top-3 z-2">
         <DestinationFlagBadge iso={v.flagIso} title={card.title} size="md" />
       </div>
-      <div className="relative z-1 flex min-h-[50%] flex-col justify-end bg-linear-to-t from-black/60 via-black/22 to-transparent p-3.5 pt-9 md:p-4 md:pt-10">
-        <h3 className="line-clamp-2 text-sm font-bold leading-snug text-white">
+      <div className="relative z-1 flex min-h-[45%] flex-col justify-end bg-linear-to-t from-black/62 via-black/26 to-transparent p-4">
+        <h3 className={`line-clamp-2 font-bold leading-tight tracking-tight text-white ${titleClass}`}>
           {card.title}
         </h3>
-        <p className="mt-1 text-[11px] font-semibold tabular-nums text-white/85">
+        <p className={`mt-1 font-medium tabular-nums text-white/82 ${metaClass}`}>
           {countLabel(card.count)}
         </p>
       </div>
@@ -137,35 +94,30 @@ function DestinationMediumCard({ card }: { card: HomeLinkCard }) {
   );
 }
 
-function LSlide({ cards }: { cards: HomeLinkCard[] }) {
-  const [a, b, c] = [cards[0], cards[1], cards[2]];
+function DestinationGridPanel({ cards }: { cards: HomeLinkCard[] }) {
+  const [a, b, c] = cards;
   if (!a) return null;
   return (
-    <div className="flex w-[min(calc(100vw-3rem),28.5rem)] shrink-0 snap-start flex-col gap-3.5 md:w-114 md:flex-row md:gap-4.5">
-      <DestinationLargeCard card={a} />
-      <div className="flex w-full min-w-0 flex-1 flex-row gap-3.5 md:w-36 md:flex-col md:justify-stretch md:gap-4.5">
-        {b ? <DestinationSmallCard card={b} /> : null}
-        {c ? <DestinationSmallCard card={c} /> : null}
-      </div>
+    <div className="grid w-[min(calc(100vw-3rem),40rem)] shrink-0 snap-start grid-cols-3 auto-rows-[7.5rem] gap-4 md:w-160 md:auto-rows-[8.5rem] md:gap-5">
+      <DestinationGridCard card={a} featured />
+      {b ? <DestinationGridCard card={b} featured={false} /> : null}
+      {c ? <DestinationGridCard card={c} featured={false} /> : null}
     </div>
   );
 }
 
-function PairSlide({ cards }: { cards: [HomeLinkCard, HomeLinkCard] }) {
-  return (
-    <div className="flex w-[min(calc(100vw-3rem),23.5rem)] shrink-0 snap-start gap-3.5 md:w-94 md:gap-4.5">
-      <DestinationMediumCard card={cards[0]} />
-      <DestinationMediumCard card={cards[1]} />
-    </div>
-  );
-}
-
-function destinationSlideKey(slide: DestinationSlide): string {
-  if (slide.kind === "l") {
-    return `l-${slide.cards.map((c) => c.id).join("-")}`;
+function chunkDestinationPanels(cards: HomeLinkCard[]): HomeLinkCard[][] {
+  if (!cards.length) return [];
+  const out: HomeLinkCard[][] = [];
+  for (let i = 0; i < cards.length; i += 3) {
+    const slice = cards.slice(i, i + 3);
+    if (slice.length) out.push(slice);
   }
-  const [x, y] = slide.cards;
-  return `p-${x?.id ?? "a"}-${y?.id ?? "b"}`;
+  return out;
+}
+
+function panelKey(cards: HomeLinkCard[]): string {
+  return cards.map((c) => c.id).join("-");
 }
 
 export function HomepageDestinationShowcase({
@@ -173,17 +125,14 @@ export function HomepageDestinationShowcase({
 }: {
   cards: HomeLinkCard[];
 }) {
-  const slides = buildDestinationSlides(cards);
-  if (!slides.length) return null;
+  const panels = chunkDestinationPanels(cards);
+  if (!panels.length) return null;
+
   return (
     <HomepageHorizontalScroller gapClass="gap-4 md:gap-5" snap>
-      {slides.map((s) =>
-        s.kind === "l" ? (
-          <LSlide key={destinationSlideKey(s)} cards={s.cards} />
-        ) : (
-          <PairSlide key={destinationSlideKey(s)} cards={s.cards} />
-        )
-      )}
+      {panels.map((p) => (
+        <DestinationGridPanel key={panelKey(p)} cards={p} />
+      ))}
     </HomepageHorizontalScroller>
   );
 }

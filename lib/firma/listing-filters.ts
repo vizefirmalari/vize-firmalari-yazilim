@@ -348,6 +348,7 @@ export const LISTING_SORT_OPTIONS: {
   value: FirmSort;
   label: string;
 }[] = [
+  { value: "name_asc", label: "Firma adına göre (A-Z)" },
   { value: "hype_desc", label: "Önerilen" },
   { value: "corp_desc", label: "Kurumsallık (yüksek → düşük)" },
   { value: "hype_score_desc", label: "Hype (yüksek → düşük)" },
