@@ -19,7 +19,11 @@ import {
   sanitizeFirmBlogBodyRichForStorage,
   sanitizeFirmBlogPastedHtml,
 } from "@/lib/blog/firm-blog-body-html";
-import { formatDateTimeLocalValue, isoToDateTimeLocalValue } from "@/lib/datetime/datetime-local";
+import {
+  datetimeLocalInputToUtcIso,
+  formatDateTimeLocalValue,
+  isoToDateTimeLocalValue,
+} from "@/lib/datetime/datetime-local";
 import {
   defaultDraftFaqItems,
   normalizeFirmBlogFaqItemFromDb,
@@ -483,6 +487,26 @@ export function FirmBlogEditorForm({
         publishCoverUrl = uploaded;
         setCoverPendingFile(null);
       }
+      let publishAtUtc: string | null = null;
+      let scheduledAtUtc: string | null = null;
+      if (nextMode === "scheduled" || nextMode === "published") {
+        const raw = publishAt.trim() || scheduledAt.trim();
+        if (!raw) {
+          setMessage("Yayınlanma zamanı zorunlu.");
+          setMessageTone("error");
+          return;
+        }
+        publishAtUtc = datetimeLocalInputToUtcIso(publishAt.trim() || scheduledAt.trim());
+        if (!publishAtUtc) {
+          setMessage("Yayın zamanı geçersiz. Lütfen tarih ve saati kontrol edin.");
+          setMessageTone("error");
+          return;
+        }
+        if (scheduledAt.trim()) {
+          scheduledAtUtc = datetimeLocalInputToUtcIso(scheduledAt.trim()) ?? publishAtUtc;
+        }
+      }
+
       const res = await saveFirmBlogPost({
         postId,
         firmId,
@@ -506,8 +530,8 @@ export function FirmBlogEditorForm({
         ctaButtons,
         relatedCountries,
         relatedVisaTypes,
-        scheduledAt,
-        publishAt,
+        scheduledAt: scheduledAtUtc,
+        publishAt: publishAtUtc,
       });
       if (!res.ok) {
         setMessage(res.error);

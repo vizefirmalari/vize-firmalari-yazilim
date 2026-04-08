@@ -29,3 +29,17 @@ export function formatRelativeTimeAgoTr(iso: string, nowMs: number = Date.now())
   const day = Math.floor(hr / 24);
   return `${day}g önce`;
 }
+
+/** Akış / kart: yayın anı Türkiye yerel saatine göre (SSR + istemci aynı). */
+export function formatPublishedAtDisplayTr(iso: string): string {
+  const ts = parseInstantMs(iso);
+  if (!Number.isFinite(ts)) return "—";
+  return new Date(ts).toLocaleString("tr-TR", {
+    timeZone: "Europe/Istanbul",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}

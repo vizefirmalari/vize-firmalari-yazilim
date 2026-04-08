@@ -17,6 +17,7 @@ import { splitBodyForMiddleAd } from "@/lib/blog/split-body-for-middle-ad";
 import { pickWeightedAd, type BlogAdRow } from "@/lib/blog/ads";
 import { getSiteUrl } from "@/lib/env";
 import { resolveFirmBlogPostOgImage, resolveToAbsoluteImageUrl } from "@/lib/seo/blog-og-image";
+import { formatPublishedAtDisplayTr } from "@/lib/datetime/parse-instant";
 import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
 
 type Props = {
@@ -384,14 +385,7 @@ export default async function BlogDetailPage({ params }: Props) {
                 ) : null}
                 {post.published_at ? (
                   <span className="text-xs text-[#1A1A1A]/55">
-                    Yayınlanma tarihi:{" "}
-                    {new Date(String(post.published_at)).toLocaleString("tr-TR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    Yayınlanma tarihi: {formatPublishedAtDisplayTr(String(post.published_at))}
                   </span>
                 ) : null}
               </div>

@@ -123,6 +123,7 @@ export async function saveFirmBlogPost(
   let scheduledAt: string | null = null;
   let publishedAt: string | null = null;
   if (payload.mode === "scheduled" || payload.mode === "published") {
+    // İstemci `datetime-local` → UTC ISO (`toISOString`) göndermeli; sunucu TZ’si ile parse edilmez.
     const rawPublishAt = payload.publishAt?.trim() || payload.scheduledAt?.trim() || "";
     if (!rawPublishAt) {
       return { ok: false, error: "Yayınlanma zamanı zorunlu." };
