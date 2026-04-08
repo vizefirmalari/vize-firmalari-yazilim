@@ -3,15 +3,8 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import Link from "@tiptap/extension-link";
-import Placeholder from "@tiptap/extension-placeholder";
-import BulletList from "@tiptap/extension-bullet-list";
-import OrderedList from "@tiptap/extension-ordered-list";
-import ListItem from "@tiptap/extension-list-item";
-import Heading from "@tiptap/extension-heading";
 import { BlogCtaButtonsRenderer } from "@/components/blog/blog-cta-buttons-renderer";
+import { FirmBlogFaqItemBlock } from "@/components/firm-panel/firm-blog-faq-item-block";
 
 import {
   BLOG_CTA_PLATFORMS,
@@ -27,7 +20,13 @@ import {
   sanitizeFirmBlogPastedHtml,
 } from "@/lib/blog/firm-blog-body-html";
 import { formatDateTimeLocalValue, isoToDateTimeLocalValue } from "@/lib/datetime/datetime-local";
-import { FirmBlogHorizontalRule } from "@/lib/blog/firm-blog-horizontal-rule";
+import {
+  defaultDraftFaqItems,
+  normalizeFirmBlogFaqItemFromDb,
+  stripFaqAnswerToPlainText,
+  type FirmBlogFaqItem,
+} from "@/lib/blog/firm-blog-faq";
+import { createFirmBlogRichTextExtensions } from "@/lib/blog/firm-blog-tiptap-extensions";
 import { splitBodyForMiddleAd } from "@/lib/blog/split-body-for-middle-ad";
 
 type Props = {
@@ -43,7 +42,7 @@ type Props = {
     body_rich: string;
     tags: string[];
     category_id: string | null;
-    faq_items: Array<{ question: string; answer: string }>;
+    faq_items: unknown;
     related_countries: string[];
     related_visa_types: string[];
     cta_buttons: unknown[];
@@ -116,31 +115,13 @@ function ToolbarButton({
   );
 }
 
-const StyledBulletList = BulletList.extend({
-  addAttributes() {
-    return {
-      listStyle: {
-        default: "disc",
-        parseHTML: (element) => element.getAttribute("data-list-style") || "disc",
-        renderHTML: (attributes) => {
-          const v = String(attributes.listStyle || "disc");
-          if (v === "check") {
-            return {
-              "data-list-style": "check",
-              class: "vf-list-check",
-              style: "list-style-type: none;",
-            };
-          }
-          const safe = ["disc", "circle", "square"].includes(v) ? v : "disc";
-          return {
-            "data-list-style": safe,
-            style: `list-style-type: ${safe};`,
-          };
-        },
-      },
-    };
-  },
-});
+function initFaqItemsFromPost(initialPost: Props["initialPost"]): FirmBlogFaqItem[] {
+  const raw = initialPost?.faq_items;
+  if (Array.isArray(raw) && raw.length > 0) {
+    return raw.map((x, i) => normalizeFirmBlogFaqItemFromDb(x, i));
+  }
+  return defaultDraftFaqItems();
+}
 
 export function FirmBlogEditorForm({
   firmId,
@@ -177,9 +158,11 @@ export function FirmBlogEditorForm({
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(initialPost?.tags ?? []);
   const [categoryId, setCategoryId] = useState<string>(initialPost?.category_id ?? "");
-  const [faqItems, setFaqItems] = useState<Array<{ question: string; answer: string }>>(
-    initialPost?.faq_items?.length ? initialPost.faq_items : [{ question: "", answer: "" }, { question: "", answer: "" }]
-  );
+  const [faqItems, setFaqItems] = useState<FirmBlogFaqItem[]>(() => initFaqItemsFromPost(initialPost));
+
+  useEffect(() => {
+    setFaqItems(initFaqItemsFromPost(initialPost));
+  }, [initialPost?.id]);
   const [ctaButtons, setCtaButtons] = useState<BlogCtaButton[]>(
     normalizeBlogCtaButtons(initialPost?.cta_buttons ?? [])
   );
@@ -247,26 +230,9 @@ export function FirmBlogEditorForm({
   const editor = useEditor(
     {
       immediatelyRender: false,
-      extensions: [
-        StarterKit.configure({
-          heading: false,
-          bulletList: false,
-          orderedList: false,
-          listItem: false,
-          horizontalRule: false,
-        }),
-        FirmBlogHorizontalRule,
-        Heading.configure({ levels: [2, 3] }),
-        StyledBulletList,
-        OrderedList,
-        ListItem,
-        Underline,
-        Link.configure({ openOnClick: false }),
-        Placeholder.configure({
-          placeholder:
-            "Giriş paragrafı ile başlayın. Ardından H2/H3 başlıklarla şartlar, belgeler, süreç adımları ve SSS bölümlerini yapılandırın.",
-        }),
-      ],
+      extensions: createFirmBlogRichTextExtensions(
+        "Giriş paragrafı ile başlayın. Ardından H2/H3 başlıklarla şartlar, belgeler, süreç adımları ve SSS bölümlerini yapılandırın."
+      ),
       content: initialEditorHtml,
       editorProps: {
         attributes: {
@@ -323,13 +289,10 @@ export function FirmBlogEditorForm({
   const altState = altLen > 120 ? "error" : altLen < 50 ? "warn" : "ok";
   const slugState = slugLen > 75 ? "error" : "ok";
   const tagsState = tags.length > 10 ? "error" : "ok";
-  const validFaqItems = faqItems
-    .map((x) => ({ question: x.question.trim(), answer: x.answer.trim() }))
-    .filter((x) => x.question.length > 0 || x.answer.length > 0);
-  const hasAtLeastTwoFaq = validFaqItems.length >= 2;
-  const hasFaqValidationError = validFaqItems.some(
-    (x) => x.question.length < 10 || x.question.length > 120 || x.answer.length < 50 || x.answer.length > 400
+  const validFaqItems = faqItems.filter(
+    (x) => x.question.trim().length > 0 && stripFaqAnswerToPlainText(x.answer).length > 0
   );
+  const hasAtLeastTwoFaq = validFaqItems.length >= 2;
   const wordState = wordCount < 800 ? "error" : wordCount < 1200 ? "warn" : "ok";
   const h2Count = (bodyRichState.match(/<h2[\s>]/g) ?? []).length;
   const hasInternalLink = /<a\s+[^>]*href=["'](\/|https?:\/\/www\.vizefirmalari\.com)/i.test(bodyRichState);
@@ -355,7 +318,7 @@ export function FirmBlogEditorForm({
     { label: "İlk paragrafta anahtar kelime", ok: hasKeywordInFirstParagraph },
     { label: "En az 2 adet H2", ok: h2Count >= 2 },
     { label: "İçerik 800+ kelime", ok: wordCount >= 800 },
-    { label: "SSS mevcut", ok: hasAtLeastTwoFaq && !hasFaqValidationError },
+    { label: "SSS mevcut", ok: hasAtLeastTwoFaq },
     { label: "Görsel var", ok: Boolean(coverUrl) },
     { label: "Alt metin var", ok: altLen >= 50 && altLen <= 120 },
     { label: "İç link mevcut", ok: hasInternalLink },
@@ -534,7 +497,12 @@ export function FirmBlogEditorForm({
         bodyRich,
         bodyPlainText,
         tags,
-        faqItems: validFaqItems,
+        faqItems: validFaqItems.map(({ id, question, answer, cta_buttons }) => ({
+          id,
+          question,
+          answer,
+          cta_buttons,
+        })),
         ctaButtons,
         relatedCountries,
         relatedVisaTypes,
@@ -576,11 +544,11 @@ export function FirmBlogEditorForm({
     setMetaDescription("");
     setFlowDescription("");
     setScheduledAt("");
-    setPublishAt(new Date().toISOString().slice(0, 16));
+    setPublishAt(formatDateTimeLocalValue(new Date()));
     setTagInput("");
     setTags([]);
     setCategoryId("");
-    setFaqItems([{ question: "", answer: "" }, { question: "", answer: "" }]);
+    setFaqItems(defaultDraftFaqItems());
     setCtaButtons([]);
     setRelatedCountries([]);
     setRelatedVisaTypes([]);
@@ -625,6 +593,24 @@ export function FirmBlogEditorForm({
       // doğrudan toggle başarısız olabiliyor; önce paragrafla normalize edip tekrar dene.
       editor.chain().focus().clearNodes().setParagraph().toggleOrderedList().run();
     }
+  };
+
+  const setLinkFromPromptMain = () => {
+    if (!editor) return;
+    const prev = editor.getAttributes("link").href as string | undefined;
+    const url = window.prompt("Bağlantı URL’si", prev ?? "https://");
+    if (url === null) return;
+    const t = url.trim();
+    if (!t) {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      return;
+    }
+    const safe = sanitizeExternalUrl(t);
+    if (!safe) {
+      window.alert("Geçerli bir adres girin (https://…).");
+      return;
+    }
+    editor.chain().focus().extendMarkRange("link").setLink({ href: safe }).run();
   };
 
   const uploadCoverFile = async (file: File): Promise<string | null> => {
@@ -961,6 +947,11 @@ export function FirmBlogEditorForm({
                   active={editor?.isActive("horizontalRule")}
                   onClick={() => editor?.chain().focus().setHorizontalRule().run()}
                 />
+                <ToolbarButton
+                  label="Bağlantı"
+                  active={editor?.isActive("link")}
+                  onClick={setLinkFromPromptMain}
+                />
               </div>
             </div>
             <div className="editor-wrapper min-w-0 max-w-full overflow-x-hidden">
@@ -1115,15 +1106,40 @@ export function FirmBlogEditorForm({
 
           </div>
           <section className="rounded-2xl border border-[#1A1A1A]/10 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0B3C5D]/70">
-                Sıkça Sorulan Sorular (SSS)
-              </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0B3C5D]/70">
+              Sıkça Sorulan Sorular (SSS)
+            </p>
+            <p className="mt-1 text-xs text-[#1A1A1A]/55">
+              En az 2 tam soru-yanıt çifti gerekir. Yanıt alanı gövde ile aynı biçimlendirme araçlarını kullanır;
+              karakter sınırı yoktur. Her soru için ayrı yönlendirme butonları ekleyebilirsiniz.
+            </p>
+            <p className="mt-1 text-xs text-[#1A1A1A]/55">Maksimum 8 SSS girişi.</p>
+            <div className="mt-3 space-y-3">
+              {faqItems.map((item, idx) => (
+                <FirmBlogFaqItemBlock
+                  key={item.id}
+                  item={item}
+                  onChange={(next) => setFaqItems((prev) => prev.map((x, i) => (i === idx ? next : x)))}
+                  onRemove={() => setFaqItems((prev) => prev.filter((_, i) => i !== idx))}
+                />
+              ))}
+            </div>
+            <div className="mt-3 flex justify-end">
               <button
                 type="button"
                 onClick={() =>
                   setFaqItems((prev) =>
-                    prev.length >= 8 ? prev : [{ question: "", answer: "" }, ...prev]
+                    prev.length >= 8
+                      ? prev
+                      : [
+                          ...prev,
+                          {
+                            id: crypto.randomUUID(),
+                            question: "",
+                            answer: "<p></p>",
+                            cta_buttons: [],
+                          },
+                        ]
                   )
                 }
                 className="rounded-lg border border-[#0B3C5D]/15 px-2.5 py-1 text-xs font-semibold text-[#0B3C5D]"
@@ -1131,48 +1147,10 @@ export function FirmBlogEditorForm({
                 Soru ekle
               </button>
             </div>
-            <p className="mt-1 text-xs text-[#1A1A1A]/55">Minimum 2, maksimum 8 SSS girişi.</p>
-            <div className="mt-3 space-y-3">
-              {faqItems.map((item, idx) => (
-                <div key={`faq-${idx}`} className="rounded-xl border border-[#1A1A1A]/10 bg-[#F8FAFC] p-3">
-                  <label className="text-[11px] font-semibold text-[#1A1A1A]/70">Soru</label>
-                  <input
-                    value={item.question}
-                    onChange={(e) =>
-                      setFaqItems((prev) =>
-                        prev.map((x, i) => (i === idx ? { ...x, question: e.target.value } : x))
-                      )
-                    }
-                    className="mt-1 w-full rounded-lg border border-[#1A1A1A]/14 bg-white px-2.5 py-2 text-sm outline-none"
-                  />
-                  <label className="mt-2 block text-[11px] font-semibold text-[#1A1A1A]/70">Yanıt</label>
-                  <textarea
-                    rows={4}
-                    value={item.answer}
-                    onChange={(e) =>
-                      setFaqItems((prev) =>
-                        prev.map((x, i) => (i === idx ? { ...x, answer: e.target.value } : x))
-                      )
-                    }
-                    className="mt-1 w-full rounded-lg border border-[#1A1A1A]/14 bg-white px-2.5 py-2 text-sm outline-none"
-                  />
-                  <div className="mt-1 flex items-center justify-between text-[11px]">
-                    <span className="text-[#1A1A1A]/55">
-                      Soru {item.question.trim().length}/120 · Yanıt {item.answer.trim().length}/400
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setFaqItems((prev) => prev.filter((_, i) => i !== idx))}
-                      className="text-[#B42318]"
-                    >
-                      Sil
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className={`mt-2 text-xs ${hasAtLeastTwoFaq && !hasFaqValidationError ? "text-[#067647]" : "text-[#B42318]"}`}>
-              Soru: 10-120 karakter, yanıt: 50-400 karakter.
+            <p className={`mt-2 text-xs ${hasAtLeastTwoFaq ? "text-[#067647]" : "text-[#B42318]"}`}>
+              {hasAtLeastTwoFaq
+                ? "Yeterli sayıda tamamlanmış SSS girişi var."
+                : "Her satırda soru ve anlamlı yanıt metni (düz metin olarak) doldurun; en az 2 satır tamamlayın."}
             </p>
           </section>
           <section className="rounded-2xl border border-[#1A1A1A]/10 bg-white p-4 shadow-sm">

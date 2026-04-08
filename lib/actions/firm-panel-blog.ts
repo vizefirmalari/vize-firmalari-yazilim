@@ -1,8 +1,10 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 
 import { sanitizeFirmBlogBodyRichForStorage } from "@/lib/blog/firm-blog-body-html";
+import { stripFaqAnswerToPlainText } from "@/lib/blog/firm-blog-faq";
 import { normalizeBlogCtaButtons } from "@/lib/blog/cta-buttons";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -24,7 +26,12 @@ type SavePayload = {
   bodyRich: string;
   bodyPlainText: string;
   tags: string[];
-  faqItems: Array<{ question: string; answer: string }>;
+  faqItems: Array<{
+    id?: string;
+    question: string;
+    answer: string;
+    cta_buttons?: unknown[];
+  }>;
   relatedCountries: string[];
   relatedVisaTypes: string[];
   ctaButtons: unknown[];
@@ -81,8 +88,18 @@ export async function saveFirmBlogPost(
   const bodyPlainText = payload.bodyPlainText.trim();
   const words = bodyPlainText.split(/\s+/).map((s) => s.trim()).filter(Boolean).length;
   const faqItems = payload.faqItems
-    .map((x) => ({ question: x.question.trim(), answer: x.answer.trim() }))
-    .filter((x) => x.question.length > 0 || x.answer.length > 0);
+    .map((x) => {
+      const id = typeof x.id === "string" && x.id.trim() ? x.id.trim() : randomUUID();
+      return {
+        id,
+        question: x.question.trim(),
+        answer: sanitizeFirmBlogBodyRichForStorage(x.answer.trim()),
+        cta_buttons: normalizeBlogCtaButtons(x.cta_buttons ?? []),
+      };
+    })
+    .filter(
+      (x) => x.question.length > 0 && stripFaqAnswerToPlainText(x.answer).length > 0
+    );
 
   if (!title || title.length < 8) return { ok: false, error: "Başlık çok kısa." };
   if (!slug || slug.length < 3) return { ok: false, error: "Geçerli bir slug girin." };
@@ -94,17 +111,7 @@ export async function saveFirmBlogPost(
     return { ok: false, error: "İçerik gövdesi yeterli değil." };
   }
   if (faqItems.length < 2) {
-    return { ok: false, error: "En az 2 adet SSS girişi zorunlu." };
-  }
-  const invalidFaq = faqItems.some(
-    (item) =>
-      item.question.length < 10 ||
-      item.question.length > 120 ||
-      item.answer.length < 50 ||
-      item.answer.length > 400
-  );
-  if (invalidFaq) {
-    return { ok: false, error: "SSS alanında soru/yanıt karakter sınırlarını kontrol edin." };
+    return { ok: false, error: "En az 2 adet tamamlanmış SSS (soru + yanıt) zorunlu." };
   }
   if (!metaDescription || metaDescription.length < 60) {
     return { ok: false, error: "Meta açıklama çok kısa." };
@@ -167,7 +174,7 @@ export async function saveFirmBlogPost(
             name: item.question,
             acceptedAnswer: {
               "@type": "Answer",
-              text: item.answer,
+              text: stripFaqAnswerToPlainText(item.answer),
             },
           })),
         }

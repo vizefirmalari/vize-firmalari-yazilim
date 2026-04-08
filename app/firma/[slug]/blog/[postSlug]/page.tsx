@@ -23,7 +23,12 @@ type Props = {
   params: Promise<{ slug: string; postSlug: string }>;
 };
 
-type FaqItem = { question: string; answer: string };
+type FaqItem = {
+  id?: string;
+  question: string;
+  answer: string;
+  cta_buttons?: unknown;
+};
 type DbClient =
   | NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>
   | NonNullable<ReturnType<typeof createSupabaseServiceRoleClient>>;
@@ -413,12 +418,24 @@ export default async function BlogDetailPage({ params }: Props) {
             <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
               <h2 className="text-lg font-semibold text-[#0B3C5D]">Sıkça Sorulan Sorular</h2>
               <div className="mt-3 space-y-2">
-                {faqItems.map((item, index) => (
-                  <details key={`${item.question}-${index}`} className="rounded-xl border border-[#0B3C5D]/10 bg-[#F8FAFC] px-4 py-3">
-                    <summary className="cursor-pointer text-sm font-semibold text-[#0B3C5D]">{item.question}</summary>
-                    <p className="mt-2 text-sm leading-relaxed text-[#1A1A1A]/75">{item.answer}</p>
-                  </details>
-                ))}
+                {faqItems.map((item, index) => {
+                  const faqKey = item.id ? String(item.id) : `${item.question}-${index}`;
+                  const faqCtas = normalizeBlogCtaButtons(item.cta_buttons);
+                  return (
+                    <details key={faqKey} className="rounded-xl border border-[#0B3C5D]/10 bg-[#F8FAFC] px-4 py-3">
+                      <summary className="cursor-pointer text-sm font-semibold text-[#0B3C5D]">{item.question}</summary>
+                      <div
+                        className="tiptap-public mt-2 text-sm leading-relaxed text-[#1A1A1A]/75"
+                        dangerouslySetInnerHTML={{ __html: String(item.answer ?? "") }}
+                      />
+                      {faqCtas.length > 0 ? (
+                        <div className="mt-3">
+                          <BlogCtaButtonsRenderer buttons={faqCtas} />
+                        </div>
+                      ) : null}
+                    </details>
+                  );
+                })}
               </div>
             </section>
           ) : null}

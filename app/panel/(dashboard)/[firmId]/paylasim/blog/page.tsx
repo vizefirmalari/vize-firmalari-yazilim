@@ -66,7 +66,7 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
     body_rich: string;
     tags: string[];
     category_id: string | null;
-    faq_items: Array<{ question: string; answer: string }>;
+    faq_items: unknown;
     related_countries: string[];
     related_visa_types: string[];
     cta_buttons: unknown[];
@@ -89,9 +89,7 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
         body_rich: String(data.body_rich ?? ""),
         tags: Array.isArray(data.tags) ? (data.tags as string[]) : [],
         category_id: data.category_id ? String(data.category_id) : null,
-        faq_items: Array.isArray(data.faq_items)
-          ? (data.faq_items as Array<{ question: string; answer: string }>)
-          : [],
+        faq_items: Array.isArray(data.faq_items) ? data.faq_items : [],
         related_countries: Array.isArray(data.related_countries)
           ? (data.related_countries as string[])
           : [],
