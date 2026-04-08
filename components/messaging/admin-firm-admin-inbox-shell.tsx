@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { ConversationThreadView } from "@/components/messaging/conversation-thread-view";
+import { DATE_TIME_OPTS_LIST_COMPACT, formatInstantInTurkey } from "@/lib/datetime/turkey-time";
 import type { AdminFirmAdminConversationRow } from "@/lib/data/admin-firm-admin-conversations";
 import type { MessageWithAttachment } from "@/lib/messaging/types";
 
@@ -17,12 +18,7 @@ type Props = {
 function formatListTime(iso: string | null) {
   if (!iso) return "";
   try {
-    return new Intl.DateTimeFormat("tr-TR", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(iso));
+    return formatInstantInTurkey(iso, DATE_TIME_OPTS_LIST_COMPACT);
   } catch {
     return "";
   }

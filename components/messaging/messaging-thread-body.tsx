@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { deleteChatMessage } from "@/lib/actions/delete-chat-message";
 import type { MessageWithAttachment } from "@/lib/messaging/types";
 import { formatFileSize } from "@/lib/messaging/identity";
+import { DATE_TIME_OPTS_LIST_COMPACT, formatInstantInTurkey } from "@/lib/datetime/turkey-time";
 import { buildMessageOrderIndex, isMessageReadByPeer } from "@/lib/messaging/read-status";
 
 type Props = {
@@ -18,12 +19,7 @@ type Props = {
 
 function timeLabel(iso: string) {
   try {
-    return new Intl.DateTimeFormat("tr-TR", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(iso));
+    return formatInstantInTurkey(iso, DATE_TIME_OPTS_LIST_COMPACT);
   } catch {
     return "";
   }

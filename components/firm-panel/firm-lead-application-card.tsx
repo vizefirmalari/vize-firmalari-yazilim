@@ -6,6 +6,7 @@ import {
   LEAD_STATUS_LABELS,
   READINESS_STATUS_LABELS,
 } from "@/lib/firm-panel/lead-application-copy";
+import { formatInstantInTurkey } from "@/lib/datetime/turkey-time";
 import { PREFERRED_CONTACT_LABELS, VISA_TYPE_LABELS } from "@/lib/quick-apply/config";
 import type { PreferredContactMethod, VisaType } from "@/lib/quick-apply/types";
 
@@ -18,11 +19,7 @@ function targetCountryLabel(row: FirmLeadListRow): string {
 
 function formatSubmittedAt(iso: string): string {
   try {
-    const d = new Date(iso);
-    return new Intl.DateTimeFormat("tr-TR", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(d);
+    return formatInstantInTurkey(iso, { dateStyle: "medium", timeStyle: "short" });
   } catch {
     return iso;
   }

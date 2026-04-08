@@ -7,6 +7,7 @@ import { UserChatHistorySection } from "@/components/account/user-chat-history-s
 import { authMutedClass } from "@/components/auth/auth-styles";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { formatInstantInTurkey } from "@/lib/datetime/turkey-time";
 import { loadUserInboxRows } from "@/lib/messaging/server/inbox-user";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -19,10 +20,7 @@ export const metadata: Metadata = {
 function formatTrDate(iso: string | undefined) {
   if (!iso) return "—";
   try {
-    return new Intl.DateTimeFormat("tr-TR", {
-      dateStyle: "long",
-      timeStyle: "short",
-    }).format(new Date(iso));
+    return formatInstantInTurkey(iso, { dateStyle: "long", timeStyle: "short" });
   } catch {
     return "—";
   }

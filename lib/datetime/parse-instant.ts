@@ -1,3 +1,5 @@
+import { formatInstantInTurkey } from "@/lib/datetime/turkey-time";
+
 /**
  * Akış / blog için anlık zaman (epoch ms).
  * Postgres `timestamptz` ve Supabase genelde UTC ISO döner; `Z` yoksa bile UTC varsayılır
@@ -30,12 +32,11 @@ export function formatRelativeTimeAgoTr(iso: string, nowMs: number = Date.now())
   return `${day}g önce`;
 }
 
-/** Akış / kart: yayın anı Türkiye yerel saatine göre (SSR + istemci aynı). */
+/** Akış / kart: yayın anı İstanbul (TRT) saatine göre (SSR + istemci aynı). */
 export function formatPublishedAtDisplayTr(iso: string): string {
   const ts = parseInstantMs(iso);
   if (!Number.isFinite(ts)) return "—";
-  return new Date(ts).toLocaleString("tr-TR", {
-    timeZone: "Europe/Istanbul",
+  return formatInstantInTurkey(ts, {
     day: "numeric",
     month: "short",
     year: "numeric",

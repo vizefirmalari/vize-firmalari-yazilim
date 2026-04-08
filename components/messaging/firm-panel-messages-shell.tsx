@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { ConversationThreadView } from "@/components/messaging/conversation-thread-view";
 import { MessagingAvatar } from "@/components/messaging/messaging-avatar";
+import { DATE_TIME_OPTS_LIST_COMPACT, formatInstantInTurkey } from "@/lib/datetime/turkey-time";
 import { firmInboxTopic } from "@/lib/realtime/channel-names";
 import { previewFromMessage, resolveUserDisplayName } from "@/lib/messaging/identity";
 import type { FirmInboxRow, FirmMessageStats } from "@/lib/messaging/inbox-types";
@@ -25,12 +26,7 @@ type Props = {
 function formatListTime(iso: string | null) {
   if (!iso) return "";
   try {
-    return new Intl.DateTimeFormat("tr-TR", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(iso));
+    return formatInstantInTurkey(iso, DATE_TIME_OPTS_LIST_COMPACT);
   } catch {
     return "";
   }

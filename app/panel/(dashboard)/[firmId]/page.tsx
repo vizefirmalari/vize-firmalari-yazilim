@@ -7,6 +7,7 @@ import { buildFirmPanelConnectionCode } from "@/lib/firm-panel/connection-code";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { allowedDashboardModuleIdsForPlan } from "@/lib/subscriptions/dashboard-modules-for-plan";
 import { getFirmPlanTypeForPanel } from "@/lib/subscriptions/firm-plan-server";
+import { DATE_TIME_OPTS_LIST_COMPACT, formatInstantInTurkey } from "@/lib/datetime/turkey-time";
 import { getFirmPanelAnnouncementsForUser } from "@/lib/data/firm-panel-announcements";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -41,12 +42,7 @@ export default async function FirmPanelOverviewPage({ params }: PageProps) {
   const updatedAt = new Date(String(firm.updated_at ?? ""));
   const updatedLabel = Number.isNaN(updatedAt.getTime())
     ? "—"
-    : new Intl.DateTimeFormat("tr-TR", {
-        day: "2-digit",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(updatedAt);
+    : formatInstantInTurkey(updatedAt, DATE_TIME_OPTS_LIST_COMPACT);
 
   const announcements = await getFirmPanelAnnouncementsForUser();
 

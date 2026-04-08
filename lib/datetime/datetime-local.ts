@@ -1,4 +1,7 @@
-/** `<input type="datetime-local" />` değeri: tarayıcı yerel duvar saati. */
+/**
+ * Tarayıcı yerel saatine göre `datetime-local` (genel amaçlı).
+ * Site genelinde Türkiye saati için `@/lib/datetime/turkey-time` kullanın.
+ */
 export function formatDateTimeLocalValue(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;

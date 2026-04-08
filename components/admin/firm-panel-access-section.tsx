@@ -9,6 +9,7 @@ import {
   cancelFirmPanelInvitation,
   removeFirmPanelMember,
 } from "@/lib/actions/firm-panel-admin";
+import { formatInstantInTurkey } from "@/lib/datetime/turkey-time";
 import type {
   FirmPanelInvitationRow,
   FirmPanelMemberRow,
@@ -23,10 +24,7 @@ type Props = {
 
 function formatTrDate(iso: string) {
   try {
-    return new Intl.DateTimeFormat("tr-TR", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(iso));
+    return formatInstantInTurkey(iso, { dateStyle: "medium", timeStyle: "short" });
   } catch {
     return iso;
   }

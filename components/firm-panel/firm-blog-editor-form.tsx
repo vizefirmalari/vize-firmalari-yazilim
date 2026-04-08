@@ -20,10 +20,10 @@ import {
   sanitizeFirmBlogPastedHtml,
 } from "@/lib/blog/firm-blog-body-html";
 import {
-  datetimeLocalInputToUtcIso,
-  formatDateTimeLocalValue,
-  isoToDateTimeLocalValue,
-} from "@/lib/datetime/datetime-local";
+  formatNowTurkeyDatetimeLocalValue,
+  turkeyDatetimeLocalInputToUtcIso,
+  utcIsoToTurkeyDatetimeLocalValue,
+} from "@/lib/datetime/turkey-time";
 import {
   defaultDraftFaqItems,
   normalizeFirmBlogFaqItemFromDb,
@@ -152,12 +152,12 @@ export function FirmBlogEditorForm({
   const [metaDescription, setMetaDescription] = useState(initialPost?.meta_description ?? "");
   const [flowDescription, setFlowDescription] = useState(initialPost?.summary ?? "");
   const [scheduledAt, setScheduledAt] = useState(
-    initialPost?.scheduled_at ? isoToDateTimeLocalValue(initialPost.scheduled_at) : ""
+    initialPost?.scheduled_at ? utcIsoToTurkeyDatetimeLocalValue(initialPost.scheduled_at) : ""
   );
   const [publishAt, setPublishAt] = useState(() => {
-    if (initialPost?.published_at) return isoToDateTimeLocalValue(initialPost.published_at);
-    if (initialPost?.scheduled_at) return isoToDateTimeLocalValue(initialPost.scheduled_at);
-    return formatDateTimeLocalValue(new Date());
+    if (initialPost?.published_at) return utcIsoToTurkeyDatetimeLocalValue(initialPost.published_at);
+    if (initialPost?.scheduled_at) return utcIsoToTurkeyDatetimeLocalValue(initialPost.scheduled_at);
+    return formatNowTurkeyDatetimeLocalValue();
   });
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(initialPost?.tags ?? []);
@@ -496,14 +496,14 @@ export function FirmBlogEditorForm({
           setMessageTone("error");
           return;
         }
-        publishAtUtc = datetimeLocalInputToUtcIso(publishAt.trim() || scheduledAt.trim());
+        publishAtUtc = turkeyDatetimeLocalInputToUtcIso(publishAt.trim() || scheduledAt.trim());
         if (!publishAtUtc) {
           setMessage("Yayın zamanı geçersiz. Lütfen tarih ve saati kontrol edin.");
           setMessageTone("error");
           return;
         }
         if (scheduledAt.trim()) {
-          scheduledAtUtc = datetimeLocalInputToUtcIso(scheduledAt.trim()) ?? publishAtUtc;
+          scheduledAtUtc = turkeyDatetimeLocalInputToUtcIso(scheduledAt.trim()) ?? publishAtUtc;
         }
       }
 
@@ -568,7 +568,7 @@ export function FirmBlogEditorForm({
     setMetaDescription("");
     setFlowDescription("");
     setScheduledAt("");
-    setPublishAt(formatDateTimeLocalValue(new Date()));
+    setPublishAt(formatNowTurkeyDatetimeLocalValue());
     setTagInput("");
     setTags([]);
     setCategoryId("");

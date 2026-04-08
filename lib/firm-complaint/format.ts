@@ -1,9 +1,8 @@
+import { formatInstantInTurkey } from "@/lib/datetime/turkey-time";
+
 export function formatComplaintDate(iso: string): string {
   try {
-    return new Date(iso).toLocaleString("tr-TR", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
+    return formatInstantInTurkey(iso, { dateStyle: "medium", timeStyle: "short" });
   } catch {
     return iso;
   }
