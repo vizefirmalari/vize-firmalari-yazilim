@@ -12,10 +12,11 @@ export const SITE_DEFAULT_DESCRIPTION =
   "Vize danışmanlık firmalarını karşılaştırın; Kurumsallık Skoru, hizmetler ve iletişim bilgileri tek yerde. Doğru firmayı bulmanıza yardımcı olan karşılaştırma ve danışmanlık platformu.";
 
 /**
- * Varsayılan OG / Twitter / Organization.logo — `public/og-share.png`.
- * Önbellek kırılması için sorgu parametresi; başlık logosundan bağımsız.
+ * Varsayılan OG / X (Twitter) / LinkedIn vb. paylaşım görseli — `public/og-share.png`.
+ * Firma ve blog yazıları kendi görselleriyle bu URL’yi metadata’da geçersiz kılar.
+ * Önbellek kırılması için sorgu parametresi.
  */
-export const SITE_DEFAULT_OG_IMAGE_URL = `${absoluteUrl("/og-share.png")}?v=20260408`;
+export const SITE_DEFAULT_OG_IMAGE_URL = `${absoluteUrl("/og-share.png")}?v=20260406`;
 
 export function siteLogoAltText(): string {
   return `${SITE_BRAND_NAME} logosu`;

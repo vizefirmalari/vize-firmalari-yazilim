@@ -13,5 +13,5 @@ export function firmOgImageAlt(firm: FirmRow): string {
 }
 
 export function siteOgImageAlt(): string {
-  return `${SITE_BRAND_NAME} — paylaşım görseli`;
+  return `${SITE_BRAND_NAME} — marka logosu (sosyal paylaşım görseli)`;
 }

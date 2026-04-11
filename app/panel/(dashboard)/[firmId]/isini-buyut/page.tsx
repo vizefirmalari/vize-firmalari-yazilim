@@ -18,6 +18,14 @@ function GrowthCatalogFallback() {
   );
 }
 
+const heroHighlights = ["Daha fazla görünürlük", "Hazır platform trafiği", "Şeffaf raporlama"] as const;
+
+const reachPillars = [
+  { title: "Reklam ve performans", desc: "Google ve Meta tarafında yönetilen, ölçülebilir kampanyalar." },
+  { title: "Otomasyon ve botlar", desc: "Talepleri yakalayan, yönlendiren akıllı akışlar." },
+  { title: "Web ve premium sistemler", desc: "Güven veren vitrin ve operasyonel araçlar." },
+] as const;
+
 export default async function FirmGrowthHubPage({ params }: PageProps) {
   const { firmId } = await params;
   const membership = await requireFirmPanelAccess(firmId);
@@ -28,57 +36,56 @@ export default async function FirmGrowthHubPage({ params }: PageProps) {
   const firstCatWithServices = catalog.find((c) => c.services.length > 0);
 
   return (
-    <div className="space-y-8">
-      <p className="rounded-2xl border border-[#0B3C5D]/10 bg-[#F4F6F8] px-4 py-3 text-center text-sm font-medium text-[#1A1A1A]/70">
-        Rakipleriniz dijital sistemlerle daha fazla müşteriye ulaşıyor.
-      </p>
-
-      <section className="overflow-hidden rounded-2xl border border-[#0B3C5D]/12 bg-linear-to-br from-[#0B3C5D] via-[#124668] to-[#0B3C5D] p-6 text-white shadow-[0_20px_44px_rgba(11,60,93,0.2)] sm:p-8">
-        <div className="grid items-center gap-8 lg:grid-cols-[1fr_minmax(0,280px)]">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/70">İşini Büyüt</p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-              <span aria-hidden>🚀 </span>
-              İşinizi Büyütün
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/85">
-              Daha fazla müşteri kazanın, talepleri kaçırmayın ve işinizi otomasyon ile büyütün. Size özel
-              geliştirilen akıllı sistemlerle süreci kontrol altına alın.
+    <div className="space-y-10">
+      <section className="overflow-hidden rounded-2xl border border-[#0B3C5D]/12 bg-white shadow-[0_12px_40px_rgba(11,60,93,0.06)] sm:shadow-[0_16px_48px_rgba(11,60,93,0.08)]">
+        <div className="grid gap-0 lg:grid-cols-[1fr_minmax(0,300px)]">
+          <div className="p-6 sm:p-8 lg:p-10">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1A1A1A]/45">Firma vitrini</p>
+            <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#0B3C5D] sm:text-3xl">İşini Büyüt</h1>
+            <p className="mt-2 max-w-2xl text-sm font-medium leading-relaxed text-[#1A1A1A]/72">
+              Görünürlüğünüzü artırın, daha nitelikli başvurular alın, platformdaki varlığınızı güçlendirin.
             </p>
-            <ul className="mt-5 flex flex-wrap gap-2">
-              {["Daha fazla müşteri", "Otomatik sistemler", "7/24 aktif yapı"].map((t) => (
-                <li
+            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-[#1A1A1A]/62">
+              Bu alan; vitrin, reklam, otomasyon ve kurumsal web çözümlerini tek düzen üzerinden sunar. Her hizmet net
+              fiyat veya teklif akışıyla ilerler; süreç panelinizden takip edilir.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {heroHighlights.map((t) => (
+                <span
                   key={t}
-                  className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90"
+                  className="inline-flex items-center rounded-full border border-[#0B3C5D]/12 bg-[#F7F9FB] px-3 py-1 text-xs font-semibold text-[#0B3C5D]/85"
                 >
                   {t}
-                </li>
+                </span>
               ))}
-            </ul>
-            <p className="mt-6 text-xs text-white/55">
-              Sonuç ve getiri garantisi verilmez; süreç şeffaf raporlama ve iyileştirme ile yönetilir.
+            </div>
+            <p className="mt-6 text-xs leading-relaxed text-[#1A1A1A]/48">
+              Sonuç veya getiri garantisi sunulmaz; hizmetler şeffaf raporlama ve iyileştirme disipliniyle yürütülür.
             </p>
           </div>
-          <GrowthHeroIllustration />
+          <div className="flex min-h-[200px] items-center justify-center bg-linear-to-br from-[#0B3C5D] via-[#124668] to-[#0B3C5D] px-6 py-10 lg:min-h-0">
+            <GrowthHeroIllustration />
+          </div>
         </div>
       </section>
 
       <section className="rounded-2xl border border-[#0B3C5D]/12 bg-white p-6 shadow-sm sm:p-8">
-        <h2 className="text-lg font-bold text-[#0B3C5D]">Geniş erişim ağı</h2>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#1A1A1A]/65">
-          168.000+ kişilik sosyal medya ağı ve platform trafiği ile firmanızı daha fazla kişiye ulaştırıyoruz.
+        <h2 className="text-lg font-bold text-[#0B3C5D] sm:text-xl">Neleri kapsıyor?</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#1A1A1A]/62">
+          Geniş erişim ağı ve içerik gücüyle firmanızı doğru kitleye taşıyın; paketler ihtiyaca göre seçilir, detaylar
+          vitrin kartlarında özetlenir.
         </p>
-        <ul className="mt-4 grid gap-2 text-sm text-[#1A1A1A]/70 sm:grid-cols-3">
-          <li className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-2 font-medium">
-            Google ve Meta reklam yönetimi
-          </li>
-          <li className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-2 font-medium">
-            Yapay zekâ botları ve otomasyon
-          </li>
-          <li className="rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-2 font-medium">
-            Web, içerik ve premium sistemler
-          </li>
-        </ul>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {reachPillars.map((p) => (
+            <div
+              key={p.title}
+              className="rounded-2xl border border-[#0B3C5D]/10 bg-[#F7F9FB] p-4 shadow-sm transition hover:border-[#0B3C5D]/18"
+            >
+              <p className="text-sm font-bold text-[#0B3C5D]">{p.title}</p>
+              <p className="mt-2 text-xs leading-relaxed text-[#1A1A1A]/58">{p.desc}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       <Suspense fallback={<GrowthCatalogFallback />}>
@@ -90,20 +97,26 @@ export default async function FirmGrowthHubPage({ params }: PageProps) {
         />
       </Suspense>
 
-      <p className="rounded-2xl border border-[#0B3C5D]/10 bg-white px-4 py-3 text-center text-sm font-medium text-[#1A1A1A]/70 shadow-sm">
-        Rakipleriniz dijital sistemlerle daha fazla müşteriye ulaşıyor.{" "}
+      <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white px-4 py-4 text-center text-sm font-medium text-[#1A1A1A]/68 shadow-sm sm:px-6">
+        Dijital vitrinde rekabet günlük işin parçası.
         {firstCatWithServices ? (
-          <Link
-            href={`/panel/${firmId}/isini-buyut#kategori-${firstCatWithServices.id}`}
-            className="font-semibold text-[#0B3C5D] hover:underline"
-          >
-            Görünürlük paketlerine göz atın
-          </Link>
+          <>
+            {" "}
+            <Link
+              href={`/panel/${firmId}/isini-buyut#kategori-${firstCatWithServices.id}`}
+              className="font-semibold text-[#0B3C5D] underline-offset-2 hover:underline"
+            >
+              Çözüm kataloğuna göz atın
+            </Link>
+            .
+          </>
         ) : (
-          <span className="font-semibold text-[#0B3C5D]">Katalog güncellendiğinde paketler burada listelenir.</span>
+          <>
+            {" "}
+            <span className="font-semibold text-[#0B3C5D]">Katalog güncellendiğinde paketler burada listelenir.</span>
+          </>
         )}
-        .
-      </p>
+      </div>
     </div>
   );
 }

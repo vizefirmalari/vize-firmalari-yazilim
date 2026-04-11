@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import type { GrowthCatalogCategory } from "@/lib/types/growth-commerce";
@@ -15,6 +15,8 @@ type Props = {
   categories: GrowthCatalogCategory[];
 };
 
+type SpotlightEntry = { serviceId: string; categoryName: string };
+
 export function GrowthCategoriesSection({ firmId, firmName, bank, categories }: Props) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -23,12 +25,26 @@ export function GrowthCategoriesSection({ firmId, firmName, bank, categories }: 
   useEffect(() => {
     const h = searchParams.get("hizmet");
     if (!h || !/^[0-9a-f-]{36}$/i.test(h)) return;
-    setAutoOpenToken(h);
     const clean = `${pathname}`;
     window.history.replaceState(null, "", clean);
+    queueMicrotask(() => setAutoOpenToken(h));
   }, [pathname, searchParams]);
 
-  const blocks = categories.filter((c) => c.services.length > 0);
+  const blocks = useMemo(() => categories.filter((c) => c.services.length > 0), [categories]);
+
+  const spotlightEntries = useMemo((): SpotlightEntry[] => {
+    const out: SpotlightEntry[] = [];
+    for (const cat of blocks) {
+      for (const s of cat.services) {
+        if (s.is_featured && out.length < 2) {
+          out.push({ serviceId: s.id, categoryName: cat.name });
+        }
+      }
+    }
+    return out;
+  }, [blocks]);
+
+  const spotlightIds = useMemo(() => new Set(spotlightEntries.map((e) => e.serviceId)), [spotlightEntries]);
 
   if (!blocks.length) {
     return (
@@ -43,30 +59,83 @@ export function GrowthCategoriesSection({ firmId, firmName, bank, categories }: 
   }
 
   return (
-    <div className="space-y-12">
-      {blocks.map((cat) => (
-        <section key={cat.id} id={`kategori-${cat.id}`} className="scroll-mt-6">
-          <div className="mb-5 flex flex-wrap items-center gap-2 border-b border-[#0B3C5D]/10 pb-3">
-            <span className="text-lg" aria-hidden>
-              {cat.icon}
-            </span>
-            <h2 className="text-lg font-bold tracking-tight text-[#0B3C5D] sm:text-xl">{cat.name}</h2>
+    <div className="space-y-14">
+      {spotlightEntries.length > 0 ? (
+        <section aria-labelledby="growth-spotlight-heading" className="scroll-mt-6">
+          <div className="mb-6 max-w-2xl">
+            <h2 id="growth-spotlight-heading" className="text-xl font-bold tracking-tight text-[#0B3C5D] sm:text-2xl">
+              Öne çıkan çözümler
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-[#1A1A1A]/60">
+              Çoğu firmanın birlikte değerlendirdiği çözümler; görünürlük ve başvuru akışını güçlendirmek için net bir
+              başlangıç noktası.
+            </p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {cat.services.map((s) => (
-              <GrowthServiceCard
-                key={s.id}
-                firmId={firmId}
-                firmName={firmName}
-                bank={bank}
-                service={s}
-                autoOpenToken={autoOpenToken}
-                onAutoOpenConsumed={() => setAutoOpenToken(null)}
-              />
-            ))}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {spotlightEntries.map(({ serviceId, categoryName }) => {
+              const svc = blocks.flatMap((c) => c.services).find((s) => s.id === serviceId);
+              if (!svc) return null;
+              return (
+                <GrowthServiceCard
+                  key={`spotlight-${svc.id}`}
+                  firmId={firmId}
+                  firmName={firmName}
+                  bank={bank}
+                  service={svc}
+                  categoryLabel={categoryName}
+                  variant="spotlight"
+                  autoOpenToken={autoOpenToken}
+                  onAutoOpenConsumed={() => setAutoOpenToken(null)}
+                />
+              );
+            })}
           </div>
         </section>
-      ))}
+      ) : null}
+
+      <section aria-labelledby="growth-all-heading" className="scroll-mt-6">
+        <div className="mb-8 max-w-2xl">
+          <h2 id="growth-all-heading" className="text-xl font-bold tracking-tight text-[#0B3C5D] sm:text-2xl">
+            Tüm çözümler
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-[#1A1A1A]/60">
+            İhtiyacınıza göre kategorilere göz atın; her kartta fiyat ve aksiyonlar aynı hizada, detay sayfasında tam
+            içerik yer alır.
+          </p>
+        </div>
+
+        <div className="space-y-12">
+          {blocks.map((cat) => {
+            const gridServices = cat.services.filter((s) => !spotlightIds.has(s.id));
+            if (!gridServices.length) return null;
+            return (
+              <div key={cat.id} id={`kategori-${cat.id}`} className="scroll-mt-6">
+                <div className="mb-5 flex flex-wrap items-center gap-2 border-b border-[#0B3C5D]/10 pb-3">
+                  <span className="text-lg" aria-hidden>
+                    {cat.icon}
+                  </span>
+                  <h3 className="text-lg font-bold tracking-tight text-[#0B3C5D] sm:text-xl">{cat.name}</h3>
+                </div>
+                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                  {gridServices.map((s) => (
+                    <GrowthServiceCard
+                      key={s.id}
+                      firmId={firmId}
+                      firmName={firmName}
+                      bank={bank}
+                      service={s}
+                      categoryLabel={cat.name}
+                      variant="default"
+                      autoOpenToken={autoOpenToken}
+                      onAutoOpenConsumed={() => setAutoOpenToken(null)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }
