@@ -18,7 +18,9 @@ export function countActiveListingFilters(
   n += f.coverage.visaRegionLabels.length;
   n += f.coverage.countries.length;
   n += f.visaTypes.length;
+  n += f.expertiseKeys.length;
   n += f.cities.length;
+  n += f.firmTypes.length;
   n += f.mainServiceLabels.length;
   if (f.exploreFocusSlug) n++;
   if (f.trust.requireTaxCertificate) n++;

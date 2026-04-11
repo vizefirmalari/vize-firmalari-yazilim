@@ -6,11 +6,15 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getFirms, parseFirmFilters } from "@/lib/data/firms";
 import {
+  mergeCompanyTypeFilterOptions,
   mergeCountryFilterOptionsFromFirms,
+  mergeMainServiceCategoryFilterOptionsFromRows,
 } from "@/lib/firma/listing-filter-options";
 import {
   getHomepageSettings,
   getPublicFilterCountries,
+  getPublicFilterCompanyTypes,
+  getPublicFilterMainServiceCategories,
 } from "@/lib/data/public-cms";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
@@ -69,7 +73,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     !filters.q.trim() &&
     filters.countries.length === 0 &&
     filters.visaTypes.length === 0 &&
+    filters.expertise.length === 0 &&
     filters.cities.length === 0 &&
+    filters.firmTypes.length === 0 &&
     filters.mainServices.length === 0 &&
     !filters.exploreFocusSlug;
 
@@ -80,6 +86,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   const cms = await getHomepageSettings();
   const dbCountries = await getPublicFilterCountries();
+  const dbCompanyTypes = await getPublicFilterCompanyTypes();
+  const dbMainServiceCategories = await getPublicFilterMainServiceCategories();
+  const companyTypeNamesOrdered = [...dbCompanyTypes]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((r) => r.name.trim())
+    .filter(Boolean);
 
   const hiddenParams: Record<string, string> = {};
   if (filters.countries.length) {
@@ -90,6 +102,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   }
   if (filters.cities.length) {
     hiddenParams.cities = filters.cities.join(",");
+  }
+  if (filters.firmTypes.length) {
+    hiddenParams.firmTypes = filters.firmTypes.join(",");
   }
   if (filters.mainServices.length) {
     hiddenParams.mainServices = filters.mainServices.join(",");
@@ -105,6 +120,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     dbCountries,
     listingFirms
   );
+  const companyTypeListForListing = mergeCompanyTypeFilterOptions(
+    companyTypeNamesOrdered,
+    listingFirms
+  );
+  const mainServiceCategoryListForListing =
+    mergeMainServiceCategoryFilterOptionsFromRows(
+      dbMainServiceCategories,
+      listingFirms
+    );
 
   return (
     <>
@@ -131,12 +155,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           initialFirms={listingFirms}
           initialCountries={filters.countries}
           initialVisaTypes={filters.visaTypes}
+          initialExpertise={filters.expertise}
           initialCities={filters.cities}
+          initialFirmTypes={filters.firmTypes}
           initialMainServices={filters.mainServices}
           initialExploreFocusSlug={filters.exploreFocusSlug}
           initialSort={filters.sort}
           query={filters.q}
           countryList={countryListForListing}
+          companyTypeList={companyTypeListForListing}
+          mainServiceCategoryList={mainServiceCategoryListForListing}
           featuredTitle={
             cms?.featured_section_title?.trim() || undefined
           }

@@ -59,3 +59,39 @@ export function resolvePopularCountryRowsFromConfig(
   }
   return out;
 }
+
+/**
+ * CMS `company_types.name` ile birebir eşleşen sabit sıra — yalnızca seçenek
+ * listesinde bulunanlar gösterilir (ayrı taxonomy kopyası oluşturulmaz).
+ */
+export const POPULAR_FIRM_TYPE_NAME_ORDER: readonly string[] = [
+  "Vize Danışmanlık Şirketi",
+  "Hukuk Bürosu",
+  "Seyahat Acentesi",
+  "Eğitim ve Vize Danışmanlığı",
+  "Vize Başvuru Merkezi",
+];
+
+export function resolvePopularFirmTypeLabelsFromOptions(
+  companyTypeOptions: string[]
+): string[] {
+  const set = new Set(companyTypeOptions);
+  return POPULAR_FIRM_TYPE_NAME_ORDER.filter((name) => set.has(name));
+}
+
+/** CMS adıyla kesişenler; sıra sabit — `main_service_categories` ile uyumlu */
+export const POPULAR_MAIN_SERVICE_NAME_ORDER: readonly string[] = [
+  "Vize Hizmeti",
+  "Oturum",
+  "Vatandaşlık",
+  "Randevu Hizmeti",
+  "Göçmenlik Hukuku",
+  "Başvuru Süreç Yönetimi",
+];
+
+export function resolvePopularMainServiceLabelsFromOptions(
+  options: string[]
+): string[] {
+  const set = new Set(options);
+  return POPULAR_MAIN_SERVICE_NAME_ORDER.filter((name) => set.has(name));
+}

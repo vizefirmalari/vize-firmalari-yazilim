@@ -14,6 +14,8 @@ type FilterSheetProps = {
   onChange: (next: AppliedListingFilters) => void;
   bounds: ListingRangeBounds;
   countryOptions: string[];
+  companyTypeOptions: string[];
+  mainServiceCategoryOptions: string[];
   resultCount: number;
   /** Aktif filtre sayısı (başlıkta gösterilir) */
   activeFilterCount?: number;
@@ -28,6 +30,8 @@ export function FirmFilterBottomSheet({
   onChange,
   bounds,
   countryOptions,
+  companyTypeOptions,
+  mainServiceCategoryOptions,
   resultCount,
   activeFilterCount = 0,
   onApply,
@@ -90,6 +94,8 @@ export function FirmFilterBottomSheet({
             onChange={onChange}
             bounds={bounds}
             countryOptions={countryOptions}
+            companyTypeOptions={companyTypeOptions}
+            mainServiceCategoryOptions={mainServiceCategoryOptions}
           />
         </div>
 

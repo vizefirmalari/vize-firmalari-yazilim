@@ -10,6 +10,7 @@ import {
 } from "@/lib/constants/firm-specializations";
 import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
 import { firmMatchesExploreCategory } from "@/lib/explore/explore-match";
+import { effectiveFirmCategoryLabel } from "@/lib/firma/listing-filter-options";
 
 const MOCK_FIRMS: FirmRow[] = [
   {
@@ -182,12 +183,35 @@ function firmMatchesCityFilter(firm: FirmRow, cities: string[]): boolean {
   return cities.some((c) => normalizeTr(c) === n);
 }
 
+function firmMatchesSpecializationKeysFromRaw(
+  r: FirmRow,
+  raw: string[]
+): boolean {
+  if (raw.length === 0) return true;
+  const selected = new Set<SpecializationKey>(
+    raw
+      .map((v) => specializationKeyFromLabel(v) ?? (v as SpecializationKey))
+      .filter(Boolean)
+  );
+  return SPECIALIZATION_OPTIONS.some(
+    ({ key }) =>
+      selected.has(key) && Boolean((r as unknown as Record<string, unknown>)[key])
+  );
+}
+
+function firmMatchesFirmTypesFilter(firm: FirmRow, firmTypes: string[]): boolean {
+  if (firmTypes.length === 0) return true;
+  const label = effectiveFirmCategoryLabel(firm);
+  if (!label) return false;
+  const n = normalizeTr(label);
+  return firmTypes.some((t) => normalizeTr(t) === n);
+}
+
 function firmMatchesMainServicesFilter(firm: FirmRow, labels: string[]): boolean {
   if (labels.length === 0) return true;
   const pool: string[] = [];
-  for (const arr of [firm.main_services, firm.services, firm.sub_services]) {
-    if (!Array.isArray(arr)) continue;
-    for (const x of arr) {
+  if (Array.isArray(firm.main_services)) {
+    for (const x of firm.main_services) {
       if (typeof x === "string" && x.trim()) pool.push(normalizeTr(x));
     }
   }
@@ -237,8 +261,10 @@ export function parseFirmFilters(searchParams: {
     q,
     countries: parseList(searchParams.countries),
     visaTypes,
+    expertise: parseList(searchParams.expertise),
     cities: parseList(searchParams.cities),
     mainServices: parseList(searchParams.mainServices),
+    firmTypes: parseList(searchParams.firmTypes),
     exploreFocusSlug,
     sort,
   };
@@ -258,22 +284,19 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
   }
 
   if (f.visaTypes.length > 0) {
-    const selected = new Set<SpecializationKey>(
-      f.visaTypes
-        .map((v) => specializationKeyFromLabel(v) ?? (v as SpecializationKey))
-        .filter(Boolean)
-    );
-    out = out.filter((r) => {
-      return SPECIALIZATION_OPTIONS.some(
-        ({ key }) =>
-          selected.has(key) &&
-          Boolean((r as unknown as Record<string, unknown>)[key])
-      );
-    });
+    out = out.filter((r) => firmMatchesSpecializationKeysFromRaw(r, f.visaTypes));
+  }
+
+  if (f.expertise.length > 0) {
+    out = out.filter((r) => firmMatchesSpecializationKeysFromRaw(r, f.expertise));
   }
 
   if (f.cities.length > 0) {
     out = out.filter((r) => firmMatchesCityFilter(r, f.cities));
+  }
+
+  if (f.firmTypes.length > 0) {
+    out = out.filter((r) => firmMatchesFirmTypesFilter(r, f.firmTypes));
   }
 
   if (f.mainServices.length > 0) {
@@ -439,22 +462,23 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
   }
 
   if (filters.visaTypes.length > 0) {
-    const selected = new Set<SpecializationKey>(
-      filters.visaTypes
-        .map((v) => specializationKeyFromLabel(v) ?? (v as SpecializationKey))
-        .filter(Boolean)
+    rows = rows.filter((r) =>
+      firmMatchesSpecializationKeysFromRaw(r, filters.visaTypes)
     );
-    rows = rows.filter((r) => {
-      return SPECIALIZATION_OPTIONS.some(
-        ({ key }) =>
-          selected.has(key) &&
-          Boolean((r as unknown as Record<string, unknown>)[key])
-      );
-    });
+  }
+
+  if (filters.expertise.length > 0) {
+    rows = rows.filter((r) =>
+      firmMatchesSpecializationKeysFromRaw(r, filters.expertise)
+    );
   }
 
   if (filters.cities.length > 0) {
     rows = rows.filter((r) => firmMatchesCityFilter(r, filters.cities));
+  }
+
+  if (filters.firmTypes.length > 0) {
+    rows = rows.filter((r) => firmMatchesFirmTypesFilter(r, filters.firmTypes));
   }
 
   if (filters.mainServices.length > 0) {

@@ -184,7 +184,9 @@ function countFiltered(
       AppliedListingFilters,
       | "coverage"
       | "visaTypes"
+      | "expertiseKeys"
       | "cities"
+      | "firmTypes"
       | "mainServiceLabels"
       | "exploreFocusSlug"
     >

@@ -1,5 +1,6 @@
 import type { FirmRow, FirmSort } from "@/lib/types/firm";
 import { firmMatchesCoverageSelection } from "@/lib/firma/listing-coverage-match";
+import { effectiveFirmCategoryLabel } from "@/lib/firma/listing-filter-options";
 import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
 import { firmMatchesExploreCategory } from "@/lib/explore/explore-match";
 import {
@@ -83,12 +84,19 @@ function firmMatchesCityLabels(firm: FirmRow, cities: string[]): boolean {
   return cities.some((c) => normalizeTr(c) === n);
 }
 
+function firmMatchesFirmTypeLabels(firm: FirmRow, firmTypes: string[]): boolean {
+  if (firmTypes.length === 0) return true;
+  const label = effectiveFirmCategoryLabel(firm);
+  if (!label) return false;
+  const n = normalizeTr(label);
+  return firmTypes.some((t) => normalizeTr(t) === n);
+}
+
 function firmMatchesMainServiceLabels(firm: FirmRow, labels: string[]): boolean {
   if (labels.length === 0) return true;
   const pool: string[] = [];
-  for (const arr of [firm.main_services, firm.services, firm.sub_services]) {
-    if (!Array.isArray(arr)) continue;
-    for (const x of arr) {
+  if (Array.isArray(firm.main_services)) {
+    for (const x of firm.main_services) {
       if (typeof x === "string" && x.trim()) pool.push(normalizeTr(x));
     }
   }
@@ -103,8 +111,12 @@ function firmMatchesMainServiceLabels(firm: FirmRow, labels: string[]): boolean 
 export type AppliedListingFilters = {
   coverage: CoverageSelection;
   visaTypes: SpecializationKey[];
+  /** Admin uzmanlık bayrakları; URL `expertise` — `visaTypes` ile ayrı kriter */
+  expertiseKeys: SpecializationKey[];
   /** URL / vitrin — şehir adları */
   cities: string[];
+  /** CMS firma türü adları; `firm_category` / `company_type` ile eşleşir */
+  firmTypes: string[];
   /** URL / vitrin — ana hizmet veya hizmet satırı etiketi */
   mainServiceLabels: string[];
   /** Keşfet slug ile aynı eşleşme */
@@ -128,7 +140,9 @@ export function createDefaultAppliedListingFilters(
   return {
     coverage: { visaRegionLabels: [], countries: [] },
     visaTypes: [],
+    expertiseKeys: [],
     cities: [],
+    firmTypes: [],
     mainServiceLabels: [],
     exploreFocusSlug: null,
     trust: {
@@ -216,6 +230,19 @@ function passesServiceMode(firm: FirmRow, m: ServiceModeFlags): boolean {
   return true;
 }
 
+function firmMatchesAnySpecializationKeys(
+  firm: FirmRow,
+  keys: SpecializationKey[]
+): boolean {
+  if (keys.length === 0) return true;
+  const active = new Set(
+    SPECIALIZATION_OPTIONS.filter(({ key }) =>
+      Boolean((firm as unknown as Record<string, unknown>)[key])
+    ).map(({ key }) => key)
+  );
+  return keys.some((key) => active.has(key));
+}
+
 function passesLanguagePro(firm: FirmRow, l: LanguageProFlags): boolean {
   const any = l.multilingualSupport || l.corporateDomain;
   if (!any) return true;
@@ -242,6 +269,8 @@ export function applyListingFilters(
 
     if (!firmMatchesCityLabels(firm, f.cities)) return false;
 
+    if (!firmMatchesFirmTypeLabels(firm, f.firmTypes)) return false;
+
     if (!firmMatchesMainServiceLabels(firm, f.mainServiceLabels)) return false;
 
     if (f.exploreFocusSlug) {
@@ -249,14 +278,9 @@ export function applyListingFilters(
       if (cat && !firmMatchesExploreCategory(firm, cat)) return false;
     }
 
-    if (f.visaTypes.length > 0) {
-      const active = new Set(
-        SPECIALIZATION_OPTIONS.filter(({ key }) =>
-          Boolean((firm as unknown as Record<string, unknown>)[key])
-        ).map(({ key }) => key)
-      );
-      if (!f.visaTypes.some((key) => active.has(key))) return false;
-    }
+    if (!firmMatchesAnySpecializationKeys(firm, f.visaTypes)) return false;
+
+    if (!firmMatchesAnySpecializationKeys(firm, f.expertiseKeys)) return false;
     if (!passesTrust(firm, f.trust)) return false;
     if (!passesServiceMode(firm, f.serviceMode)) return false;
     if (!passesLanguagePro(firm, f.languagePro)) return false;

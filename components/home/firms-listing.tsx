@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { DEFAULT_COUNTRIES } from "@/lib/constants";
 import {
@@ -11,7 +11,11 @@ import {
   type AppliedListingFilters,
 } from "@/lib/firma/listing-filters";
 import { countActiveListingFilters } from "@/lib/firma/listing-filter-active-count";
-import { filterCountryNamesForListing } from "@/lib/firma/filter-country-options";
+import { buildUnifiedCountryFilterList } from "@/lib/firma/filter-country-options";
+import {
+  mergeCompanyTypeFilterOptions,
+  mergeMainServiceCategoryFilterOptionsFromRows,
+} from "@/lib/firma/listing-filter-options";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { isSupabaseConfigured } from "@/lib/env";
 import type { FirmRow, FirmSort } from "@/lib/types/firm";
@@ -28,17 +32,28 @@ import {
   consumeHomeListingScrollAfterSearch,
   HOME_LISTING_SCROLL_AFTER_SEARCH_SESSION_KEY,
 } from "@/lib/search/home-listing-scroll";
+import {
+  applyHomeListingParamsToSearchParams,
+  homeListingSearchParamsEqual,
+} from "@/lib/search/home-listing-url";
 
 type Props = {
   initialFirms: FirmRow[];
   initialCountries?: string[];
   initialVisaTypes?: string[];
+  /** Admin uzmanlık bayrakları; URL `expertise` */
+  initialExpertise?: string[];
   initialCities?: string[];
+  initialFirmTypes?: string[];
   initialMainServices?: string[];
   initialExploreFocusSlug?: string | null;
   initialSort?: FirmSort;
   query?: string;
   countryList?: string[];
+  /** CMS `company_types` + yayınlanmış firmalardan birleşik firma türü etiketleri */
+  companyTypeList?: string[];
+  /** CMS `main_service_categories` + firmalardaki ana hizmet etiketleri */
+  mainServiceCategoryList?: string[];
   featuredTitle?: string;
   featuredSubtitle?: string;
   /** Ana sayfa: vitrin (keşif) alanı — sağ sütunda, filtre ile hizalı */
@@ -50,10 +65,15 @@ function buildApplied(
   countries: string[],
   visaTypes: string[],
   cities: string[] = [],
+  firmTypes: string[] = [],
+  expertise: string[] = [],
   mainServiceLabels: string[] = [],
   exploreFocusSlug: string | null = null
 ): AppliedListingFilters {
   const normalizedVisaTypes = visaTypes
+    .map((v) => specializationKeyFromLabel(v) ?? (v as SpecializationKey))
+    .filter(Boolean);
+  const normalizedExpertiseKeys = expertise
     .map((v) => specializationKeyFromLabel(v) ?? (v as SpecializationKey))
     .filter(Boolean);
   return {
@@ -62,7 +82,9 @@ function buildApplied(
       countries: [...countries],
     },
     visaTypes: [...new Set(normalizedVisaTypes)],
+    expertiseKeys: [...new Set(normalizedExpertiseKeys)],
     cities: [...cities],
+    firmTypes: [...firmTypes],
     mainServiceLabels: [...mainServiceLabels],
     exploreFocusSlug,
     trust: {
@@ -95,12 +117,16 @@ export function FirmsListing({
   initialFirms,
   initialCountries = [],
   initialVisaTypes = [],
+  initialExpertise = [],
   initialCities = [],
+  initialFirmTypes = [],
   initialMainServices = [],
   initialExploreFocusSlug = null,
   initialSort = "name_asc",
   query = "",
   countryList,
+  companyTypeList,
+  mainServiceCategoryList,
   featuredTitle = "Tüm Firmalar",
   featuredSubtitle =
     "Filtreleyin, karşılaştırın ve size uygun firmayı bulun.",
@@ -108,6 +134,7 @@ export function FirmsListing({
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const bounds = useMemo(
     () => computeRangeBounds(initialFirms),
     [initialFirms]
@@ -120,6 +147,8 @@ export function FirmsListing({
         initialCountries,
         initialVisaTypes,
         initialCities,
+        initialFirmTypes,
+        initialExpertise,
         initialMainServices,
         initialExploreFocusSlug
       )
@@ -135,6 +164,8 @@ export function FirmsListing({
         initialCountries,
         initialVisaTypes,
         initialCities,
+        initialFirmTypes,
+        initialExpertise,
         initialMainServices,
         initialExploreFocusSlug
       )
@@ -145,7 +176,9 @@ export function FirmsListing({
       [
         initialCountries.join(","),
         initialVisaTypes.join(","),
+        initialExpertise.join(","),
         initialCities.join(","),
+        initialFirmTypes.join(","),
         initialMainServices.join(","),
         initialExploreFocusSlug ?? "",
         initialSort,
@@ -153,7 +186,9 @@ export function FirmsListing({
     [
       initialCountries,
       initialVisaTypes,
+      initialExpertise,
       initialCities,
+      initialFirmTypes,
       initialMainServices,
       initialExploreFocusSlug,
       initialSort,
@@ -161,20 +196,53 @@ export function FirmsListing({
   );
 
   useEffect(() => {
-    setAppliedFilters(
-      buildApplied(
+    setAppliedFilters((prev) => {
+      const base = buildApplied(
         bounds,
         initialCountries,
         initialVisaTypes,
         initialCities,
+        initialFirmTypes,
+        initialExpertise,
         initialMainServices,
         initialExploreFocusSlug
-      )
-    );
+      );
+      return {
+        ...base,
+        coverage: {
+          ...base.coverage,
+          visaRegionLabels: prev.coverage.visaRegionLabels,
+        },
+        trust: prev.trust,
+        serviceMode: prev.serviceMode,
+        languagePro: prev.languagePro,
+        corpMin: prev.corpMin,
+        corpMax: prev.corpMax,
+        hypeMin: prev.hypeMin,
+        hypeMax: prev.hypeMax,
+        yearMin: prev.yearMin,
+        yearMax: prev.yearMax,
+        yearPreset: prev.yearPreset,
+      };
+    });
     setSort(initialSort);
     // Yalnızca URL / sunucu filtre senkronu; firms realtime ile bounds değişince sıfırlanmaz.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bounds, initialCountries, initialVisaTypes, initialSort: urlKey ile birlikte güncellenir
   }, [urlKey]);
+
+  /** Ana sayfa: URL ile `countries`, `cities`, `visaTypes` vb. senkron (yenilemede korunur). */
+  useEffect(() => {
+    if (pathname !== "/") return;
+    const base = new URLSearchParams(searchParams.toString());
+    const next = applyHomeListingParamsToSearchParams(base, {
+      q: query,
+      applied: appliedFilters,
+      sort,
+    });
+    if (homeListingSearchParamsEqual(next, base)) return;
+    const qs = next.toString();
+    router.replace(qs ? `/?${qs}#firmalar` : "/#firmalar", { scroll: false });
+  }, [pathname, searchParams, query, appliedFilters, sort, router]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -258,8 +326,25 @@ export function FirmsListing({
   const countriesSource = useMemo(() => {
     const raw =
       countryList && countryList.length > 0 ? countryList : DEFAULT_COUNTRIES;
-    return filterCountryNamesForListing(raw);
+    return buildUnifiedCountryFilterList(raw);
   }, [countryList]);
+
+  const companyTypesSource = useMemo(
+    () =>
+      companyTypeList && companyTypeList.length > 0
+        ? companyTypeList
+        : mergeCompanyTypeFilterOptions([], initialFirms),
+    [companyTypeList, initialFirms]
+  );
+
+  const mainServiceCategorySource = useMemo(
+    () =>
+      mainServiceCategoryList && mainServiceCategoryList.length > 0
+        ? mainServiceCategoryList
+        : mergeMainServiceCategoryFilterOptionsFromRows([], initialFirms),
+    [mainServiceCategoryList, initialFirms]
+  );
+
   const filtered = useMemo(
     () =>
       applyListingFilters(initialFirms, appliedFilters, bounds, query),
@@ -280,7 +365,9 @@ export function FirmsListing({
     let n = appliedFilters.coverage.visaRegionLabels.length;
     n += appliedFilters.coverage.countries.length;
     n += appliedFilters.visaTypes.length;
+    n += appliedFilters.expertiseKeys.length;
     n += appliedFilters.cities.length;
+    n += appliedFilters.firmTypes.length;
     n += appliedFilters.mainServiceLabels.length;
     if (appliedFilters.exploreFocusSlug) n++;
     const t = appliedFilters.trust;
@@ -335,6 +422,13 @@ export function FirmsListing({
     }));
   };
 
+  const clearExpertiseChip = (key: SpecializationKey) => {
+    setAppliedFilters((prev) => ({
+      ...prev,
+      expertiseKeys: prev.expertiseKeys.filter((x) => x !== key),
+    }));
+  };
+
   const clearTrustChip = (
     key: keyof AppliedListingFilters["trust"]
   ) => {
@@ -376,7 +470,7 @@ export function FirmsListing({
   );
 
   const clearFilterDraft = () => {
-    setFilterDraft(buildApplied(bounds, [], [], [], [], null));
+    setFilterDraft(buildApplied(bounds, [], [], [], [], [], [], null));
   };
 
   const applyFilterSheet = () => {
@@ -388,7 +482,7 @@ export function FirmsListing({
     LISTING_SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "Firma adına göre (A-Z)";
 
   const resetToCleanHome = () => {
-    setAppliedFilters(buildApplied(bounds, [], [], [], [], null));
+    setAppliedFilters(buildApplied(bounds, [], [], [], [], [], [], null));
     setSort("name_asc");
     router.replace("/#firmalar", { scroll: false });
   };
@@ -397,6 +491,13 @@ export function FirmsListing({
     setAppliedFilters((prev) => ({
       ...prev,
       cities: prev.cities.filter((x) => x !== value),
+    }));
+  };
+
+  const clearFirmTypeChip = (value: string) => {
+    setAppliedFilters((prev) => ({
+      ...prev,
+      firmTypes: prev.firmTypes.filter((x) => x !== value),
     }));
   };
 
@@ -449,6 +550,8 @@ export function FirmsListing({
               onChange={setAppliedFilters}
               bounds={bounds}
               countryOptions={countriesSource}
+              companyTypeOptions={companyTypesSource}
+              mainServiceCategoryOptions={mainServiceCategorySource}
             />
           </div>
 
@@ -549,21 +652,6 @@ export function FirmsListing({
                   </span>
                 </button>
               ))}
-              {appliedFilters.visaTypes.map((key) => (
-                <button
-                  key={`v-${key}`}
-                  type="button"
-                  onClick={() => clearVisaChip(key)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
-                >
-                  <span className="max-w-56 truncate">
-                    {SPECIALIZATION_LABELS[key]}
-                  </span>
-                  <span className="text-foreground/45" aria-hidden>
-                    ×
-                  </span>
-                </button>
-              ))}
               {appliedFilters.cities.map((city) => (
                 <button
                   key={`city-${city}`}
@@ -577,6 +665,34 @@ export function FirmsListing({
                   </span>
                 </button>
               ))}
+              {appliedFilters.firmTypes.map((ft) => (
+                <button
+                  key={`ft-${ft}`}
+                  type="button"
+                  onClick={() => clearFirmTypeChip(ft)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-56 truncate">{ft}</span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ))}
+              {appliedFilters.expertiseKeys.map((key) => (
+                <button
+                  key={`ex-${key}`}
+                  type="button"
+                  onClick={() => clearExpertiseChip(key)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-56 truncate">
+                    {SPECIALIZATION_LABELS[key]}
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ))}
               {appliedFilters.mainServiceLabels.map((svc) => (
                 <button
                   key={`ms-${svc}`}
@@ -585,6 +701,21 @@ export function FirmsListing({
                   className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
                 >
                   <span className="max-w-56 truncate">{svc}</span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ))}
+              {appliedFilters.visaTypes.map((key) => (
+                <button
+                  key={`v-${key}`}
+                  type="button"
+                  onClick={() => clearVisaChip(key)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-56 truncate">
+                    {SPECIALIZATION_LABELS[key]}
+                  </span>
                   <span className="text-foreground/45" aria-hidden>
                     ×
                   </span>
@@ -790,9 +921,168 @@ export function FirmsListing({
             ))}
           </div>
           {sorted.length === 0 ? (
-            <div className="premium-card mt-4 p-8 text-center text-sm leading-relaxed text-foreground/75">
-              Bu filtrelerle eşleşen firma bulunamadı. Daha geniş sonuçlar için
-              bazı bölgeleri, ülkeleri veya diğer kriterleri kaldırabilirsiniz.
+            <div className="premium-card mt-4 space-y-4 p-8 text-center text-sm leading-relaxed text-foreground/75">
+              {appliedFilters.mainServiceLabels.length > 0 ? (
+                <>
+                  <p>
+                    Seçtiğiniz hizmet kategorilerinde eşleşen firma bulunamadı.
+                    Farklı hizmet veya filtre kombinasyonlarını deneyin.
+                  </p>
+                  <div className="flex flex-col flex-wrap items-stretch justify-center gap-2 sm:flex-row sm:items-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAppliedFilters((prev) => ({
+                          ...prev,
+                          mainServiceLabels: [],
+                        }))
+                      }
+                      className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85 transition hover:bg-primary/5"
+                    >
+                      Ana hizmet filtresini kaldır
+                    </button>
+                    {appliedFilters.expertiseKeys.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAppliedFilters((prev) => ({
+                            ...prev,
+                            expertiseKeys: [],
+                          }))
+                        }
+                        className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85 transition hover:bg-primary/5"
+                      >
+                        Uzmanlık filtresini kaldır
+                      </button>
+                    ) : null}
+                  </div>
+                </>
+              ) : appliedFilters.expertiseKeys.length > 0 ? (
+                <>
+                  <p>
+                    Seçtiğiniz uzmanlık alanında eşleşen firma bulunamadı.
+                    İsterseniz diğer uzmanlık alanlarını veya firma türü / ülke
+                    filtrelerini birlikte deneyin.
+                  </p>
+                  <div className="flex flex-col flex-wrap items-stretch justify-center gap-2 sm:flex-row sm:items-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAppliedFilters((prev) => ({
+                          ...prev,
+                          expertiseKeys: [],
+                        }))
+                      }
+                      className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85 transition hover:bg-primary/5"
+                    >
+                      Uzmanlık filtresini kaldır
+                    </button>
+                    {appliedFilters.firmTypes.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAppliedFilters((prev) => ({ ...prev, firmTypes: [] }))
+                        }
+                        className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85 transition hover:bg-primary/5"
+                      >
+                        Firma türü filtresini kaldır
+                      </button>
+                    ) : null}
+                  </div>
+                </>
+              ) : appliedFilters.firmTypes.length > 0 ? (
+                <>
+                  <p>
+                    Seçtiğiniz firma türünde eşleşen kayıt bulunamadı. İsterseniz
+                    diğer firma türlerini veya daha geniş ülke / ofis filtrelerini
+                    deneyin.
+                  </p>
+                  <div className="flex flex-col flex-wrap items-stretch justify-center gap-2 sm:flex-row sm:items-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAppliedFilters((prev) => ({ ...prev, firmTypes: [] }))
+                      }
+                      className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85 transition hover:bg-primary/5"
+                    >
+                      Firma türü filtresini kaldır
+                    </button>
+                    {appliedFilters.coverage.countries.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAppliedFilters((prev) => ({
+                            ...prev,
+                            coverage: { ...prev.coverage, countries: [] },
+                          }))
+                        }
+                        className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85 transition hover:bg-primary/5"
+                      >
+                        Ülke filtresini kaldır
+                      </button>
+                    ) : null}
+                  </div>
+                </>
+              ) : appliedFilters.cities.length > 0 ? (
+                <>
+                  <p>
+                    Seçtiğiniz şehirde eşleşen firma bulunamadı. İsterseniz yakın
+                    şehirleri veya çevrimiçi danışmanlık sunan firmaları
+                    inceleyin.
+                  </p>
+                  <div className="flex flex-col flex-wrap items-stretch justify-center gap-2 sm:flex-row sm:items-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAppliedFilters((prev) => ({ ...prev, cities: [] }))
+                      }
+                      className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85 transition hover:bg-primary/5"
+                    >
+                      Şehir filtresini kaldır
+                    </button>
+                    {appliedFilters.serviceMode.officeFaceToFace ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAppliedFilters((prev) => ({
+                            ...prev,
+                            serviceMode: {
+                              ...prev.serviceMode,
+                              officeFaceToFace: false,
+                            },
+                          }))
+                        }
+                        className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85 transition hover:bg-primary/5"
+                      >
+                        &quot;Ofiste / yüz yüze&quot; filtresini kaldır
+                      </button>
+                    ) : null}
+                    {!appliedFilters.serviceMode.onlineConsulting ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAppliedFilters((prev) => ({
+                            ...prev,
+                            serviceMode: {
+                              ...prev.serviceMode,
+                              onlineConsulting: true,
+                            },
+                          }))
+                        }
+                        className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85 transition hover:bg-primary/5"
+                      >
+                        Çevrimiçi danışmanlığı dahil et
+                      </button>
+                    ) : null}
+                  </div>
+                </>
+              ) : (
+                <p>
+                  Bu filtrelerle eşleşen firma bulunamadı. Daha geniş sonuçlar
+                  için bazı bölgeleri, ülkeleri veya diğer kriterleri
+                  kaldırabilirsiniz.
+                </p>
+              )}
             </div>
           ) : null}
           </div>
@@ -807,6 +1097,8 @@ export function FirmsListing({
         onChange={setFilterDraft}
         bounds={bounds}
         countryOptions={countriesSource}
+        companyTypeOptions={companyTypesSource}
+        mainServiceCategoryOptions={mainServiceCategorySource}
         resultCount={previewCount}
         activeFilterCount={draftFilterActiveCount}
         onApply={applyFilterSheet}

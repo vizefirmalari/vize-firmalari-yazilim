@@ -118,3 +118,39 @@ export function mergeServiceFilterOptionsWithFirms(
   }
   return [...set].sort((a, b) => a.localeCompare(b, "tr"));
 }
+
+type MainServiceCategorySortRow = { name: string; sort_order: number };
+
+/**
+ * CMS `main_service_categories` sırası korunur; firmada olup katalogda olmayan
+ * `main_services` etiketleri alfabetik eklenir (yalnızca ana hizmet dizisi).
+ */
+export function mergeMainServiceCategoryFilterOptionsFromRows(
+  cmsRows: MainServiceCategorySortRow[],
+  firms: FirmRow[]
+): string[] {
+  const cmsOrdered = [...cmsRows].sort(
+    (a, b) => a.sort_order - b.sort_order
+  );
+  const cmsNames = cmsOrdered.map((r) => r.name.trim()).filter(Boolean);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const name of cmsNames) {
+    if (seen.has(name)) continue;
+    seen.add(name);
+    out.push(name);
+  }
+  const fromFirms = new Set<string>();
+  for (const f of firms) {
+    if (!Array.isArray(f.main_services)) continue;
+    for (const x of f.main_services) {
+      const t = typeof x === "string" ? x.trim() : "";
+      if (t) fromFirms.add(t);
+    }
+  }
+  const extras = [...fromFirms]
+    .filter((n) => !seen.has(n))
+    .sort((a, b) => a.localeCompare(b, "tr"));
+  out.push(...extras);
+  return out;
+}

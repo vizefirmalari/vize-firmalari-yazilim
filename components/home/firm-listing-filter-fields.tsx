@@ -4,13 +4,20 @@ import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import type { AppliedListingFilters } from "@/lib/firma/listing-filters";
 import type { ListingRangeBounds } from "@/lib/firma/listing-filters";
 import { normalizeCountryKey } from "@/lib/firma/coverage-catalog";
-import { filterCountryNamesForListing } from "@/lib/firma/filter-country-options";
+import { buildUnifiedCountryFilterList } from "@/lib/firma/filter-country-options";
 import {
   ALL_LISTING_VISA_REGION_LABELS,
   POPULAR_VISA_REGION_LABELS,
   resolvePopularCountryRowsFromConfig,
+  resolvePopularFirmTypeLabelsFromOptions,
+  resolvePopularMainServiceLabelsFromOptions,
 } from "@/lib/firma/listing-filter-config";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
+import {
+  normalizeOfficeCityKey,
+  POPULAR_OFFICE_CITY_NAMES,
+  TURKEY_OFFICE_PROVINCE_NAMES,
+} from "@/lib/constants/turkiye-ofis-sehirleri";
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -253,6 +260,361 @@ function PopularCountriesBlock({
   );
 }
 
+function FirmTypeFilterBlock({
+  draft,
+  patch,
+  companyTypeOptions,
+}: {
+  draft: AppliedListingFilters;
+  patch: (partial: Partial<AppliedListingFilters>) => void;
+  companyTypeOptions: string[];
+}) {
+  const [q, setQ] = useState("");
+  const deferredQ = useDeferredValue(q);
+
+  const sortedTypes = useMemo(
+    () =>
+      [...companyTypeOptions].sort((a, b) => a.localeCompare(b, "tr")),
+    [companyTypeOptions]
+  );
+
+  const popularLabels = useMemo(
+    () => resolvePopularFirmTypeLabelsFromOptions(sortedTypes),
+    [sortedTypes]
+  );
+
+  const listFiltered = useMemo(() => {
+    const needle = normalizeOfficeCityKey(deferredQ);
+    if (!needle) return sortedTypes;
+    return sortedTypes.filter((name) =>
+      normalizeOfficeCityKey(name).includes(needle)
+    );
+  }, [sortedTypes, deferredQ]);
+
+  if (sortedTypes.length === 0) {
+    return (
+      <p className="text-xs leading-relaxed text-foreground/55">
+        Firma türü listesi yüklenemedi veya henüz tanımlı değil.
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      {popularLabels.length > 0 ? (
+        <>
+          <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
+            Sık seçilenler
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-foreground/50">
+            Yönetim panelindeki firma türü alanıyla birebir eşleşir.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {popularLabels.map((label) => {
+              const active = draft.firmTypes.includes(label);
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() =>
+                    patch({
+                      firmTypes: toggleListItem(draft.firmTypes, label, !active),
+                    })
+                  }
+                  className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+                    active
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-foreground/75 hover:bg-primary/5"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      ) : null}
+
+      <p
+        className={`text-xs font-semibold uppercase tracking-wide text-foreground/55 ${
+          popularLabels.length > 0 ? "mt-5" : ""
+        }`}
+      >
+        Tüm firma türleri
+      </p>
+      <input
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Tür ara…"
+        className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-foreground/40"
+        autoComplete="off"
+        enterKeyHint="search"
+      />
+      <div
+        className="mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]"
+        role="listbox"
+        aria-label="Firma türleri"
+      >
+        {listFiltered.length === 0 ? (
+          <p className="py-2 text-xs text-foreground/55">Eşleşen tür yok.</p>
+        ) : null}
+        {listFiltered.map((label) => (
+          <label
+            key={label}
+            className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+          >
+            <input
+              type="checkbox"
+              checked={draft.firmTypes.includes(label)}
+              onChange={(e) =>
+                patch({
+                  firmTypes: toggleListItem(
+                    draft.firmTypes,
+                    label,
+                    e.target.checked
+                  ),
+                })
+              }
+              className="accent-primary"
+            />
+            <span className="min-w-0 wrap-break-word leading-snug">{label}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MainServiceCategoriesFilterBlock({
+  draft,
+  patch,
+  mainServiceCategoryOptions,
+}: {
+  draft: AppliedListingFilters;
+  patch: (partial: Partial<AppliedListingFilters>) => void;
+  mainServiceCategoryOptions: string[];
+}) {
+  const [q, setQ] = useState("");
+  const deferredQ = useDeferredValue(q);
+
+  const sortedLabels = useMemo(
+    () =>
+      [...mainServiceCategoryOptions].sort((a, b) => a.localeCompare(b, "tr")),
+    [mainServiceCategoryOptions]
+  );
+
+  const popularLabels = useMemo(
+    () => resolvePopularMainServiceLabelsFromOptions(sortedLabels),
+    [sortedLabels]
+  );
+
+  const listFiltered = useMemo(() => {
+    const needle = normalizeOfficeCityKey(deferredQ);
+    if (!needle) return sortedLabels;
+    return sortedLabels.filter((name) =>
+      normalizeOfficeCityKey(name).includes(needle)
+    );
+  }, [sortedLabels, deferredQ]);
+
+  if (sortedLabels.length === 0) {
+    return (
+      <p className="text-xs leading-relaxed text-foreground/55">
+        Ana hizmet kategorisi listesi yüklenemedi veya henüz tanımlı değil.
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      {popularLabels.length > 0 ? (
+        <>
+          <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
+            Sık seçilenler
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-foreground/50">
+            Yönetim panelindeki ana hizmet kategorileri ile aynı kaynak; firma
+            kaydındaki ana hizmet listesiyle eşleşir.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {popularLabels.map((label) => {
+              const active = draft.mainServiceLabels.includes(label);
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() =>
+                    patch({
+                      mainServiceLabels: toggleListItem(
+                        draft.mainServiceLabels,
+                        label,
+                        !active
+                      ),
+                    })
+                  }
+                  className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+                    active
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-foreground/75 hover:bg-primary/5"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      ) : null}
+
+      <p
+        className={`text-xs font-semibold uppercase tracking-wide text-foreground/55 ${
+          popularLabels.length > 0 ? "mt-5" : ""
+        }`}
+      >
+        Tüm kategoriler
+      </p>
+      <input
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Kategori ara…"
+        className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-foreground/40"
+        autoComplete="off"
+        enterKeyHint="search"
+      />
+      <div
+        className="mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]"
+        role="listbox"
+        aria-label="Ana hizmet kategorileri"
+      >
+        {listFiltered.length === 0 ? (
+          <p className="py-2 text-xs text-foreground/55">Eşleşen kategori yok.</p>
+        ) : null}
+        {listFiltered.map((label) => (
+          <label
+            key={label}
+            className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+          >
+            <input
+              type="checkbox"
+              checked={draft.mainServiceLabels.includes(label)}
+              onChange={(e) =>
+                patch({
+                  mainServiceLabels: toggleListItem(
+                    draft.mainServiceLabels,
+                    label,
+                    e.target.checked
+                  ),
+                })
+              }
+              className="accent-primary"
+            />
+            <span className="min-w-0 wrap-break-word leading-snug">{label}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OfficeLocationFilterBlock({
+  draft,
+  patch,
+}: {
+  draft: AppliedListingFilters;
+  patch: (partial: Partial<AppliedListingFilters>) => void;
+}) {
+  const [q, setQ] = useState("");
+  const deferredQ = useDeferredValue(q);
+
+  const sortedProvinces = useMemo(
+    () => [...TURKEY_OFFICE_PROVINCE_NAMES].sort((a, b) => a.localeCompare(b, "tr")),
+    []
+  );
+
+  const listFiltered = useMemo(() => {
+    const needle = normalizeOfficeCityKey(deferredQ);
+    if (!needle) return sortedProvinces;
+    return sortedProvinces.filter((name) =>
+      normalizeOfficeCityKey(name).includes(needle)
+    );
+  }, [sortedProvinces, deferredQ]);
+
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
+        Popüler şehirler
+      </p>
+      <p className="mt-1 text-xs leading-relaxed text-foreground/50">
+        Hızlı seçim; firma kaydındaki ofis şehri ile eşleşir.
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {POPULAR_OFFICE_CITY_NAMES.map((city) => {
+          const active = draft.cities.includes(city);
+          return (
+            <button
+              key={city}
+              type="button"
+              onClick={() =>
+                patch({
+                  cities: toggleListItem(draft.cities, city, !active),
+                })
+              }
+              className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+                active
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-foreground/75 hover:bg-primary/5"
+              }`}
+            >
+              {city}
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-foreground/55">
+        Tüm şehirler
+      </p>
+      <input
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Şehir ara…"
+        className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-foreground/40"
+        autoComplete="off"
+        enterKeyHint="search"
+      />
+      <div
+        className="mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]"
+        role="listbox"
+        aria-label="Ofis konumu şehirleri"
+      >
+        {listFiltered.length === 0 ? (
+          <p className="py-2 text-xs text-foreground/55">Eşleşen şehir yok.</p>
+        ) : null}
+        {listFiltered.map((city) => (
+          <label
+            key={city}
+            className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+          >
+            <input
+              type="checkbox"
+              checked={draft.cities.includes(city)}
+              onChange={(e) =>
+                patch({
+                  cities: toggleListItem(draft.cities, city, e.target.checked),
+                })
+              }
+              className="accent-primary"
+            />
+            <span className="min-w-0 wrap-break-word leading-snug">{city}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CountryFullListBlock({
   draft,
   countryOptions,
@@ -265,28 +627,19 @@ function CountryFullListBlock({
   const [q, setQ] = useState("");
   const deferredQ = useDeferredValue(q);
 
-  const popularRows = useMemo(
-    () => resolvePopularCountryRowsFromConfig(countryOptions),
-    [countryOptions]
-  );
-  const popularValues = useMemo(
-    () => new Set(popularRows.map((r) => r.value)),
-    [popularRows]
-  );
-
   const sortedAtoZ = useMemo(
     () => [...countryOptions].sort((a, b) => a.localeCompare(b, "tr")),
     [countryOptions]
   );
 
+  /** Tüm ülkeler: popüler kısayollarla çakışsa bile burada tekrar gösterilir (tam liste). */
   const listForScroll = useMemo(() => {
     const needle = normalizeCountryKey(deferredQ);
     return sortedAtoZ.filter((c) => {
-      if (popularValues.has(c)) return false;
       if (!needle) return true;
       return normalizeCountryKey(c).includes(needle);
     });
-  }, [sortedAtoZ, popularValues, deferredQ]);
+  }, [sortedAtoZ, deferredQ]);
 
   return (
     <div>
@@ -348,6 +701,8 @@ type FilterFieldsProps = {
   onChange: (next: AppliedListingFilters) => void;
   bounds: ListingRangeBounds;
   countryOptions: string[];
+  companyTypeOptions: string[];
+  mainServiceCategoryOptions: string[];
   collapsible?: boolean;
 };
 
@@ -356,14 +711,34 @@ export function FirmListingFilterFields({
   onChange,
   bounds,
   countryOptions,
+  companyTypeOptions,
+  mainServiceCategoryOptions,
   collapsible = false,
 }: FilterFieldsProps) {
   const patch = (partial: Partial<AppliedListingFilters>) =>
     onChange({ ...draft, ...partial });
 
   const countryOptionsSafe = useMemo(
-    () => filterCountryNamesForListing(countryOptions),
+    () => buildUnifiedCountryFilterList(countryOptions),
     [countryOptions]
+  );
+
+  const companyTypeOptionsSafe = useMemo(
+    () =>
+      [...new Set(companyTypeOptions.map((s) => s.trim()).filter(Boolean))].sort(
+        (a, b) => a.localeCompare(b, "tr")
+      ),
+    [companyTypeOptions]
+  );
+
+  const mainServiceCategoryOptionsSafe = useMemo(
+    () =>
+      [
+        ...new Set(
+          mainServiceCategoryOptions.map((s) => s.trim()).filter(Boolean)
+        ),
+      ].sort((a, b) => a.localeCompare(b, "tr")),
+    [mainServiceCategoryOptions]
   );
 
   const regionsAndCountriesGroup = (
@@ -398,6 +773,61 @@ export function FirmListingFilterFields({
           />
         </div>
       </div>
+
+      <div className="rounded-lg border border-border/80 bg-background p-3">
+        <p className="text-sm font-semibold text-foreground">Ofis Konumu</p>
+        <p className="mt-1 text-xs leading-relaxed text-foreground/55">
+          Firmaların Türkiye&apos;deki fiziksel ofis konumuna göre filtreleyin.
+          Bulunduğunuz şehirde hizmet veren firmaları bularak yüz yüze görüşme
+          imkânı yakalayın.
+        </p>
+        <div className="mt-4">
+          <OfficeLocationFilterBlock draft={draft} patch={patch} />
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border/80 bg-background p-3">
+        <p className="text-sm font-semibold text-foreground">Firma Türü</p>
+        <p className="mt-1 text-xs leading-relaxed text-foreground/55">
+          Yönetim panelinde tanımlanan firma yapısına göre filtreleyin. Hukuk
+          bürosu, seyahat acentesi, eğitim danışmanlığı veya vize başvuru merkezi
+          gibi firma türlerini seçerek daha isabetli sonuçlara ulaşın.
+        </p>
+        <div className="mt-4">
+          <FirmTypeFilterBlock
+            draft={draft}
+            patch={patch}
+            companyTypeOptions={companyTypeOptionsSafe}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const expertiseAreaBlock = (
+    <div className="space-y-2">
+      {SPECIALIZATION_OPTIONS.map(({ key, label }) => (
+        <label
+          key={key}
+          className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+        >
+          <input
+            type="checkbox"
+            checked={draft.expertiseKeys.includes(key)}
+            onChange={(e) =>
+              patch({
+                expertiseKeys: toggleListItem(
+                  draft.expertiseKeys,
+                  key,
+                  e.target.checked
+                ),
+              })
+            }
+            className="accent-primary"
+          />
+          <span>{label}</span>
+        </label>
+      ))}
     </div>
   );
 
@@ -632,7 +1062,57 @@ export function FirmListingFilterFields({
             />
           </div>
         </Collapsible>
-        <Collapsible title="Vize türü">{visaTypeBlock}</Collapsible>
+        <Collapsible title="Ofis Konumu" defaultOpen>
+          <p className="mb-3 text-xs leading-relaxed text-foreground/55">
+            Türkiye&apos;de fiziksel ofisi bulunan firmaları şehre göre
+            filtreleyin; kayıt şehri yönetim panelindeki ofis alanıyla aynıdır.
+          </p>
+          <OfficeLocationFilterBlock draft={draft} patch={patch} />
+        </Collapsible>
+        <Collapsible title="Firma Türü" defaultOpen>
+          <p className="mb-3 text-xs leading-relaxed text-foreground/55">
+            Firmaları kurumsal yapısına ve faaliyet modeline göre filtreleyin;
+            seçenekler CMS&apos;teki firma türü listesiyle uyumludur.
+          </p>
+          <FirmTypeFilterBlock
+            draft={draft}
+            patch={patch}
+            companyTypeOptions={companyTypeOptionsSafe}
+          />
+        </Collapsible>
+        <Collapsible title="Uzmanlık Alanları" defaultOpen>
+          <p className="mb-3 text-xs leading-relaxed text-foreground/55">
+            Yönetim panelindeki uzmanlık bayraklarıyla aynı kaynak; listede
+            işaretli alanlardan en az birine sahip firmalar gösterilir.
+          </p>
+          <div className="max-h-[min(360px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+            {expertiseAreaBlock}
+          </div>
+        </Collapsible>
+        <Collapsible title="Ana Hizmet Kategorileri" defaultOpen>
+          <p className="mb-3 text-xs leading-relaxed text-foreground/55">
+            Firmaların sunduğu temel hizmet alanlarına göre filtreleyin. Vize,
+            oturum, vatandaşlık veya hukuki danışmanlık gibi hizmetlere göre
+            daha doğru firmaları bulun.
+          </p>
+          <div className="max-h-[min(360px,55vh)] overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+            <MainServiceCategoriesFilterBlock
+              draft={draft}
+              patch={patch}
+              mainServiceCategoryOptions={mainServiceCategoryOptionsSafe}
+            />
+          </div>
+        </Collapsible>
+        <Collapsible title="Vize türü">
+          <p className="mb-3 text-xs leading-relaxed text-foreground/55">
+            Listeyi daraltmak için hizmet niyetine göre seçim; uzmanlık
+            gücünü görmek için yukarıdaki &quot;Uzmanlık Alanları&quot;nı
+            kullanın.
+          </p>
+          <div className="max-h-[min(360px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+            {visaTypeBlock}
+          </div>
+        </Collapsible>
         <Collapsible title="Kurumsallık & yasal yapı">{trustBlock}</Collapsible>
         <Collapsible title="Hizmet biçimi">{serviceModeBlock}</Collapsible>
         <Collapsible title="Dil & profesyonellik">{langBlock}</Collapsible>
@@ -649,8 +1129,46 @@ export function FirmListingFilterFields({
       <div>{regionsAndCountriesGroup}</div>
 
       <div>
+        <p className="text-sm font-semibold text-foreground">Uzmanlık Alanları</p>
+        <p className="mt-1 text-xs leading-relaxed text-foreground/55">
+          Firmaları uzmanlık bayraklarına göre filtreleyin. Schengen, öğrenci,
+          çalışma, aile birleşimi veya red sonrası süreçlerde öne çıkan
+          firmaları daha hızlı bulun.
+        </p>
+        <div className="mt-3 max-h-[min(360px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+          {expertiseAreaBlock}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-semibold text-foreground">
+          Ana Hizmet Kategorileri
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-foreground/55">
+          Firmaların sunduğu temel hizmet alanlarına göre filtreleyin. Vize,
+          oturum, vatandaşlık, eğitim veya hukuki danışmanlık gibi hizmetlere
+          göre daha doğru firmaları bulun. Yalnızca kayıttaki ana hizmet
+          kategorileri dikkate alınır.
+        </p>
+        <div className="mt-3 max-h-[min(360px,55vh)] overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+          <MainServiceCategoriesFilterBlock
+            draft={draft}
+            patch={patch}
+            mainServiceCategoryOptions={mainServiceCategoryOptionsSafe}
+          />
+        </div>
+      </div>
+
+      <div>
         <p className="text-sm font-semibold text-foreground">Vize türü</p>
-        <div className="mt-3">{visaTypeBlock}</div>
+        <p className="mt-1 text-xs leading-relaxed text-foreground/55">
+          Listeyi daraltmak için genel vize hizmet niyeti; paneldeki uzmanlık
+          işaretleriyle aynı bayraklara dayanır ancak burada ayrı bir filtre
+          olarak uygulanır.
+        </p>
+        <div className="mt-3 max-h-[min(360px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+          {visaTypeBlock}
+        </div>
       </div>
 
       <div>

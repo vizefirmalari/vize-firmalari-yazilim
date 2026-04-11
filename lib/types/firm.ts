@@ -169,10 +169,20 @@ export type FirmFilters = {
   q: string;
   countries: string[];
   visaTypes: string[];
+  /**
+   * Uzmanlık bayrakları (admin ile aynı anahtarlar); `expertise` URL parametresi.
+   * `visaTypes` ile ayrı; ikisi birlikte seçiliyse her ikisi de AND ile uygulanır.
+   */
+  expertise: string[];
   /** Şehir adı(ları); `cities` URL parametresi (virgülle) */
   cities: string[];
   /** Ana hizmet / hizmet etiketi; `mainServices` URL parametresi */
   mainServices: string[];
+  /**
+   * Firma türü etiketleri (`firm_category` / `company_type` ile eşleşir);
+   * `firmTypes` URL parametresi (virgülle).
+   */
+  firmTypes: string[];
   /** Keşfet kategorisi ile aynı eşleşme motoru (`hedef` URL parametresi, slug) */
   exploreFocusSlug: string | null;
   sort: FirmSort;

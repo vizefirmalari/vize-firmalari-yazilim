@@ -12,11 +12,15 @@ import {
 const CHIP_BASE =
   "inline-flex h-7 max-w-full items-center gap-2 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 text-xs font-medium text-[#0B3C5D]/85";
 
+/** Firma detay — tam etiket, satır kırılımı; liste/kart özetinden ayrı */
+const CHIP_DETAIL =
+  "inline-flex min-h-7 max-w-full items-start gap-2 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2.5 py-2 text-xs font-medium leading-snug text-[#0B3C5D]/85";
+
 /** Anasayfa kartı tek satır özeti: `max-w-full` yok — flex satırında bayrak + metin taşmadan kalır */
 const CHIP_CARD_SUMMARY =
   "inline-flex h-6 min-h-6 min-w-0 max-w-[9rem] shrink-0 items-center gap-1.5 rounded-md border border-[#0B3C5D]/10 bg-[#FAFBFC] px-2 py-0.5 text-[11px] font-medium text-[#0B3C5D]/85";
 
-type ChipVariant = "default" | "cardSummary";
+type ChipVariant = "default" | "cardSummary" | "detail";
 
 type ChipProps = {
   className?: string;
@@ -25,7 +29,9 @@ type ChipProps = {
 };
 
 function chipBaseClass(variant: ChipVariant | undefined): string {
-  return variant === "cardSummary" ? CHIP_CARD_SUMMARY : CHIP_BASE;
+  if (variant === "cardSummary") return CHIP_CARD_SUMMARY;
+  if (variant === "detail") return CHIP_DETAIL;
+  return CHIP_BASE;
 }
 
 export function CountryChip({
@@ -50,7 +56,14 @@ export function CountryChip({
   const flagImgClass =
     variant === "cardSummary"
       ? "h-3.5 w-auto shrink-0 rounded-[3px] object-cover"
-      : "h-4 w-auto shrink-0 rounded-[3px] object-cover";
+      : variant === "detail"
+        ? "mt-0.5 h-4 w-auto shrink-0 rounded-[3px] object-cover"
+        : "h-4 w-auto shrink-0 rounded-[3px] object-cover";
+
+  const countryLabelClass =
+    variant === "detail"
+      ? "min-w-0 wrap-break-word"
+      : "min-w-0 truncate";
 
   const inner = (
     <>
@@ -66,7 +79,7 @@ export function CountryChip({
           onError={() => setImgOk(false)}
         />
       ) : null}
-      <span className="min-w-0 truncate">{countryName}</span>
+      <span className={countryLabelClass}>{countryName}</span>
     </>
   );
 
@@ -123,10 +136,14 @@ export function RegionChip({
   const flagImgClass = multi
     ? variant === "cardSummary"
       ? "h-3 w-auto shrink-0 rounded-[2px] object-cover"
-      : "h-3.5 w-auto shrink-0 rounded-[2px] object-cover"
+      : variant === "detail"
+        ? "mt-0.5 h-3.5 w-auto shrink-0 rounded-[2px] object-cover"
+        : "h-3.5 w-auto shrink-0 rounded-[2px] object-cover"
     : variant === "cardSummary"
       ? "h-3.5 w-auto shrink-0 rounded-[3px] object-cover"
-      : "h-4 w-auto shrink-0 rounded-[3px] object-cover";
+      : variant === "detail"
+        ? "mt-0.5 h-4 w-auto shrink-0 rounded-[3px] object-cover"
+        : "h-4 w-auto shrink-0 rounded-[3px] object-cover";
 
   const showFlags = Boolean(codes?.length) && flagsOk;
 
@@ -154,7 +171,15 @@ export function RegionChip({
       ) : (
         <RegionPinIcon compact={variant === "cardSummary"} />
       )}
-      <span className="min-w-0 truncate">{regionLabel}</span>
+      <span
+        className={
+          variant === "detail"
+            ? "min-w-0 wrap-break-word leading-snug"
+            : "min-w-0 truncate"
+        }
+      >
+        {regionLabel}
+      </span>
     </>
   );
 

@@ -17,7 +17,9 @@ export function homePageShouldNoindex(sp: {
   if (f.q.trim().length > 0) return true;
   if (f.countries.length > 0) return true;
   if (f.visaTypes.length > 0) return true;
+  if (f.expertise.length > 0) return true;
   if (f.cities.length > 0) return true;
+  if (f.firmTypes.length > 0) return true;
   if (f.mainServices.length > 0) return true;
   if (f.exploreFocusSlug) return true;
   if (f.sort !== "hype_desc") return true;
