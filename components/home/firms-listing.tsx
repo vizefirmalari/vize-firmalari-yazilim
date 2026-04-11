@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DEFAULT_COUNTRIES } from "@/lib/constants";
 import {
   applyListingFilters,
@@ -111,6 +111,37 @@ function buildApplied(
     yearMax: bounds.year.max,
     yearPreset: null,
   };
+}
+
+/** Filtre/sıralama/arama değişiminde scroll tetiklemek için deterministik imza */
+function serializeAppliedListingState(
+  f: AppliedListingFilters,
+  sort: FirmSort,
+  query: string
+): string {
+  const loc = (a: string, b: string) => a.localeCompare(b, "tr");
+  return JSON.stringify({
+    q: query.trim(),
+    sort,
+    regions: [...f.coverage.visaRegionLabels].sort(loc),
+    countries: [...f.coverage.countries].sort(loc),
+    visaTypes: [...f.visaTypes].slice().sort(),
+    expertiseKeys: [...f.expertiseKeys].slice().sort(),
+    cities: [...f.cities].sort(loc),
+    firmTypes: [...f.firmTypes].sort(loc),
+    mainServiceLabels: [...f.mainServiceLabels].sort(loc),
+    exploreFocusSlug: f.exploreFocusSlug,
+    trust: f.trust,
+    serviceMode: f.serviceMode,
+    languagePro: f.languagePro,
+    corpMin: f.corpMin,
+    corpMax: f.corpMax,
+    hypeMin: f.hypeMin,
+    hypeMax: f.hypeMax,
+    yearMin: f.yearMin,
+    yearMax: f.yearMax,
+    yearPreset: f.yearPreset,
+  });
 }
 
 export function FirmsListing({
@@ -229,6 +260,61 @@ export function FirmsListing({
     // Yalnızca URL / sunucu filtre senkronu; firms realtime ile bounds değişince sıfırlanmaz.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bounds, initialCountries, initialVisaTypes, initialSort: urlKey ile birlikte güncellenir
   }, [urlKey]);
+
+  const listingScrollKey = useMemo(
+    () => serializeAppliedListingState(appliedFilters, sort, query),
+    [appliedFilters, sort, query]
+  );
+
+  const prevListingScrollKeyForResultsRef = useRef<string | null>(null);
+  const prevUrlKeyForResultsScrollRef = useRef<string | null>(null);
+
+  /**
+   * Masaüstü: sol filtre/sıralama sonrası kullanıcı sonuç alanını görmüyorsa `#firmalar`’a
+   * smooth scroll (scroll-margin sticky header ile uyumlu). URL senkronundan gelen
+   * güncellemelerde tetiklenmez; slider gibi hızlı ardışık değişimlerde debounce.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const prevL = prevListingScrollKeyForResultsRef.current;
+    const prevU = prevUrlKeyForResultsScrollRef.current;
+
+    if (prevL === null) {
+      prevListingScrollKeyForResultsRef.current = listingScrollKey;
+      prevUrlKeyForResultsScrollRef.current = urlKey;
+      return;
+    }
+
+    const listingChanged = prevL !== listingScrollKey;
+    const urlKeyChanged = prevU !== urlKey;
+
+    prevListingScrollKeyForResultsRef.current = listingScrollKey;
+    prevUrlKeyForResultsScrollRef.current = urlKey;
+
+    if (!listingChanged) return;
+    if (urlKeyChanged) return;
+
+    const timeoutId = window.setTimeout(() => {
+      if (!window.matchMedia("(min-width: 1024px)").matches) return;
+
+      const el = document.getElementById("firmalar");
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const headerReservePx = 96;
+      const listingTopComfortablyVisible =
+        rect.top >= headerReservePx - 10 &&
+        rect.top <= window.innerHeight * 0.74;
+      if (listingTopComfortablyVisible) return;
+
+      requestAnimationFrame(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }, 175);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [listingScrollKey, urlKey]);
 
   /** Ana sayfa: URL ile `countries`, `cities`, `visaTypes` vb. senkron (yenilemede korunur). */
   useEffect(() => {
