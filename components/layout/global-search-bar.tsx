@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import type { FormEvent, KeyboardEvent } from "react";
 import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -34,6 +36,8 @@ type Props = {
 
 const DEBOUNCE_MS = 200;
 const MIN_CHARS = 2;
+/** Mobil tab bar (~h-16) + güvenli pay — `fixed` panel max-yüksekliği */
+const MOBILE_TABBAR_RESERVE_PX = 92;
 
 function SuggestionIcon({ kind }: { kind: GlobalSearchItem["kind"] }) {
   const cls = "h-4 w-4 shrink-0 text-primary/70";
@@ -112,7 +116,11 @@ export function GlobalSearchBar({
   const router = useRouter();
   const listboxId = useId().replace(/:/g, "");
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  /** `compact` yalnızca `md:hidden` header satırında kullanılır (<768px). */
+  const useMobileWidePanel = Boolean(compact);
 
   const [query, setQuery] = useState(defaultValue);
   const [debounced, setDebounced] = useState(defaultValue.trim());
@@ -121,6 +129,42 @@ export function GlobalSearchBar({
   const [groups, setGroups] = useState<GlobalSearchGroup[]>([]);
   const [narrow, setNarrow] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
+
+  const trimmedQuery = query.trim();
+  const showPanel = open && (trimmedQuery.length >= MIN_CHARS || !trimmedQuery);
+  const showSuggestions = trimmedQuery.length >= MIN_CHARS;
+  const showIdlePopular = open && trimmedQuery.length < MIN_CHARS;
+
+  const [mobilePanelTop, setMobilePanelTop] = useState(0);
+  const [mobilePanelMaxH, setMobilePanelMaxH] = useState("min(70dvh,26rem)");
+
+  const updateMobilePanelGeometry = useCallback(() => {
+    if (!useMobileWidePanel || !showPanel) return;
+    const el = inputRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const gap = 6;
+    const top = rect.bottom + gap;
+    setMobilePanelTop(top);
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    const available = Math.max(160, vh - top - MOBILE_TABBAR_RESERVE_PX);
+    setMobilePanelMaxH(`${Math.min(available, 440)}px`);
+  }, [showPanel, useMobileWidePanel]);
+
+  useLayoutEffect(() => {
+    if (!useMobileWidePanel || !showPanel) return;
+    updateMobilePanelGeometry();
+    const onWin = () => updateMobilePanelGeometry();
+    window.addEventListener("resize", onWin);
+    window.addEventListener("scroll", onWin, true);
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", onWin);
+    return () => {
+      window.removeEventListener("resize", onWin);
+      window.removeEventListener("scroll", onWin, true);
+      vv?.removeEventListener("resize", onWin);
+    };
+  }, [showPanel, updateMobilePanelGeometry, useMobileWidePanel, query, groups, loading, narrow]);
 
   useEffect(() => {
     setQuery(defaultValue);
@@ -194,7 +238,9 @@ export function GlobalSearchBar({
 
   useEffect(() => {
     function onDoc(ev: MouseEvent) {
-      if (!rootRef.current?.contains(ev.target as Node)) setOpen(false);
+      const t = ev.target as Node;
+      if (rootRef.current?.contains(t) || panelRef.current?.contains(t)) return;
+      setOpen(false);
     }
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -265,10 +311,152 @@ export function GlobalSearchBar({
     [activeIdx, flatItems, navigateTo, open, query]
   );
 
-  const showPanel = open && (query.trim().length >= MIN_CHARS || !query.trim());
-  const showSuggestions = query.trim().length >= MIN_CHARS;
-  const showIdlePopular = open && query.trim().length < MIN_CHARS;
   const popular = useMemo(() => popularSuggestions(hiddenParams), [hiddenParams]);
+
+  const suggestionPanel =
+    showPanel ? (
+      <div
+        ref={panelRef}
+        id={listboxId}
+        role="listbox"
+        aria-multiselectable={false}
+        style={
+          useMobileWidePanel
+            ? { top: mobilePanelTop, maxHeight: mobilePanelMaxH }
+            : undefined
+        }
+        className={`z-[200] overflow-y-auto overflow-x-hidden rounded-xl border border-border/90 bg-white py-2 shadow-[0_16px_48px_rgba(11,60,93,0.14)] ${
+          useMobileWidePanel
+            ? "fixed left-[max(0.75rem,env(safe-area-inset-left,0px))] right-[max(0.75rem,env(safe-area-inset-right,0px))] mt-0 w-auto max-w-none"
+            : "absolute left-0 right-0 top-full mt-1 max-h-[min(70dvh,26rem)] sm:max-h-[min(75vh,28rem)]"
+        } ${useMobileWidePanel ? "py-2.5" : ""}`}
+      >
+        {showIdlePopular ? (
+          <div className={`pb-1 pt-1 ${useMobileWidePanel ? "px-4" : "px-3"}`}>
+            <p
+              className={`pb-2 text-[11px] font-semibold uppercase tracking-wide text-foreground/45 ${
+                useMobileWidePanel ? "px-0" : "px-1"
+              }`}
+            >
+              Popüler aramalar
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {popular.map((p) => (
+                <Link
+                  key={p.href}
+                  href={p.href}
+                  onClick={() => setOpen(false)}
+                  className="inline-flex min-h-9 items-center rounded-lg border border-primary/12 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-primary/5"
+                >
+                  {p.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {showSuggestions && loading ? (
+          <p className="px-4 py-3 text-sm text-foreground/55">Aranıyor…</p>
+        ) : null}
+
+        {showSuggestions && !loading && narrow ? (
+          <div className={useMobileWidePanel ? "px-4 py-3" : "px-3 py-2"}>
+            <p className="text-sm font-semibold text-primary">Sonuç bulunamadı</p>
+            <p className="mt-1 text-xs leading-relaxed text-foreground/55">
+              Ülke, firma veya hizmet adıyla tekrar deneyin; aşağıdaki kısayollarla keşfe başlayabilirsiniz.
+            </p>
+            <button
+              type="button"
+              className="mt-3 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95"
+              onClick={() => navigateTo(buildHomeSearchPath(hiddenParams, { q: query }))}
+            >
+              Metinle tüm sonuçları görüntüle
+            </button>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {popular.map((p) => (
+                <Link
+                  key={p.href}
+                  href={p.href}
+                  onClick={() => setOpen(false)}
+                  className="inline-flex min-h-9 items-center rounded-lg border border-primary/12 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-primary/5"
+                >
+                  {p.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {showSuggestions && !loading && !narrow
+          ? groups.map((group) => (
+              <div key={group.id} className="pb-2 pt-1">
+                <p
+                  className={`pb-1 text-[11px] font-semibold uppercase tracking-wide text-foreground/45 ${
+                    useMobileWidePanel ? "px-4" : "px-3"
+                  }`}
+                >
+                  {group.label}
+                </p>
+                <ul className={useMobileWidePanel ? "space-y-1" : "space-y-0.5"}>
+                  {group.items.map((item) => {
+                    const globalIndex = flatIndexById.get(item.id) ?? -1;
+                    const active = globalIndex >= 0 && globalIndex === activeIdx;
+                    const optionId = `${listboxId}-opt-${item.id}`;
+                    return (
+                      <li key={item.id} role="presentation">
+                        <button
+                          id={optionId}
+                          type="button"
+                          role="option"
+                          aria-selected={active}
+                          className={`flex w-full items-start gap-2.5 text-left text-sm transition ${
+                            useMobileWidePanel ? "min-h-12 px-4 py-3" : "min-h-11 px-3 py-2.5"
+                          } ${active ? "bg-primary/8 text-primary" : "text-foreground hover:bg-surface"}`}
+                          onMouseEnter={() => setActiveIdx(globalIndex)}
+                          onClick={() => navigateTo(item.href)}
+                        >
+                          <span className="mt-0.5">
+                            <SuggestionIcon kind={item.kind} />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span
+                              className={`block font-semibold leading-snug ${
+                                useMobileWidePanel ? "line-clamp-2 break-words" : ""
+                              }`}
+                            >
+                              {highlightSearchMatch(item.title, debounced)}
+                            </span>
+                            {item.subtitle ? (
+                              <span
+                                className={`mt-0.5 block text-xs font-normal leading-snug text-foreground/55 ${
+                                  useMobileWidePanel ? "line-clamp-3 break-words" : "line-clamp-2"
+                                }`}
+                              >
+                                {highlightSearchMatch(item.subtitle, debounced)}
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="mt-1 shrink-0 text-foreground/35" aria-hidden>
+                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
+                              <path
+                                d="M9 6l6 6-6 6"
+                                stroke="currentColor"
+                                strokeWidth="1.7"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))
+          : null}
+      </div>
+    ) : null;
 
   return (
     <div ref={rootRef} className={`relative ${className ?? ""}`}>
@@ -318,123 +506,9 @@ export function GlobalSearchBar({
         ))}
       </form>
 
-      {showPanel ? (
-        <div
-          id={listboxId}
-          role="listbox"
-          aria-multiselectable={false}
-          className="absolute left-0 right-0 top-full z-[200] mt-1 max-h-[min(70dvh,26rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-border/90 bg-white py-2 shadow-[0_16px_48px_rgba(11,60,93,0.14)] sm:max-h-[min(75vh,28rem)]"
-        >
-          {showIdlePopular ? (
-            <div className="px-3 pb-1 pt-1">
-              <p className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-wide text-foreground/45">
-                Popüler aramalar
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {popular.map((p) => (
-                  <Link
-                    key={p.href}
-                    href={p.href}
-                    onClick={() => setOpen(false)}
-                    className="inline-flex min-h-9 items-center rounded-lg border border-primary/12 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-primary/5"
-                  >
-                    {p.title}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {showSuggestions && loading ? (
-            <p className="px-4 py-3 text-sm text-foreground/55">Aranıyor…</p>
-          ) : null}
-
-          {showSuggestions && !loading && narrow ? (
-            <div className="px-3 py-2">
-              <p className="text-sm font-semibold text-primary">Sonuç bulunamadı</p>
-              <p className="mt-1 text-xs leading-relaxed text-foreground/55">
-                Ülke, firma veya hizmet adıyla tekrar deneyin; aşağıdaki kısayollarla keşfe başlayabilirsiniz.
-              </p>
-              <button
-                type="button"
-                className="mt-3 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95"
-                onClick={() => navigateTo(buildHomeSearchPath(hiddenParams, { q: query }))}
-              >
-                Metinle tüm sonuçları görüntüle
-              </button>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {popular.map((p) => (
-                  <Link
-                    key={p.href}
-                    href={p.href}
-                    onClick={() => setOpen(false)}
-                    className="inline-flex min-h-9 items-center rounded-lg border border-primary/12 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-primary/5"
-                  >
-                    {p.title}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {showSuggestions && !loading && !narrow
-            ? groups.map((group) => (
-                <div key={group.id} className="pb-2 pt-1">
-                  <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-foreground/45">
-                    {group.label}
-                  </p>
-                  <ul className="space-y-0.5">
-                    {group.items.map((item) => {
-                      const globalIndex = flatIndexById.get(item.id) ?? -1;
-                      const active = globalIndex >= 0 && globalIndex === activeIdx;
-                      const optionId = `${listboxId}-opt-${item.id}`;
-                      return (
-                        <li key={item.id} role="presentation">
-                          <button
-                            id={optionId}
-                            type="button"
-                            role="option"
-                            aria-selected={active}
-                            className={`flex w-full min-h-11 items-start gap-2.5 px-3 py-2.5 text-left text-sm transition ${
-                              active ? "bg-primary/8 text-primary" : "text-foreground hover:bg-surface"
-                            }`}
-                            onMouseEnter={() => setActiveIdx(globalIndex)}
-                            onClick={() => navigateTo(item.href)}
-                          >
-                            <span className="mt-0.5">
-                              <SuggestionIcon kind={item.kind} />
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block font-semibold leading-snug">
-                                {highlightSearchMatch(item.title, debounced)}
-                              </span>
-                              {item.subtitle ? (
-                                <span className="mt-0.5 line-clamp-2 block text-xs font-normal leading-snug text-foreground/55">
-                                  {highlightSearchMatch(item.subtitle, debounced)}
-                                </span>
-                              ) : null}
-                            </span>
-                            <span className="mt-1 shrink-0 text-foreground/35" aria-hidden>
-                              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
-                                <path
-                                  d="M9 6l6 6-6 6"
-                                  stroke="currentColor"
-                                  strokeWidth="1.7"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))
-            : null}
-        </div>
-      ) : null}
+      {useMobileWidePanel && suggestionPanel && typeof document !== "undefined"
+        ? createPortal(suggestionPanel, document.body)
+        : suggestionPanel}
     </div>
   );
 }
