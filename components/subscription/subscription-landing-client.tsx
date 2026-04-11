@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 
 import { authPrimaryButtonClass } from "@/components/auth/auth-styles";
+import { HomepageHorizontalScroller } from "@/components/home/homepage-horizontal-scroller";
 import {
   COMPARISON_ROWS,
   formatTl,
@@ -43,6 +44,94 @@ function CellCheck({ ok }: { ok: boolean }) {
         <span className="text-foreground/25">—</span>
       )}
     </span>
+  );
+}
+
+function PlanMarketingCard({
+  plan,
+  billing,
+  selectedPlan,
+  showYearlyDiscountBadge,
+  onSelectPaid,
+  articleClassName,
+}: {
+  plan: PlanCardDef;
+  billing: BillingPeriod;
+  selectedPlan: SubscriptionPlanId | null;
+  showYearlyDiscountBadge: boolean;
+  onSelectPaid: (id: SubscriptionPlanId) => void;
+  articleClassName: string;
+}) {
+  const isRec = plan.variant === "recommended";
+  const isStrong = plan.variant === "strong";
+  const selected = selectedPlan === plan.id;
+  const showYearly = billing === "yearly" && !plan.yearlyUnavailable;
+
+  return (
+    <article
+      className={`${articleClassName} rounded-2xl border bg-white px-5 pb-5 shadow-[0_4px_24px_rgba(11,60,93,0.07)] transition duration-200 will-change-transform ${
+        isRec
+          ? "border-primary/35 pt-7 ring-1 ring-primary/15 lg:scale-[1.02]"
+          : isStrong
+            ? "border-primary/25 pt-7 ring-1 ring-primary/10"
+            : "border-border pt-5 hover:border-primary/20"
+      } ${selected ? "ring-2 ring-primary/35" : ""} hover:z-10 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(11,60,93,0.12)]`}
+    >
+      {isRec ? (
+        <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-accent/30 bg-accent/18 px-3 py-1 text-[10px] font-bold tracking-wide text-foreground">
+          Önerilen
+        </div>
+      ) : null}
+      {isStrong ? (
+        <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[10px] font-bold tracking-wide text-primary">
+          En Güçlü
+        </div>
+      ) : null}
+
+      <div className="min-h-12">
+        <h3 className="text-lg font-bold text-primary">{plan.name}</h3>
+      </div>
+
+      <div className="mt-4 min-h-20">
+        <PlanPrice plan={plan} billing={showYearly ? "yearly" : "monthly"} showYearlyDiscountBadge={showYearlyDiscountBadge} />
+      </div>
+
+      <p className="mt-4 flex-1 text-sm leading-relaxed text-foreground/72">{plan.tagline}</p>
+
+      <ul className="mt-5 space-y-2.5 border-t border-border/80 pt-4 text-sm text-foreground/80">
+        {plan.features.map((f) => (
+          <li key={f} className="flex gap-2">
+            <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <span>{f}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-6">
+        {plan.id === "free" ? (
+          <Link
+            href="/uye-is-yerimiz-olun"
+            className="flex min-h-11 w-full items-center justify-center rounded-2xl border border-primary/20 bg-surface px-4 text-sm font-semibold text-primary transition hover:bg-primary/5"
+          >
+            {plan.ctaLabel}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onSelectPaid(plan.id)}
+            className={`flex min-h-11 w-full items-center justify-center rounded-2xl px-4 text-sm font-semibold transition ${
+              isRec
+                ? "bg-primary text-white shadow-sm hover:bg-[#082f49]"
+                : isStrong
+                  ? "border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
+                  : "border border-primary/20 bg-white text-primary hover:bg-surface"
+            }`}
+          >
+            {plan.ctaLabel}
+          </button>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -251,83 +340,36 @@ export function SubscriptionLandingClient({ firmName, needLabel, firmId }: Props
         <section id="planlar" ref={planSectionRef} className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
           <h2 className="sr-only">Abonelik planları</h2>
           <div className="lg:hidden">
-            <p className="mb-3 text-center text-xs text-foreground/50">Planları kaydırarak inceleyin</p>
+            <p className="mb-3 text-center text-xs text-foreground/50">Planları oklar veya kaydırarak inceleyin</p>
           </div>
-          <div className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-visible scroll-smooth px-1 pb-4 pt-2 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0">
-            {SUBSCRIPTION_PLANS.map((plan) => {
-              const isRec = plan.variant === "recommended";
-              const isStrong = plan.variant === "strong";
-              const selected = selectedPlan === plan.id;
-              const showYearly = billing === "yearly" && !plan.yearlyUnavailable;
-
-              return (
-                <article
-                  key={plan.id}
-                  className={`relative flex w-[min(100%,17.75rem)] shrink-0 snap-center flex-col rounded-2xl border bg-white px-5 pb-5 shadow-[0_4px_24px_rgba(11,60,93,0.07)] transition duration-200 will-change-transform sm:w-[min(100%,20rem)] lg:w-auto lg:min-w-0 lg:snap-none ${
-                    isRec
-                      ? "border-primary/35 pt-7 ring-1 ring-primary/15 lg:scale-[1.02]"
-                      : isStrong
-                        ? "border-primary/25 pt-7 ring-1 ring-primary/10"
-                        : "border-border pt-5 hover:border-primary/20"
-                  } ${selected ? "ring-2 ring-primary/35" : ""} hover:z-10 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(11,60,93,0.12)]`}
-                >
-                  {isRec ? (
-                    <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-accent/30 bg-accent/18 px-3 py-1 text-[10px] font-bold tracking-wide text-foreground">
-                      Önerilen
-                    </div>
-                  ) : null}
-                  {isStrong ? (
-                    <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[10px] font-bold tracking-wide text-primary">
-                      En Güçlü
-                    </div>
-                  ) : null}
-
-                  <div className="min-h-12">
-                    <h3 className="text-lg font-bold text-primary">{plan.name}</h3>
-                  </div>
-
-                  <div className="mt-4 min-h-20">
-                    <PlanPrice plan={plan} billing={showYearly ? "yearly" : "monthly"} showYearlyDiscountBadge={showYearlyDiscountBadge} />
-                  </div>
-
-                  <p className="mt-4 flex-1 text-sm leading-relaxed text-foreground/72">{plan.tagline}</p>
-
-                  <ul className="mt-5 space-y-2.5 border-t border-border/80 pt-4 text-sm text-foreground/80">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex gap-2">
-                        <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="mt-6">
-                    {plan.id === "free" ? (
-                      <Link
-                        href="/uye-is-yerimiz-olun"
-                        className="flex min-h-11 w-full items-center justify-center rounded-2xl border border-primary/20 bg-surface px-4 text-sm font-semibold text-primary transition hover:bg-primary/5"
-                      >
-                        {plan.ctaLabel}
-                      </Link>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleSelectPlan(plan.id)}
-                        className={`flex min-h-11 w-full items-center justify-center rounded-2xl px-4 text-sm font-semibold transition ${
-                          isRec
-                            ? "bg-primary text-white shadow-sm hover:bg-[#082f49]"
-                            : isStrong
-                              ? "border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
-                              : "border border-primary/20 bg-white text-primary hover:bg-surface"
-                        }`}
-                      >
-                        {plan.ctaLabel}
-                      </button>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
+          <div className="lg:hidden">
+            <HomepageHorizontalScroller gapClass="gap-4" flushMobile snap className="pb-4 pt-2">
+              {SUBSCRIPTION_PLANS.map((plan) => (
+                <div key={plan.id} className="shrink-0 snap-center">
+                  <PlanMarketingCard
+                    plan={plan}
+                    billing={billing}
+                    selectedPlan={selectedPlan}
+                    showYearlyDiscountBadge={showYearlyDiscountBadge}
+                    onSelectPaid={handleSelectPlan}
+                    articleClassName="relative flex w-[min(100%,17.75rem)] flex-col sm:w-[min(100%,20rem)]"
+                  />
+                </div>
+              ))}
+            </HomepageHorizontalScroller>
+          </div>
+          <div className="hidden gap-4 pt-2 pb-0 lg:grid lg:grid-cols-3">
+            {SUBSCRIPTION_PLANS.map((plan) => (
+              <PlanMarketingCard
+                key={plan.id}
+                plan={plan}
+                billing={billing}
+                selectedPlan={selectedPlan}
+                showYearlyDiscountBadge={showYearlyDiscountBadge}
+                onSelectPaid={handleSelectPlan}
+                articleClassName="relative flex w-full min-w-0 flex-col"
+              />
+            ))}
           </div>
           {selectedPlan ? (
             <p className="mt-4 text-center text-xs text-foreground/55" role="status">

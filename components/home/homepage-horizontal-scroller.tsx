@@ -15,6 +15,11 @@ type Props = {
   className?: string;
   /** Yatay snap */
   snap?: boolean;
+  /**
+   * `container-shell` içinde kaydırma şeridini yatayda kesintisiz gösterir (mobil / tek sütun).
+   * `lg` ve üzeri çift sütunda sıfırlanır.
+   */
+  flushMobile?: boolean;
 };
 
 export function HomepageHorizontalScroller({
@@ -22,6 +27,7 @@ export function HomepageHorizontalScroller({
   gapClass = "gap-3 md:gap-4",
   className = "",
   snap = true,
+  flushMobile = true,
 }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
@@ -78,23 +84,31 @@ export function HomepageHorizontalScroller({
   };
 
   const snapClass = snap
-    ? "snap-x snap-mandatory scroll-smooth [scroll-padding-inline:0.65rem] md:[scroll-padding-inline:0.75rem]"
-    : "scroll-smooth";
+    ? "snap-x snap-mandatory scroll-smooth max-md:[scroll-padding-inline:0.5rem] [scroll-padding-inline:0.65rem] md:[scroll-padding-inline:0.75rem]"
+    : "scroll-smooth max-md:[scroll-padding-inline:0.5rem]";
 
-  const btnBase =
-    "relative z-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/60 text-primary shadow-sm backdrop-blur-sm transition sm:h-9 sm:w-9 md:h-8 md:w-8";
+  /** Masaüstü: yan sütun; mobil: üst üste bindirme — kart alanı tam genişlik */
+  const btnDesktop =
+    "relative z-2 hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/85 text-primary shadow-sm backdrop-blur-sm transition md:inline-flex";
+
+  const btnMobileOverlay =
+    "pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-primary/15 bg-white/92 text-primary shadow-md backdrop-blur-sm transition md:hidden";
+
+  const flushClass = flushMobile
+    ? "-mx-4 w-[calc(100%+2rem)] max-w-none sm:-mx-6 sm:w-[calc(100%+3rem)] lg:mx-0 lg:w-full lg:max-w-full"
+    : "w-full";
 
   return (
-    <div className={`flex w-full min-w-0 items-stretch gap-1 sm:gap-1.5 ${className}`}>
-      <div className="flex w-10 shrink-0 items-center justify-center sm:w-9 md:w-8">
+    <div className={`flex min-w-0 items-stretch md:gap-1 ${flushClass} ${className}`.trim()}>
+      <div className="hidden w-8 shrink-0 md:flex md:items-center md:justify-center">
         <button
           type="button"
           onClick={() => scrollByDir(-1)}
           disabled={!canLeft}
           aria-label="Önceki"
-          className={`${btnBase} ${
+          className={`${btnDesktop} ${
             canLeft
-              ? "opacity-50 hover:border-primary/28 hover:bg-background/85 hover:opacity-100"
+              ? "opacity-60 hover:border-primary/28 hover:bg-background hover:opacity-100"
               : "cursor-default opacity-25"
           }`}
         >
@@ -103,12 +117,13 @@ export function HomepageHorizontalScroller({
       </div>
 
       <div className="relative min-w-0 flex-1">
+        {/* Kenar solması: yalnızca md+ (mobilde ekstra “beyaz şerit” hissi vermesin) */}
         <div
-          className="pointer-events-none absolute inset-y-1 left-0 z-1 w-5 bg-linear-to-r from-background via-background/88 to-transparent md:w-6"
+          className="pointer-events-none absolute inset-y-1 left-0 z-1 hidden w-6 bg-linear-to-r from-background/90 via-background/55 to-transparent md:block"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-y-1 right-0 z-1 w-5 bg-linear-to-l from-background via-background/88 to-transparent md:w-6"
+          className="pointer-events-none absolute inset-y-1 right-0 z-1 hidden w-6 bg-linear-to-l from-background/90 via-background/55 to-transparent md:block"
           aria-hidden
         />
 
@@ -119,22 +134,54 @@ export function HomepageHorizontalScroller({
         >
           <div
             ref={innerRef}
-            className={`flex w-max min-w-full ${gapClass} py-1 pl-1 pr-1 md:pl-1.5 md:pr-1.5`}
+            className={`flex w-max min-w-full ${gapClass} py-1 pl-0.5 pr-0.5 md:pl-1.5 md:pr-1.5`}
           >
             {children}
           </div>
         </div>
+
+        {/* Mobil: oklar kaydırma alanı üzerinde — yan beyaz sütun yok */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-2 flex items-center md:hidden">
+          <button
+            type="button"
+            onClick={() => scrollByDir(-1)}
+            disabled={!canLeft}
+            aria-label="Önceki"
+            className={`${btnMobileOverlay} ml-0.5 ${
+              canLeft
+                ? "opacity-90 active:scale-95"
+                : "cursor-default opacity-30 shadow-none"
+            }`}
+          >
+            <ChevronLeftIcon />
+          </button>
+        </div>
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-2 flex items-center md:hidden">
+          <button
+            type="button"
+            onClick={() => scrollByDir(1)}
+            disabled={!canRight}
+            aria-label="Sonraki"
+            className={`${btnMobileOverlay} mr-0.5 ${
+              canRight
+                ? "opacity-90 active:scale-95"
+                : "cursor-default opacity-30 shadow-none"
+            }`}
+          >
+            <ChevronRightIcon />
+          </button>
+        </div>
       </div>
 
-      <div className="flex w-10 shrink-0 items-center justify-center sm:w-9 md:w-8">
+      <div className="hidden w-8 shrink-0 md:flex md:items-center md:justify-center">
         <button
           type="button"
           onClick={() => scrollByDir(1)}
           disabled={!canRight}
           aria-label="Sonraki"
-          className={`${btnBase} ${
+          className={`${btnDesktop} ${
             canRight
-              ? "opacity-50 hover:border-primary/28 hover:bg-background/85 hover:opacity-100"
+              ? "opacity-60 hover:border-primary/28 hover:bg-background hover:opacity-100"
               : "cursor-default opacity-25"
           }`}
         >

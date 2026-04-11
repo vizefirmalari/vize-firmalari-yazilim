@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { HomepageHorizontalScroller } from "@/components/home/homepage-horizontal-scroller";
 
 type Props = {
   categories: Array<{ id: string; name: string }>;
@@ -142,7 +143,12 @@ export function FeedFiltersBar({ categories, countries, visaTypes }: Props) {
             </button>
           </div>
           {chips.length > 0 ? (
-            <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5">
+            <HomepageHorizontalScroller
+              gapClass="gap-1.5"
+              snap={false}
+              flushMobile={false}
+              className="mt-2"
+            >
               {chips.map((chip) => (
                 <button
                   type="button"
@@ -154,7 +160,7 @@ export function FeedFiltersBar({ categories, countries, visaTypes }: Props) {
                   <span aria-hidden>✕</span>
                 </button>
               ))}
-            </div>
+            </HomepageHorizontalScroller>
           ) : null}
         </div>
       </div>
