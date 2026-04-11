@@ -34,6 +34,9 @@ export type FirmRow = {
   /** Elle öncelik (sort_priority) */
   manual_priority?: number;
   short_badge?: string | null;
+  /** Admin “Doğrulandı rozeti”; vergi/lisans beyanı platformca işlenmiş kayıt. */
+  verified_badge?: boolean | null;
+  premium_badge?: boolean | null;
   countries: string[];
   /**
    * Ülke seçimlerinden türetilen vize bölge etiketleri (DB; `syncFirmDenormalized`).

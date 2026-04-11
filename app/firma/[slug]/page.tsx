@@ -23,6 +23,7 @@ import {
   QuickApplyLauncher,
 } from "@/components/quick-apply/quick-apply-launcher";
 import { buildQuickApplyExpertiseLine, buildQuickApplySubtitle } from "@/lib/quick-apply/firm-intro-branding";
+import { VerifiedFirmBadge } from "@/components/firma/verified-firm-badge";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -218,10 +219,19 @@ export default async function FirmaPage({ params }: PageProps) {
                     </span>
                   )}
                 </div>
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                    {firm.name}
-                  </h1>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                    <h1 className="min-w-0 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                      {firm.name}
+                    </h1>
+                    <VerifiedFirmBadge
+                      isVerified={firm.verified_badge === true}
+                      companyName={firm.name}
+                      logoUrl={firm.logo_url}
+                      variant="hero"
+                      className="shrink-0"
+                    />
+                  </div>
                   <p className="mt-2 text-sm text-white/80">
                     <span>
                       Kurumsallık Skoru:{" "}

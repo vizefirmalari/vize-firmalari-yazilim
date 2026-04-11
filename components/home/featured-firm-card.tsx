@@ -17,6 +17,7 @@ import {
 import { effectiveFirmCategoryLabel } from "@/lib/firma/listing-filter-options";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 import { FirmOfficeCityBadge } from "@/components/firma/firm-office-city-badge";
+import { VerifiedFirmBadge } from "@/components/firma/verified-firm-badge";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -99,9 +100,18 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-bold leading-snug text-primary">
-            {firm.name}
-          </h3>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <h3 className="min-w-0 break-words text-base font-bold leading-snug text-primary">
+              {firm.name}
+            </h3>
+            <VerifiedFirmBadge
+              isVerified={firm.verified_badge === true}
+              companyName={firm.name}
+              logoUrl={firm.logo_url}
+              variant="card"
+              className="shrink-0"
+            />
+          </div>
           {badgeLine ? (
             <p className="mt-1 line-clamp-2 text-[10px] font-medium leading-tight text-foreground/50">
               {badgeLine}
