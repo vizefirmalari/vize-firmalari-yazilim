@@ -2,7 +2,7 @@ import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
 
-import { HeaderSearchForm } from "@/components/layout/header-search-form";
+import { GlobalSearchBar } from "@/components/layout/global-search-bar";
 import { HeaderFlowNavButton } from "@/components/layout/header-flow-nav-button";
 import { SiteAuthNav } from "@/components/layout/site-auth-nav";
 import { SITE_HEADER_LOGO_URL } from "@/lib/constants";
@@ -51,7 +51,7 @@ function HeaderFallback({
             Vize Firmaları
           </span>
         </Link>
-        <HeaderSearchForm
+        <GlobalSearchBar
           hiddenParams={hiddenParams}
           defaultValue={searchValue}
           inputId="header-search-mobile-inline"
@@ -96,7 +96,7 @@ function HeaderFallback({
             </span>
           </span>
         </Link>
-        <HeaderSearchForm
+        <GlobalSearchBar
           hiddenParams={hiddenParams}
           defaultValue={searchValue}
           inputId="header-search"
@@ -167,7 +167,7 @@ async function SiteHeaderAsync({
             Vize Firmaları
           </span>
         </Link>
-        <HeaderSearchForm
+        <GlobalSearchBar
           hiddenParams={hiddenParams}
           defaultValue={searchValue}
           inputId="header-search-mobile-inline"
@@ -213,7 +213,7 @@ async function SiteHeaderAsync({
           </span>
         </Link>
 
-        <HeaderSearchForm
+        <GlobalSearchBar
           hiddenParams={hiddenParams}
           defaultValue={searchValue}
           inputId="header-search"
