@@ -2,6 +2,10 @@ import { unstable_cache } from "next/cache";
 import { getSiteUrl, isSupabaseConfigured } from "@/lib/env";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { listExploreSlugs } from "@/lib/explore/explore-categories";
+import {
+  COUNTRY_GUIDE_CATALOG_BASE_PATH,
+  listCountryGuideSlugs,
+} from "@/lib/country-guides/taxonomy";
 import { listPublicDocumentPages } from "@/lib/seo/public-routes";
 
 export type SitemapUrl = {
@@ -157,11 +161,18 @@ export async function getIndexableUrlsBySection(section: SitemapSection): Promis
 
   if (section === "static") {
     const explorePaths = listExploreSlugs().map((slug) => `/kesfet/${slug}`);
+    const countryGuidePaths = [
+      COUNTRY_GUIDE_CATALOG_BASE_PATH,
+      ...listCountryGuideSlugs().map(
+        (slug) => `${COUNTRY_GUIDE_CATALOG_BASE_PATH}/${slug}`
+      ),
+    ];
     const staticPaths = [
       "/",
       "/akis",
       "/kesfet",
       ...explorePaths,
+      ...countryGuidePaths,
       ...listPublicDocumentPages().map((p) => p.path),
     ];
     return dedupeUrls(

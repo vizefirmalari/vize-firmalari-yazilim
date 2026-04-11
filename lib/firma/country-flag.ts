@@ -491,6 +491,27 @@ export function getCountryFlagCodeFromName(countryName: string): string | null {
     cr: "cr",
     costarica: "cr",
     kostarika: "cr",
+
+    do: "do",
+    dominicanrepublic: "do",
+    dominikcumhuriyeti: "do",
+
+    np: "np",
+    nepal: "np",
+
+    lk: "lk",
+    srilanka: "lk",
+    srillanka: "lk",
+
+    tz: "tz",
+    tanzanya: "tz",
+    tanzania: "tz",
+
+    sn: "sn",
+    senegal: "sn",
+
+    ug: "ug",
+    uganda: "ug",
   };
 
   const code = map[key];

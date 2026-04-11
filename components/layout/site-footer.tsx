@@ -217,7 +217,9 @@ export function SiteFooter() {
 
       <FooterColumn title="Keşfet">
         <li>
-          <FooterLink>Ülkelere Göre Vize Rehberi</FooterLink>
+          <FooterLink href="/ulkelere-gore-vize-rehberi">
+            Ülkelere Göre Vize Rehberi
+          </FooterLink>
         </li>
         <li>
           <FooterLink>Vize Türleri</FooterLink>
