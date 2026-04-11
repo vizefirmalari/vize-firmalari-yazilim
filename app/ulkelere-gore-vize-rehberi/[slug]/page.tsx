@@ -16,12 +16,18 @@ import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
 import { resolveDefaultSiteShareImage } from "@/lib/seo/og-images";
 import { flagUrlForIso } from "@/lib/firma/country-flag";
 import { AmerikaCountryGuideView } from "@/components/country-guides/amerika-country-guide-view";
+import { AlmanyaCountryGuideView } from "@/components/country-guides/almanya-country-guide-view";
+import { YunanistanCountryGuideView } from "@/components/country-guides/yunanistan-country-guide-view";
 import { getFirmsForCountryGuide } from "@/lib/data/country-guide-firms";
 import { AMERIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/amerika-guide-sections";
+import { ALMANYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/almanya-guide-sections";
+import { YUNANISTAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/yunanistan-guide-sections";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
 const AMERIKA_SLUG = "amerika";
+const ALMANYA_SLUG = "almanya";
+const YUNANISTAN_SLUG = "yunanistan";
 
 /** Paneldeki ülke / yayın durumu değişince rehber sayfaları güncel kalsın (özellikle firma şeridi). */
 export const dynamic = "force-dynamic";
@@ -43,11 +49,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
           url: absoluteUrl("/country-guides/amerika/new-york-liberty-manhattan.png"),
           alt: "Özgürlük Anıtı ve Manhattan silüeti — Amerika vize ve oturum rehberi",
         }
-      : resolveDefaultSiteShareImage();
+      : slug === ALMANYA_SLUG
+        ? {
+            url: absoluteUrl("/country-guides/almanya/reichstag-berlin.png"),
+            alt: "Berlin Reichstag — Almanya vize ve oturum rehberi",
+          }
+        : slug === YUNANISTAN_SLUG
+          ? {
+              url: absoluteUrl("/country-guides/yunanistan/parthenon-athens.png"),
+              alt: "Atina Akropolü Parthenon — Yunanistan vize ve oturum rehberi",
+            }
+          : resolveDefaultSiteShareImage();
   return {
     title: entry.seoTitle,
     description: entry.metaDescription,
     ...(slug === AMERIKA_SLUG ? { keywords: AMERIKA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === ALMANYA_SLUG ? { keywords: ALMANYA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === YUNANISTAN_SLUG ? { keywords: YUNANISTAN_SEO_KEYWORD_TAGS } : {}),
     alternates: { canonical: absoluteUrl(path) },
     openGraph: {
       title: `${entry.nameTr} | ${SITE_BRAND_NAME}`,
@@ -78,7 +96,15 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const firmsHref = countryGuideFirmsListingHref(entry.firmCatalogCountryLabel);
   const path = `${COUNTRY_GUIDE_CATALOG_BASE_PATH}/${slug}`;
   const isAmerika = slug === AMERIKA_SLUG;
+  const isAlmanya = slug === ALMANYA_SLUG;
+  const isYunanistan = slug === YUNANISTAN_SLUG;
   const amerikaFirms = isAmerika
+    ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
+    : [];
+  const almanyaFirms = isAlmanya
+    ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
+    : [];
+  const yunanistanFirms = isYunanistan
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
     : [];
 
@@ -110,6 +136,10 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
 
           {isAmerika ? (
             <AmerikaCountryGuideView entry={entry} region={region} firms={amerikaFirms} />
+          ) : isAlmanya ? (
+            <AlmanyaCountryGuideView entry={entry} region={region} firms={almanyaFirms} />
+          ) : isYunanistan ? (
+            <YunanistanCountryGuideView entry={entry} region={region} firms={yunanistanFirms} />
           ) : (
             <>
               <header className="rounded-2xl border border-border bg-white p-6 shadow-[0_2px_14px_rgba(11,60,93,0.06)] sm:p-8">

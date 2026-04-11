@@ -1,8 +1,4 @@
-export type CountryGuideSlide = {
-  src: string;
-  alt: string;
-  caption: string;
-};
+import type { CountryGuideSlide } from "@/lib/country-guides/guide-content-types";
 
 /** Kuzey Amerika / ABD rehberi hero altı görsel şeridi (statik dosyalar: `public/country-guides/amerika/`). */
 export const AMERIKA_GUIDE_SLIDES: CountryGuideSlide[] = [

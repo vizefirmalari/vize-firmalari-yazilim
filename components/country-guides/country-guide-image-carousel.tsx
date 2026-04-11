@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useSyncExternalStore, useState } from "react";
-import type { CountryGuideSlide } from "@/lib/country-guides/amerika-slides";
+import type { CountryGuideSlide } from "@/lib/country-guides/guide-content-types";
 
 function subscribeReducedMotion(onStoreChange: () => void) {
   const mq = window.matchMedia("(prefers-reduced-motion: reduce)");

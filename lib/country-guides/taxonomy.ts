@@ -135,7 +135,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
     seoIntro:
       "Bulgaristan, Hırvatistan ve Romanya dahil güncel Schengen üyesi ülkeler; ortak Schengen kuralları ile ulusal istisnalara dair rehber girişleri.",
     countries: [
-      entry("almanya", "Almanya", "de", "Almanya", "Çalışma, aile birleşimi ve turistik Schengen başvurularına giriş.", "Almanya Schengen ve vize rehberi | Vize Firmaları", "Almanya için vize koşulları, oturum ve çalışma rehberi girişi."),
+      entry(
+        "almanya",
+        "Almanya",
+        "de",
+        "Almanya",
+        "Çalışma, aile birleşimi ve turistik Schengen başvurularına giriş.",
+        "Almanya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "Almanya’da iş arama, başvuru kültürü, staj, mesleki eğitim, taşınma ve çalışma-yaşam başlıklarında EURES kaynaklı özet rehber; Schengen ve oturum için resmî bilgileri doğrulayın."
+      ),
       entry("avusturya", "Avusturya", "at", "Avusturya", "Turistik ve ulusal D tipi süreçlere genel bakış.", "Avusturya vize rehberi | Vize Firmaları", "Avusturya Schengen ve oturum başlıklarına ülke rehberi girişi."),
       entry("belcika", "Belçika", "be", "Belçika", "Schengen ve çalışma izni süreçlerine giriş.", "Belçika vize rehberi | Vize Firmaları", "Belçika için vize, oturum ve çalışma rehberi."),
       entry("bulgaristan", "Bulgaristan", "bg", "Bulgaristan", "Güncel Schengen üyeliği ile başvuru mantığına giriş.", "Bulgaristan vize rehberi | Vize Firmaları", "Bulgaristan Schengen ve ulusal vize başlıkları."),
@@ -163,7 +171,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
       entry("romanya", "Romanya", "ro", "Romanya", "Güncel Schengen üyeliği ile başvuru mantığına giriş.", "Romanya vize rehberi | Vize Firmaları", "Romanya Schengen ve çalışma rehberi."),
       entry("slovakya", "Slovakya", "sk", "Slovakya", "Schengen ve çalışma süreçlerine giriş.", "Slovakya vize rehberi | Vize Firmaları", "Slovakya Schengen rehberi."),
       entry("slovenya", "Slovenya", "si", "Slovenya", "Schengen ve çalışma iznine giriş.", "Slovenya vize rehberi | Vize Firmaları", "Slovenya vize rehberi."),
-      entry("yunanistan", "Yunanistan", "gr", "Yunanistan", "Schengen ve ulusal süreçlere giriş.", "Yunanistan vize rehberi | Vize Firmaları", "Yunanistan Schengen başvuruları."),
+      entry(
+        "yunanistan",
+        "Yunanistan",
+        "gr",
+        "Yunanistan",
+        "Schengen ve ulusal süreçlere giriş.",
+        "Yunanistan Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "DYPA ile iş arama, başvuru kültürü, staj, mesleki çıraklık, konut ve çalışma koşullarında EURES kaynaklı özet; Schengen ve oturum için resmî bilgileri doğrulayın."
+      ),
     ],
   },
   {

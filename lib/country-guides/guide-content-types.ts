@@ -14,3 +14,10 @@ export type GuideSectionBlock = {
   lead: string;
   accordions: GuideAccordionBlock[];
 };
+
+/** Ülke rehberi hero altı görsel şeridi (`public/country-guides/...`). */
+export type CountryGuideSlide = {
+  src: string;
+  alt: string;
+  caption: string;
+};
