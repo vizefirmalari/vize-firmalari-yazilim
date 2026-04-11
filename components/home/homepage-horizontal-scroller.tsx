@@ -82,11 +82,11 @@ export function HomepageHorizontalScroller({
     : "scroll-smooth";
 
   const btnBase =
-    "relative z-2 hidden h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/60 text-primary shadow-sm backdrop-blur-sm transition md:inline-flex";
+    "relative z-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/60 text-primary shadow-sm backdrop-blur-sm transition sm:h-9 sm:w-9 md:h-8 md:w-8";
 
   return (
-    <div className={`flex w-full min-w-0 items-stretch gap-0.5 md:gap-1 ${className}`}>
-      <div className="hidden w-7 shrink-0 md:flex md:items-center md:justify-center">
+    <div className={`flex w-full min-w-0 items-stretch gap-1 sm:gap-1.5 ${className}`}>
+      <div className="flex w-10 shrink-0 items-center justify-center sm:w-9 md:w-8">
         <button
           type="button"
           onClick={() => scrollByDir(-1)}
@@ -126,7 +126,7 @@ export function HomepageHorizontalScroller({
         </div>
       </div>
 
-      <div className="hidden w-7 shrink-0 md:flex md:items-center md:justify-center">
+      <div className="flex w-10 shrink-0 items-center justify-center sm:w-9 md:w-8">
         <button
           type="button"
           onClick={() => scrollByDir(1)}

@@ -77,8 +77,8 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "us",
         "Amerika",
         "Turistik, çalışma ve yatırımcı vizeleri ile Green Card süreçlerine giriş.",
-        "Amerika (ABD) vize rehberi | Vize Firmaları",
-        "ABD için turistik ve çalışma vizesi, oturum ve vatandaşlık başlıklarına ülke bazlı rehber girişi; ilgili danışmanlık firmalarına ulaşın."
+        "Amerika Vize ve Oturum Rehberi 2026 | Çalışma, Green Card ve Başvuru Süreci",
+        "ABD vize, çalışma, Green Card ve oturum süreçlerini adım adım öğrenin. Amerika’ya gitmek için gerekli şartlar ve başvuru rehberi."
       ),
       entry(
         "kanada",
