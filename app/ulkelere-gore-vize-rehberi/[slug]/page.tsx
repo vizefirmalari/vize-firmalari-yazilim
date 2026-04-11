@@ -18,16 +18,25 @@ import { flagUrlForIso } from "@/lib/firma/country-flag";
 import { AmerikaCountryGuideView } from "@/components/country-guides/amerika-country-guide-view";
 import { AlmanyaCountryGuideView } from "@/components/country-guides/almanya-country-guide-view";
 import { YunanistanCountryGuideView } from "@/components/country-guides/yunanistan-country-guide-view";
+import { ItalyaCountryGuideView } from "@/components/country-guides/italya-country-guide-view";
+import { BelcikaCountryGuideView } from "@/components/country-guides/belcika-country-guide-view";
+import { MaltaCountryGuideView } from "@/components/country-guides/malta-country-guide-view";
 import { getFirmsForCountryGuide } from "@/lib/data/country-guide-firms";
 import { AMERIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/amerika-guide-sections";
 import { ALMANYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/almanya-guide-sections";
 import { YUNANISTAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/yunanistan-guide-sections";
+import { ITALYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/italya-guide-sections";
+import { BELCIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/belcika-guide-sections";
+import { MALTA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/malta-guide-sections";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
 const AMERIKA_SLUG = "amerika";
 const ALMANYA_SLUG = "almanya";
 const YUNANISTAN_SLUG = "yunanistan";
+const ITALYA_SLUG = "italya";
+const BELCIKA_SLUG = "belcika";
+const MALTA_SLUG = "malta";
 
 /** Paneldeki ülke / yayın durumu değişince rehber sayfaları güncel kalsın (özellikle firma şeridi). */
 export const dynamic = "force-dynamic";
@@ -59,13 +68,31 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
               url: absoluteUrl("/country-guides/yunanistan/parthenon-athens.png"),
               alt: "Atina Akropolü Parthenon — Yunanistan vize ve oturum rehberi",
             }
-          : resolveDefaultSiteShareImage();
+          : slug === ITALYA_SLUG
+            ? {
+                url: absoluteUrl("/country-guides/italya/rome-colosseum.png"),
+                alt: "Roma Kolezyum — İtalya vize ve oturum rehberi",
+              }
+            : slug === BELCIKA_SLUG
+              ? {
+                  url: absoluteUrl("/country-guides/belcika/antwerp-grote-markt-twilight.png"),
+                  alt: "Antwerp Grote Markt ve Onze-Lieve-Vrouwekathedraal — Belçika vize ve oturum rehberi",
+                }
+              : slug === MALTA_SLUG
+                ? {
+                    url: absoluteUrl("/country-guides/malta/valletta-skyline.png"),
+                    alt: "Valletta silüeti ve Akdeniz — Malta vize ve oturum rehberi",
+                  }
+                : resolveDefaultSiteShareImage();
   return {
     title: entry.seoTitle,
     description: entry.metaDescription,
     ...(slug === AMERIKA_SLUG ? { keywords: AMERIKA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === ALMANYA_SLUG ? { keywords: ALMANYA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === YUNANISTAN_SLUG ? { keywords: YUNANISTAN_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === ITALYA_SLUG ? { keywords: ITALYA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === BELCIKA_SLUG ? { keywords: BELCIKA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === MALTA_SLUG ? { keywords: MALTA_SEO_KEYWORD_TAGS } : {}),
     alternates: { canonical: absoluteUrl(path) },
     openGraph: {
       title: `${entry.nameTr} | ${SITE_BRAND_NAME}`,
@@ -98,6 +125,9 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const isAmerika = slug === AMERIKA_SLUG;
   const isAlmanya = slug === ALMANYA_SLUG;
   const isYunanistan = slug === YUNANISTAN_SLUG;
+  const isItalya = slug === ITALYA_SLUG;
+  const isBelcika = slug === BELCIKA_SLUG;
+  const isMalta = slug === MALTA_SLUG;
   const amerikaFirms = isAmerika
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
     : [];
@@ -107,6 +137,9 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const yunanistanFirms = isYunanistan
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
     : [];
+  const italyaFirms = isItalya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const belcikaFirms = isBelcika ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const maltaFirms = isMalta ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
 
   return (
     <>
@@ -140,6 +173,12 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
             <AlmanyaCountryGuideView entry={entry} region={region} firms={almanyaFirms} />
           ) : isYunanistan ? (
             <YunanistanCountryGuideView entry={entry} region={region} firms={yunanistanFirms} />
+          ) : isItalya ? (
+            <ItalyaCountryGuideView entry={entry} region={region} firms={italyaFirms} />
+          ) : isBelcika ? (
+            <BelcikaCountryGuideView entry={entry} region={region} firms={belcikaFirms} />
+          ) : isMalta ? (
+            <MaltaCountryGuideView entry={entry} region={region} firms={maltaFirms} />
           ) : (
             <>
               <header className="rounded-2xl border border-border bg-white p-6 shadow-[0_2px_14px_rgba(11,60,93,0.06)] sm:p-8">
