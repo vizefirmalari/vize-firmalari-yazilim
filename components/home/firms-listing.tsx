@@ -525,26 +525,31 @@ export function FirmsListing({
     <section className="pb-14">
       <div className="container-shell">
         <div className="grid gap-8 pt-1 lg:grid-cols-[minmax(280px,360px)_1fr] lg:items-start lg:gap-10 lg:pt-2">
-        <aside className="premium-card hidden h-fit w-full p-5 lg:sticky lg:top-24 lg:block lg:self-start">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-base font-semibold text-primary">
-              Filtrele
-              {activeFilterCount > 0 ? (
-                <span className="ml-1.5 tabular-nums text-xs font-semibold text-foreground/50">
-                  ({activeFilterCount})
-                </span>
-              ) : null}
-            </h2>
-            <button
-              type="button"
-              onClick={resetToCleanHome}
-              className="text-xs font-semibold text-secondary"
-            >
-              Temizle
-            </button>
+        <aside
+          className="premium-card hidden w-full lg:sticky lg:top-24 lg:z-[5] lg:flex lg:max-h-[calc(100dvh-7rem)] lg:flex-col lg:overflow-hidden lg:self-start"
+          aria-label="Filtreler"
+        >
+          <div className="shrink-0 border-b border-border/70 px-5 pt-5 pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-primary">
+                Filtrele
+                {activeFilterCount > 0 ? (
+                  <span className="ml-1.5 tabular-nums text-xs font-semibold text-foreground/50">
+                    ({activeFilterCount})
+                  </span>
+                ) : null}
+              </h2>
+              <button
+                type="button"
+                onClick={resetToCleanHome}
+                className="text-xs font-semibold text-secondary"
+              >
+                Temizle
+              </button>
+            </div>
           </div>
 
-          <div className="mt-5">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]">
             <FirmListingFilterFields
               draft={appliedFilters}
               onChange={setAppliedFilters}
@@ -555,7 +560,7 @@ export function FirmsListing({
             />
           </div>
 
-          <fieldset className="mt-6 border-t border-border pt-6">
+          <fieldset className="shrink-0 border-t border-border px-5 pb-5 pt-6">
             <legend className="text-sm font-semibold text-foreground">
               Sıralama
             </legend>
