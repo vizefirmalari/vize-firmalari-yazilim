@@ -191,7 +191,8 @@ export function FirmsListing({
 
     let cancelled = false;
     let cleared = false;
-    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    /** DOM zamanlayıcı id’si (`number`); Node `Timeout` ile karışmaması için açık tip. */
+    const timeouts: number[] = [];
 
     const clearFlag = () => {
       if (cleared) return;
