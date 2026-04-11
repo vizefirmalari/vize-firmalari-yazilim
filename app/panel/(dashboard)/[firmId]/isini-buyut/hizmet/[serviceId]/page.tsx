@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { GrowthDetailPurchase } from "@/components/firm-panel/growth/growth-detail-purchase";
+import { PackageFeatureList } from "@/components/firm-panel/growth/growth-package-features";
 import { growthServicePriceLine } from "@/lib/format/try-lira";
 import { loadGrowthServiceById } from "@/lib/data/growth-catalog";
 import { getGrowthPaymentBankInfo } from "@/lib/firm-panel/growth-payment-config";
@@ -26,7 +27,7 @@ export default async function FirmGrowthServiceDetailPage({ params }: PageProps)
   const bank = getGrowthPaymentBankInfo();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Link href={`/panel/${firmId}/isini-buyut`} className="text-sm font-semibold text-[#0B3C5D] hover:underline">
         ← İşini Büyüt
       </Link>
@@ -46,18 +47,16 @@ export default async function FirmGrowthServiceDetailPage({ params }: PageProps)
         ) : null}
         <p className="mt-3 text-sm font-semibold text-[#0B3C5D]">{priceLine}</p>
         {service.package_includes.length > 0 ? (
-          <div className="mt-4 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB] px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/50">Paket içeriği</p>
-            <ul className="mt-2 list-inside list-disc text-sm text-[#1A1A1A]/70">
-              {service.package_includes.map((item, i) => (
-                <li key={`${i}-${item}`}>{item}</li>
-              ))}
-            </ul>
+          <div className="mt-6">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/48">Paket içeriği</p>
+            <div className="mt-3 rounded-xl bg-[#F5F7FA] px-4 py-4 sm:px-5 sm:py-5">
+              <PackageFeatureList items={service.package_includes} />
+            </div>
           </div>
         ) : null}
       </div>
 
-      <section className="rounded-2xl border border-[#0B3C5D]/12 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm sm:p-7">
         <h2 className="text-sm font-bold text-[#0B3C5D]">Size ne kazandırır?</h2>
         <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-[#1A1A1A]/70">{body}</p>
       </section>

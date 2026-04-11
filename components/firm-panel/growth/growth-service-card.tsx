@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { GrowthPurchaseModal, type GrowthPurchaseModalBank } from "@/components/firm-panel/growth/growth-purchase-modal";
+import { ServiceHighlightsPreview } from "@/components/firm-panel/growth/growth-package-features";
 import { formatTryLira, growthServicePriceLine } from "@/lib/format/try-lira";
 import type { GrowthServiceRow } from "@/lib/types/growth-commerce";
 
@@ -21,14 +22,6 @@ type Props = {
   onAutoOpenConsumed?: () => void;
 };
 
-const CHIP_MAX = 3;
-
-function plainTextFromHtml(html: string, maxLen: number): string {
-  const t = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-  if (t.length <= maxLen) return t;
-  return `${t.slice(0, maxLen).trim()}…`;
-}
-
 export function GrowthServiceCard({
   firmId,
   firmName,
@@ -44,20 +37,6 @@ export function GrowthServiceCard({
   const badge = service.badge?.trim() || null;
   const featured = service.is_featured;
   const spotlight = variant === "spotlight";
-
-  const benefitChips = useMemo(() => service.package_includes.slice(0, CHIP_MAX), [service.package_includes]);
-  const remainderIncludes = useMemo(() => service.package_includes.slice(CHIP_MAX), [service.package_includes]);
-
-  const benefitSummary = useMemo(() => {
-    const joined = remainderIncludes.join(" ").trim();
-    if (joined) {
-      return joined.length > 200 ? `${joined.slice(0, 200).trim()}…` : joined;
-    }
-    if (!service.short_description?.trim() && service.long_description?.trim()) {
-      return plainTextFromHtml(service.long_description, 150);
-    }
-    return null;
-  }, [remainderIncludes, service.long_description, service.short_description]);
 
   useEffect(() => {
     if (!autoOpenToken || autoOpenToken !== service.id) return;
@@ -82,7 +61,7 @@ export function GrowthServiceCard({
       <article
         className={`group flex h-full flex-col rounded-2xl border bg-[#FDFDFE] shadow-[0_8px_30px_rgba(11,60,93,0.05)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(11,60,93,0.09)] ${featuredShell} ${pad}`}
       >
-        {/* A. Rozetler — tek akış, ayırıcı çizgi yok */}
+        {/* A. Rozetler */}
         <div className="flex flex-wrap items-center gap-1.5">
           {categoryLabel ? (
             <span className="max-w-[46%] truncate rounded-full bg-[#F0F3F6] px-2.5 py-0.5 text-[11px] font-semibold text-[#0B3C5D]/82 sm:max-w-none">
@@ -120,29 +99,13 @@ export function GrowthServiceCard({
           <p className="mt-3 line-clamp-3 text-[0.8125rem] leading-[1.65] text-[#1A1A1A]/62 sm:text-sm">{service.short_description}</p>
         ) : null}
 
-        {/* D. Avantaj chip’leri */}
-        {benefitChips.length > 0 ? (
-          <div className="mt-4 flex flex-wrap gap-1.5" aria-label="Öne çıkan avantajlar">
-            {benefitChips.map((item, i) => (
-              <span
-                key={`${i}-${item.slice(0, 24)}`}
-                className="inline-flex max-w-full rounded-md bg-[#F1F4F7] px-2 py-1 text-[11px] font-medium leading-snug text-[#1A1A1A]/68"
-              >
-                <span className="line-clamp-2">{item}</span>
-              </span>
-            ))}
-          </div>
-        ) : null}
+        {/* D. Paket özeti: detay sayfasıyla aynı kaynaktan ilk 4 madde */}
+        <ServiceHighlightsPreview items={service.package_includes} className="mt-4" />
 
-        {/* E. Mini fayda özeti — çerçevesiz, tek blok */}
-        {benefitSummary ? (
-          <p className="mt-4 text-[0.8125rem] leading-relaxed text-[#1A1A1A]/56 sm:text-xs">{benefitSummary}</p>
-        ) : null}
-
-        {/* Üst içerik ile fiyat arasında nefes; kart yüksekliğinde alta iter */}
+        {/* Üst içerik ile fiyat arasında nefes */}
         <div className="min-h-4 flex-1" aria-hidden />
 
-        {/* F. Fiyat — CTA’dan hemen önce, çizgisiz */}
+        {/* E. Fiyat */}
         <div className="mt-6">
           {showSplitPrice ? (
             <div className="flex flex-row items-end justify-between gap-4">
@@ -171,7 +134,7 @@ export function GrowthServiceCard({
           )}
         </div>
 
-        {/* G. CTA */}
+        {/* F. CTA */}
         <div className="mt-4 flex flex-col gap-2.5 sm:flex-row sm:items-stretch">
           <button
             type="button"
