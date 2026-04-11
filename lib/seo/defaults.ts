@@ -16,7 +16,7 @@ export const SITE_DEFAULT_DESCRIPTION =
  * Firma ve blog yazıları kendi görselleriyle bu URL’yi metadata’da geçersiz kılar.
  * Önbellek kırılması için sorgu parametresi.
  */
-export const SITE_DEFAULT_OG_IMAGE_URL = `${absoluteUrl("/og-share.png")}?v=20260406`;
+export const SITE_DEFAULT_OG_IMAGE_URL = `${absoluteUrl("/og-share.png")}?v=20260411`;
 
 export function siteLogoAltText(): string {
   return `${SITE_BRAND_NAME} logosu`;
