@@ -16,6 +16,11 @@ import {
 
 import type { GlobalSearchGroup, GlobalSearchItem } from "@/lib/search/global-search-response";
 import { highlightSearchMatch } from "@/lib/search/highlight-search-match";
+import {
+  isHomeFilteredListingHref,
+  markHomeListingScrollAfterSearch,
+  shouldMarkScrollAfterSearchNav,
+} from "@/lib/search/home-listing-scroll";
 import { buildHomeSearchPath } from "@/lib/search/home-search-url";
 
 type ApiResponse = {
@@ -255,19 +260,25 @@ export function GlobalSearchBar({
   }, [activeIdx, flatItems, listboxId]);
 
   const navigateTo = useCallback(
-    (href: string) => {
+    (href: string, item?: Pick<GlobalSearchItem, "kind">) => {
       setOpen(false);
       setActiveIdx(-1);
+      if (item && shouldMarkScrollAfterSearchNav(href, item.kind)) {
+        markHomeListingScrollAfterSearch();
+      }
+      if (compact) {
+        queueMicrotask(() => inputRef.current?.blur());
+      }
       router.push(href);
     },
-    [router]
+    [compact, router]
   );
 
   const onSubmit = useCallback(
     (e: FormEvent) => {
       e.preventDefault();
       const href = buildHomeSearchPath(hiddenParams, { q: query });
-      navigateTo(href);
+      navigateTo(href, { kind: "all" });
     },
     [hiddenParams, navigateTo, query]
   );
@@ -305,7 +316,7 @@ export function GlobalSearchBar({
       }
       if (e.key === "Enter" && activeIdx >= 0 && flatItems[activeIdx]) {
         e.preventDefault();
-        navigateTo(flatItems[activeIdx].item.href);
+        navigateTo(flatItems[activeIdx].item.href, flatItems[activeIdx].item);
       }
     },
     [activeIdx, flatItems, navigateTo, open, query]
@@ -345,7 +356,11 @@ export function GlobalSearchBar({
                 <Link
                   key={p.href}
                   href={p.href}
-                  onClick={() => setOpen(false)}
+                  onClick={() => {
+                    if (isHomeFilteredListingHref(p.href)) markHomeListingScrollAfterSearch();
+                    if (compact) queueMicrotask(() => inputRef.current?.blur());
+                    setOpen(false);
+                  }}
                   className="inline-flex min-h-9 items-center rounded-lg border border-primary/12 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-primary/5"
                 >
                   {p.title}
@@ -368,7 +383,9 @@ export function GlobalSearchBar({
             <button
               type="button"
               className="mt-3 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95"
-              onClick={() => navigateTo(buildHomeSearchPath(hiddenParams, { q: query }))}
+              onClick={() =>
+                navigateTo(buildHomeSearchPath(hiddenParams, { q: query }), { kind: "all" })
+              }
             >
               Metinle tüm sonuçları görüntüle
             </button>
@@ -377,7 +394,11 @@ export function GlobalSearchBar({
                 <Link
                   key={p.href}
                   href={p.href}
-                  onClick={() => setOpen(false)}
+                  onClick={() => {
+                    if (isHomeFilteredListingHref(p.href)) markHomeListingScrollAfterSearch();
+                    if (compact) queueMicrotask(() => inputRef.current?.blur());
+                    setOpen(false);
+                  }}
                   className="inline-flex min-h-9 items-center rounded-lg border border-primary/12 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-primary/5"
                 >
                   {p.title}
@@ -413,7 +434,7 @@ export function GlobalSearchBar({
                             useMobileWidePanel ? "min-h-12 px-4 py-3" : "min-h-11 px-3 py-2.5"
                           } ${active ? "bg-primary/8 text-primary" : "text-foreground hover:bg-surface"}`}
                           onMouseEnter={() => setActiveIdx(globalIndex)}
-                          onClick={() => navigateTo(item.href)}
+                          onClick={() => navigateTo(item.href, item)}
                         >
                           <span className="mt-0.5">
                             <SuggestionIcon kind={item.kind} />

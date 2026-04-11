@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { DEFAULT_COUNTRIES } from "@/lib/constants";
 import {
@@ -24,6 +24,10 @@ import {
   type SpecializationKey,
 } from "@/lib/constants/firm-specializations";
 import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
+import {
+  consumeHomeListingScrollAfterSearch,
+  HOME_LISTING_SCROLL_AFTER_SEARCH_SESSION_KEY,
+} from "@/lib/search/home-listing-scroll";
 
 type Props = {
   initialFirms: FirmRow[];
@@ -103,6 +107,7 @@ export function FirmsListing({
   children,
 }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const bounds = useMemo(
     () => computeRangeBounds(initialFirms),
     [initialFirms]
@@ -170,6 +175,63 @@ export function FirmsListing({
     // Yalnızca URL / sunucu filtre senkronu; firms realtime ile bounds değişince sıfırlanmaz.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bounds, initialCountries, initialVisaTypes, initialSort: urlKey ile birlikte güncellenir
   }, [urlKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (pathname !== "/") {
+      sessionStorage.removeItem(HOME_LISTING_SCROLL_AFTER_SEARCH_SESSION_KEY);
+    }
+  }, [pathname]);
+
+  /** Üst arama önerisi / metin araması sonrası ana liste bölümüne kaydır (sticky header: `#firmalar` scroll-margin). */
+  useEffect(() => {
+    if (pathname !== "/") return;
+    if (typeof window === "undefined") return;
+    if (sessionStorage.getItem(HOME_LISTING_SCROLL_AFTER_SEARCH_SESSION_KEY) !== "1") return;
+
+    let cancelled = false;
+    let cleared = false;
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+
+    const clearFlag = () => {
+      if (cleared) return;
+      cleared = true;
+      consumeHomeListingScrollAfterSearch();
+    };
+
+    const scrollToListing = () => {
+      if (cancelled) return false;
+      const el = document.getElementById("firmalar");
+      if (!el) return false;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      clearFlag();
+      return true;
+    };
+
+    timeouts.push(
+      window.setTimeout(() => {
+        if (cancelled) return;
+        if (scrollToListing()) return;
+        timeouts.push(
+          window.setTimeout(() => {
+            if (cancelled) return;
+            if (scrollToListing()) return;
+            timeouts.push(
+              window.setTimeout(() => {
+                if (cancelled) return;
+                if (!scrollToListing()) clearFlag();
+              }, 120)
+            );
+          }, 60)
+        );
+      }, 0)
+    );
+
+    return () => {
+      cancelled = true;
+      for (const t of timeouts) window.clearTimeout(t);
+    };
+  }, [pathname, urlKey, query]);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
