@@ -8,12 +8,27 @@ import {
 } from "@/lib/country-guides/taxonomy";
 import { listPublicDocumentPages } from "@/lib/seo/public-routes";
 
+/** Google sitemap urlset — priority 0.0–1.0 (opsiyonel). */
 export type SitemapUrl = {
   loc: string;
   lastmod?: string;
+  changefreq?: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
+  /** 0 ile 1 arası; çıktıda nokta ayırıcılı ondalık stringe dönüştürülür. */
+  priority?: number;
 };
 
 type SitemapSection = "static" | "firms" | "blog" | "flow" | "categories" | "countries" | "visa-types";
+
+/** Sitemap index’te yalnızca gerçekten URL içeren bölümler (boş alt dosya = tarama israfı). */
+const SITEMAP_INDEX_SECTIONS: SitemapSection[] = ["static", "firms", "blog"];
+
+/** Eski /sitemaps/{flow|categories|...}.xml istekleri 404 olmasın; boş urlset döner. */
+const LEGACY_EMPTY_SITEMAP_SECTIONS = new Set<SitemapSection>([
+  "flow",
+  "categories",
+  "countries",
+  "visa-types",
+]);
 
 const SITEMAP_CHUNK_SIZE = 40000;
 const EXCLUDED_PATH_PREFIXES = [
@@ -100,6 +115,12 @@ function toLastmod(value: string | null | undefined): string | undefined {
   return date.toISOString();
 }
 
+function formatSitemapPriority(value: number | undefined): string | undefined {
+  if (value === undefined || Number.isNaN(value)) return undefined;
+  const clamped = Math.min(1, Math.max(0, value));
+  return String(Math.round(clamped * 100) / 100);
+}
+
 const getFirmRows = unstable_cache(
   async () => {
     if (!isSupabaseConfigured()) return [] as Array<{ slug: string; updated_at: string | null; created_at: string | null }>;
@@ -156,31 +177,42 @@ const getBlogRows = unstable_cache(
   { revalidate: 900 }
 );
 
+function buildStaticSectionUrls(): SitemapUrl[] {
+  const rows: SitemapUrl[] = [
+    { loc: normalizeCanonicalUrl("/"), changefreq: "daily", priority: 1 },
+    { loc: normalizeCanonicalUrl("/akis"), changefreq: "daily", priority: 0.9 },
+    { loc: normalizeCanonicalUrl("/kesfet"), changefreq: "weekly", priority: 0.85 },
+    { loc: normalizeCanonicalUrl(COUNTRY_GUIDE_CATALOG_BASE_PATH), changefreq: "weekly", priority: 0.85 },
+  ];
+  for (const slug of listExploreSlugs()) {
+    rows.push({
+      loc: normalizeCanonicalUrl(`/kesfet/${slug}`),
+      changefreq: "weekly",
+      priority: 0.72,
+    });
+  }
+  for (const slug of listCountryGuideSlugs()) {
+    rows.push({
+      loc: normalizeCanonicalUrl(`${COUNTRY_GUIDE_CATALOG_BASE_PATH}/${slug}`),
+      changefreq: "weekly",
+      priority: 0.78,
+    });
+  }
+  for (const p of listPublicDocumentPages()) {
+    rows.push({
+      loc: normalizeCanonicalUrl(p.path),
+      changefreq: p.changeFrequency,
+      priority: p.priority,
+    });
+  }
+  return dedupeUrls(rows);
+}
+
 export async function getIndexableUrlsBySection(section: SitemapSection): Promise<SitemapUrl[]> {
   const nowIso = new Date().toISOString();
 
   if (section === "static") {
-    const explorePaths = listExploreSlugs().map((slug) => `/kesfet/${slug}`);
-    const countryGuidePaths = [
-      COUNTRY_GUIDE_CATALOG_BASE_PATH,
-      ...listCountryGuideSlugs().map(
-        (slug) => `${COUNTRY_GUIDE_CATALOG_BASE_PATH}/${slug}`
-      ),
-    ];
-    const staticPaths = [
-      "/",
-      "/akis",
-      "/kesfet",
-      ...explorePaths,
-      ...countryGuidePaths,
-      ...listPublicDocumentPages().map((p) => p.path),
-    ];
-    return dedupeUrls(
-      staticPaths.map((path) => ({
-        loc: normalizeCanonicalUrl(path),
-        lastmod: nowIso,
-      }))
-    );
+    return buildStaticSectionUrls();
   }
 
   if (section === "firms") {
@@ -189,6 +221,8 @@ export async function getIndexableUrlsBySection(section: SitemapSection): Promis
       firms.map((f) => ({
         loc: normalizeCanonicalUrl(`/firma/${f.slug}`),
         lastmod: toLastmod(f.updated_at ?? f.created_at) ?? nowIso,
+        changefreq: "weekly" as const,
+        priority: 0.64,
       }))
     );
   }
@@ -199,28 +233,22 @@ export async function getIndexableUrlsBySection(section: SitemapSection): Promis
       blogs.map((b) => ({
         loc: normalizeCanonicalUrl(`/firma/${b.company_slug}/blog/${b.post_slug}`),
         lastmod: toLastmod(b.updated_at ?? b.published_at) ?? nowIso,
+        changefreq: "monthly" as const,
+        priority: 0.55,
       }))
     );
   }
 
-  if (section === "flow") {
-    return [{ loc: normalizeCanonicalUrl("/akis"), lastmod: nowIso }];
-  }
-
-  // Future-proof buckets for SEO landing expansions.
+  // flow / categories / countries / visa-types: index’te yok; boş urlset için LEGACY_EMPTY_SITEMAP_SECTIONS.
   return [];
 }
 
 export async function getSitemapIndexEntries(): Promise<SitemapUrl[]> {
-  const sections: SitemapSection[] = ["static", "firms", "blog", "flow", "categories", "countries", "visa-types"];
-  const out: SitemapUrl[] = [];
   const nowIso = new Date().toISOString();
-
-  for (const section of sections) {
-    out.push({ loc: normalizeCanonicalUrl(`/sitemaps/${section}.xml`), lastmod: nowIso });
-  }
-
-  return out;
+  return SITEMAP_INDEX_SECTIONS.map((section) => ({
+    loc: normalizeCanonicalUrl(`/sitemaps/${section}.xml`),
+    lastmod: nowIso,
+  }));
 }
 
 export async function getSitemapChunk(sectionAndPage: string): Promise<SitemapUrl[]> {
@@ -228,7 +256,12 @@ export async function getSitemapChunk(sectionAndPage: string): Promise<SitemapUr
   if (!match) return [];
   const section = (match[1] ?? "") as SitemapSection;
   const page = Number(match[2] ?? "1");
-  if (!["static", "firms", "blog", "flow", "categories", "countries", "visa-types"].includes(section)) return [];
+  const known =
+    section === "static" ||
+    section === "firms" ||
+    section === "blog" ||
+    LEGACY_EMPTY_SITEMAP_SECTIONS.has(section);
+  if (!known) return [];
   if (!Number.isFinite(page) || page < 1) return [];
 
   const urls = await getIndexableUrlsBySection(section);
@@ -248,10 +281,13 @@ export function buildSitemapIndexXml(entries: SitemapUrl[]): string {
 
 export function buildUrlSetXml(entries: SitemapUrl[]): string {
   const nodes = entries
-    .map(
-      (e) =>
-        `<url><loc>${xmlEscape(e.loc)}</loc>${e.lastmod ? `<lastmod>${xmlEscape(e.lastmod)}</lastmod>` : ""}</url>`
-    )
+    .map((e) => {
+      const lastmod = e.lastmod ? `<lastmod>${xmlEscape(e.lastmod)}</lastmod>` : "";
+      const changefreq = e.changefreq ? `<changefreq>${xmlEscape(e.changefreq)}</changefreq>` : "";
+      const pr = formatSitemapPriority(e.priority);
+      const priority = pr !== undefined ? `<priority>${xmlEscape(pr)}</priority>` : "";
+      return `<url><loc>${xmlEscape(e.loc)}</loc>${lastmod}${changefreq}${priority}</url>`;
+    })
     .join("");
   return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${nodes}</urlset>`;
 }
