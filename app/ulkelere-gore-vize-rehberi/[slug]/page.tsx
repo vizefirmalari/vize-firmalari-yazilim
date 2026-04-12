@@ -27,6 +27,9 @@ import { IsvecCountryGuideView } from "@/components/country-guides/isvec-country
 import { PolonyaCountryGuideView } from "@/components/country-guides/polonya-country-guide-view";
 import { LetonyaCountryGuideView } from "@/components/country-guides/letonya-country-guide-view";
 import { DanimarkaCountryGuideView } from "@/components/country-guides/danimarka-country-guide-view";
+import { FransaCountryGuideView } from "@/components/country-guides/fransa-country-guide-view";
+import { HirvatistanCountryGuideView } from "@/components/country-guides/hirvatistan-country-guide-view";
+import { AvusturyaCountryGuideView } from "@/components/country-guides/avusturya-country-guide-view";
 import { getFirmsForCountryGuide } from "@/lib/data/country-guide-firms";
 import { AMERIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/amerika-guide-sections";
 import { ALMANYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/almanya-guide-sections";
@@ -40,6 +43,9 @@ import { ISVEC_SEO_KEYWORD_TAGS } from "@/lib/country-guides/isvec-guide-section
 import { POLONYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/polonya-guide-sections";
 import { LETONYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/letonya-guide-sections";
 import { DANIMARKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/danimarka-guide-sections";
+import { FRANSA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/fransa-guide-sections";
+import { HIRVATISTAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/hirvatistan-guide-sections";
+import { AVUSTURYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/avusturya-guide-sections";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -55,6 +61,9 @@ const ISVEC_SLUG = "isvec";
 const POLONYA_SLUG = "polonya";
 const LETONYA_SLUG = "letonya";
 const DANIMARKA_SLUG = "danimarka";
+const FRANSA_SLUG = "fransa";
+const HIRVATISTAN_SLUG = "hirvatistan";
+const AVUSTURYA_SLUG = "avusturya";
 
 /** Paneldeki ülke / yayın durumu değişince rehber sayfaları güncel kalsın (özellikle firma şeridi). */
 export const dynamic = "force-dynamic";
@@ -131,7 +140,28 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                                 url: absoluteUrl("/country-guides/danimarka/copenhagen-nyhavn-canal-dusk-golden.png"),
                                 alt: "Kopenhag Nyhavn kanalı, renkli tarihî evler ve alacakaranlıkta sokak lambası yansımaları — Danimarka vize ve oturum rehberi",
                               }
-                            : resolveDefaultSiteShareImage();
+                            : slug === FRANSA_SLUG
+                              ? {
+                                  url: absoluteUrl(
+                                    "/country-guides/fransa/paris-eiffel-champ-de-mars-trees-day.png"
+                                  ),
+                                  alt: "Paris Champ de Mars ve Eyfel Kulesi, ağaç sıraları ve açık gökyüzü — Fransa vize ve oturum rehberi",
+                                }
+                              : slug === HIRVATISTAN_SLUG
+                                ? {
+                                    url: absoluteUrl(
+                                      "/country-guides/hirvatistan/dubrovnik-old-town-aerial-adriatic.png"
+                                    ),
+                                    alt: "Dubrovnik eski şehir ve Adriatik kıyısı, kuşbakışı — Hırvatistan vize ve oturum rehberi",
+                                  }
+                                : slug === AVUSTURYA_SLUG
+                                  ? {
+                                      url: absoluteUrl(
+                                        "/country-guides/avusturya/wien-parlament-pallas-athene-night.png"
+                                      ),
+                                      alt: "Viyana Parlamento binası gece ışıkları ve Pallas Athena çeşmesi — Avusturya vize ve oturum rehberi",
+                                    }
+                                  : resolveDefaultSiteShareImage();
   return {
     title: entry.seoTitle,
     description: entry.metaDescription,
@@ -147,6 +177,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ...(slug === POLONYA_SLUG ? { keywords: POLONYA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === LETONYA_SLUG ? { keywords: LETONYA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === DANIMARKA_SLUG ? { keywords: DANIMARKA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === FRANSA_SLUG ? { keywords: FRANSA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === HIRVATISTAN_SLUG ? { keywords: HIRVATISTAN_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === AVUSTURYA_SLUG ? { keywords: AVUSTURYA_SEO_KEYWORD_TAGS } : {}),
     alternates: { canonical: absoluteUrl(path) },
     openGraph: {
       title: `${entry.nameTr} | ${SITE_BRAND_NAME}`,
@@ -188,6 +221,9 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const isPolonya = slug === POLONYA_SLUG;
   const isLetonya = slug === LETONYA_SLUG;
   const isDanimarka = slug === DANIMARKA_SLUG;
+  const isFransa = slug === FRANSA_SLUG;
+  const isHirvatistan = slug === HIRVATISTAN_SLUG;
+  const isAvusturya = slug === AVUSTURYA_SLUG;
   const amerikaFirms = isAmerika
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
     : [];
@@ -206,6 +242,11 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const polonyaFirms = isPolonya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const letonyaFirms = isLetonya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const danimarkaFirms = isDanimarka ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const fransaFirms = isFransa ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const hirvatistanFirms = isHirvatistan
+    ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
+    : [];
+  const avusturyaFirms = isAvusturya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
 
   return (
     <>
@@ -257,6 +298,12 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
             <LetonyaCountryGuideView entry={entry} region={region} firms={letonyaFirms} />
           ) : isDanimarka ? (
             <DanimarkaCountryGuideView entry={entry} region={region} firms={danimarkaFirms} />
+          ) : isFransa ? (
+            <FransaCountryGuideView entry={entry} region={region} firms={fransaFirms} />
+          ) : isHirvatistan ? (
+            <HirvatistanCountryGuideView entry={entry} region={region} firms={hirvatistanFirms} />
+          ) : isAvusturya ? (
+            <AvusturyaCountryGuideView entry={entry} region={region} firms={avusturyaFirms} />
           ) : (
             <>
               <header className="rounded-2xl border border-border bg-white p-6 shadow-[0_2px_14px_rgba(11,60,93,0.06)] sm:p-8">

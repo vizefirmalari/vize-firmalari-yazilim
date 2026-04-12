@@ -144,7 +144,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "Almanya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
         "Almanya’da iş arama, başvuru kültürü, staj, mesleki eğitim, taşınma ve çalışma-yaşam başlıklarında EURES kaynaklı özet rehber; Schengen ve oturum için resmî bilgileri doğrulayın."
       ),
-      entry("avusturya", "Avusturya", "at", "Avusturya", "Turistik ve ulusal D tipi süreçlere genel bakış.", "Avusturya vize rehberi | Vize Firmaları", "Avusturya Schengen ve oturum başlıklarına ülke rehberi girişi."),
+      entry(
+        "avusturya",
+        "Avusturya",
+        "at",
+        "Avusturya",
+        "AMS ve alle jobs ile iş arama, Mietrecht ve Meldeamt, marjinal eşik ve Lehre başlıklarında EURES özetine giriş.",
+        "Avusturya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "Avusturya’da iş arama, başvuru kültürü, staj, çıraklık, taşınma, kira ve kayıt, çalışma-yaşam ve vergi-sağlık başlıklarında EURES kaynaklı özet rehber; Schengen ve oturum için resmî bilgileri doğrulayın."
+      ),
       entry(
         "belcika",
         "Belçika",
@@ -167,8 +175,24 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
       ),
       entry("estonya", "Estonya", "ee", "Estonya", "Dijital oturum ve Schengen başvurularına giriş.", "Estonya vize rehberi | Vize Firmaları", "Estonya Schengen ve çalışma rehberi."),
       entry("finlandiya", "Finlandiya", "fi", "Finlandiya", "Turistik ve çalışma vizeleri ile oturuma giriş.", "Finlandiya vize rehberi | Vize Firmaları", "Finlandiya Schengen başvuruları."),
-      entry("fransa", "Fransa", "fr", "Fransa", "Schengen, ulusal uzun süreli vizeler ve oturum başlıklarına giriş.", "Fransa vize rehberi | Vize Firmaları", "Fransa için turistik ve çalışma vizesi rehberi girişi."),
-      entry("hirvatistan", "Hırvatistan", "hr", "Hırvatistan", "Schengen üyesi; turistik ve çalışma süreçlerine giriş.", "Hırvatistan vize rehberi | Vize Firmaları", "Hırvatistan Schengen başvuruları ve oturum."),
+      entry(
+        "fransa",
+        "Fransa",
+        "fr",
+        "Fransa",
+        "France Travail, APEC ve Cap Emploi ile iş arama; alternance ve staj; SMIC ve bordro; préfecture ikamet; CPAM sağlık ve eğitim başlıklarına giriş.",
+        "Fransa Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "EURES “Fransa’da yaşam ve çalışma koşulları” özetine dayanır: France Travail ve uluslararası iş arama, CV ve ön yazı, staj ve vize ayrımı, çıraklık ücret tabloları, konut ve okul kaydı, AB/EEA ikamet kartı ve üçüncü ülke yolları, iş sözleşmeleri ve SMIC, izinler, vergi, sağlık ve engelli istihdamı; güncel bilgileri service-public.fr ve francetravail.fr üzerinden doğrulayın."
+      ),
+      entry(
+        "hirvatistan",
+        "Hırvatistan",
+        "hr",
+        "Hırvatistan",
+        "HZZ Burza rada, OIB, geçici oturum, asgari ücret ve Adriyatik bölgesinde konut fiyatları başlıklarına giriş.",
+        "Hırvatistan Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "EURES “Hırvatistan’da yaşam ve çalışma koşulları” özetine dayanır: istihdam hizmeti ve iş portalları, staj ve meslekî eğitim, kira ve eğitim kayıtları, AEA ikamet kaydı ve üçüncü ülke oturum türleri, iş sözleşmesi ve mevsimlik çalışma, 2026 asgari ücret, izinler ve vergi, HZZO sağlık ve engelli istihdamı; güncel bilgileri hzz.hr ve mup.gov.hr üzerinden doğrulayın."
+      ),
       entry(
         "hollanda",
         "Hollanda",
