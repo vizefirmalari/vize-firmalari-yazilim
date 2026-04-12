@@ -1,6 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import {
+  indexNowKeyFromTxtPath,
+  normalizeIndexNowKeyFromEnv,
+} from "@/lib/seo/indexnow";
+
 function withNoStore(res: NextResponse) {
   res.headers.set("Cache-Control", "no-store, must-revalidate");
   return res;
@@ -18,11 +23,26 @@ function withPrivateNoIndex(res: NextResponse) {
  * /admin/* için ek olarak admin rolü kontrolü.
  */
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  const indexNowKey = normalizeIndexNowKeyFromEnv();
+  if (indexNowKey) {
+    const pathKey = indexNowKeyFromTxtPath(pathname);
+    if (pathKey && pathKey === indexNowKey) {
+      return new NextResponse(indexNowKey, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "public, max-age=86400, s-maxage=86400",
+        },
+      });
+    }
+  }
+
   let response = NextResponse.next({ request });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const pathname = request.nextUrl.pathname;
 
   if (!supabaseUrl || !supabaseKey) {
     if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {

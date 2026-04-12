@@ -2,6 +2,7 @@
 
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { sanitizeFirmBlogBodyRichForStorage } from "@/lib/blog/firm-blog-body-html";
 import { stripFaqAnswerToPlainText } from "@/lib/blog/firm-blog-faq";
@@ -9,6 +10,8 @@ import { normalizeBlogCtaButtons } from "@/lib/blog/cta-buttons";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { absoluteUrl } from "@/lib/seo/canonical";
+import { submitIndexNowUrls } from "@/lib/seo/indexnow";
 
 type SaveMode = "draft" | "scheduled" | "published";
 
@@ -235,6 +238,11 @@ export async function saveFirmBlogPost(
   revalidatePath(`/panel/${firmId}/paylasim`);
   revalidatePath(`/panel/${firmId}/paylasim/blog`);
   revalidatePath(`/firma/${String(firm.slug)}`);
+
+  if (status === "published" && firm.slug) {
+    const blogUrl = absoluteUrl(`/firma/${String(firm.slug)}/blog/${slug}`);
+    after(() => submitIndexNowUrls([blogUrl]));
+  }
 
   return { ok: true, id: savedId, status };
 }

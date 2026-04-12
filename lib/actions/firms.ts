@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { logAdminActivity } from "@/lib/actions/activity";
 import { getAdminContext } from "@/lib/auth/admin";
@@ -12,6 +13,8 @@ import {
   recalculateCorporatenessScoreWithClient,
 } from "@/lib/firms/recalculate-corporateness";
 import { deriveVisaRegions } from "@/lib/visa-regions/derive";
+import { absoluteUrl } from "@/lib/seo/canonical";
+import { submitIndexNowUrls } from "@/lib/seo/indexnow";
 
 /** Yönetici paneli / cron — `WithClient` doğrudan `lib/firms/recalculate-corporateness` içinden import edin. */
 export { recalculateCorporatenessScore };
@@ -19,6 +22,16 @@ export { recalculateCorporatenessScore };
 type SupabaseAdmin = NonNullable<
   Awaited<ReturnType<typeof createSupabaseServerClient>>
 >;
+
+function scheduleIndexNowForFirmSlugs(slugs: string[]) {
+  const urls = slugs
+    .map((s) => String(s).trim())
+    .filter(Boolean)
+    .map((slug) => absoluteUrl(`/firma/${slug}`));
+  if (urls.length) {
+    after(() => submitIndexNowUrls(urls));
+  }
+}
 
 function emptyToNull(s: string | null | undefined): string | null {
   if (s === undefined || s === null) return null;
@@ -369,6 +382,9 @@ export async function createFirmFromForm(
   revalidatePath("/");
   revalidatePath("/admin/firms");
   revalidatePath(`/firma/${v.slug}`);
+  if (v.status === "published") {
+    scheduleIndexNowForFirmSlugs([v.slug]);
+  }
   return { ok: true, id: firmId };
 }
 
@@ -443,6 +459,9 @@ export async function updateFirmFromForm(
   revalidatePath("/");
   revalidatePath("/admin/firms");
   revalidatePath(`/firma/${v.slug}`);
+  if (v.status === "published") {
+    scheduleIndexNowForFirmSlugs([v.slug]);
+  }
   return { ok: true };
 }
 
@@ -479,15 +498,20 @@ export async function setFirmStatus(
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false, error: "Supabase yapılandırması eksik" };
 
-  const { error } = await supabase
+  const { data: row, error } = await supabase
     .from("firms")
     .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", firmId);
+    .eq("id", firmId)
+    .select("slug")
+    .maybeSingle();
   if (error) return { ok: false, error: error.message };
 
   await logAdminActivity(supabase, ctx.userId, `firm.status.${status}`, "firm", firmId, null);
   revalidatePath("/");
   revalidatePath("/admin/firms");
+  if (status === "published" && row?.slug) {
+    scheduleIndexNowForFirmSlugs([String(row.slug)]);
+  }
   return { ok: true };
 }
 
@@ -510,14 +534,18 @@ export async function bulkFirmAction(
     });
   } else {
     const status = action === "publish" ? "published" : "inactive";
-    const { error } = await supabase
+    const { data: rows, error } = await supabase
       .from("firms")
       .update({ status, updated_at: new Date().toISOString() })
-      .in("id", ids);
+      .in("id", ids)
+      .select("slug");
     if (error) return { ok: false, error: error.message };
     await logAdminActivity(supabase, ctx.userId, `firm.bulk_${status}`, "firm", null, {
       count: ids.length,
     });
+    if (action === "publish" && rows?.length) {
+      scheduleIndexNowForFirmSlugs(rows.map((r) => String(r.slug ?? "")));
+    }
   }
 
   revalidatePath("/");
