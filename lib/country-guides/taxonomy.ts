@@ -246,7 +246,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "İtalya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
         "SPID ve CPI ile iş arama, clicLavoro, staj ve çıraklık çerçevesi, konut ve vergi özetleriyle EURES kaynaklı rehber; Schengen ve oturum için resmî bilgileri doğrulayın."
       ),
-      entry("izlanda", "İzlanda", "is", "İzlanda", "Schengen ve çalışma izni süreçlerine giriş.", "İzlanda vize rehberi | Vize Firmaları", "İzlanda Schengen başvuruları."),
+      entry(
+        "izlanda",
+        "İzlanda",
+        "is",
+        "İzlanda",
+        "Vinnumálastofnun, EURES, toplu sözleşmeler, Þjóðskrá kaydı ve ISK tabanlı yaşam maliyeti özetine giriş.",
+        "İzlanda Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "EURES “İzlanda’da yaşam ve çalışma koşulları” özetine dayanır: iş arama ve İzlandaca ilanlar, Europass, staj ve meslekî çıraklık, konut ve okul, Þjóðskrá ile ikamet ve sağlık (E-104), toplu anlaşma üstünlüğü ve yazılı sözleşme, ücret–bordro, çalışma süresi ve izinler, sendika ve grev oylaması, vergi ve sağlık sistemi, ulaşım, serbest meslek ve posting.is, ICF ile engelli istihdamı ve maaş sübvansiyonu; güncel bilgileri vmst.is, skra.is ve island.is üzerinden doğrulayın."
+      ),
       entry(
         "letonya",
         "Letonya",
@@ -257,8 +265,24 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "NVA ve EURES ile iş arama, lisanslı işe yerleştirme, yazılı iş sözleşmesi ve ücret ödeme sıklığı, PMLP ikamet kaydı, kira hukuku ve yaşam maliyeti, asgari ücret ve VID vergi özetleri, VDI iş hukuku ve VMNVD sağlık sistemi özetleriyle EURES kaynaklı rehber; güncel bilgileri pmlp.gov.lv ve vid.gov.lv üzerinden doğrulayın."
       ),
       entry("liechtenstein", "Liechtenstein", "li", "Liechtenstein", "İsviçre ile bağlantılı Schengen başvurularına giriş.", "Liechtenstein vize rehberi | Vize Firmaları", "Liechtenstein Schengen giriş rehberi."),
-      entry("litvanya", "Litvanya", "lt", "Litvanya", "Schengen ve çalışma izni süreçlerine giriş.", "Litvanya vize rehberi | Vize Firmaları", "Litvanya Schengen rehberi."),
-      entry("luksemburg", "Lüksemburg", "lu", "Lüksemburg", "Schengen ve çalışma süreçlerine giriş.", "Lüksemburg vize rehberi | Vize Firmaları", "Lüksemburg vize ve oturum girişi."),
+      entry(
+        "litvanya",
+        "Litvanya",
+        "lt",
+        "Litvanya",
+        "UŽT, EURES, MIGRIS ikamet, İş Kanunu sözleşme türleri ve EUR tabanlı ücret–vergi özetine giriş.",
+        "Litvanya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "EURES “Litvanya’da yaşam ve çalışma koşulları” özetine dayanır: AB serbest dolaşımı ve istisnai kamu meslekleri, UŽT ile iş arama ve ücretsiz özel aracılık, CV ve Europass, staj ve çıraklık geri ödemeleri, konut ve okul e-başvurusu, MIGRIS ve oturum izinleri, sözleşme türleri ve çocuk işçiliği sınırları, ücret ve bordro, çalışma süresi ve izinler, sendika–işyeri konseyi ve grev bildirimi, 2025 vergi oranları, sağlık sigortası, yaşam maliyeti ve e-vinyet, engelli istihdam destekleri; güncel bilgileri migracija.lt ve uzt.lt üzerinden doğrulayın."
+      ),
+      entry(
+        "luksemburg",
+        "Lüksemburg",
+        "lu",
+        "Lüksemburg",
+        "ADEM, çok dillilik, SSM, ücretsiz toplu taşıma ve guichet.public.lu yerleşim bildirimine giriş.",
+        "Lüksemburg Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "EURES “Lüksemburg’da yaşam ve çalışma koşulları” özetine dayanır: ADEM ve sektör portalları, spekülatif başvuru ve dil beklentisi, 2020 staj ve üçüncü ülke izinleri, ADEM çıraklığı ve meslek odaları, konut ve sınır bölgeleri, çok dilli okul ve zorunluluk süresi, AB belediye bildirimi ve üçüncü ülke prosedürleri, CDI/CDD ve deneme, SSM ile endeksleme, çalışma süresi ve izinler, fesih ve ONC öncesi grev, vergi ve KDV, CNS sağlığı, ücretsiz ulaşım, ADEM engelli istihdamı; güncel bilgileri guichet.public.lu ve adem.public.lu üzerinden doğrulayın."
+      ),
       entry(
         "macaristan",
         "Macaristan",
