@@ -179,7 +179,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "İspanya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
         "SEPE ve özerk topluluk istihdam servisleri, staj ve çift öğrenme (FCT), NIE ve empadronamiento, 2023 iş hukuku reformu ile SMI ve vergi özetleriyle EURES kaynaklı rehber; Schengen ve oturum için resmî bilgileri doğrulayın."
       ),
-      entry("isvec", "İsveç", "se", "İsveç", "Schengen ve çalışma izni süreçlerine giriş.", "İsveç vize rehberi | Vize Firmaları", "İsveç için vize ve çalışma rehberi."),
+      entry(
+        "isvec",
+        "İsveç",
+        "se",
+        "İsveç",
+        "Schengen, çalışma izni ve oturum süreçlerine giriş.",
+        "İsveç Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "Platsbanken ve Arbetsförmedlingen ile iş arama, LAS ve kolektif sözleşmeler, personnummer, vergi ve 1177 sağlık hattı özetleriyle EURES kaynaklı rehber; güncel mevzuatı Skatteverket, Migrationsverket ve arbetsformedlingen.se üzerinden doğrulayın."
+      ),
       entry("isvicre", "İsviçre", "ch", "İsviçre", "Schengen üyesi; ulusal çalışma izinleri ile birlikte değerlendirme.", "İsviçre vize rehberi | Vize Firmaları", "İsviçre Schengen ve çalışma izni girişi."),
       entry(
         "italya",
@@ -191,7 +199,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "SPID ve CPI ile iş arama, clicLavoro, staj ve çıraklık çerçevesi, konut ve vergi özetleriyle EURES kaynaklı rehber; Schengen ve oturum için resmî bilgileri doğrulayın."
       ),
       entry("izlanda", "İzlanda", "is", "İzlanda", "Schengen ve çalışma izni süreçlerine giriş.", "İzlanda vize rehberi | Vize Firmaları", "İzlanda Schengen başvuruları."),
-      entry("letonya", "Letonya", "lv", "Letonya", "Schengen ve oturum süreçlerine giriş.", "Letonya vize rehberi | Vize Firmaları", "Letonya için vize rehberi."),
+      entry(
+        "letonya",
+        "Letonya",
+        "lv",
+        "Letonya",
+        "Schengen, çalışma ve oturum süreçlerine giriş.",
+        "Letonya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "NVA ve EURES ile iş arama, lisanslı işe yerleştirme, yazılı iş sözleşmesi ve ücret ödeme sıklığı, PMLP ikamet kaydı, kira hukuku ve yaşam maliyeti, asgari ücret ve VID vergi özetleri, VDI iş hukuku ve VMNVD sağlık sistemi özetleriyle EURES kaynaklı rehber; güncel bilgileri pmlp.gov.lv ve vid.gov.lv üzerinden doğrulayın."
+      ),
       entry("liechtenstein", "Liechtenstein", "li", "Liechtenstein", "İsviçre ile bağlantılı Schengen başvurularına giriş.", "Liechtenstein vize rehberi | Vize Firmaları", "Liechtenstein Schengen giriş rehberi."),
       entry("litvanya", "Litvanya", "lt", "Litvanya", "Schengen ve çalışma izni süreçlerine giriş.", "Litvanya vize rehberi | Vize Firmaları", "Litvanya Schengen rehberi."),
       entry("luksemburg", "Lüksemburg", "lu", "Lüksemburg", "Schengen ve çalışma süreçlerine giriş.", "Lüksemburg vize rehberi | Vize Firmaları", "Lüksemburg vize ve oturum girişi."),
@@ -206,7 +222,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "Jobsplus ve EURES Malta ile iş arama, staj ve MCAST/ITS çıraklığı, Identity Malta ikamet kartı, kira–satın alma, asgari ücret ve vergi özetleriyle EURES kaynaklı rehber; Schengen ve oturum için resmî bilgileri doğrulayın."
       ),
       entry("norvec", "Norveç", "no", "Norveç", "Schengen üyesi; çalışma izni süreçlerine giriş.", "Norveç vize rehberi | Vize Firmaları", "Norveç Schengen ve çalışma rehberi."),
-      entry("polonya", "Polonya", "pl", "Polonya", "Schengen ve çalışma vizelerine giriş.", "Polonya vize rehberi | Vize Firmaları", "Polonya Schengen başvuruları."),
+      entry(
+        "polonya",
+        "Polonya",
+        "pl",
+        "Polonya",
+        "Schengen, çalışma ve oturum süreçlerine giriş.",
+        "Polonya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "ePraca ve EURES ile iş arama, KRAZ kayıtlı istihdam büroları, İş Kanunu ve uzaktan çalışma, PESEL ve voyvoda ikamet kaydı, asgari ücret ve ZUS, NFZ sağlık güvencesi özetleriyle EURES kaynaklı rehber; güncel bilgileri gov.pl ve praca.gov.pl üzerinden doğrulayın."
+      ),
       entry("portekiz", "Portekiz", "pt", "Portekiz", "Schengen ve Golden Visa süreçlerine giriş.", "Portekiz vize rehberi | Vize Firmaları", "Portekiz turistik ve oturum rehberi."),
       entry("romanya", "Romanya", "ro", "Romanya", "Güncel Schengen üyeliği ile başvuru mantığına giriş.", "Romanya vize rehberi | Vize Firmaları", "Romanya Schengen ve çalışma rehberi."),
       entry("slovakya", "Slovakya", "sk", "Slovakya", "Schengen ve çalışma süreçlerine giriş.", "Slovakya vize rehberi | Vize Firmaları", "Slovakya Schengen rehberi."),

@@ -23,6 +23,9 @@ import { BelcikaCountryGuideView } from "@/components/country-guides/belcika-cou
 import { MaltaCountryGuideView } from "@/components/country-guides/malta-country-guide-view";
 import { IspanyaCountryGuideView } from "@/components/country-guides/ispanya-country-guide-view";
 import { HollandaCountryGuideView } from "@/components/country-guides/hollanda-country-guide-view";
+import { IsvecCountryGuideView } from "@/components/country-guides/isvec-country-guide-view";
+import { PolonyaCountryGuideView } from "@/components/country-guides/polonya-country-guide-view";
+import { LetonyaCountryGuideView } from "@/components/country-guides/letonya-country-guide-view";
 import { getFirmsForCountryGuide } from "@/lib/data/country-guide-firms";
 import { AMERIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/amerika-guide-sections";
 import { ALMANYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/almanya-guide-sections";
@@ -32,6 +35,9 @@ import { BELCIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/belcika-guide-sec
 import { MALTA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/malta-guide-sections";
 import { ISPANYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/ispanya-guide-sections";
 import { HOLLANDA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/hollanda-guide-sections";
+import { ISVEC_SEO_KEYWORD_TAGS } from "@/lib/country-guides/isvec-guide-sections";
+import { POLONYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/polonya-guide-sections";
+import { LETONYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/letonya-guide-sections";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -43,6 +49,9 @@ const BELCIKA_SLUG = "belcika";
 const MALTA_SLUG = "malta";
 const ISPANYA_SLUG = "ispanya";
 const HOLLANDA_SLUG = "hollanda";
+const ISVEC_SLUG = "isvec";
+const POLONYA_SLUG = "polonya";
+const LETONYA_SLUG = "letonya";
 
 /** Paneldeki ülke / yayın durumu değişince rehber sayfaları güncel kalsın (özellikle firma şeridi). */
 export const dynamic = "force-dynamic";
@@ -99,7 +108,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                         url: absoluteUrl("/country-guides/hollanda/den-haag-mauritshuis-hofvijver.png"),
                         alt: "Lahey Mauritshuis ve Hofvijver — Hollanda vize ve oturum rehberi",
                       }
-                    : resolveDefaultSiteShareImage();
+                    : slug === ISVEC_SLUG
+                      ? {
+                          url: absoluteUrl("/country-guides/isvec/stockholm-riksdag-helgeandsholmen.png"),
+                          alt: "Stockholm Riksdag ve Helgeandsholmen — İsveç vize ve oturum rehberi",
+                        }
+                      : slug === POLONYA_SLUG
+                        ? {
+                            url: absoluteUrl("/country-guides/polonya/krakow-rynek-town-hall-tower.png"),
+                            alt: "Kraków Rynek Główny Belediye Kulesi — Polonya vize ve oturum rehberi",
+                          }
+                        : slug === LETONYA_SLUG
+                          ? {
+                              url: absoluteUrl("/country-guides/letonya/riga-daugava-vansu-dom-sunny.png"),
+                              alt: "Rīga Vecrīga, Rīgas Doms ve Daugava üzerinde Vanšu tilts — Letonya vize ve oturum rehberi",
+                            }
+                          : resolveDefaultSiteShareImage();
   return {
     title: entry.seoTitle,
     description: entry.metaDescription,
@@ -111,6 +135,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ...(slug === MALTA_SLUG ? { keywords: MALTA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === ISPANYA_SLUG ? { keywords: ISPANYA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === HOLLANDA_SLUG ? { keywords: HOLLANDA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === ISVEC_SLUG ? { keywords: ISVEC_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === POLONYA_SLUG ? { keywords: POLONYA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === LETONYA_SLUG ? { keywords: LETONYA_SEO_KEYWORD_TAGS } : {}),
     alternates: { canonical: absoluteUrl(path) },
     openGraph: {
       title: `${entry.nameTr} | ${SITE_BRAND_NAME}`,
@@ -148,6 +175,9 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const isMalta = slug === MALTA_SLUG;
   const isIspanya = slug === ISPANYA_SLUG;
   const isHollanda = slug === HOLLANDA_SLUG;
+  const isIvec = slug === ISVEC_SLUG;
+  const isPolonya = slug === POLONYA_SLUG;
+  const isLetonya = slug === LETONYA_SLUG;
   const amerikaFirms = isAmerika
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
     : [];
@@ -162,6 +192,9 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const maltaFirms = isMalta ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const ispanyaFirms = isIspanya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const hollandaFirms = isHollanda ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const isvecFirms = isIvec ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const polonyaFirms = isPolonya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const letonyaFirms = isLetonya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
 
   return (
     <>
@@ -205,6 +238,12 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
             <IspanyaCountryGuideView entry={entry} region={region} firms={ispanyaFirms} />
           ) : isHollanda ? (
             <HollandaCountryGuideView entry={entry} region={region} firms={hollandaFirms} />
+          ) : isIvec ? (
+            <IsvecCountryGuideView entry={entry} region={region} firms={isvecFirms} />
+          ) : isPolonya ? (
+            <PolonyaCountryGuideView entry={entry} region={region} firms={polonyaFirms} />
+          ) : isLetonya ? (
+            <LetonyaCountryGuideView entry={entry} region={region} firms={letonyaFirms} />
           ) : (
             <>
               <header className="rounded-2xl border border-border bg-white p-6 shadow-[0_2px_14px_rgba(11,60,93,0.06)] sm:p-8">
