@@ -21,6 +21,8 @@ import { YunanistanCountryGuideView } from "@/components/country-guides/yunanist
 import { ItalyaCountryGuideView } from "@/components/country-guides/italya-country-guide-view";
 import { BelcikaCountryGuideView } from "@/components/country-guides/belcika-country-guide-view";
 import { MaltaCountryGuideView } from "@/components/country-guides/malta-country-guide-view";
+import { IspanyaCountryGuideView } from "@/components/country-guides/ispanya-country-guide-view";
+import { HollandaCountryGuideView } from "@/components/country-guides/hollanda-country-guide-view";
 import { getFirmsForCountryGuide } from "@/lib/data/country-guide-firms";
 import { AMERIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/amerika-guide-sections";
 import { ALMANYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/almanya-guide-sections";
@@ -28,6 +30,8 @@ import { YUNANISTAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/yunanistan-gui
 import { ITALYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/italya-guide-sections";
 import { BELCIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/belcika-guide-sections";
 import { MALTA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/malta-guide-sections";
+import { ISPANYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/ispanya-guide-sections";
+import { HOLLANDA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/hollanda-guide-sections";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -37,6 +41,8 @@ const YUNANISTAN_SLUG = "yunanistan";
 const ITALYA_SLUG = "italya";
 const BELCIKA_SLUG = "belcika";
 const MALTA_SLUG = "malta";
+const ISPANYA_SLUG = "ispanya";
+const HOLLANDA_SLUG = "hollanda";
 
 /** Paneldeki ülke / yayın durumu değişince rehber sayfaları güncel kalsın (özellikle firma şeridi). */
 export const dynamic = "force-dynamic";
@@ -83,7 +89,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                     url: absoluteUrl("/country-guides/malta/valletta-skyline.png"),
                     alt: "Valletta silüeti ve Akdeniz — Malta vize ve oturum rehberi",
                   }
-                : resolveDefaultSiteShareImage();
+                : slug === ISPANYA_SLUG
+                  ? {
+                      url: absoluteUrl("/country-guides/ispanya/madrid-plaza-mayor.jpg"),
+                      alt: "Madrid Plaza Mayor — İspanya vize ve oturum rehberi",
+                    }
+                  : slug === HOLLANDA_SLUG
+                    ? {
+                        url: absoluteUrl("/country-guides/hollanda/den-haag-mauritshuis-hofvijver.png"),
+                        alt: "Lahey Mauritshuis ve Hofvijver — Hollanda vize ve oturum rehberi",
+                      }
+                    : resolveDefaultSiteShareImage();
   return {
     title: entry.seoTitle,
     description: entry.metaDescription,
@@ -93,6 +109,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ...(slug === ITALYA_SLUG ? { keywords: ITALYA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === BELCIKA_SLUG ? { keywords: BELCIKA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === MALTA_SLUG ? { keywords: MALTA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === ISPANYA_SLUG ? { keywords: ISPANYA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === HOLLANDA_SLUG ? { keywords: HOLLANDA_SEO_KEYWORD_TAGS } : {}),
     alternates: { canonical: absoluteUrl(path) },
     openGraph: {
       title: `${entry.nameTr} | ${SITE_BRAND_NAME}`,
@@ -128,6 +146,8 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const isItalya = slug === ITALYA_SLUG;
   const isBelcika = slug === BELCIKA_SLUG;
   const isMalta = slug === MALTA_SLUG;
+  const isIspanya = slug === ISPANYA_SLUG;
+  const isHollanda = slug === HOLLANDA_SLUG;
   const amerikaFirms = isAmerika
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
     : [];
@@ -140,6 +160,8 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const italyaFirms = isItalya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const belcikaFirms = isBelcika ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const maltaFirms = isMalta ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const ispanyaFirms = isIspanya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const hollandaFirms = isHollanda ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
 
   return (
     <>
@@ -179,6 +201,10 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
             <BelcikaCountryGuideView entry={entry} region={region} firms={belcikaFirms} />
           ) : isMalta ? (
             <MaltaCountryGuideView entry={entry} region={region} firms={maltaFirms} />
+          ) : isIspanya ? (
+            <IspanyaCountryGuideView entry={entry} region={region} firms={ispanyaFirms} />
+          ) : isHollanda ? (
+            <HollandaCountryGuideView entry={entry} region={region} firms={hollandaFirms} />
           ) : (
             <>
               <header className="rounded-2xl border border-border bg-white p-6 shadow-[0_2px_14px_rgba(11,60,93,0.06)] sm:p-8">

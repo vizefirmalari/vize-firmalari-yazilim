@@ -161,8 +161,24 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
       entry("finlandiya", "Finlandiya", "fi", "Finlandiya", "Turistik ve çalışma vizeleri ile oturuma giriş.", "Finlandiya vize rehberi | Vize Firmaları", "Finlandiya Schengen başvuruları."),
       entry("fransa", "Fransa", "fr", "Fransa", "Schengen, ulusal uzun süreli vizeler ve oturum başlıklarına giriş.", "Fransa vize rehberi | Vize Firmaları", "Fransa için turistik ve çalışma vizesi rehberi girişi."),
       entry("hirvatistan", "Hırvatistan", "hr", "Hırvatistan", "Schengen üyesi; turistik ve çalışma süreçlerine giriş.", "Hırvatistan vize rehberi | Vize Firmaları", "Hırvatistan Schengen başvuruları ve oturum."),
-      entry("hollanda", "Hollanda", "nl", "Hollanda", "Schengen ve yüksek nitelikli çalışan vizelerine giriş.", "Hollanda vize rehberi | Vize Firmaları", "Hollanda için vize ve çalışma rehberi."),
-      entry("ispanya", "İspanya", "es", "İspanya", "Turistik, Altın Vize ve çalışma süreçlerine giriş.", "İspanya vize rehberi | Vize Firmaları", "İspanya Schengen ve oturum başlıkları."),
+      entry(
+        "hollanda",
+        "Hollanda",
+        "nl",
+        "Hollanda",
+        "Schengen ve yüksek nitelikli çalışan vizelerine giriş.",
+        "Hollanda Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "UWV ve werk.nl ile iş arama, Hollandaca başvuru ve traineeship/MBO–HBO staj yolları, BSN ve belediye kaydı, Randstad konutu, WAB ve zorunlu sağlık sigortası özetleriyle EURES kaynaklı rehber; resmî bilgileri rijksoverheid.nl ve uwv.nl üzerinden doğrulayın."
+      ),
+      entry(
+        "ispanya",
+        "İspanya",
+        "es",
+        "İspanya",
+        "Turistik, Altın Vize ve çalışma süreçlerine giriş.",
+        "İspanya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "SEPE ve özerk topluluk istihdam servisleri, staj ve çift öğrenme (FCT), NIE ve empadronamiento, 2023 iş hukuku reformu ile SMI ve vergi özetleriyle EURES kaynaklı rehber; Schengen ve oturum için resmî bilgileri doğrulayın."
+      ),
       entry("isvec", "İsveç", "se", "İsveç", "Schengen ve çalışma izni süreçlerine giriş.", "İsveç vize rehberi | Vize Firmaları", "İsveç için vize ve çalışma rehberi."),
       entry("isvicre", "İsviçre", "ch", "İsviçre", "Schengen üyesi; ulusal çalışma izinleri ile birlikte değerlendirme.", "İsviçre vize rehberi | Vize Firmaları", "İsviçre Schengen ve çalışma izni girişi."),
       entry(
