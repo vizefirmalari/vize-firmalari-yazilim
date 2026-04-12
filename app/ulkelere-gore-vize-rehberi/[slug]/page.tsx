@@ -30,6 +30,10 @@ import { DanimarkaCountryGuideView } from "@/components/country-guides/danimarka
 import { FransaCountryGuideView } from "@/components/country-guides/fransa-country-guide-view";
 import { HirvatistanCountryGuideView } from "@/components/country-guides/hirvatistan-country-guide-view";
 import { AvusturyaCountryGuideView } from "@/components/country-guides/avusturya-country-guide-view";
+import { BulgaristanCountryGuideView } from "@/components/country-guides/bulgaristan-country-guide-view";
+import { CekyaCountryGuideView } from "@/components/country-guides/cekya-country-guide-view";
+import { KibrisCountryGuideView } from "@/components/country-guides/kibris-country-guide-view";
+import { MacaristanCountryGuideView } from "@/components/country-guides/macaristan-country-guide-view";
 import { getFirmsForCountryGuide } from "@/lib/data/country-guide-firms";
 import { AMERIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/amerika-guide-sections";
 import { ALMANYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/almanya-guide-sections";
@@ -46,6 +50,10 @@ import { DANIMARKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/danimarka-guide
 import { FRANSA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/fransa-guide-sections";
 import { HIRVATISTAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/hirvatistan-guide-sections";
 import { AVUSTURYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/avusturya-guide-sections";
+import { BULGARISTAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/bulgaristan-guide-sections";
+import { CEKYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/cekya-guide-sections";
+import { KIBRIS_SEO_KEYWORD_TAGS } from "@/lib/country-guides/kibris-guide-sections";
+import { MACARISTAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/macaristan-guide-sections";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -64,6 +72,10 @@ const DANIMARKA_SLUG = "danimarka";
 const FRANSA_SLUG = "fransa";
 const HIRVATISTAN_SLUG = "hirvatistan";
 const AVUSTURYA_SLUG = "avusturya";
+const BULGARISTAN_SLUG = "bulgaristan";
+const CEKYA_SLUG = "cekya";
+const KIBRIS_SLUG = "kibris";
+const MACARISTAN_SLUG = "macaristan";
 
 /** Paneldeki ülke / yayın durumu değişince rehber sayfaları güncel kalsın (özellikle firma şeridi). */
 export const dynamic = "force-dynamic";
@@ -161,7 +173,33 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                                       ),
                                       alt: "Viyana Parlamento binası gece ışıkları ve Pallas Athena çeşmesi — Avusturya vize ve oturum rehberi",
                                     }
-                                  : resolveDefaultSiteShareImage();
+                                  : slug === BULGARISTAN_SLUG
+                                    ? {
+                                        url: absoluteUrl(
+                                          "/country-guides/bulgaristan/sofia-iskender-nevski-katedrali.png"
+                                        ),
+                                        alt: "Sofya İskender Nevski Katedrali, altın kubbe ve yeşil çatılar — Bulgaristan vize ve oturum rehberi",
+                                      }
+                                    : slug === CEKYA_SLUG
+                                      ? {
+                                          url: absoluteUrl("/country-guides/cekya/praha-hrad-vltava-panorama.png"),
+                                          alt: "Prag Vltava nehri, kırmızı çatılar ve Prag Kalesi — Çekya vize ve oturum rehberi",
+                                        }
+                                      : slug === KIBRIS_SLUG
+                                        ? {
+                                            url: absoluteUrl(
+                                              "/country-guides/kibris/limasol-molos-sahil-kusbakisi.png"
+                                            ),
+                                            alt: "Limasol Molos sahil şeridi ve Akdeniz — Kıbrıs vize ve oturum rehberi",
+                                          }
+                                        : slug === MACARISTAN_SLUG
+                                          ? {
+                                              url: absoluteUrl(
+                                                "/country-guides/macaristan/budapest-parlament-duna-aranyora.png"
+                                              ),
+                                              alt: "Budapeşte Macaristan Ulusal Meclisi ve Tuna, gün batımı — Macaristan vize ve oturum rehberi",
+                                            }
+                                          : resolveDefaultSiteShareImage();
   return {
     title: entry.seoTitle,
     description: entry.metaDescription,
@@ -180,6 +218,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ...(slug === FRANSA_SLUG ? { keywords: FRANSA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === HIRVATISTAN_SLUG ? { keywords: HIRVATISTAN_SEO_KEYWORD_TAGS } : {}),
     ...(slug === AVUSTURYA_SLUG ? { keywords: AVUSTURYA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === BULGARISTAN_SLUG ? { keywords: BULGARISTAN_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === CEKYA_SLUG ? { keywords: CEKYA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === KIBRIS_SLUG ? { keywords: KIBRIS_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === MACARISTAN_SLUG ? { keywords: MACARISTAN_SEO_KEYWORD_TAGS } : {}),
     alternates: { canonical: absoluteUrl(path) },
     openGraph: {
       title: `${entry.nameTr} | ${SITE_BRAND_NAME}`,
@@ -224,6 +266,10 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const isFransa = slug === FRANSA_SLUG;
   const isHirvatistan = slug === HIRVATISTAN_SLUG;
   const isAvusturya = slug === AVUSTURYA_SLUG;
+  const isBulgaristan = slug === BULGARISTAN_SLUG;
+  const isCekya = slug === CEKYA_SLUG;
+  const isKibris = slug === KIBRIS_SLUG;
+  const isMacaristan = slug === MACARISTAN_SLUG;
   const amerikaFirms = isAmerika
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
     : [];
@@ -247,6 +293,10 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
     : [];
   const avusturyaFirms = isAvusturya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const bulgaristanFirms = isBulgaristan ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const cekyaFirms = isCekya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const kibrisFirms = isKibris ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const macaristanFirms = isMacaristan ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
 
   return (
     <>
@@ -304,6 +354,14 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
             <HirvatistanCountryGuideView entry={entry} region={region} firms={hirvatistanFirms} />
           ) : isAvusturya ? (
             <AvusturyaCountryGuideView entry={entry} region={region} firms={avusturyaFirms} />
+          ) : isBulgaristan ? (
+            <BulgaristanCountryGuideView entry={entry} region={region} firms={bulgaristanFirms} />
+          ) : isCekya ? (
+            <CekyaCountryGuideView entry={entry} region={region} firms={cekyaFirms} />
+          ) : isKibris ? (
+            <KibrisCountryGuideView entry={entry} region={region} firms={kibrisFirms} />
+          ) : isMacaristan ? (
+            <MacaristanCountryGuideView entry={entry} region={region} firms={macaristanFirms} />
           ) : (
             <>
               <header className="rounded-2xl border border-border bg-white p-6 shadow-[0_2px_14px_rgba(11,60,93,0.06)] sm:p-8">

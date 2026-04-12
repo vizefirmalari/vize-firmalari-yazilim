@@ -162,8 +162,24 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "Belçika Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
         "VDAB, Forem, Actiris ve ADG çerçevesinde iş arama, staj ve ikili öğrenme, ikamet kaydı ve çalışma koşullarında EURES kaynaklı özet; resmî bilgileri belgium.be ve bölge mercilerinden doğrulayın."
       ),
-      entry("bulgaristan", "Bulgaristan", "bg", "Bulgaristan", "Güncel Schengen üyeliği ile başvuru mantığına giriş.", "Bulgaristan vize rehberi | Vize Firmaları", "Bulgaristan Schengen ve ulusal vize başlıkları."),
-      entry("cekya", "Çekya", "cz", "Çekya", "Turistik ve çalışma vizeleri ile oturuma giriş.", "Çekya vize rehberi | Vize Firmaları", "Çekya Schengen başvuruları ve çalışma rehberi."),
+      entry(
+        "bulgaristan",
+        "Bulgaristan",
+        "bg",
+        "Bulgaristan",
+        "İstihdam Ajansı kaydı, staj ve işyerinde eğitim, NZOK ve NAP pratikleriyle EURES özetine giriş.",
+        "Bulgaristan Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "Bulgaristan’da iş arama, başvuru, staj, işyerinde eğitim, konut, AB ikameti, çalışma koşulları ve sağlık başlıklarında EURES kaynaklı özet rehber; Schengen ve oturum için resmî bilgileri doğrulayın."
+      ),
+      entry(
+        "cekya",
+        "Çekya",
+        "cz",
+        "Çekya",
+        "Úřad práce, DPP/DPČ, koruna ve OAMP kayıtlarıyla EURES özetine giriş.",
+        "Çekya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "Çekya’da iş arama, başvuru, staj, meslekî eğitim, konut, ikamet, çalışma koşulları ve vergi–sağlık başlıklarında EURES kaynaklı özet rehber; Schengen ve oturum için resmî bilgileri doğrulayın."
+      ),
       entry(
         "danimarka",
         "Danimarka",
@@ -243,7 +259,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
       entry("liechtenstein", "Liechtenstein", "li", "Liechtenstein", "İsviçre ile bağlantılı Schengen başvurularına giriş.", "Liechtenstein vize rehberi | Vize Firmaları", "Liechtenstein Schengen giriş rehberi."),
       entry("litvanya", "Litvanya", "lt", "Litvanya", "Schengen ve çalışma izni süreçlerine giriş.", "Litvanya vize rehberi | Vize Firmaları", "Litvanya Schengen rehberi."),
       entry("luksemburg", "Lüksemburg", "lu", "Lüksemburg", "Schengen ve çalışma süreçlerine giriş.", "Lüksemburg vize rehberi | Vize Firmaları", "Lüksemburg vize ve oturum girişi."),
-      entry("macaristan", "Macaristan", "hu", "Macaristan", "Schengen ve ulusal çalışma izinlerine giriş.", "Macaristan vize rehberi | Vize Firmaları", "Macaristan Schengen başvuruları."),
+      entry(
+        "macaristan",
+        "Macaristan",
+        "hu",
+        "Macaristan",
+        "NFSZ, VMP, OIF kaydı ve forint tabanlı ücret–vergi özetine giriş.",
+        "Macaristan Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "Macaristan’da iş arama, başvuru, çift eğitim çıraklığı, konut ve okul, Schengen ikamet bildirimi, EFO ve asgari ücret, Mt. çalışma süreleri, vergi–TAJ ve ulaşım başlıklarında EURES kaynaklı özet rehber; güncel şartları resmî kaynaklardan doğrulayın."
+      ),
       entry(
         "malta",
         "Malta",
@@ -288,7 +312,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
     countries: [
       entry("ingiltere", "Birleşik Krallık (İngiltere)", "gb", "İngiltere", "Ziyaret, çalışma ve öğrenci vizeleri ile Skilled Worker süreçlerine giriş.", "İngiltere vize rehberi | Vize Firmaları", "İngiltere için vize koşulları, çalışma ve oturum rehberi girişi."),
       entry("irlanda", "İrlanda", "ie", "İrlanda", "Schengen dışı; çalışma ve oturum süreçlerine giriş.", "İrlanda vize rehberi | Vize Firmaları", "İrlanda için çalışma vizesi ve oturum rehberi."),
-      entry("kibris", "Kıbrıs (Rum Kesimi)", "cy", "Kıbrıs", "Schengen dışı AB üyesi; giriş ve oturum kurallarına giriş.", "Kıbrıs vize rehberi | Vize Firmaları", "Kıbrıs için vize ve oturum süreçlerine rehber girişi."),
+      entry(
+        "kibris",
+        "Kıbrıs (Rum Kesimi)",
+        "cy",
+        "Kıbrıs",
+        "PES, GHS, avro ve CRMD kaydıyla EURES özetine giriş.",
+        "Kıbrıs Vize ve Oturum Rehberi 2026 | AB, Çalışma ve İkamet",
+        "Kıbrıs Cumhuriyeti’nde iş arama, başvuru, staj, çıraklık, konut, ikamet, çalışma koşulları, asgari ücret, GHS ve vergi başlıklarında EURES kaynaklı özet rehber; Schengen dışı giriş ve oturum için resmî bilgileri doğrulayın."
+      ),
       entry("ukrayna", "Ukrayna", "ua", "Ukrayna", "Geçici koruma ve ulusal vizelere giriş.", "Ukrayna vize rehberi | Vize Firmaları", "Ukrayna için vize ve oturum başlıkları."),
       entry("rusya", "Rusya", "ru", "Rusya", "Turistik, ticari ve çalışma vizeleri ile oturum süreçlerine giriş.", "Rusya vize rehberi | Vize Firmaları", "Rusya için vize koşulları, çalışma ve oturum rehberi girişi."),
       entry("belarus", "Belarus", "by", "Belarus", "Ulusal vize ve sınır politikalarına giriş.", "Belarus vize rehberi | Vize Firmaları", "Belarus için vize süreçleri."),
