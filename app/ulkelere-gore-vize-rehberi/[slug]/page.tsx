@@ -26,6 +26,7 @@ import { HollandaCountryGuideView } from "@/components/country-guides/hollanda-c
 import { IsvecCountryGuideView } from "@/components/country-guides/isvec-country-guide-view";
 import { PolonyaCountryGuideView } from "@/components/country-guides/polonya-country-guide-view";
 import { LetonyaCountryGuideView } from "@/components/country-guides/letonya-country-guide-view";
+import { DanimarkaCountryGuideView } from "@/components/country-guides/danimarka-country-guide-view";
 import { getFirmsForCountryGuide } from "@/lib/data/country-guide-firms";
 import { AMERIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/amerika-guide-sections";
 import { ALMANYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/almanya-guide-sections";
@@ -38,6 +39,7 @@ import { HOLLANDA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/hollanda-guide-s
 import { ISVEC_SEO_KEYWORD_TAGS } from "@/lib/country-guides/isvec-guide-sections";
 import { POLONYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/polonya-guide-sections";
 import { LETONYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/letonya-guide-sections";
+import { DANIMARKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/danimarka-guide-sections";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -52,6 +54,7 @@ const HOLLANDA_SLUG = "hollanda";
 const ISVEC_SLUG = "isvec";
 const POLONYA_SLUG = "polonya";
 const LETONYA_SLUG = "letonya";
+const DANIMARKA_SLUG = "danimarka";
 
 /** Paneldeki ülke / yayın durumu değişince rehber sayfaları güncel kalsın (özellikle firma şeridi). */
 export const dynamic = "force-dynamic";
@@ -123,7 +126,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                               url: absoluteUrl("/country-guides/letonya/riga-daugava-vansu-dom-sunny.png"),
                               alt: "Rīga Vecrīga, Rīgas Doms ve Daugava üzerinde Vanšu tilts — Letonya vize ve oturum rehberi",
                             }
-                          : resolveDefaultSiteShareImage();
+                          : slug === DANIMARKA_SLUG
+                            ? {
+                                url: absoluteUrl("/country-guides/danimarka/copenhagen-nyhavn-canal-dusk-golden.png"),
+                                alt: "Kopenhag Nyhavn kanalı, renkli tarihî evler ve alacakaranlıkta sokak lambası yansımaları — Danimarka vize ve oturum rehberi",
+                              }
+                            : resolveDefaultSiteShareImage();
   return {
     title: entry.seoTitle,
     description: entry.metaDescription,
@@ -138,6 +146,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ...(slug === ISVEC_SLUG ? { keywords: ISVEC_SEO_KEYWORD_TAGS } : {}),
     ...(slug === POLONYA_SLUG ? { keywords: POLONYA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === LETONYA_SLUG ? { keywords: LETONYA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === DANIMARKA_SLUG ? { keywords: DANIMARKA_SEO_KEYWORD_TAGS } : {}),
     alternates: { canonical: absoluteUrl(path) },
     openGraph: {
       title: `${entry.nameTr} | ${SITE_BRAND_NAME}`,
@@ -178,6 +187,7 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const isIvec = slug === ISVEC_SLUG;
   const isPolonya = slug === POLONYA_SLUG;
   const isLetonya = slug === LETONYA_SLUG;
+  const isDanimarka = slug === DANIMARKA_SLUG;
   const amerikaFirms = isAmerika
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
     : [];
@@ -195,6 +205,7 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const isvecFirms = isIvec ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const polonyaFirms = isPolonya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const letonyaFirms = isLetonya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const danimarkaFirms = isDanimarka ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
 
   return (
     <>
@@ -244,6 +255,8 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
             <PolonyaCountryGuideView entry={entry} region={region} firms={polonyaFirms} />
           ) : isLetonya ? (
             <LetonyaCountryGuideView entry={entry} region={region} firms={letonyaFirms} />
+          ) : isDanimarka ? (
+            <DanimarkaCountryGuideView entry={entry} region={region} firms={danimarkaFirms} />
           ) : (
             <>
               <header className="rounded-2xl border border-border bg-white p-6 shadow-[0_2px_14px_rgba(11,60,93,0.06)] sm:p-8">

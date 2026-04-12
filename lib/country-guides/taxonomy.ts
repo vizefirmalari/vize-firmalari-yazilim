@@ -156,7 +156,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
       ),
       entry("bulgaristan", "Bulgaristan", "bg", "Bulgaristan", "Güncel Schengen üyeliği ile başvuru mantığına giriş.", "Bulgaristan vize rehberi | Vize Firmaları", "Bulgaristan Schengen ve ulusal vize başlıkları."),
       entry("cekya", "Çekya", "cz", "Çekya", "Turistik ve çalışma vizeleri ile oturuma giriş.", "Çekya vize rehberi | Vize Firmaları", "Çekya Schengen başvuruları ve çalışma rehberi."),
-      entry("danimarka", "Danimarka", "dk", "Danimarka", "Schengen ve çalışma izni süreçlerine giriş.", "Danimarka vize rehberi | Vize Firmaları", "Danimarka için vize ve oturum rehberi."),
+      entry(
+        "danimarka",
+        "Danimarka",
+        "dk",
+        "Danimarka",
+        "Schengen, çalışma ve oturum süreçlerine giriş.",
+        "Danimarka Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "Jobcenter ve jobnet.dk, Workindenmark ile İngilizce iş arama, SIRI AB oturum belgesi ve CPR, toplu sözleşme modeli ve NemKonto bordro, isteğe bağlı A‑kasse, skat.dk vergi ve yüksek yaşam maliyeti ile sarı kart sağlık sistemi özetleriyle EURES kaynaklı rehber; güncel bilgileri lifeindenmark.borger.dk ve nyidanmark.dk üzerinden doğrulayın."
+      ),
       entry("estonya", "Estonya", "ee", "Estonya", "Dijital oturum ve Schengen başvurularına giriş.", "Estonya vize rehberi | Vize Firmaları", "Estonya Schengen ve çalışma rehberi."),
       entry("finlandiya", "Finlandiya", "fi", "Finlandiya", "Turistik ve çalışma vizeleri ile oturuma giriş.", "Finlandiya vize rehberi | Vize Firmaları", "Finlandiya Schengen başvuruları."),
       entry("fransa", "Fransa", "fr", "Fransa", "Schengen, ulusal uzun süreli vizeler ve oturum başlıklarına giriş.", "Fransa vize rehberi | Vize Firmaları", "Fransa için turistik ve çalışma vizesi rehberi girişi."),
