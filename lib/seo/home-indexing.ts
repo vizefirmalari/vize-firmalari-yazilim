@@ -22,7 +22,8 @@ export function homePageShouldNoindex(sp: {
   if (f.firmTypes.length > 0) return true;
   if (f.mainServices.length > 0) return true;
   if (f.exploreFocusSlug) return true;
-  if (f.sort !== "hype_desc") return true;
+  // parseFirmFilters varsayılanı name_asc; yalnızca kullanıcı farklı bir sıralama seçtiğinde noindex.
+  if (f.sort !== "name_asc") return true;
 
   return false;
 }

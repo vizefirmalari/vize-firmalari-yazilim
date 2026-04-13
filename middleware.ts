@@ -148,6 +148,6 @@ export const config = {
      * Oturum çerezlerinin güncel kalması için uygulama rotalarının çoğu.
      * Hariç: Next statik/image, favicon, yaygın statik uzantılar.
      */
-    "/((?!_next/static|_next/image|favicon.ico|icon\\.jpg|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon\\.jpg|robots\\.txt|sitemap\\.xml|sitemaps(?:/.*)?|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
