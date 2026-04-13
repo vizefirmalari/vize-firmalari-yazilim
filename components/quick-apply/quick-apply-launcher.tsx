@@ -18,13 +18,13 @@ export function QuickApplyInactiveButton({ className }: { className?: string }) 
   return (
     <div
       role="status"
-      aria-label="Hızlı Başvur — aktif değil"
+      aria-label="Danışman Ata — aktif değil"
       className={
         className ??
         "flex min-h-11 w-full select-none flex-col items-center justify-center gap-0.5 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/90 py-2.5 text-center opacity-95"
       }
     >
-      <span className="text-sm font-semibold text-[#1A1A1A]/48">Hızlı Başvur</span>
+      <span className="text-sm font-semibold text-[#1A1A1A]/48">Danışman Ata</span>
       <span className="text-[10px] font-semibold uppercase tracking-wide text-[#1A1A1A]/40">
         Aktif Değil
       </span>
@@ -97,7 +97,7 @@ export function QuickApplyLauncher({
           "flex items-center justify-center rounded-xl bg-[#D9A441] py-2.5 text-sm font-semibold text-[#1A1A1A] shadow-sm transition hover:bg-[#c8942f] disabled:cursor-not-allowed disabled:opacity-40"
         }
       >
-        Hızlı Başvur
+        Danışman Ata
       </button>
 
       {open ? (
