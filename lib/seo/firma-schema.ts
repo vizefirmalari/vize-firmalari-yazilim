@@ -1,4 +1,5 @@
 import { resolveFirmCoverageDisplay } from "@/lib/firma/resolve-firm-coverage";
+import { resolveToAbsoluteImageUrl } from "@/lib/seo/blog-og-image";
 import type { FirmRow } from "@/lib/types/firm";
 
 function keywordString(firm: FirmRow): string | undefined {
@@ -28,7 +29,11 @@ export function buildFirmSchemaGraph(
   homeUrl: string
 ) {
   const ogOrLogo =
-    firm.og_image_url?.trim() || firm.logo_url?.trim() || undefined;
+    resolveToAbsoluteImageUrl(firm.og_image_url?.trim()) ||
+    resolveToAbsoluteImageUrl(firm.logo_url?.trim()) ||
+    undefined;
+  const logoUrl = resolveToAbsoluteImageUrl(firm.logo_url?.trim());
+  const logoAlt = String(firm.logo_alt_text ?? "").trim() || `${firm.name} logosu`;
   const allCoverage = Array.isArray(firm.countries) ? firm.countries : [];
   const { regions, countries } = resolveFirmCoverageDisplay({
     countries: allCoverage,
@@ -50,6 +55,13 @@ export function buildFirmSchemaGraph(
       name: c,
     })),
     image: ogOrLogo,
+    logo: logoUrl
+      ? {
+          "@type": "ImageObject",
+          url: logoUrl,
+          caption: logoAlt,
+        }
+      : undefined,
   };
 
   const breadcrumb = {
