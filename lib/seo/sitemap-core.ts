@@ -309,7 +309,10 @@ export async function getIndexableUrlsBySection(section: SitemapSection): Promis
   const nowIso = new Date().toISOString();
 
   if (section === "static") {
-    return buildStaticSectionUrls();
+    return buildStaticSectionUrls().map((entry) => ({
+      ...entry,
+      lastmod: nowIso,
+    }));
   }
 
   if (section === "firms") {
