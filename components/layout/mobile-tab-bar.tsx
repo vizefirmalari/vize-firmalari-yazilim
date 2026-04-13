@@ -6,6 +6,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 
 const HIDE_PREFIXES = ["/admin", "/panel", "/auth"];
 const HIDE_PATHS = ["/giris", "/kayit", "/sifre-unuttum", "/sifre-yenile"];
+const FEED_BADGE_REFRESH_MS = 60_000;
 
 type TabItem = {
   href: string;
@@ -46,10 +47,18 @@ function MobileTabBarInner() {
     if (pathname.startsWith("/akis")) {
       try {
         localStorage.setItem("vf:akis:last-seen", new Date().toISOString());
+        localStorage.setItem("vf:akis:last-check", String(Date.now()));
       } catch {}
       setHasNewFlow(false);
       return;
     }
+
+    try {
+      const lastCheckRaw = localStorage.getItem("vf:akis:last-check");
+      const lastCheck = lastCheckRaw ? Number(lastCheckRaw) : 0;
+      if (lastCheck > 0 && Date.now() - lastCheck < FEED_BADGE_REFRESH_MS) return;
+      localStorage.setItem("vf:akis:last-check", String(Date.now()));
+    } catch {}
 
     let cancelled = false;
     fetch("/api/feed/items?offset=0&limit=1")
@@ -75,7 +84,7 @@ function MobileTabBarInner() {
   return (
     <>
       <div className="h-20 md:hidden" aria-hidden />
-      <nav className="fixed inset-x-0 bottom-0 z-90 h-16 border-t border-[#eee] bg-white md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-[90] h-16 border-t border-[#eee] bg-white md:hidden">
         <div className="mx-auto flex h-full max-w-[720px] items-center justify-between px-3">
           {TABS.map((tab) => {
             const active = tab.match(pathname);
@@ -85,7 +94,7 @@ function MobileTabBarInner() {
                   key={tab.href}
                   href={tab.href}
                   aria-label={tab.label}
-                  className={`relative inline-flex h-14 w-14 -translate-y-2.5 items-center justify-center rounded-full text-lg shadow-[0_8px_22px_rgba(11,60,93,0.22)] transition ${
+                  className={`relative inline-flex h-14 w-14 -translate-y-2.5 touch-manipulation items-center justify-center rounded-full text-lg shadow-[0_8px_22px_rgba(11,60,93,0.22)] transition ${
                     active ? "bg-primary text-white" : "bg-primary/90 text-white hover:bg-primary"
                   }`}
                 >
@@ -101,7 +110,7 @@ function MobileTabBarInner() {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`inline-flex min-w-14 flex-col items-center justify-center gap-0.5 px-1 text-xs ${
+                className={`inline-flex min-w-14 touch-manipulation flex-col items-center justify-center gap-0.5 px-1 text-xs ${
                   active ? "text-[#0B3C5D]" : "text-[#9ca3af]"
                 }`}
               >
