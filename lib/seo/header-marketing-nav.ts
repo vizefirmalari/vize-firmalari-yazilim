@@ -16,11 +16,4 @@ export const HEADER_NAV_VISIBLE = HEADER_PRIMARY_NAV.slice(0, 5);
 /** Kalan vitrin koleksiyonları. */
 export const HEADER_NAV_MORE = HEADER_PRIMARY_NAV.slice(5);
 
-/** Hizmetler menüsü — mevcut `hedef` ve keşfet URL’leri (veri modeli değişmez). */
-export const HEADER_SERVICES_DROPDOWN = [
-  { href: "/kesfet", label: "Tümünü keşfet" },
-  { href: "/?hedef=egitim-vizesi#firmalar", label: "Eğitim vizesi" },
-  { href: "/?hedef=oturum-islemleri#firmalar", label: "Oturum işlemleri" },
-  { href: "/?hedef=red-sonrasi#firmalar", label: "Red sonrası" },
-  { href: "/?hedef=evrak-basvuru-danismanligi#firmalar", label: "Evrak ve başvuru" },
-] as const;
+/** Ana hizmet kategorisi vitrinleri: `listServiceCategoryNavItems` (`lib/seo/service-category-landings.ts`). */

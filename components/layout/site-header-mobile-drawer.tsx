@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { useEffect, useId, useMemo, useState } from "react";
 
 import { GlobalSearchBar } from "@/components/layout/global-search-bar";
 import { HeaderMarketingMobileCategoryGrid } from "@/components/layout/header-marketing-category-strip";
-import { HEADER_SERVICES_DROPDOWN } from "@/lib/seo/header-marketing-nav";
+import { SITE_HEADER_LOGO_URL } from "@/lib/constants";
+import { listServiceCategoryNavItems } from "@/lib/seo/service-category-landings";
 
-const serviceCardClass =
-  "block rounded-xl border border-border/90 bg-white px-3 py-2.5 text-sm font-medium leading-snug text-foreground/90 shadow-[0_1px_0_0_rgba(11,60,93,0.04)] transition hover:border-primary/20 hover:bg-primary/5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/35";
+const serviceCatCardClass =
+  "flex min-h-[3.25rem] items-center justify-center rounded-2xl border border-border/90 bg-white px-2.5 py-2.5 text-center text-[13px] font-semibold leading-snug text-foreground/90 shadow-[0_1px_3px_0_rgba(11,60,93,0.07)] transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 active:scale-[0.98] active:bg-primary/[0.06] sm:text-sm";
 
 type Props = {
   navUser: { id: string; email?: string | null } | null;
@@ -22,8 +24,20 @@ export function SiteHeaderMobileDrawer({
   hiddenParams,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [svcQuery, setSvcQuery] = useState("");
   const titleId = useId();
-  const serviceLinks = useMemo(() => [...HEADER_SERVICES_DROPDOWN], []);
+
+  const serviceCategories = useMemo(() => listServiceCategoryNavItems(), []);
+  const q = svcQuery.trim().toLowerCase();
+  const filteredServices = useMemo(() => {
+    if (!q) return serviceCategories;
+    return serviceCategories.filter((i) => i.label.toLowerCase().includes(q));
+  }, [serviceCategories, q]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -43,7 +57,149 @@ export function SiteHeaderMobileDrawer({
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
+  useEffect(() => {
+    if (!open) setSvcQuery("");
+  }, [open]);
+
   const close = () => setOpen(false);
+
+  const panel = open ? (
+    <div className="fixed inset-0 z-90 md:hidden" role="presentation">
+      <button
+        type="button"
+        aria-label="Menüyü kapat"
+        className="absolute inset-0 bg-primary/18"
+        onClick={close}
+      />
+      <div
+        id={`${titleId}-panel`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`${titleId}-heading`}
+        className="absolute inset-y-0 right-0 flex h-full w-full max-w-[min(100%,26.5rem)] flex-col border-l border-border/70 bg-surface shadow-[-12px_0_40px_rgba(11,60,93,0.12)]"
+      >
+        <div className="shrink-0 border-b border-border/70 px-4 pb-3 pt-[max(0.5rem,env(safe-area-inset-top,0px))]">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id={`${titleId}-heading`} className="text-base font-bold tracking-tight text-primary">
+              Menü
+            </h2>
+            <button
+              type="button"
+              onClick={close}
+              className="rounded-xl border border-border/80 bg-white px-3 py-2 text-xs font-semibold text-primary shadow-sm transition active:scale-[0.98] active:bg-primary/5"
+            >
+              Kapat
+            </button>
+          </div>
+          <div className="mt-3 h-px w-full bg-border/60" aria-hidden />
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] pt-4 [-webkit-overflow-scrolling:touch]">
+          <div className="rounded-2xl border border-border/80 bg-white p-4 shadow-[0_2px_12px_rgba(11,60,93,0.06)]">
+            <Link
+              href="/"
+              className="flex items-start gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40"
+              onClick={close}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={SITE_HEADER_LOGO_URL}
+                alt=""
+                width={44}
+                height={44}
+                className="h-11 w-11 shrink-0 object-contain"
+                decoding="async"
+              />
+              <div className="min-w-0 pt-0.5">
+                <p className="text-base font-bold tracking-tight text-primary">Vize Firmaları</p>
+                <p className="mt-1 text-xs leading-relaxed text-foreground/60">
+                  Vize ve danışmanlık kategorilerini keşfedin
+                </p>
+              </div>
+            </Link>
+            <Link
+              href={navUser ? "/hesabim" : "/giris"}
+              className="mt-4 flex w-full items-center justify-center rounded-xl border border-primary/25 bg-primary/10 py-3 text-sm font-semibold text-primary shadow-sm transition active:scale-[0.99] active:bg-primary/[0.14]"
+              onClick={close}
+            >
+              {navUser ? "Hesabım" : "Giriş yap"}
+            </Link>
+          </div>
+
+          <section className="mt-6" aria-labelledby={`${titleId}-search-h`}>
+            <h3
+              id={`${titleId}-search-h`}
+              className="text-[11px] font-semibold uppercase tracking-wide text-foreground/50"
+            >
+              Arama
+            </h3>
+            <div className="mt-2 rounded-2xl border border-border/70 bg-white p-3 shadow-[0_1px_3px_rgba(11,60,93,0.05)]">
+              <GlobalSearchBar
+                hiddenParams={hiddenParams}
+                defaultValue={searchValue}
+                inputId={`${titleId}-drawer-search`}
+                className="w-full"
+                placeholder="Ülke, vize türü veya firma ara"
+              />
+            </div>
+          </section>
+
+          <section className="mt-7" aria-labelledby={`${titleId}-vitrin-h`}>
+            <h3
+              id={`${titleId}-vitrin-h`}
+              className="text-sm font-semibold text-primary"
+            >
+              Vitrin kategorileri
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-foreground/55">
+              Ülke ve koleksiyon vitrinlerine hızlı geçiş
+            </p>
+            <div className="mt-3">
+              <HeaderMarketingMobileCategoryGrid variant="drawer" onNavigate={close} />
+            </div>
+          </section>
+
+          <section className="mt-8 border-t border-border/60 pt-7" aria-labelledby={`${titleId}-hizmet-h`}>
+            <h3 id={`${titleId}-hizmet-h`} className="text-sm font-semibold text-primary">
+              Hizmetler
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-foreground/55">
+              Ana hizmet kategorisine göre firmaları keşfedin
+            </p>
+            <label htmlFor={`${titleId}-svc-search`} className="sr-only">
+              Kategori ara
+            </label>
+            <input
+              id={`${titleId}-svc-search`}
+              type="search"
+              value={svcQuery}
+              onChange={(e) => setSvcQuery(e.target.value)}
+              placeholder="Kategori ara…"
+              autoComplete="off"
+              className="mt-3 w-full rounded-xl border border-border/90 bg-white px-3 py-3 text-sm text-foreground placeholder:text-foreground/45 shadow-[0_1px_2px_rgba(11,60,93,0.04)] focus-visible:border-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/30"
+            />
+            <div className="mt-3 max-h-[min(42vh,22rem)] overflow-y-auto overscroll-contain rounded-2xl border border-border/50 bg-white/80 p-2 [-webkit-overflow-scrolling:touch]">
+              <div className="grid grid-cols-2 gap-2">
+                {filteredServices.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={serviceCatCardClass}
+                    onClick={close}
+                  >
+                    <span className="line-clamp-4 text-pretty">{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+              {filteredServices.length === 0 ? (
+                <p className="py-6 text-center text-xs text-foreground/55">Eşleşen kategori yok.</p>
+              ) : null}
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <>
@@ -51,9 +207,9 @@ export function SiteHeaderMobileDrawer({
         type="button"
         aria-label={open ? "Menüyü kapat" : "Menüyü aç"}
         aria-expanded={open}
-        aria-controls={`${titleId}-panel`}
+        aria-controls={open ? `${titleId}-panel` : undefined}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/90 bg-white text-primary shadow-sm transition hover:border-primary/20 hover:bg-primary/5"
+        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/90 bg-white text-primary shadow-sm transition active:scale-[0.97] active:bg-primary/5"
       >
         {open ? (
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
@@ -66,86 +222,7 @@ export function SiteHeaderMobileDrawer({
         )}
       </button>
 
-      {open ? (
-        <div className="fixed inset-0 z-60 md:hidden">
-          <button
-            type="button"
-            aria-label="Kapat"
-            className="absolute inset-0 bg-foreground/35 backdrop-blur-[1px]"
-            onClick={close}
-          />
-          <div
-            id={`${titleId}-panel`}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            className="absolute right-0 top-0 flex h-full w-[min(100%,26rem)] flex-col border-l border-border/80 bg-surface shadow-xl"
-          >
-            <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
-              <p id={titleId} className="text-sm font-semibold text-primary">
-                Menü
-              </p>
-              <button
-                type="button"
-                onClick={close}
-                className="rounded-lg px-2 py-1 text-xs font-semibold text-secondary"
-              >
-                Kapat
-              </button>
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-              <div className="border-b border-border/70 p-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground/50">
-                  Arama
-                </p>
-                <GlobalSearchBar
-                  hiddenParams={hiddenParams}
-                  defaultValue={searchValue}
-                  inputId={`${titleId}-drawer-search`}
-                  className="w-full"
-                  placeholder="Ülke, vize türü veya firma ara"
-                />
-              </div>
-
-              <div className="p-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground/50">
-                  Kategoriler
-                </p>
-                <HeaderMarketingMobileCategoryGrid onNavigate={close} />
-              </div>
-
-              <div className="border-t border-border/70 p-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground/50">
-                  Hizmetler
-                </p>
-                <div className="max-h-[min(20rem,45vh)] space-y-2 overflow-y-auto pr-0.5 [-webkit-overflow-scrolling:touch]">
-                  {serviceLinks.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={serviceCardClass}
-                      onClick={close}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-border/70 p-3">
-              <Link
-                href={navUser ? "/hesabim" : "/giris"}
-                className="flex w-full items-center justify-center rounded-xl border border-primary/20 bg-primary/10 py-2.5 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-primary/[0.14]"
-                onClick={close}
-              >
-                {navUser ? "Hesabım" : "Giriş yap"}
-              </Link>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {mounted && panel ? createPortal(panel, document.body) : null}
     </>
   );
 }

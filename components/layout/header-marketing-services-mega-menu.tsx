@@ -4,13 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
-import {
-  HEADER_PRIMARY_NAV,
-  HEADER_SERVICES_DROPDOWN,
-} from "@/lib/seo/header-marketing-nav";
+import { listServiceCategoryNavItems } from "@/lib/seo/service-category-landings";
 
 const itemCard =
-  "flex min-h-[2.75rem] flex-col justify-center rounded-xl border border-border/90 bg-white px-3 py-2.5 text-left text-[15px] font-medium leading-snug text-foreground/90 shadow-[0_1px_0_0_rgba(11,60,93,0.04)] transition hover:border-primary/20 hover:bg-primary/5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-surface";
+  "flex min-h-[2.875rem] flex-col justify-center rounded-xl border border-border/90 bg-white px-3.5 py-2.5 text-left text-[15px] font-medium leading-snug text-foreground/90 shadow-[0_1px_0_0_rgba(11,60,93,0.04)] transition hover:border-primary/20 hover:bg-primary/5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-surface";
 
 const itemCardActive =
   "border-primary/25 bg-primary/10 text-primary shadow-sm hover:border-primary/30 hover:bg-primary/10";
@@ -23,18 +20,13 @@ export function HeaderMarketingServicesMegaMenu() {
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const primary = useMemo(() => [...HEADER_PRIMARY_NAV], []);
-  const services = useMemo(() => [...HEADER_SERVICES_DROPDOWN], []);
+  const categories = useMemo(() => listServiceCategoryNavItems(), []);
 
   const q = query.trim().toLowerCase();
-  const filteredPrimary = useMemo(() => {
-    if (!q) return primary;
-    return primary.filter((i) => i.label.toLowerCase().includes(q));
-  }, [primary, q]);
-  const filteredServices = useMemo(() => {
-    if (!q) return services;
-    return services.filter((i) => i.label.toLowerCase().includes(q));
-  }, [services, q]);
+  const filtered = useMemo(() => {
+    if (!q) return categories;
+    return categories.filter((i) => i.label.toLowerCase().includes(q));
+  }, [categories, q]);
 
   useEffect(() => {
     if (!open) return;
@@ -85,10 +77,11 @@ export function HeaderMarketingServicesMegaMenu() {
         <div
           id={`${id}-mega-panel`}
           role="dialog"
-          aria-label="Hizmetler ve kategoriler"
-          className="absolute right-0 z-50 mt-2 w-[min(calc(100vw-1.25rem),42rem)] overflow-hidden rounded-2xl border border-border/80 bg-surface shadow-xl ring-1 ring-black/4"
+          aria-label="Tüm kategoriler"
+          className="absolute right-0 z-50 mt-2 w-[min(calc(100vw-1.25rem),56rem)] overflow-hidden rounded-2xl border border-border/80 bg-surface shadow-xl ring-1 ring-black/4"
         >
-          <div className="border-b border-border/70 bg-surface/90 p-3 backdrop-blur-sm">
+          <div className="border-b border-border/70 bg-surface/90 px-3 pb-3 pt-3 backdrop-blur-sm sm:px-4">
+            <h2 className="text-sm font-semibold text-primary">Tüm Kategoriler</h2>
             <label htmlFor={`${id}-mega-search`} className="sr-only">
               Kategori ara
             </label>
@@ -100,59 +93,32 @@ export function HeaderMarketingServicesMegaMenu() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Kategori ara…"
               autoComplete="off"
-              className="w-full rounded-xl border border-border/90 bg-white px-3.5 py-2.5 text-sm text-foreground placeholder:text-foreground/45 focus-visible:border-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/30"
+              className="mt-2 w-full rounded-xl border border-border/90 bg-white px-3.5 py-2.5 text-sm text-foreground placeholder:text-foreground/45 focus-visible:border-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/30"
             />
           </div>
 
-          <div className="max-h-[min(31.25rem,calc(100dvh-10rem))] overflow-y-auto overscroll-contain p-3 [-webkit-overflow-scrolling:touch]">
-            {filteredPrimary.length > 0 ? (
-              <div>
-                <p className="px-0.5 pb-2 text-xs font-semibold uppercase tracking-wide text-foreground/50">
-                  Vitrin kategorileri
-                </p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {filteredPrimary.map((item) => {
-                    const active = pathname === item.href;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={`${itemCard} ${active ? itemCardActive : ""}`}
-                        onClick={() => setOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
-            {filteredServices.length > 0 ? (
-              <div className={filteredPrimary.length > 0 ? "mt-4 border-t border-border/60 pt-4" : ""}>
-                <p className="px-0.5 pb-2 text-xs font-semibold uppercase tracking-wide text-foreground/50">
-                  Keşfet ve kısayollar
-                </p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {filteredServices.map((item) => (
+          <div className="max-h-[min(31.25rem,calc(100dvh-10rem))] overflow-y-auto overscroll-contain p-3 sm:p-4 [-webkit-overflow-scrolling:touch]">
+            {filtered.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                {filtered.map((item) => {
+                  const active = pathname === item.href;
+                  return (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={itemCard}
+                      className={`${itemCard} ${active ? itemCardActive : ""}`}
                       onClick={() => setOpen(false)}
                     >
                       {item.label}
                     </Link>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            ) : null}
-
-            {filteredPrimary.length === 0 && filteredServices.length === 0 ? (
-              <p className="py-6 text-center text-sm text-foreground/55">
+            ) : (
+              <p className="py-8 text-center text-sm text-foreground/55">
                 Sonuç bulunamadı. Farklı bir arama deneyin.
               </p>
-            ) : null}
+            )}
           </div>
         </div>
       ) : null}

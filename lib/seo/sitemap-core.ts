@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { getSiteUrl, isSupabaseConfigured } from "@/lib/env";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { listExploreSlugs } from "@/lib/explore/explore-categories";
+import { listServiceCategorySlugs } from "@/lib/seo/service-category-landings";
 import { VISA_SEO_LANDING_PATHS } from "@/lib/seo/visa-seo-landings";
 import {
   COUNTRY_GUIDE_CATALOG_BASE_PATH,
@@ -287,6 +288,13 @@ function buildStaticSectionUrls(): SitemapUrl[] {
       loc: normalizeCanonicalUrl(path),
       changefreq: "weekly",
       priority: 0.82,
+    });
+  }
+  for (const slug of listServiceCategorySlugs()) {
+    rows.push({
+      loc: normalizeCanonicalUrl(`/hizmet/${slug}`),
+      changefreq: "weekly",
+      priority: 0.8,
     });
   }
   for (const slug of listExploreSlugs()) {
