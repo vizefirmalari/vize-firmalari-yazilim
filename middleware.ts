@@ -113,16 +113,16 @@ export async function middleware(request: NextRequest) {
         .eq("id", user.id)
         .maybeSingle();
       if (profile?.role === "admin") {
-        return withNoStore(
+        return withPrivateNoIndex(
           NextResponse.redirect(new URL("/admin", request.url))
         );
       }
     }
-    return withNoStore(response);
+    return withPrivateNoIndex(response);
   }
 
   if (!user) {
-    return withNoStore(
+    return withPrivateNoIndex(
       NextResponse.redirect(new URL("/admin/login", request.url))
     );
   }
@@ -134,12 +134,12 @@ export async function middleware(request: NextRequest) {
     .maybeSingle();
 
   if (profile?.role !== "admin") {
-    return withNoStore(
+    return withPrivateNoIndex(
       NextResponse.redirect(new URL("/admin/login?error=forbidden", request.url))
     );
   }
 
-  return withNoStore(response);
+  return withPrivateNoIndex(response);
 }
 
 export const config = {
