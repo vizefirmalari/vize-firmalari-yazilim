@@ -635,7 +635,7 @@ export function FirmsListing({
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]">
+          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-5 py-4 pb-5 [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]">
             <FirmListingFilterFields
               draft={appliedFilters}
               onChange={setAppliedFilters}
@@ -644,31 +644,31 @@ export function FirmsListing({
               companyTypeOptions={companyTypesSource}
               mainServiceCategoryOptions={mainServiceCategorySource}
             />
-          </div>
 
-          <fieldset className="shrink-0 border-t border-border px-5 pb-5 pt-6">
-            <legend className="text-sm font-semibold text-foreground">
-              Sıralama
-            </legend>
-            <div className="mt-3 flex flex-col gap-2.5">
-              {LISTING_SORT_OPTIONS.map(({ value, label }) => (
-                <label
-                  key={value}
-                  className="flex cursor-pointer items-center gap-2.5 text-sm text-foreground/90"
-                >
-                  <input
-                    type="radio"
-                    name="listing-sort"
-                    value={value}
-                    checked={sort === value}
-                    onChange={() => setSort(value)}
-                    className="accent-primary"
-                  />
-                  <span>{label}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
+            <fieldset className="mt-8 border-t border-border pt-6">
+              <legend className="text-sm font-semibold text-foreground">
+                Sıralama
+              </legend>
+              <div className="mt-3 flex flex-col gap-2.5">
+                {LISTING_SORT_OPTIONS.map(({ value, label }) => (
+                  <label
+                    key={value}
+                    className="flex cursor-pointer items-center gap-2.5 text-sm text-foreground/90"
+                  >
+                    <input
+                      type="radio"
+                      name="listing-sort"
+                      value={value}
+                      checked={sort === value}
+                      onChange={() => setSort(value)}
+                      className="accent-primary"
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </div>
         </aside>
 
         <div className="min-w-0">

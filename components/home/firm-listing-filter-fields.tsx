@@ -19,6 +19,10 @@ import {
   TURKEY_OFFICE_PROVINCE_NAMES,
 } from "@/lib/constants/turkiye-ofis-sehirleri";
 
+/** Masaüstü sol panelde tek dış scroll; mobil / alt sayfada iç liste kısıtları korunur. */
+const FILTER_INNER_SCROLL_LG_FLUSH =
+  "lg:max-h-none lg:overflow-y-visible lg:overscroll-auto";
+
 function Chevron({ open }: { open: boolean }) {
   return (
     <svg
@@ -145,7 +149,7 @@ function RegionsListBlock({
         Hedef bölgenizi bir tıkla seçin; listeyi rotaya göre daraltın.
       </p>
       <div
-        className="mt-2 max-h-[min(240px,42vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]"
+        className={`mt-2 max-h-[min(240px,42vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
         role="listbox"
         aria-label="Bölgeler"
       >
@@ -352,7 +356,7 @@ function FirmTypeFilterBlock({
         enterKeyHint="search"
       />
       <div
-        className="mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]"
+        className={`mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
         role="listbox"
         aria-label="Firma türleri"
       >
@@ -483,7 +487,7 @@ function MainServiceCategoriesFilterBlock({
         enterKeyHint="search"
       />
       <div
-        className="mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]"
+        className={`mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
         role="listbox"
         aria-label="Ana hizmet kategorileri"
       >
@@ -585,7 +589,7 @@ function OfficeLocationFilterBlock({
         enterKeyHint="search"
       />
       <div
-        className="mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]"
+        className={`mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
         role="listbox"
         aria-label="Ofis konumu şehirleri"
       >
@@ -659,7 +663,7 @@ function CountryFullListBlock({
         enterKeyHint="search"
       />
       <div
-        className="mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]"
+        className={`mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
         role="listbox"
         aria-label="Ülkeler"
       >
@@ -1085,7 +1089,9 @@ export function FirmListingFilterFields({
             Yönetim panelindeki uzmanlık bayraklarıyla aynı kaynak; listede
             işaretli alanlardan en az birine sahip firmalar gösterilir.
           </p>
-          <div className="max-h-[min(360px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+          <div
+            className={`max-h-[min(360px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
+          >
             {expertiseAreaBlock}
           </div>
         </Collapsible>
@@ -1095,7 +1101,9 @@ export function FirmListingFilterFields({
             oturum, vatandaşlık veya hukuki danışmanlık gibi hizmetlere göre
             daha doğru firmaları bulun.
           </p>
-          <div className="max-h-[min(360px,55vh)] overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+          <div
+            className={`max-h-[min(360px,55vh)] overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
+          >
             <MainServiceCategoriesFilterBlock
               draft={draft}
               patch={patch}
@@ -1109,7 +1117,9 @@ export function FirmListingFilterFields({
             gücünü görmek için yukarıdaki &quot;Uzmanlık Alanları&quot;nı
             kullanın.
           </p>
-          <div className="max-h-[min(360px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+          <div
+            className={`max-h-[min(360px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
+          >
             {visaTypeBlock}
           </div>
         </Collapsible>
@@ -1135,7 +1145,9 @@ export function FirmListingFilterFields({
           çalışma, aile birleşimi veya red sonrası süreçlerde öne çıkan
           firmaları daha hızlı bulun.
         </p>
-        <div className="mt-3 max-h-[min(360px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+        <div
+          className={`mt-3 max-h-[min(360px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
+        >
           {expertiseAreaBlock}
         </div>
       </div>
@@ -1150,7 +1162,9 @@ export function FirmListingFilterFields({
           göre daha doğru firmaları bulun. Yalnızca kayıttaki ana hizmet
           kategorileri dikkate alınır.
         </p>
-        <div className="mt-3 max-h-[min(360px,55vh)] overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+        <div
+          className={`mt-3 max-h-[min(360px,55vh)] overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
+        >
           <MainServiceCategoriesFilterBlock
             draft={draft}
             patch={patch}
@@ -1166,7 +1180,9 @@ export function FirmListingFilterFields({
           işaretleriyle aynı bayraklara dayanır ancak burada ayrı bir filtre
           olarak uygulanır.
         </p>
-        <div className="mt-3 max-h-[min(360px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+        <div
+          className={`mt-3 max-h-[min(360px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
+        >
           {visaTypeBlock}
         </div>
       </div>
