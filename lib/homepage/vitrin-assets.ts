@@ -89,8 +89,11 @@ export function getDestinationVisual(
     "kanada-vizesi": {
       flagIso: "ca",
       imageUrls: mergeUrls(
-        [u("photo-1505761671935-60b3a7427bad"), u("photo-1517935702655-ce394b619419")],
-        [u("photo-1464822759023-fed622ff2c3b")]
+        [
+          u("photo-1543962226-818f4301073f"),
+          u("photo-1558818061-547b1114aa6a"),
+        ],
+        [u("photo-1511525499366-bc3f823bacb7")]
       ),
       gradientClassName: gradientEu,
       tintClassName: "from-[#7b1f23]/16 via-[#1e355a]/10 to-transparent",
@@ -287,8 +290,11 @@ export function getDestinationVisual(
     return {
       flagIso: "ca",
       imageUrls: mergeUrls(
-        [u("photo-1505761671935-60b3a7427bad"), u("photo-1517935702655-ce394b619419")],
-        [u("photo-1464822759023-fed622ff2c3b")]
+        [
+          u("photo-1543962226-818f4301073f"),
+          u("photo-1558818061-547b1114aa6a"),
+        ],
+        [u("photo-1511525499366-bc3f823bacb7")]
       ),
       gradientClassName: gradientEu,
       tintClassName: "from-[#7b1f23]/16 via-[#1e355a]/10 to-transparent",

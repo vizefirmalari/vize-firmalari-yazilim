@@ -54,7 +54,8 @@ html {
 
 @media (width >= 768px) {
   html {
-    scroll-padding-top: 5.75rem;
+    /* Çift satır header + kategori şeridi */
+    scroll-padding-top: 8rem;
   }
 }
 

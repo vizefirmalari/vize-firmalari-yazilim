@@ -1,7 +1,15 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type SetStateAction,
+} from "react";
 import { DEFAULT_COUNTRIES } from "@/lib/constants";
 import {
   applyListingFilters,
@@ -36,6 +44,10 @@ import {
   applyHomeListingParamsToSearchParams,
   homeListingSearchParamsEqual,
 } from "@/lib/search/home-listing-url";
+import {
+  applyListingCategoryLock,
+  type ListingCategoryLock,
+} from "@/lib/firma/listing-category-lock";
 
 type Props = {
   initialFirms: FirmRow[];
@@ -58,6 +70,13 @@ type Props = {
   featuredSubtitle?: string;
   /** Ana sayfa: vitrin (keşif) alanı — sağ sütunda, filtre ile hizalı */
   children?: ReactNode;
+  /**
+   * Liste URL senkronu için taban path. Ana sayfa `/`, SEO vitrinleri `/abd-vizesi` vb.
+   * Verilmezse yalnızca ana sayfada `router.replace` ile query güncellenir.
+   */
+  listingPath?: string;
+  /** SEO vitrinlerinde keşfet / ana hizmet / vize türü kilidi (ek filtrelerle birlikte kalır). */
+  listingCategoryLock?: ListingCategoryLock | null;
 };
 
 function buildApplied(
@@ -162,16 +181,46 @@ export function FirmsListing({
   featuredSubtitle =
     "Filtreleyin, karşılaştırın ve size uygun firmayı bulun.",
   children,
+  listingPath,
+  listingCategoryLock = null,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const listingUrlBase = listingPath ?? "/";
+  const shouldSyncListingUrl = pathname === listingUrlBase;
   const bounds = useMemo(
     () => computeRangeBounds(initialFirms),
     [initialFirms]
   );
 
-  const [appliedFilters, setAppliedFilters] = useState<AppliedListingFilters>(
+  const memoCategoryLock = useMemo<ListingCategoryLock | null>(() => {
+    if (!listingCategoryLock) return null;
+    return {
+      exploreSlug: listingCategoryLock.exploreSlug,
+      mainServices: listingCategoryLock.mainServices
+        ? [...listingCategoryLock.mainServices]
+        : undefined,
+      visaTypes: listingCategoryLock.visaTypes
+        ? [...listingCategoryLock.visaTypes]
+        : undefined,
+    };
+  }, [
+    listingCategoryLock?.exploreSlug,
+    listingCategoryLock?.mainServices?.join("\0"),
+    listingCategoryLock?.visaTypes?.join("\0"),
+  ]);
+
+  const lockedMainServiceSet = useMemo(
+    () => new Set(memoCategoryLock?.mainServices ?? []),
+    [memoCategoryLock?.mainServices?.join("\0")]
+  );
+  const lockedVisaTypeSet = useMemo(
+    () => new Set(memoCategoryLock?.visaTypes ?? []),
+    [memoCategoryLock?.visaTypes?.join("\0")]
+  );
+
+  const [appliedFilters, setAppliedFiltersBase] = useState<AppliedListingFilters>(
     () =>
       buildApplied(
         bounds,
@@ -202,6 +251,16 @@ export function FirmsListing({
       )
   );
 
+  const setAppliedFiltersWithLock = useCallback(
+    (update: SetStateAction<AppliedListingFilters>) => {
+      setAppliedFiltersBase((prev) => {
+        const next = typeof update === "function" ? update(prev) : update;
+        return applyListingCategoryLock(next, memoCategoryLock);
+      });
+    },
+    [memoCategoryLock]
+  );
+
   const urlKey = useMemo(
     () =>
       [
@@ -227,7 +286,7 @@ export function FirmsListing({
   );
 
   useEffect(() => {
-    setAppliedFilters((prev) => {
+    setAppliedFiltersWithLock((prev) => {
       const base = buildApplied(
         bounds,
         initialCountries,
@@ -259,7 +318,7 @@ export function FirmsListing({
     setSort(initialSort);
     // Yalnızca URL / sunucu filtre senkronu; firms realtime ile bounds değişince sıfırlanmaz.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bounds, initialCountries, initialVisaTypes, initialSort: urlKey ile birlikte güncellenir
-  }, [urlKey]);
+  }, [urlKey, setAppliedFiltersWithLock]);
 
   const listingScrollKey = useMemo(
     () => serializeAppliedListingState(appliedFilters, sort, query),
@@ -316,9 +375,9 @@ export function FirmsListing({
     return () => window.clearTimeout(timeoutId);
   }, [listingScrollKey, urlKey]);
 
-  /** Ana sayfa: URL ile `countries`, `cities`, `visaTypes` vb. senkron (yenilemede korunur). */
+  /** Ana sayfa / SEO vitrin: URL ile `countries`, `cities`, `visaTypes` vb. senkron (yenilemede korunur). */
   useEffect(() => {
-    if (pathname !== "/") return;
+    if (!shouldSyncListingUrl) return;
     const base = new URLSearchParams(searchParams.toString());
     const next = applyHomeListingParamsToSearchParams(base, {
       q: query,
@@ -327,19 +386,29 @@ export function FirmsListing({
     });
     if (homeListingSearchParamsEqual(next, base)) return;
     const qs = next.toString();
-    router.replace(qs ? `/?${qs}#firmalar` : "/#firmalar", { scroll: false });
-  }, [pathname, searchParams, query, appliedFilters, sort, router]);
+    const prefix = listingUrlBase === "/" ? "/" : listingUrlBase;
+    router.replace(qs ? `${prefix}?${qs}#firmalar` : `${prefix}#firmalar`, { scroll: false });
+  }, [
+    shouldSyncListingUrl,
+    listingUrlBase,
+    pathname,
+    searchParams,
+    query,
+    appliedFilters,
+    sort,
+    router,
+  ]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (pathname !== "/") {
+    if (!shouldSyncListingUrl) {
       sessionStorage.removeItem(HOME_LISTING_SCROLL_AFTER_SEARCH_SESSION_KEY);
     }
-  }, [pathname]);
+  }, [pathname, shouldSyncListingUrl]);
 
   /** Üst arama önerisi / metin araması sonrası ana liste bölümüne kaydır (sticky header: `#firmalar` scroll-margin). */
   useEffect(() => {
-    if (pathname !== "/") return;
+    if (!shouldSyncListingUrl) return;
     if (typeof window === "undefined") return;
     if (sessionStorage.getItem(HOME_LISTING_SCROLL_AFTER_SEARCH_SESSION_KEY) !== "1") return;
 
@@ -386,7 +455,7 @@ export function FirmsListing({
       cancelled = true;
       for (const t of timeouts) window.clearTimeout(t);
     };
-  }, [pathname, urlKey, query]);
+  }, [pathname, shouldSyncListingUrl, urlKey, query]);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
@@ -470,8 +539,25 @@ export function FirmsListing({
     if (l.multilingualSupport) n++;
     if (l.corporateDomain) n++;
     if (appliedFilters.yearPreset !== null) n++;
+    if (
+      memoCategoryLock?.exploreSlug &&
+      appliedFilters.exploreFocusSlug === memoCategoryLock.exploreSlug
+    ) {
+      n -= 1;
+    }
+    for (const m of appliedFilters.mainServiceLabels) {
+      if (lockedMainServiceSet.has(m)) n -= 1;
+    }
+    for (const v of appliedFilters.visaTypes) {
+      if (lockedVisaTypeSet.has(v)) n -= 1;
+    }
     return n;
-  }, [appliedFilters]);
+  }, [
+    appliedFilters,
+    lockedMainServiceSet,
+    lockedVisaTypeSet,
+    memoCategoryLock?.exploreSlug,
+  ]);
 
   const extraNonChipFilterCount = Math.max(
     0,
@@ -479,7 +565,7 @@ export function FirmsListing({
   );
 
   const clearCoverageChip = (kind: "region" | "country", value: string) => {
-    setAppliedFilters((prev) => {
+    setAppliedFiltersWithLock((prev) => {
       if (kind === "region") {
         return {
           ...prev,
@@ -502,14 +588,15 @@ export function FirmsListing({
   };
 
   const clearVisaChip = (key: SpecializationKey) => {
-    setAppliedFilters((prev) => ({
+    if (lockedVisaTypeSet.has(key)) return;
+    setAppliedFiltersWithLock((prev) => ({
       ...prev,
       visaTypes: prev.visaTypes.filter((x) => x !== key),
     }));
   };
 
   const clearExpertiseChip = (key: SpecializationKey) => {
-    setAppliedFilters((prev) => ({
+    setAppliedFiltersWithLock((prev) => ({
       ...prev,
       expertiseKeys: prev.expertiseKeys.filter((x) => x !== key),
     }));
@@ -518,7 +605,7 @@ export function FirmsListing({
   const clearTrustChip = (
     key: keyof AppliedListingFilters["trust"]
   ) => {
-    setAppliedFilters((prev) => ({
+    setAppliedFiltersWithLock((prev) => ({
       ...prev,
       trust: { ...prev.trust, [key]: false },
     }));
@@ -527,21 +614,21 @@ export function FirmsListing({
   const clearServiceChip = (
     key: keyof AppliedListingFilters["serviceMode"]
   ) => {
-    setAppliedFilters((prev) => ({
+    setAppliedFiltersWithLock((prev) => ({
       ...prev,
       serviceMode: { ...prev.serviceMode, [key]: false },
     }));
   };
 
   const clearLangChip = (key: "multilingualSupport" | "corporateDomain") => {
-    setAppliedFilters((prev) => ({
+    setAppliedFiltersWithLock((prev) => ({
       ...prev,
       languagePro: { ...prev.languagePro, [key]: false },
     }));
   };
 
   const clearYearPresetChip = () => {
-    setAppliedFilters((prev) => ({ ...prev, yearPreset: null }));
+    setAppliedFiltersWithLock((prev) => ({ ...prev, yearPreset: null }));
   };
 
   const previewCount = useMemo(
@@ -556,11 +643,12 @@ export function FirmsListing({
   );
 
   const clearFilterDraft = () => {
-    setFilterDraft(buildApplied(bounds, [], [], [], [], [], [], null));
+    const empty = buildApplied(bounds, [], [], [], [], [], [], null);
+    setFilterDraft(applyListingCategoryLock(empty, memoCategoryLock));
   };
 
   const applyFilterSheet = () => {
-    setAppliedFilters(filterDraft);
+    setAppliedFiltersWithLock(filterDraft);
     setFilterSheetOpen(false);
   };
 
@@ -568,43 +656,51 @@ export function FirmsListing({
     LISTING_SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "Firma adına göre (A-Z)";
 
   const resetToCleanHome = () => {
-    setAppliedFilters(buildApplied(bounds, [], [], [], [], [], [], null));
+    const fresh = buildApplied(bounds, [], [], [], [], [], [], null);
+    setAppliedFiltersWithLock(applyListingCategoryLock(fresh, memoCategoryLock));
     setSort("name_asc");
-    router.replace("/#firmalar", { scroll: false });
+    const pathPrefix = listingUrlBase === "/" ? "/" : listingUrlBase;
+    router.replace(`${pathPrefix}#firmalar`, { scroll: false });
   };
 
   const clearCityChip = (value: string) => {
-    setAppliedFilters((prev) => ({
+    setAppliedFiltersWithLock((prev) => ({
       ...prev,
       cities: prev.cities.filter((x) => x !== value),
     }));
   };
 
   const clearFirmTypeChip = (value: string) => {
-    setAppliedFilters((prev) => ({
+    setAppliedFiltersWithLock((prev) => ({
       ...prev,
       firmTypes: prev.firmTypes.filter((x) => x !== value),
     }));
   };
 
   const clearMainServiceChip = (value: string) => {
-    setAppliedFilters((prev) => ({
+    if (lockedMainServiceSet.has(value)) return;
+    setAppliedFiltersWithLock((prev) => ({
       ...prev,
       mainServiceLabels: prev.mainServiceLabels.filter((x) => x !== value),
     }));
   };
 
   const clearExploreChip = () => {
-    setAppliedFilters((prev) => ({ ...prev, exploreFocusSlug: null }));
+    if (memoCategoryLock?.exploreSlug) return;
+    setAppliedFiltersWithLock((prev) => ({ ...prev, exploreFocusSlug: null }));
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
+    const pathPrefix = listingUrlBase === "/" ? "/" : listingUrlBase;
     if (params.has("hedef")) {
       params.delete("hedef");
       const qs = params.toString();
-      router.replace(qs ? `/?${qs}#firmalar` : "/#firmalar", { scroll: false });
+      router.replace(
+        qs ? `${pathPrefix}?${qs}#firmalar` : `${pathPrefix}#firmalar`,
+        { scroll: false }
+      );
       return;
     }
-    router.replace("/#firmalar", { scroll: false });
+    router.replace(`${pathPrefix}#firmalar`, { scroll: false });
   };
 
   return (
@@ -638,7 +734,7 @@ export function FirmsListing({
           <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-5 py-4 pb-5 [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]">
             <FirmListingFilterFields
               draft={appliedFilters}
-              onChange={setAppliedFilters}
+              onChange={setAppliedFiltersWithLock}
               bounds={bounds}
               countryOptions={countriesSource}
               companyTypeOptions={companyTypesSource}
@@ -784,48 +880,78 @@ export function FirmsListing({
                   </span>
                 </button>
               ))}
-              {appliedFilters.mainServiceLabels.map((svc) => (
-                <button
-                  key={`ms-${svc}`}
-                  type="button"
-                  onClick={() => clearMainServiceChip(svc)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
-                >
-                  <span className="max-w-56 truncate">{svc}</span>
-                  <span className="text-foreground/45" aria-hidden>
-                    ×
+              {appliedFilters.mainServiceLabels.map((svc) =>
+                lockedMainServiceSet.has(svc) ? (
+                  <span
+                    key={`ms-${svc}`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                  >
+                    <span className="max-w-56 truncate">{svc}</span>
                   </span>
-                </button>
-              ))}
-              {appliedFilters.visaTypes.map((key) => (
-                <button
-                  key={`v-${key}`}
-                  type="button"
-                  onClick={() => clearVisaChip(key)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
-                >
-                  <span className="max-w-56 truncate">
-                    {SPECIALIZATION_LABELS[key]}
+                ) : (
+                  <button
+                    key={`ms-${svc}`}
+                    type="button"
+                    onClick={() => clearMainServiceChip(svc)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                  >
+                    <span className="max-w-56 truncate">{svc}</span>
+                    <span className="text-foreground/45" aria-hidden>
+                      ×
+                    </span>
+                  </button>
+                )
+              )}
+              {appliedFilters.visaTypes.map((key) =>
+                lockedVisaTypeSet.has(key) ? (
+                  <span
+                    key={`v-${key}`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                  >
+                    <span className="max-w-56 truncate">
+                      {SPECIALIZATION_LABELS[key]}
+                    </span>
                   </span>
-                  <span className="text-foreground/45" aria-hidden>
-                    ×
-                  </span>
-                </button>
-              ))}
+                ) : (
+                  <button
+                    key={`v-${key}`}
+                    type="button"
+                    onClick={() => clearVisaChip(key)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                  >
+                    <span className="max-w-56 truncate">
+                      {SPECIALIZATION_LABELS[key]}
+                    </span>
+                    <span className="text-foreground/45" aria-hidden>
+                      ×
+                    </span>
+                  </button>
+                )
+              )}
               {appliedFilters.exploreFocusSlug ? (
-                <button
-                  type="button"
-                  onClick={clearExploreChip}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
-                >
-                  <span className="max-w-56 truncate">
-                    {getExploreCategoryBySlug(appliedFilters.exploreFocusSlug)
-                      ?.label ?? "Hedef"}
+                memoCategoryLock?.exploreSlug &&
+                appliedFilters.exploreFocusSlug === memoCategoryLock.exploreSlug ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                    <span className="max-w-56 truncate">
+                      {getExploreCategoryBySlug(appliedFilters.exploreFocusSlug)
+                        ?.label ?? "Hedef"}
+                    </span>
                   </span>
-                  <span className="text-foreground/50" aria-hidden>
-                    ×
-                  </span>
-                </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={clearExploreChip}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                  >
+                    <span className="max-w-56 truncate">
+                      {getExploreCategoryBySlug(appliedFilters.exploreFocusSlug)
+                        ?.label ?? "Hedef"}
+                    </span>
+                    <span className="text-foreground/50" aria-hidden>
+                      ×
+                    </span>
+                  </button>
+                )
               ) : null}
               {appliedFilters.trust.requireTaxCertificate ? (
                 <button
@@ -1023,7 +1149,7 @@ export function FirmsListing({
                     <button
                       type="button"
                       onClick={() =>
-                        setAppliedFilters((prev) => ({
+                        setAppliedFiltersWithLock((prev) => ({
                           ...prev,
                           mainServiceLabels: [],
                         }))
@@ -1036,7 +1162,7 @@ export function FirmsListing({
                       <button
                         type="button"
                         onClick={() =>
-                          setAppliedFilters((prev) => ({
+                          setAppliedFiltersWithLock((prev) => ({
                             ...prev,
                             expertiseKeys: [],
                           }))
@@ -1059,7 +1185,7 @@ export function FirmsListing({
                     <button
                       type="button"
                       onClick={() =>
-                        setAppliedFilters((prev) => ({
+                        setAppliedFiltersWithLock((prev) => ({
                           ...prev,
                           expertiseKeys: [],
                         }))
@@ -1072,7 +1198,7 @@ export function FirmsListing({
                       <button
                         type="button"
                         onClick={() =>
-                          setAppliedFilters((prev) => ({ ...prev, firmTypes: [] }))
+                          setAppliedFiltersWithLock((prev) => ({ ...prev, firmTypes: [] }))
                         }
                         className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85 transition hover:bg-primary/5"
                       >
@@ -1092,7 +1218,7 @@ export function FirmsListing({
                     <button
                       type="button"
                       onClick={() =>
-                        setAppliedFilters((prev) => ({ ...prev, firmTypes: [] }))
+                        setAppliedFiltersWithLock((prev) => ({ ...prev, firmTypes: [] }))
                       }
                       className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85 transition hover:bg-primary/5"
                     >
@@ -1102,7 +1228,7 @@ export function FirmsListing({
                       <button
                         type="button"
                         onClick={() =>
-                          setAppliedFilters((prev) => ({
+                          setAppliedFiltersWithLock((prev) => ({
                             ...prev,
                             coverage: { ...prev.coverage, countries: [] },
                           }))
@@ -1125,7 +1251,7 @@ export function FirmsListing({
                     <button
                       type="button"
                       onClick={() =>
-                        setAppliedFilters((prev) => ({ ...prev, cities: [] }))
+                        setAppliedFiltersWithLock((prev) => ({ ...prev, cities: [] }))
                       }
                       className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground/85 transition hover:bg-primary/5"
                     >
@@ -1135,7 +1261,7 @@ export function FirmsListing({
                       <button
                         type="button"
                         onClick={() =>
-                          setAppliedFilters((prev) => ({
+                          setAppliedFiltersWithLock((prev) => ({
                             ...prev,
                             serviceMode: {
                               ...prev.serviceMode,
@@ -1152,7 +1278,7 @@ export function FirmsListing({
                       <button
                         type="button"
                         onClick={() =>
-                          setAppliedFilters((prev) => ({
+                          setAppliedFiltersWithLock((prev) => ({
                             ...prev,
                             serviceMode: {
                               ...prev.serviceMode,

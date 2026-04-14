@@ -16,6 +16,7 @@ import {
   getPublicFilterCompanyTypes,
   getPublicFilterMainServiceCategories,
 } from "@/lib/data/public-cms";
+import { hiddenParamsFromFirmFilters } from "@/lib/search/hidden-params-from-firm-filters";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
 import { homePageShouldNoindex } from "@/lib/seo/home-indexing";
@@ -93,28 +94,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     .map((r) => r.name.trim())
     .filter(Boolean);
 
-  const hiddenParams: Record<string, string> = {};
-  if (filters.countries.length) {
-    hiddenParams.countries = filters.countries.join(",");
-  }
-  if (filters.visaTypes.length) {
-    hiddenParams.visaTypes = filters.visaTypes.join(",");
-  }
-  if (filters.cities.length) {
-    hiddenParams.cities = filters.cities.join(",");
-  }
-  if (filters.firmTypes.length) {
-    hiddenParams.firmTypes = filters.firmTypes.join(",");
-  }
-  if (filters.mainServices.length) {
-    hiddenParams.mainServices = filters.mainServices.join(",");
-  }
-  if (filters.exploreFocusSlug) {
-    hiddenParams.hedef = filters.exploreFocusSlug;
-  }
-  if (filters.sort !== "name_asc") {
-    hiddenParams.sort = filters.sort;
-  }
+  const hiddenParams = hiddenParamsFromFirmFilters(filters);
 
   const countryListForListing = mergeCountryFilterOptionsFromFirms(
     dbCountries,

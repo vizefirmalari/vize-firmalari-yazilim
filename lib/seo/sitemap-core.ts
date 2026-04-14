@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { getSiteUrl, isSupabaseConfigured } from "@/lib/env";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { listExploreSlugs } from "@/lib/explore/explore-categories";
+import { VISA_SEO_LANDING_PATHS } from "@/lib/seo/visa-seo-landings";
 import {
   COUNTRY_GUIDE_CATALOG_BASE_PATH,
   listCountryGuideSlugs,
@@ -281,6 +282,13 @@ function buildStaticSectionUrls(): SitemapUrl[] {
     { loc: normalizeCanonicalUrl("/kesfet"), changefreq: "weekly", priority: 0.85 },
     { loc: normalizeCanonicalUrl(COUNTRY_GUIDE_CATALOG_BASE_PATH), changefreq: "weekly", priority: 0.85 },
   ];
+  for (const path of VISA_SEO_LANDING_PATHS) {
+    rows.push({
+      loc: normalizeCanonicalUrl(path),
+      changefreq: "weekly",
+      priority: 0.82,
+    });
+  }
   for (const slug of listExploreSlugs()) {
     rows.push({
       loc: normalizeCanonicalUrl(`/kesfet/${slug}`),
