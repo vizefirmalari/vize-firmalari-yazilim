@@ -365,14 +365,15 @@ export default async function BlogDetailPage({ params }: Props) {
         <article className="space-y-5">
           <section className="overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-sm">
             {post.cover_image_url ? (
-              <div className="relative aspect-1200/630 w-full">
+              <div className="flex w-full items-center justify-center px-3 pt-3 sm:px-4 sm:pt-4">
                 <Image
                   src={String(post.cover_image_url)}
                   alt={String(post.cover_image_alt || post.title)}
-                  fill
+                  width={1200}
+                  height={630}
                   priority
                   sizes="(max-width: 1024px) 100vw, 960px"
-                  className="object-cover"
+                  className="h-auto max-h-[380px] max-w-full w-full object-contain sm:max-h-[500px]"
                 />
               </div>
             ) : null}
