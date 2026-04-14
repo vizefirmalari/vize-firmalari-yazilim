@@ -373,7 +373,7 @@ export default async function BlogDetailPage({ params }: Props) {
                   height={630}
                   priority
                   sizes="(max-width: 1024px) 100vw, 960px"
-                  className="h-auto max-h-[380px] max-w-full w-full object-contain sm:max-h-[500px]"
+                  className="h-auto w-full max-w-full object-contain"
                 />
               </div>
             ) : null}
