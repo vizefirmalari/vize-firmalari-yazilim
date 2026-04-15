@@ -12,6 +12,8 @@ export {
 
 export { ADMIN_PANEL_ACCOUNT_EMAIL, FIRM_PANEL_DEFAULT_EMAIL } from "./platform-emails";
 
+export { isPublicFeedPath, PUBLIC_FEED_ROUTE } from "./public-routes";
+
 import { ALL_COUNTRIES } from "./filters";
 
 /** FirmsListing ve benzeri için tam ülke listesi */

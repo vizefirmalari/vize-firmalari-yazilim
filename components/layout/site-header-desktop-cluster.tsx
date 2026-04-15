@@ -4,6 +4,7 @@ import { GlobalSearchBar } from "@/components/layout/global-search-bar";
 import { HeaderMarketingCategoryStrip } from "@/components/layout/header-marketing-category-strip";
 import { HeaderMarketingServicesMenu } from "@/components/layout/header-marketing-services-menu";
 import { SiteAuthNav } from "@/components/layout/site-auth-nav";
+import { SiteHeaderDesktopFeedLink } from "@/components/layout/site-header-desktop-feed-link";
 import { SITE_HEADER_LOGO_URL } from "@/lib/constants";
 
 type Props = {
@@ -60,6 +61,10 @@ export function SiteHeaderDesktopCluster({
                 placeholder="Ülke, vize türü veya firma ara"
               />
             </div>
+          </div>
+
+          <div className="hidden shrink-0 items-center lg:flex">
+            <SiteHeaderDesktopFeedLink />
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">

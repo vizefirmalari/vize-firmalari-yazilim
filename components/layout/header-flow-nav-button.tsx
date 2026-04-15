@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { isPublicFeedPath, PUBLIC_FEED_ROUTE } from "@/lib/constants";
+
 export function HeaderFlowNavButton() {
   const pathname = usePathname();
-  const active = pathname === "/akis" || pathname.startsWith("/akis?");
+  const active = isPublicFeedPath(pathname);
 
   return (
     <Link
-      href="/akis"
+      href={PUBLIC_FEED_ROUTE}
       aria-label="Akış"
       className={`inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-2 text-[0.8125rem] font-semibold transition sm:min-h-0 sm:min-w-0 sm:px-3 sm:text-xs ${
         active

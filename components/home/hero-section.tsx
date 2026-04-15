@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PUBLIC_FEED_ROUTE } from "@/lib/constants";
+
 export type HeroProps = {
   title?: string | null;
   subtitle?: string | null;
@@ -50,7 +52,7 @@ export function Hero({
               {resolvedCta}
             </Link>
             <Link
-              href="/akis"
+              href={PUBLIC_FEED_ROUTE}
               className="inline-flex items-center rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
             >
               Akışı İncele

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
+import { isPublicFeedPath, PUBLIC_FEED_ROUTE } from "@/lib/constants";
+
 const HIDE_PREFIXES = ["/admin", "/panel", "/auth"];
 const HIDE_PATHS = ["/giris", "/kayit", "/sifre-unuttum", "/sifre-yenile"];
 const FEED_BADGE_REFRESH_MS = 60_000;
@@ -19,7 +21,13 @@ type TabItem = {
 const TABS: TabItem[] = [
   { href: "/", label: "Vize Firmaları", icon: "⌂", match: (p) => p === "/" },
   { href: "/kesfet", label: "Keşfet", icon: "◫", match: (p) => p.startsWith("/kesfet") },
-  { href: "/akis", label: "Akış", icon: "✦", isCenter: true, match: (p) => p.startsWith("/akis") },
+  {
+    href: PUBLIC_FEED_ROUTE,
+    label: "Akış",
+    icon: "✦",
+    isCenter: true,
+    match: (p) => isPublicFeedPath(p),
+  },
   { href: "/mesajlar", label: "Mesajlar", icon: "✉", match: (p) => p.startsWith("/mesajlar") },
   { href: "/hesabim", label: "Profil", icon: "◉", match: (p) => p.startsWith("/hesabim") },
 ];
@@ -44,7 +52,7 @@ function MobileTabBarInner() {
 
   useEffect(() => {
     if (hidden) return;
-    if (pathname.startsWith("/akis")) {
+    if (isPublicFeedPath(pathname)) {
       try {
         localStorage.setItem("vf:akis:last-seen", new Date().toISOString());
         localStorage.setItem("vf:akis:last-check", String(Date.now()));
