@@ -159,6 +159,11 @@ const firmFormSchemaObject = z.object({
   business_visa_support: z.boolean(),
   family_reunion_support: z.boolean(),
   appeal_support: z.boolean(),
+  /** Panel taxonomy slug'ları (sabit boolean anahtarları değildir) */
+  custom_specialization_slugs: z
+    .array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(120))
+    .max(48)
+    .default([]),
   social_media_activity: z
     .union([z.enum(["low", "medium", "high"]), z.literal("")])
     .optional()

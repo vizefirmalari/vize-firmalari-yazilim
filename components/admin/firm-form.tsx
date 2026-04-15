@@ -22,6 +22,8 @@ import {
   createInlineMainServiceCategory,
   createInlineSubService,
 } from "@/lib/actions/filters-admin";
+import { createSpecializationTaxonomyFromPanel } from "@/lib/actions/specialization-taxonomy-admin";
+import type { SpecializationTaxonomyRow } from "@/lib/data/specialization-taxonomy";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 import { deriveVisaRegions } from "@/lib/visa-regions/derive";
 import { isExcludedCountryPicklistName } from "@/lib/visa-regions/picklist-exclusions";
@@ -156,6 +158,7 @@ function tabForValidationPath(path: (string | number)[]): TabId {
     "business_visa_support",
     "family_reunion_support",
     "appeal_support",
+    "custom_specialization_slugs",
   ]);
   const seoKeys = new Set([
     "seo_title",
@@ -206,6 +209,8 @@ type FirmFormProps = {
   companyTypes: string[];
   mainServiceCategories: string[];
   subServices: string[];
+  /** Panel taxonomy — ek uzmanlık seçenekleri + inline ekleme listesi */
+  initialSpecializationTaxonomy?: SpecializationTaxonomyRow[];
 };
 
 const inputClass =
@@ -229,6 +234,7 @@ export function FirmForm({
   companyTypes,
   mainServiceCategories,
   subServices,
+  initialSpecializationTaxonomy = [],
 }: FirmFormProps) {
   const router = useRouter();
 
@@ -264,8 +270,25 @@ export function FirmForm({
   const [newCompanyTypeDraft, setNewCompanyTypeDraft] = useState("");
   const [newMainServiceDraft, setNewMainServiceDraft] = useState("");
   const [creatingPicklist, setCreatingPicklist] = useState<
-    null | "country" | "companyType" | "mainService" | "subService"
+    null | "country" | "companyType" | "mainService" | "subService" | "specialization"
   >(null);
+  const [specTaxonomyRows, setSpecTaxonomyRows] = useState<SpecializationTaxonomyRow[]>(
+    () => [...initialSpecializationTaxonomy]
+  );
+  const [newSpecializationDraft, setNewSpecializationDraft] = useState("");
+  const [newSpecializationAffectsScore, setNewSpecializationAffectsScore] = useState(false);
+
+  const specializationTaxonomyBoot = useMemo(
+    () =>
+      initialSpecializationTaxonomy
+        .map(
+          (r) =>
+            `${r.slug}\t${r.label}\t${Number(r.is_active)}\t${Number(r.affects_corporate_score)}\t${r.sort_order}`
+        )
+        .sort()
+        .join("\n"),
+    [initialSpecializationTaxonomy]
+  );
 
   useEffect(() => {
     /** Yalnız düzenleme: sunucu verisiyle senkron. Yeni oluşturma modunda `picklist` değişince formu sıfırlama (inline ülke/tür vb. eklerken kayıp olmasın). */
@@ -278,6 +301,7 @@ export function FirmForm({
     setCompanyTypeOptions(companyTypes);
     setMainServiceOptions(mainServiceCategories);
     setSubServiceOptions(subServices);
+    setSpecTaxonomyRows([...initialSpecializationTaxonomy]);
   }, [
     mode,
     initial,
@@ -288,6 +312,7 @@ export function FirmForm({
     companyTypes,
     mainServiceCategories,
     subServices,
+    specializationTaxonomyBoot,
   ]);
 
   function patch<K extends keyof FirmFormState>(key: K, value: FirmFormState[K]) {
@@ -355,6 +380,65 @@ export function FirmForm({
     }
     setNewMainServiceDraft("");
     toast.success(`Yeni ana kategori eklendi: ${res.name}`);
+  }
+
+  function toggleCustomSpecializationSlug(slug: string, checked: boolean) {
+    setForm((f) => {
+      const cur = f.custom_specialization_slugs ?? [];
+      const next = checked
+        ? cur.includes(slug)
+          ? cur
+          : [...cur, slug]
+        : cur.filter((x) => x !== slug);
+      return { ...f, custom_specialization_slugs: next };
+    });
+  }
+
+  async function addSpecializationInline() {
+    const name = newSpecializationDraft.trim();
+    if (!name) {
+      toast.error("Uzmanlık alanı adı yazın.");
+      return;
+    }
+    setCreatingPicklist("specialization");
+    const res = await createSpecializationTaxonomyFromPanel(
+      name,
+      newSpecializationAffectsScore
+    );
+    setCreatingPicklist(null);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
+    setSpecTaxonomyRows((prev) => {
+      if (prev.some((r) => r.slug === res.slug)) return prev;
+      const nextSort =
+        prev.reduce((m, r) => Math.max(m, r.sort_order ?? 0), 0) + 1;
+      return [
+        ...prev,
+        {
+          id: "",
+          slug: res.slug,
+          label: res.label,
+          affects_corporate_score: newSpecializationAffectsScore,
+          is_active: true,
+          sort_order: nextSort,
+        },
+      ].sort(
+        (a, b) =>
+          (a.sort_order ?? 0) - (b.sort_order ?? 0) ||
+          a.label.localeCompare(b.label, "tr")
+      );
+    });
+    setForm((f) => ({
+      ...f,
+      custom_specialization_slugs: f.custom_specialization_slugs.includes(res.slug)
+        ? f.custom_specialization_slugs
+        : [...f.custom_specialization_slugs, res.slug],
+    }));
+    setNewSpecializationDraft("");
+    setNewSpecializationAffectsScore(false);
+    toast.success(`Uzmanlık eklendi: ${res.label}`);
   }
 
   async function addSubServiceInline(nameRaw?: string) {
@@ -443,9 +527,19 @@ export function FirmForm({
     });
   }, [subServiceQ, form.sub_services, subServiceOptions]);
 
+  const customSpecializationScoreCount = useMemo(() => {
+    const selected = new Set(form.custom_specialization_slugs ?? []);
+    return specTaxonomyRows.filter(
+      (r) => selected.has(r.slug) && r.affects_corporate_score
+    ).length;
+  }, [form.custom_specialization_slugs, specTaxonomyRows]);
+
   const corporatenessPreview = useMemo(
-    () => computeCorporatenessPreview(form, selectedCountries, selectedFeatured),
-    [form, selectedCountries, selectedFeatured]
+    () =>
+      computeCorporatenessPreview(form, selectedCountries, selectedFeatured, {
+        customSpecializationScoreCount,
+      }),
+    [form, selectedCountries, selectedFeatured, customSpecializationScoreCount]
   );
 
   function renderIdentity() {
@@ -1409,7 +1503,9 @@ export function FirmForm({
         <div className={subsection}>
           <p className={groupTitle}>Uzmanlık alanları</p>
           <p className="mt-1 text-xs text-[#1A1A1A]/45">
-            Kurumsallık skorunu besleyen uzmanlık bayrakları.
+            Sabit uzmanlıklar mevcut sistemdeki boolean alanlarla saklanır ve skor kuralları aynı kalır. Ek
+            uzmanlıklar taxonomy tablosunda tutulur; yalnızca oluştururken veya kayıtta “skora dahil”
+            işaretlenen ek alanlar Kurumsallık skorundaki uzmanlık tavanına eklenir (varsayılan kapalı).
           </p>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {SPECIALIZATION_OPTIONS.map(({ key, label }) => (
@@ -1432,6 +1528,86 @@ export function FirmForm({
               </label>
             ))}
           </div>
+
+          <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1A1A]/45">
+            Ek uzmanlık alanları
+          </p>
+          <p className="mt-1 text-xs text-[#1A1A1A]/45">
+            Panelde tanımlı ek uzmanlıkları seçin veya yeni bir alan ekleyin; eklenen alan tüm firmalarda
+            yeniden kullanılabilir.
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {specTaxonomyRows.map((row) => {
+              const selected = form.custom_specialization_slugs.includes(row.slug);
+              if (!row.is_active && !selected) return null;
+              return (
+                <label
+                  key={row.slug}
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D] ${!row.is_active ? "opacity-80" : ""}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    onChange={(e) =>
+                      row.is_active || selected
+                        ? toggleCustomSpecializationSlug(row.slug, e.target.checked)
+                        : undefined
+                    }
+                    className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                  />
+                  <span className="min-w-0 flex-1 leading-snug">
+                    {row.label}
+                    {row.affects_corporate_score ? (
+                      <span className="ml-1.5 text-[10px] font-normal text-[#1A1A1A]/40">
+                        (skor)
+                      </span>
+                    ) : null}
+                    {!row.is_active ? (
+                      <span className="ml-1.5 text-[10px] font-normal text-[#1A1A1A]/40">
+                        (pasif)
+                      </span>
+                    ) : null}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className={`${labelClass} min-w-0 flex-1`}>
+              Yeni uzmanlık alanı adı
+              <input
+                value={newSpecializationDraft}
+                onChange={(e) => setNewSpecializationDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void addSpecializationInline();
+                  }
+                }}
+                placeholder="Örn. Sporcu Vizesi"
+                maxLength={120}
+                className={inputClass}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => void addSpecializationInline()}
+              disabled={creatingPicklist === "specialization"}
+              className="shrink-0 rounded-xl border border-[#0B3C5D]/15 px-4 py-2.5 text-sm font-semibold text-[#0B3C5D] hover:bg-[#eef2f6] disabled:opacity-60"
+            >
+              {creatingPicklist === "specialization" ? "Ekleniyor…" : "Ekle"}
+            </button>
+          </div>
+          <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs font-medium text-[#1A1A1A]/55">
+            <input
+              type="checkbox"
+              checked={newSpecializationAffectsScore}
+              onChange={(e) => setNewSpecializationAffectsScore(e.target.checked)}
+              className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+            />
+            Yeni alanı Kurumsallık skoruna dahil et (varsayılan kapalı; yalnızca bilinçli tercih)
+          </label>
         </div>
 
         <div className={subsection}>

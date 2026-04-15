@@ -16,6 +16,7 @@ import {
   getPublicFilterCompanyTypes,
   getPublicFilterMainServiceCategories,
 } from "@/lib/data/public-cms";
+import { getPublicSpecializationTaxonomy } from "@/lib/data/specialization-taxonomy";
 import { hiddenParamsFromFirmFilters } from "@/lib/search/hidden-params-from-firm-filters";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
@@ -85,10 +86,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     ? listingFirms
     : await getFirms(emptyFilters);
 
-  const cms = await getHomepageSettings();
-  const dbCountries = await getPublicFilterCountries();
-  const dbCompanyTypes = await getPublicFilterCompanyTypes();
-  const dbMainServiceCategories = await getPublicFilterMainServiceCategories();
+  const [cms, dbCountries, dbCompanyTypes, dbMainServiceCategories, specializationTaxonomy] =
+    await Promise.all([
+      getHomepageSettings(),
+      getPublicFilterCountries(),
+      getPublicFilterCompanyTypes(),
+      getPublicFilterMainServiceCategories(),
+      getPublicSpecializationTaxonomy(),
+    ]);
   const companyTypeNamesOrdered = [...dbCompanyTypes]
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((r) => r.name.trim())
@@ -145,6 +150,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           countryList={countryListForListing}
           companyTypeList={companyTypeListForListing}
           mainServiceCategoryList={mainServiceCategoryListForListing}
+          specializationTaxonomyOptions={specializationTaxonomy}
           featuredTitle={
             cms?.featured_section_title?.trim() || undefined
           }

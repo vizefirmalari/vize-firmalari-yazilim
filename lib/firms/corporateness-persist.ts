@@ -17,9 +17,16 @@ export type PersistedCorporatenessColumns = {
 
 export function computePersistedCorporatenessFields(
   v: FirmFormInput,
-  options?: { hypeForTrust?: bigint | number }
+  options?: {
+    hypeForTrust?: bigint | number;
+    customSpecializationScoreCount?: number;
+  }
 ): PersistedCorporatenessColumns {
-  const corp = calculateCorporatenessScore(mapFirmFormToCorporatenessInput(v));
+  const corp = calculateCorporatenessScore(
+    mapFirmFormToCorporatenessInput(v, {
+      customSpecializationScoreCount: options?.customSpecializationScoreCount,
+    })
+  );
   const hype = options?.hypeForTrust ?? BigInt(0);
   return {
     corporateness_score: corp.totalScore,

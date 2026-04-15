@@ -6,6 +6,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { logAdminActivity } from "@/lib/actions/activity";
 import { getAdminContext } from "@/lib/auth/admin";
 import { firmFormSchema, type FirmFormInput } from "@/lib/validations/firm";
+import {
+  countActiveTaxonomySlugsForCorporateness,
+  replaceFirmSpecializationCustom,
+} from "@/lib/data/specialization-taxonomy";
 import { computePersistedCorporatenessFields } from "@/lib/firms/corporateness-persist";
 import { resolveHypeBigintFromRow } from "@/lib/firms/hype-resolve";
 import {
@@ -43,8 +47,15 @@ function emptyToNull(s: string | null | undefined): string | null {
  * Firma satırı — Kurumsallık ve güven skoru her zaman `computePersistedCorporatenessFields`
  * ile hesaplanır; istemciden gelen alanlar güvenilir değildir.
  */
-function firmRowPayload(v: FirmFormInput, hypeForTrust: bigint) {
-  const persisted = computePersistedCorporatenessFields(v, { hypeForTrust });
+function firmRowPayload(
+  v: FirmFormInput,
+  hypeForTrust: bigint,
+  corpOpts?: { customSpecializationScoreCount?: number }
+) {
+  const persisted = computePersistedCorporatenessFields(v, {
+    hypeForTrust,
+    customSpecializationScoreCount: corpOpts?.customSpecializationScoreCount,
+  });
   const licenseVal = emptyToNull(v.license_number ?? v.permit_number ?? undefined);
   const taxDoc = v.has_tax_document || v.has_tax_certificate;
   const nz = (s: string | null | undefined) => Boolean(s && String(s).trim().length);
@@ -333,7 +344,14 @@ export async function createFirmFromForm(
   const slugOk = await assertSlugAvailable(supabase, v.slug);
   if (!slugOk.ok) return { ok: false, error: slugOk.error };
 
-  const payload = { ...firmRowPayload(v, BigInt(0)), updated_at: new Date().toISOString() };
+  const customScore = await countActiveTaxonomySlugsForCorporateness(
+    supabase,
+    v.custom_specialization_slugs ?? []
+  );
+  const payload = {
+    ...firmRowPayload(v, BigInt(0), { customSpecializationScoreCount: customScore }),
+    updated_at: new Date().toISOString(),
+  };
 
   const { data: inserted, error } = await supabase
     .from("firms")
@@ -367,6 +385,15 @@ export async function createFirmFromForm(
   await supabase.from("firm_service_types").delete().eq("firm_id", firmId);
 
   await syncFirmDenormalized(supabase, firmId);
+
+  const specSync = await replaceFirmSpecializationCustom(
+    supabase,
+    firmId,
+    v.custom_specialization_slugs ?? []
+  );
+  if (!specSync.ok) {
+    console.error("[createFirmFromForm] specialization junction:", specSync.error);
+  }
 
   const recalc = await recalculateCorporatenessScoreWithClient(supabase, firmId, {
     revalidate: false,
@@ -416,7 +443,14 @@ export async function updateFirmFromForm(
     .maybeSingle();
 
   const hypeForTrust = resolveHypeBigintFromRow((priorHype ?? {}) as Record<string, unknown>);
-  const payload = { ...firmRowPayload(v, hypeForTrust), updated_at: new Date().toISOString() };
+  const customScore = await countActiveTaxonomySlugsForCorporateness(
+    supabase,
+    v.custom_specialization_slugs ?? []
+  );
+  const payload = {
+    ...firmRowPayload(v, hypeForTrust, { customSpecializationScoreCount: customScore }),
+    updated_at: new Date().toISOString(),
+  };
 
   const { error } = await supabase.from("firms").update(payload).eq("id", firmId);
 
@@ -444,6 +478,15 @@ export async function updateFirmFromForm(
   }
 
   await syncFirmDenormalized(supabase, firmId);
+
+  const specSync = await replaceFirmSpecializationCustom(
+    supabase,
+    firmId,
+    v.custom_specialization_slugs ?? []
+  );
+  if (!specSync.ok) {
+    console.error("[updateFirmFromForm] specialization junction:", specSync.error);
+  }
 
   const recalc = await recalculateCorporatenessScoreWithClient(supabase, firmId, {
     revalidate: false,

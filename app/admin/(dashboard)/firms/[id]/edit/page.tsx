@@ -8,6 +8,7 @@ import {
   getPicklistSubServices,
 } from "@/lib/data/admin-filters";
 import { getFirmForAdmin } from "@/lib/data/admin-firm-detail";
+import { listSpecializationTaxonomyForAdmin } from "@/lib/data/specialization-taxonomy-admin-list";
 
 export const metadata = {
   title: "Firma düzenle",
@@ -21,12 +22,14 @@ export default async function EditFirmPage({ params }: PageProps) {
   const detail = await getFirmForAdmin(id);
   if (!detail) notFound();
 
-  const [countries, companyTypes, mainServiceCategories, subServices] = await Promise.all([
-    getPicklistCountries(),
-    getPicklistCompanyTypes(),
-    getPicklistMainServiceCategories(),
-    getPicklistSubServices(),
-  ]);
+  const [countries, companyTypes, mainServiceCategories, subServices, specializationTaxonomy] =
+    await Promise.all([
+      getPicklistCountries(),
+      getPicklistCompanyTypes(),
+      getPicklistMainServiceCategories(),
+      getPicklistSubServices(),
+      listSpecializationTaxonomyForAdmin(),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -65,6 +68,7 @@ export default async function EditFirmPage({ params }: PageProps) {
         companyTypes={companyTypes}
         mainServiceCategories={mainServiceCategories}
         subServices={subServices}
+        initialSpecializationTaxonomy={specializationTaxonomy}
       />
     </div>
   );

@@ -82,9 +82,16 @@ export default async function FirmaPage({ params }: PageProps) {
     Array.isArray(firm.custom_services) ? firm.custom_services : []
   );
 
-  const specializationFlags = SPECIALIZATION_OPTIONS
-    .filter((s) => Boolean((firm as unknown as Record<string, unknown>)[s.key]))
-    .map((s) => s.label);
+  const specializationFlags = [
+    ...SPECIALIZATION_OPTIONS.filter((s) =>
+      Boolean((firm as unknown as Record<string, unknown>)[s.key])
+    ).map((s) => s.label),
+    ...(Array.isArray(firm.custom_specializations)
+      ? firm.custom_specializations
+          .map((c) => c.label?.trim())
+          .filter((x): x is string => Boolean(x))
+      : []),
+  ];
 
   const hasAbout = Boolean(aboutShortText) || Boolean(aboutDetailedText);
   const hasCountries = countries.length > 0;

@@ -54,8 +54,28 @@ export async function getFirmForAdmin(
     .eq("firm_id", id)
     .maybeSingle();
 
+  const { data: specRows } = await supabase
+    .from("firm_specialization_custom")
+    .select("specialization_taxonomy(slug)")
+    .eq("firm_id", id);
+
+  const custom_specialization_slugs = (specRows ?? [])
+    .map((r) => {
+      const t = r.specialization_taxonomy as
+        | { slug: string }
+        | { slug: string }[]
+        | null
+        | undefined;
+      const tax = Array.isArray(t) ? t[0] : t;
+      return tax?.slug ? String(tax.slug) : "";
+    })
+    .filter(Boolean);
+
   return {
-    firm: firm as Record<string, unknown>,
+    firm: {
+      ...(firm as Record<string, unknown>),
+      custom_specialization_slugs,
+    },
     country_ids: (fc ?? []).map((r) => r.country_id as string),
     featured_country_ids: (ff ?? []).map((r) => r.country_id as string),
     private: priv

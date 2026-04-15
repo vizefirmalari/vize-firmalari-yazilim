@@ -103,9 +103,15 @@ export function FirmCard({ firm }: FirmCardProps) {
 
   const specializationLabels = useMemo(() => {
     const f = firm as unknown as Record<string, unknown>;
-    return SPECIALIZATION_OPTIONS.filter(({ key }) => Boolean(f[key])).map(
+    const built = SPECIALIZATION_OPTIONS.filter(({ key }) => Boolean(f[key])).map(
       ({ label }) => label
     );
+    const custom = Array.isArray(firm.custom_specializations)
+      ? firm.custom_specializations
+          .map((c) => c.label?.trim())
+          .filter((x): x is string => Boolean(x))
+      : [];
+    return [...built, ...custom];
   }, [firm]);
 
   /**

@@ -17,6 +17,7 @@ import {
   mergeCountryFilterOptionsFromFirms,
 } from "@/lib/firma/listing-filter-options";
 import { getPublicFilterCountries } from "@/lib/data/public-cms";
+import { getPublicSpecializationTaxonomy } from "@/lib/data/specialization-taxonomy";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
 import { resolveDefaultSiteShareImage } from "@/lib/seo/og-images";
@@ -73,7 +74,10 @@ export default async function KesfetSlugPage({ params }: PageProps) {
   const filters = parseFirmFilters({});
   const allFirms = await getFirms(filters);
   const matched = filterFirmsByExploreCategory(allFirms, category);
-  const dbCountries = await getPublicFilterCountries();
+  const [dbCountries, specializationTaxonomy] = await Promise.all([
+    getPublicFilterCountries(),
+    getPublicSpecializationTaxonomy(),
+  ]);
   const countryList = mergeCountryFilterOptionsFromFirms(dbCountries, matched);
 
   return (
@@ -125,6 +129,7 @@ export default async function KesfetSlugPage({ params }: PageProps) {
                 countryList={countryList}
                 listTitle={`${category.label} — Firmalar`}
                 listSubtitle={category.shortDescription}
+                specializationTaxonomyOptions={specializationTaxonomy}
               />
             </>
           )}

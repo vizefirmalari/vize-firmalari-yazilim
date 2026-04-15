@@ -136,6 +136,7 @@ export function GlobalSearchBar({
   const [activeIdx, setActiveIdx] = useState(-1);
 
   const trimmedQuery = query.trim();
+  const showMarqueePlaceholder = compact && trimmedQuery.length === 0;
   const showPanel = open && (trimmedQuery.length >= MIN_CHARS || !trimmedQuery);
   const showSuggestions = trimmedQuery.length >= MIN_CHARS;
   const showIdlePopular = open && trimmedQuery.length < MIN_CHARS;
@@ -493,6 +494,21 @@ export function GlobalSearchBar({
             </svg>
           </span>
         ) : null}
+        {showMarqueePlaceholder ? (
+          <div
+            className="pointer-events-none absolute inset-y-0 left-9 right-3 z-0 flex items-center overflow-hidden"
+            aria-hidden
+          >
+            <div className="header-search-marquee-track">
+              <span className="shrink-0 whitespace-nowrap text-[13px] text-foreground/40">
+                {placeholder}
+              </span>
+              <span className="shrink-0 whitespace-nowrap text-[13px] text-foreground/40">
+                {placeholder}
+              </span>
+            </div>
+          </div>
+        ) : null}
         <input
           ref={inputRef}
           id={inputId}
@@ -517,9 +533,11 @@ export function GlobalSearchBar({
               ? `${listboxId}-opt-${flatItems[activeIdx].item.id}`
               : undefined
           }
-          placeholder={placeholder}
-          className={`w-full rounded-xl border border-border bg-background text-sm text-foreground outline-none transition placeholder:text-foreground/40 focus:border-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-            compact ? "h-10 px-3 pl-9 text-[13px]" : "h-11 px-4"
+          placeholder={showMarqueePlaceholder ? " " : placeholder}
+          className={`w-full rounded-xl border border-border text-sm text-foreground outline-none transition placeholder:text-foreground/40 focus:border-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+            compact
+              ? `relative z-2 h-10 px-3 pl-9 text-[13px] ${showMarqueePlaceholder ? "bg-transparent" : "bg-background"}`
+              : "h-11 bg-background px-4"
           }`}
         />
         {Object.entries(hiddenParams).map(([name, value]) => (

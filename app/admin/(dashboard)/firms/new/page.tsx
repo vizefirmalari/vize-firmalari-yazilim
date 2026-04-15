@@ -5,6 +5,7 @@ import {
   getPicklistMainServiceCategories,
   getPicklistSubServices,
 } from "@/lib/data/admin-filters";
+import { listSpecializationTaxonomyForAdmin } from "@/lib/data/specialization-taxonomy-admin-list";
 
 export const metadata = {
   title: "Yeni firma",
@@ -12,12 +13,14 @@ export const metadata = {
 };
 
 export default async function NewFirmPage() {
-  const [countries, companyTypes, mainServiceCategories, subServices] = await Promise.all([
-    getPicklistCountries(),
-    getPicklistCompanyTypes(),
-    getPicklistMainServiceCategories(),
-    getPicklistSubServices(),
-  ]);
+  const [countries, companyTypes, mainServiceCategories, subServices, specializationTaxonomy] =
+    await Promise.all([
+      getPicklistCountries(),
+      getPicklistCompanyTypes(),
+      getPicklistMainServiceCategories(),
+      getPicklistSubServices(),
+      listSpecializationTaxonomyForAdmin(),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -37,6 +40,7 @@ export default async function NewFirmPage() {
         companyTypes={companyTypes}
         mainServiceCategories={mainServiceCategories}
         subServices={subServices}
+        initialSpecializationTaxonomy={specializationTaxonomy}
       />
     </div>
   );

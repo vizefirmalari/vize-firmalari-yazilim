@@ -8,6 +8,7 @@ type Props = {
   countryList: string[];
   listTitle: string;
   listSubtitle: string;
+  specializationTaxonomyOptions?: { slug: string; label: string }[];
 };
 
 function ExploreListingFallback() {
@@ -36,6 +37,7 @@ export function ExploreFirmResults({
   countryList,
   listTitle,
   listSubtitle,
+  specializationTaxonomyOptions = [],
 }: Props) {
   return (
     <Suspense fallback={<ExploreListingFallback />}>
@@ -46,6 +48,7 @@ export function ExploreFirmResults({
         countryList={countryList}
         featuredTitle={listTitle}
         featuredSubtitle={listSubtitle}
+        specializationTaxonomyOptions={specializationTaxonomyOptions}
       />
     </Suspense>
   );

@@ -8,6 +8,11 @@ import {
   SPECIALIZATION_OPTIONS,
   type SpecializationKey,
 } from "@/lib/constants/firm-specializations";
+import {
+  firmMatchesSpecializationFilterTokens,
+  normalizeSpecializationFilterToken,
+} from "@/lib/firma/specialization-match";
+import { attachFirmCustomSpecializations } from "@/lib/data/specialization-taxonomy";
 import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
 import { firmMatchesExploreCategory } from "@/lib/explore/explore-match";
 import { effectiveFirmCategoryLabel } from "@/lib/firma/listing-filter-options";
@@ -158,14 +163,32 @@ function firmMatchesQuery(r: FirmRow, rawQuery: string): boolean {
   });
   if (visaLabelMatch) return true;
 
+  const customs = r.custom_specializations;
+  if (Array.isArray(customs) && customs.length > 0) {
+    const customHit = customs.some(
+      (c) =>
+        typeof c.label === "string" &&
+        c.label.toLocaleLowerCase("tr").includes(needle)
+    );
+    if (customHit) return true;
+  }
+
   // Anahtar kelime label'i tam eşleşmiyorsa token bazlı gevşek eşle.
   const tokens = needle.split(/\s+/).filter(Boolean);
   if (tokens.length > 0) {
-    return SPECIALIZATION_OPTIONS.some(({ key, label }) => {
+    const builtinTok = SPECIALIZATION_OPTIONS.some(({ key, label }) => {
       if (!Boolean((r as unknown as Record<string, unknown>)[key])) return false;
       const normalized = label.toLocaleLowerCase("tr");
       return tokens.some((t) => normalized.includes(t));
     });
+    if (builtinTok) return true;
+    if (Array.isArray(customs)) {
+      return customs.some(
+        (c) =>
+          typeof c.label === "string" &&
+          tokens.some((t) => c.label.toLocaleLowerCase("tr").includes(t))
+      );
+    }
   }
 
   return false;
@@ -181,22 +204,6 @@ function firmMatchesCityFilter(firm: FirmRow, cities: string[]): boolean {
   if (!fc) return false;
   const n = normalizeTr(fc);
   return cities.some((c) => normalizeTr(c) === n);
-}
-
-function firmMatchesSpecializationKeysFromRaw(
-  r: FirmRow,
-  raw: string[]
-): boolean {
-  if (raw.length === 0) return true;
-  const selected = new Set<SpecializationKey>(
-    raw
-      .map((v) => specializationKeyFromLabel(v) ?? (v as SpecializationKey))
-      .filter(Boolean)
-  );
-  return SPECIALIZATION_OPTIONS.some(
-    ({ key }) =>
-      selected.has(key) && Boolean((r as unknown as Record<string, unknown>)[key])
-  );
 }
 
 function firmMatchesFirmTypesFilter(firm: FirmRow, firmTypes: string[]): boolean {
@@ -241,9 +248,12 @@ export function parseFirmFilters(searchParams: {
   );
   const visaTypesRaw = parseList(searchParams.visaTypes);
   const legacyServicesRaw = parseList(searchParams.services);
-  const visaTypes =
-    visaTypesRaw.length > 0
-      ? visaTypesRaw
+  const visaFromUrl = visaTypesRaw
+    .map((s) => normalizeSpecializationFilterToken(s))
+    .filter((s): s is string => Boolean(s));
+  const visaTypes: string[] =
+    visaFromUrl.length > 0
+      ? visaFromUrl
       : legacyServicesRaw
           .map((s) => specializationKeyFromLabel(s))
           .filter((s): s is SpecializationKey => Boolean(s));
@@ -261,7 +271,9 @@ export function parseFirmFilters(searchParams: {
     q,
     countries: parseList(searchParams.countries),
     visaTypes,
-    expertise: parseList(searchParams.expertise),
+    expertise: parseList(searchParams.expertise)
+      .map((s) => normalizeSpecializationFilterToken(s))
+      .filter((s): s is string => Boolean(s)),
     cities: parseList(searchParams.cities),
     mainServices: parseList(searchParams.mainServices),
     firmTypes: parseList(searchParams.firmTypes),
@@ -284,11 +296,11 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
   }
 
   if (f.visaTypes.length > 0) {
-    out = out.filter((r) => firmMatchesSpecializationKeysFromRaw(r, f.visaTypes));
+    out = out.filter((r) => firmMatchesSpecializationFilterTokens(r, f.visaTypes));
   }
 
   if (f.expertise.length > 0) {
-    out = out.filter((r) => firmMatchesSpecializationKeysFromRaw(r, f.expertise));
+    out = out.filter((r) => firmMatchesSpecializationFilterTokens(r, f.expertise));
   }
 
   if (f.cities.length > 0) {
@@ -456,6 +468,8 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
     };
   });
 
+  rows = await attachFirmCustomSpecializations(supabase, rows);
+
   if (filters.sort === "hype_desc" || filters.sort === "hype_score_desc" || filters.sort === "corp_desc") {
     const s = filters.sort;
     rows.sort((a, b) => compareFirmRowsWithPlanVisibility(a, b, s));
@@ -463,13 +477,13 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
 
   if (filters.visaTypes.length > 0) {
     rows = rows.filter((r) =>
-      firmMatchesSpecializationKeysFromRaw(r, filters.visaTypes)
+      firmMatchesSpecializationFilterTokens(r, filters.visaTypes)
     );
   }
 
   if (filters.expertise.length > 0) {
     rows = rows.filter((r) =>
-      firmMatchesSpecializationKeysFromRaw(r, filters.expertise)
+      firmMatchesSpecializationFilterTokens(r, filters.expertise)
     );
   }
 
@@ -557,8 +571,9 @@ export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {
     console.error("[getFirmBySlug] firm_has_active_panel_member", panelErr.message);
   }
 
+  const [enriched] = await attachFirmCustomSpecializations(supabase, [firm]);
   firm = {
-    ...firm,
+    ...enriched,
     subscription_plan,
     has_active_panel_member: Boolean(hasPanel),
   };

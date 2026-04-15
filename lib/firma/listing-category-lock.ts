@@ -1,11 +1,10 @@
 import type { AppliedListingFilters } from "@/lib/firma/listing-filters";
-import type { SpecializationKey } from "@/lib/constants/firm-specializations";
-
 /** SEO vitrin sayfalarında keşfet / ana hizmet / vize türü kilidini korur. */
 export type ListingCategoryLock = {
   exploreSlug?: string;
   mainServices?: string[];
-  visaTypes?: SpecializationKey[];
+  /** Builtin uzmanlık anahtarı veya özel taxonomy slug */
+  visaTypes?: string[];
 };
 
 export function applyListingCategoryLock(

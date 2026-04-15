@@ -30,11 +30,8 @@ import type { FirmRow, FirmSort } from "@/lib/types/firm";
 import { FirmCard } from "@/components/home/firm-card";
 import { FirmFilterBottomSheet, FirmSortBottomSheet } from "@/components/home/firm-listing-sheets";
 import { FirmListingFilterFields } from "@/components/home/firm-listing-filter-fields";
-import {
-  SPECIALIZATION_LABELS,
-  specializationKeyFromLabel,
-  type SpecializationKey,
-} from "@/lib/constants/firm-specializations";
+import { SPECIALIZATION_LABELS } from "@/lib/constants/firm-specializations";
+import { normalizeSpecializationFilterToken } from "@/lib/firma/specialization-match";
 import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
 import {
   consumeHomeListingScrollAfterSearch,
@@ -77,6 +74,8 @@ type Props = {
   listingPath?: string;
   /** SEO vitrinlerinde keşfet / ana hizmet / vize türü kilidi (ek filtrelerle birlikte kalır). */
   listingCategoryLock?: ListingCategoryLock | null;
+  /** Panel taxonomy — filtre paneli ve chip etiketleri (sabit 8 anahtara ek) */
+  specializationTaxonomyOptions?: { slug: string; label: string }[];
 };
 
 function buildApplied(
@@ -90,11 +89,11 @@ function buildApplied(
   exploreFocusSlug: string | null = null
 ): AppliedListingFilters {
   const normalizedVisaTypes = visaTypes
-    .map((v) => specializationKeyFromLabel(v) ?? (v as SpecializationKey))
-    .filter(Boolean);
+    .map((v) => normalizeSpecializationFilterToken(v))
+    .filter((x): x is string => Boolean(x));
   const normalizedExpertiseKeys = expertise
-    .map((v) => specializationKeyFromLabel(v) ?? (v as SpecializationKey))
-    .filter(Boolean);
+    .map((v) => normalizeSpecializationFilterToken(v))
+    .filter((x): x is string => Boolean(x));
   return {
     coverage: {
       visaRegionLabels: [],
@@ -183,6 +182,7 @@ export function FirmsListing({
   children,
   listingPath,
   listingCategoryLock = null,
+  specializationTaxonomyOptions = [],
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -219,6 +219,16 @@ export function FirmsListing({
     () => new Set(memoCategoryLock?.visaTypes ?? []),
     [memoCategoryLock?.visaTypes?.join("\0")]
   );
+
+  const specializationFilterLabels = useMemo(() => {
+    const m: Record<string, string> = { ...SPECIALIZATION_LABELS };
+    for (const row of specializationTaxonomyOptions) {
+      const slug = row.slug?.trim();
+      if (!slug) continue;
+      m[slug] = row.label.trim() || slug;
+    }
+    return m;
+  }, [specializationTaxonomyOptions]);
 
   const [appliedFilters, setAppliedFiltersBase] = useState<AppliedListingFilters>(
     () =>
@@ -587,7 +597,7 @@ export function FirmsListing({
     });
   };
 
-  const clearVisaChip = (key: SpecializationKey) => {
+  const clearVisaChip = (key: string) => {
     if (lockedVisaTypeSet.has(key)) return;
     setAppliedFiltersWithLock((prev) => ({
       ...prev,
@@ -595,7 +605,7 @@ export function FirmsListing({
     }));
   };
 
-  const clearExpertiseChip = (key: SpecializationKey) => {
+  const clearExpertiseChip = (key: string) => {
     setAppliedFiltersWithLock((prev) => ({
       ...prev,
       expertiseKeys: prev.expertiseKeys.filter((x) => x !== key),
@@ -739,6 +749,7 @@ export function FirmsListing({
               countryOptions={countriesSource}
               companyTypeOptions={companyTypesSource}
               mainServiceCategoryOptions={mainServiceCategorySource}
+              specializationTaxonomyOptions={specializationTaxonomyOptions}
             />
 
             <fieldset className="mt-8 border-t border-border pt-6">
@@ -873,7 +884,7 @@ export function FirmsListing({
                   className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
                 >
                   <span className="max-w-56 truncate">
-                    {SPECIALIZATION_LABELS[key]}
+                    {specializationFilterLabels[key] ?? key}
                   </span>
                   <span className="text-foreground/45" aria-hidden>
                     ×
@@ -909,7 +920,7 @@ export function FirmsListing({
                     className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
                   >
                     <span className="max-w-56 truncate">
-                      {SPECIALIZATION_LABELS[key]}
+                      {specializationFilterLabels[key] ?? key}
                     </span>
                   </span>
                 ) : (
@@ -920,7 +931,7 @@ export function FirmsListing({
                     className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
                   >
                     <span className="max-w-56 truncate">
-                      {SPECIALIZATION_LABELS[key]}
+                      {specializationFilterLabels[key] ?? key}
                     </span>
                     <span className="text-foreground/45" aria-hidden>
                       ×
@@ -1316,6 +1327,7 @@ export function FirmsListing({
         countryOptions={countriesSource}
         companyTypeOptions={companyTypesSource}
         mainServiceCategoryOptions={mainServiceCategorySource}
+        specializationTaxonomyOptions={specializationTaxonomyOptions}
         resultCount={previewCount}
         activeFilterCount={draftFilterActiveCount}
         onApply={applyFilterSheet}

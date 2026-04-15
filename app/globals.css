@@ -282,3 +282,26 @@ body {
   border-top: 1px solid rgba(26, 26, 26, 0.14);
   margin: 1.25rem 0;
 }
+
+/* Mobil header arama — boş alanda ipucu metni (sonsuz kaydırma) */
+@keyframes header-search-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.header-search-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: header-search-marquee 18s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-search-marquee-track {
+    animation: none;
+    transform: none;
+  }
+}

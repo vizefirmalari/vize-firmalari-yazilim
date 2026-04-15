@@ -16,6 +16,7 @@ type FilterSheetProps = {
   countryOptions: string[];
   companyTypeOptions: string[];
   mainServiceCategoryOptions: string[];
+  specializationTaxonomyOptions?: { slug: string; label: string }[];
   resultCount: number;
   /** Aktif filtre sayısı (başlıkta gösterilir) */
   activeFilterCount?: number;
@@ -32,6 +33,7 @@ export function FirmFilterBottomSheet({
   countryOptions,
   companyTypeOptions,
   mainServiceCategoryOptions,
+  specializationTaxonomyOptions = [],
   resultCount,
   activeFilterCount = 0,
   onApply,
@@ -96,6 +98,7 @@ export function FirmFilterBottomSheet({
             countryOptions={countryOptions}
             companyTypeOptions={companyTypeOptions}
             mainServiceCategoryOptions={mainServiceCategoryOptions}
+            specializationTaxonomyOptions={specializationTaxonomyOptions}
           />
         </div>
 

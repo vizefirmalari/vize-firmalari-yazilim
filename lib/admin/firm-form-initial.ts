@@ -103,6 +103,8 @@ export type FirmFormState = {
   business_visa_support: boolean;
   family_reunion_support: boolean;
   appeal_support: boolean;
+  /** taxonomy.slug listesi — sabit uzmanlık boolean'larına ek */
+  custom_specialization_slugs: string[];
   social_media_activity: "" | "low" | "medium" | "high";
   testimonials_level: "" | "none" | "few" | "moderate" | "strong";
   multilingual_team: boolean;
@@ -357,6 +359,11 @@ export function buildFirmFormState(
     business_visa_support: Boolean((i as { business_visa_support?: boolean }).business_visa_support),
     family_reunion_support: Boolean((i as { family_reunion_support?: boolean }).family_reunion_support),
     appeal_support: Boolean((i as { appeal_support?: boolean }).appeal_support),
+    custom_specialization_slugs: Array.isArray(
+      (i as { custom_specialization_slugs?: string[] }).custom_specialization_slugs
+    )
+      ? [...((i as { custom_specialization_slugs?: string[] }).custom_specialization_slugs as string[])]
+      : [],
     social_media_activity: (i.social_media_activity as FirmFormState["social_media_activity"]) || "",
     testimonials_level: (i.testimonials_level as FirmFormState["testimonials_level"]) || "",
     multilingual_team: Boolean(i.multilingual_team),
@@ -544,6 +551,7 @@ export function formStateToPayload(
     business_visa_support: form.business_visa_support,
     family_reunion_support: form.family_reunion_support,
     appeal_support: form.appeal_support,
+    custom_specialization_slugs: [...new Set(form.custom_specialization_slugs ?? [])],
     social_media_activity: form.social_media_activity || null,
     testimonials_level: form.testimonials_level || null,
     multilingual_team: form.multilingual_team,
@@ -620,7 +628,8 @@ export function formStateToPayload(
 export function computeCorporatenessPreview(
   form: FirmFormState,
   selectedCountries: string[],
-  selectedFeatured: string[]
+  selectedFeatured: string[],
+  options?: { customSpecializationScoreCount?: number }
 ): CorporatenessResult {
   const raw = formStateToPayload(form, selectedCountries, selectedFeatured);
   const parsed = firmFormSchema.safeParse(raw);
@@ -642,5 +651,9 @@ export function computeCorporatenessPreview(
       },
     };
   }
-  return calculateCorporatenessScore(mapFirmFormToCorporatenessInput(parsed.data));
+  return calculateCorporatenessScore(
+    mapFirmFormToCorporatenessInput(parsed.data, {
+      customSpecializationScoreCount: options?.customSpecializationScoreCount,
+    })
+  );
 }

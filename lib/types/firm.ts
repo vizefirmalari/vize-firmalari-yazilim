@@ -120,6 +120,11 @@ export type FirmRow = {
   business_visa_support?: boolean | null;
   family_reunion_support?: boolean | null;
   appeal_support?: boolean | null;
+  /**
+   * Panelden tanımlanan ek uzmanlıklar (sabit boolean bayrakları değiştirmez).
+   * `getFirms` / `getFirmBySlug` junction + taxonomy ile doldurulur.
+   */
+  custom_specializations?: { slug: string; label: string }[] | null;
 
   // Process / credibility
   about_section?: string | null;

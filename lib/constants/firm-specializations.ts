@@ -30,6 +30,11 @@ export const SPECIALIZATION_OPTIONS: ReadonlyArray<{
   label: SPECIALIZATION_LABELS[key],
 }));
 
+/** Boolean sütun adları — taxonomy slug çakışması engellenir */
+export const RESERVED_SPECIALIZATION_SLUGS: ReadonlySet<string> = new Set(
+  SPECIALIZATION_ORDER
+);
+
 const SPECIALIZATION_BY_LABEL = new Map<string, SpecializationKey>(
   SPECIALIZATION_OPTIONS.map(({ key, label }) => [label, key])
 );

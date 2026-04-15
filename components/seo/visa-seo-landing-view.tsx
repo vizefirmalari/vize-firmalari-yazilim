@@ -1,5 +1,6 @@
-import { FirmCard } from "@/components/home/firm-card";
 import { FirmsListing } from "@/components/home/firms-listing";
+import { LandingFeaturedFirmsRail } from "@/components/seo/landing-featured-firms-rail";
+import { LandingHeroCtaRow } from "@/components/seo/landing-hero-cta-row";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getFirms } from "@/lib/data/firms";
@@ -13,8 +14,8 @@ import {
   getPublicFilterCountries,
   getPublicFilterMainServiceCategories,
 } from "@/lib/data/public-cms";
+import { getPublicSpecializationTaxonomy } from "@/lib/data/specialization-taxonomy";
 import { hiddenParamsFromFirmFilters } from "@/lib/search/hidden-params-from-firm-filters";
-import type { SpecializationKey } from "@/lib/constants/firm-specializations";
 import type { ListingCategoryLock } from "@/lib/firma/listing-category-lock";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import {
@@ -22,7 +23,6 @@ import {
   mergeVisaLandingServerFilters,
   type VisaSeoLandingPath,
 } from "@/lib/seo/visa-seo-landings";
-import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
 import { compareFirmRowsWithPlanVisibility } from "@/lib/subscriptions/plan-visibility";
 
 type Props = {
@@ -41,15 +41,25 @@ export async function VisaSeoLandingView({ routePath, searchParams }: Props) {
       : cfg.lockMainServices?.length
         ? { mainServices: [...cfg.lockMainServices] }
         : cfg.lockVisaTypes?.length
-          ? { visaTypes: [...cfg.lockVisaTypes] as SpecializationKey[] }
+          ? { visaTypes: [...cfg.lockVisaTypes] }
           : null;
 
   const filters = mergeVisaLandingServerFilters(routePath, sp);
-  const listingFirms = await getFirms(filters);
-
-  const dbCountries = await getPublicFilterCountries();
-  const dbCompanyTypes = await getPublicFilterCompanyTypes();
-  const dbMainServiceCategories = await getPublicFilterMainServiceCategories();
+  /** Şerit: sayfa kilidine uyan tüm firma havuzu; URL’den gelen ek filtreler uygulanmaz. */
+  const featuredFilters = {
+    ...mergeVisaLandingServerFilters(routePath, {}),
+    sort: "corp_desc" as const,
+    q: "",
+  };
+  const [listingFirms, featuredPool, dbCountries, dbCompanyTypes, dbMainServiceCategories, specializationTaxonomy] =
+    await Promise.all([
+      getFirms(filters),
+      getFirms(featuredFilters),
+      getPublicFilterCountries(),
+      getPublicFilterCompanyTypes(),
+      getPublicFilterMainServiceCategories(),
+      getPublicSpecializationTaxonomy(),
+    ]);
   const companyTypeNamesOrdered = [...dbCompanyTypes]
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((r) => r.name.trim())
@@ -68,7 +78,7 @@ export async function VisaSeoLandingView({ routePath, searchParams }: Props) {
 
   const hiddenParams = hiddenParamsFromFirmFilters(filters);
 
-  const featured = [...listingFirms]
+  const featured = [...featuredPool]
     .sort((a, b) => compareFirmRowsWithPlanVisibility(a, b, "corp_desc"))
     .slice(0, 5);
 
@@ -100,37 +110,23 @@ export async function VisaSeoLandingView({ routePath, searchParams }: Props) {
       <SiteHeader defaultQuery={filters.q} hiddenParams={hiddenParams} />
       <main className="flex-1 bg-background">
         <section className="border-b border-border/70 bg-surface/40">
-          <div className="container-shell py-10 md:py-12">
-            <p className="text-xs font-semibold uppercase tracking-wide text-foreground/50">
-              {SITE_BRAND_NAME}
+          <div className="container-shell py-6 md:py-8">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground/50">
+              Koleksiyon
             </p>
-            <h1 className="mt-2 max-w-3xl text-2xl font-bold tracking-tight text-primary md:text-3xl">
+            <h1 className="mt-1.5 max-w-3xl text-2xl font-bold tracking-tight text-primary md:text-3xl">
               {cfg.h1}
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-foreground/75 md:text-base">
+            <p className="mt-2 max-w-2xl text-sm leading-snug text-foreground/75 line-clamp-3 md:text-[0.9375rem]">
               {cfg.heroLead}
             </p>
+            <LandingHeroCtaRow editorialParagraphs={cfg.editorialParagraphs} />
           </div>
         </section>
 
-        <section className="border-b border-border/70 bg-background" aria-label="Konu hakkında bilgi">
-          <div className="container-shell max-w-3xl py-10 md:py-12">
-            {cfg.editorialParagraphs.map((paragraph, index) => (
-              <p
-                key={index}
-                className={
-                  index === 0
-                    ? "text-sm leading-relaxed text-foreground/80 md:text-base"
-                    : "mt-4 text-sm leading-relaxed text-foreground/80 md:text-base"
-                }
-              >
-                {paragraph}
-              </p>
-            ))}
-          </div>
-        </section>
+        <LandingFeaturedFirmsRail firms={featured} />
 
-        <section className="container-shell py-10 md:py-12">
+        <section className="container-shell py-8 md:py-10">
           <h2 className="text-lg font-semibold text-primary">Sıkça sorulan sorular</h2>
           <div className="mt-4 space-y-2">
             {cfg.faq.map((item) => (
@@ -146,22 +142,6 @@ export async function VisaSeoLandingView({ routePath, searchParams }: Props) {
             ))}
           </div>
         </section>
-
-        {featured.length > 0 ? (
-          <section className="border-y border-border/60 bg-surface/25 py-10 md:py-12">
-            <div className="container-shell">
-              <h2 className="text-lg font-semibold text-primary">Öne çıkan firmalar</h2>
-              <p className="mt-1 text-sm text-foreground/65">
-                Kurumsallık skoruna göre bu kategoride öne çıkan ilk {featured.length} firma.
-              </p>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                {featured.map((f) => (
-                  <FirmCard key={f.id} firm={f} />
-                ))}
-              </div>
-            </div>
-          </section>
-        ) : null}
 
         <FirmsListing
           listingPath={routePath}
@@ -179,6 +159,7 @@ export async function VisaSeoLandingView({ routePath, searchParams }: Props) {
           countryList={countryListForListing}
           companyTypeList={companyTypeListForListing}
           mainServiceCategoryList={mainServiceCategoryListForListing}
+          specializationTaxonomyOptions={specializationTaxonomy}
           featuredTitle="Tüm firmalar"
           featuredSubtitle="Aşağıdaki filtreler bu kategoriyle uyumludur; sol panelden daraltabilirsiniz."
         />

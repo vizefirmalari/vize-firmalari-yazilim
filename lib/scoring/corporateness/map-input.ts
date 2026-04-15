@@ -97,10 +97,24 @@ function specializationCount(v: FirmFormInput): number {
   return flags.filter(Boolean).length;
 }
 
+/** Sunucunun doğruladığı skor katkısı sayısı (taxonomy `affects_corporate_score`). */
+function specializationTotalFlagCount(
+  v: FirmFormInput,
+  customScoreCount?: number
+): number {
+  const builtIn = specializationCount(v);
+  const extra = Math.max(0, Math.floor(Number(customScoreCount) || 0));
+  return Math.min(8, builtIn + extra);
+}
+
 /**
  * Admin form doğrulamasından gelen `FirmFormInput` ile Kurumsallık girdisini üretir.
+ * `customSpecializationScoreCount` yalnızca sunucuda (taxonomy doğrulaması sonrası) set edilir.
  */
-export function mapFirmFormToCorporatenessInput(v: FirmFormInput): CorporatenessInput {
+export function mapFirmFormToCorporatenessInput(
+  v: FirmFormInput,
+  opts?: { customSpecializationScoreCount?: number }
+): CorporatenessInput {
   const structureRaw = v.company_structure?.trim()
     ? v.company_structure
     : v.company_type;
@@ -141,6 +155,9 @@ export function mapFirmFormToCorporatenessInput(v: FirmFormInput): Corporateness
 
     countries_served_count,
     sub_service_count,
-    specialization_flag_count: specializationCount(v),
+    specialization_flag_count: specializationTotalFlagCount(
+      v,
+      opts?.customSpecializationScoreCount
+    ),
   };
 }

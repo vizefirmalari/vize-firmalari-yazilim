@@ -13,6 +13,7 @@ import {
   resolvePopularMainServiceLabelsFromOptions,
 } from "@/lib/firma/listing-filter-config";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
+import { isBuiltinSpecializationKey } from "@/lib/firma/specialization-match";
 import {
   normalizeOfficeCityKey,
   POPULAR_OFFICE_CITY_NAMES,
@@ -707,6 +708,8 @@ type FilterFieldsProps = {
   countryOptions: string[];
   companyTypeOptions: string[];
   mainServiceCategoryOptions: string[];
+  /** Panel taxonomy — sabit boolean anahtarlarıyla çakışan slug'lar elenir */
+  specializationTaxonomyOptions?: { slug: string; label: string }[];
   collapsible?: boolean;
 };
 
@@ -717,10 +720,25 @@ export function FirmListingFilterFields({
   countryOptions,
   companyTypeOptions,
   mainServiceCategoryOptions,
+  specializationTaxonomyOptions = [],
   collapsible = false,
 }: FilterFieldsProps) {
   const patch = (partial: Partial<AppliedListingFilters>) =>
     onChange({ ...draft, ...partial });
+
+  const extraSpecializationRows = useMemo(() => {
+    const seen = new Set<string>();
+    const out: { slug: string; label: string }[] = [];
+    for (const row of specializationTaxonomyOptions) {
+      const slug = row.slug?.trim();
+      if (!slug || isBuiltinSpecializationKey(slug)) continue;
+      if (seen.has(slug)) continue;
+      seen.add(slug);
+      out.push({ slug, label: row.label?.trim() || slug });
+    }
+    out.sort((a, b) => a.label.localeCompare(b.label, "tr"));
+    return out;
+  }, [specializationTaxonomyOptions]);
 
   const countryOptionsSafe = useMemo(
     () => buildUnifiedCountryFilterList(countryOptions),
@@ -832,6 +850,28 @@ export function FirmListingFilterFields({
           <span>{label}</span>
         </label>
       ))}
+      {extraSpecializationRows.map(({ slug, label }) => (
+        <label
+          key={`ex-tax-${slug}`}
+          className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+        >
+          <input
+            type="checkbox"
+            checked={draft.expertiseKeys.includes(slug)}
+            onChange={(e) =>
+              patch({
+                expertiseKeys: toggleListItem(
+                  draft.expertiseKeys,
+                  slug,
+                  e.target.checked
+                ),
+              })
+            }
+            className="accent-primary"
+          />
+          <span>{label}</span>
+        </label>
+      ))}
     </div>
   );
 
@@ -850,6 +890,28 @@ export function FirmListingFilterFields({
                 visaTypes: toggleListItem(
                   draft.visaTypes,
                   key,
+                  e.target.checked
+                ),
+              })
+            }
+            className="accent-primary"
+          />
+          <span>{label}</span>
+        </label>
+      ))}
+      {extraSpecializationRows.map(({ slug, label }) => (
+        <label
+          key={`vt-tax-${slug}`}
+          className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+        >
+          <input
+            type="checkbox"
+            checked={draft.visaTypes.includes(slug)}
+            onChange={(e) =>
+              patch({
+                visaTypes: toggleListItem(
+                  draft.visaTypes,
+                  slug,
                   e.target.checked
                 ),
               })

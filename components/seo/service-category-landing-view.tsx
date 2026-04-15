@@ -1,5 +1,6 @@
-import { FirmCard } from "@/components/home/firm-card";
 import { FirmsListing } from "@/components/home/firms-listing";
+import { LandingFeaturedFirmsRail } from "@/components/seo/landing-featured-firms-rail";
+import { LandingHeroCtaRow } from "@/components/seo/landing-hero-cta-row";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getFirms } from "@/lib/data/firms";
@@ -13,6 +14,7 @@ import {
   getPublicFilterCountries,
   getPublicFilterMainServiceCategories,
 } from "@/lib/data/public-cms";
+import { getPublicSpecializationTaxonomy } from "@/lib/data/specialization-taxonomy";
 import { getSiteUrl } from "@/lib/env";
 import { hiddenParamsFromFirmFilters } from "@/lib/search/hidden-params-from-firm-filters";
 import { absoluteUrl } from "@/lib/seo/canonical";
@@ -28,7 +30,7 @@ type Props = {
 
 function CategoryHeroIcon() {
   return (
-    <svg viewBox="0 0 48 48" className="h-10 w-10" fill="none" aria-hidden>
+    <svg viewBox="0 0 48 48" className="h-9 w-9 md:h-10 md:w-10" fill="none" aria-hidden>
       <rect
         x="10"
         y="12"
@@ -60,11 +62,21 @@ function CategoryHeroIcon() {
 export async function ServiceCategoryLandingView({ cfg, searchParams }: Props) {
   const sp = await searchParams;
   const filters = mergeServiceCategoryLandingFilters(cfg.mainServiceLabel, sp);
-  const listingFirms = await getFirms(filters);
-
-  const dbCountries = await getPublicFilterCountries();
-  const dbCompanyTypes = await getPublicFilterCompanyTypes();
-  const dbMainServiceCategories = await getPublicFilterMainServiceCategories();
+  /** Şerit: yalnızca bu ana hizmet kategorisindeki firmalar (URL’deki ülke/şehir vb. daraltma uygulanmaz). */
+  const featuredFilters = {
+    ...mergeServiceCategoryLandingFilters(cfg.mainServiceLabel, {}),
+    sort: "corp_desc" as const,
+    q: "",
+  };
+  const [listingFirms, featuredPool, dbCountries, dbCompanyTypes, dbMainServiceCategories, specializationTaxonomy] =
+    await Promise.all([
+      getFirms(filters),
+      getFirms(featuredFilters),
+      getPublicFilterCountries(),
+      getPublicFilterCompanyTypes(),
+      getPublicFilterMainServiceCategories(),
+      getPublicSpecializationTaxonomy(),
+    ]);
   const companyTypeNamesOrdered = [...dbCompanyTypes]
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((r) => r.name.trim())
@@ -83,7 +95,7 @@ export async function ServiceCategoryLandingView({ cfg, searchParams }: Props) {
 
   const hiddenParams = hiddenParamsFromFirmFilters(filters);
 
-  const featured = [...listingFirms]
+  const featured = [...featuredPool]
     .sort((a, b) => compareFirmRowsWithPlanVisibility(a, b, "corp_desc"))
     .slice(0, 5);
 
@@ -136,48 +148,34 @@ export async function ServiceCategoryLandingView({ cfg, searchParams }: Props) {
       />
       <SiteHeader defaultQuery={filters.q} hiddenParams={hiddenParams} />
       <main className="flex-1 bg-background">
-        <section className="border-b border-border/70 bg-linear-to-br from-primary/[0.07] via-surface to-secondary/[0.09]">
-          <div className="container-shell py-10 md:py-14">
-            <div className="flex flex-col gap-8 md:flex-row md:items-center md:gap-12">
+        <section className="border-b border-border/70 bg-linear-to-br from-primary/[0.07] via-surface to-secondary/9">
+          <div className="container-shell py-6 md:py-8">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8">
               <div
-                className="flex h-[5.25rem] w-[5.25rem] shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-white shadow-[0_1px_2px_0_rgb(0_0_0/0.05)] md:h-24 md:w-24"
+                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-white shadow-xs md:h-18 md:w-18"
                 aria-hidden
               >
                 <CategoryHeroIcon />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground/50">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground/50">
                   Ana hizmet kategorisi
                 </p>
-                <h1 className="mt-2 max-w-3xl text-2xl font-bold tracking-tight text-primary md:text-3xl">
+                <h1 className="mt-1 max-w-3xl text-2xl font-bold tracking-tight text-primary md:text-3xl">
                   {cfg.h1}
                 </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-foreground/80 md:text-base">
+                <p className="mt-2 max-w-2xl text-sm leading-snug text-foreground/75 line-clamp-3 md:text-[0.9375rem]">
                   {cfg.heroLead}
                 </p>
+                <LandingHeroCtaRow editorialParagraphs={cfg.editorialParagraphs} />
               </div>
             </div>
           </div>
         </section>
 
-        <section className="border-b border-border/70 bg-background" aria-label="Kategori hakkında">
-          <div className="container-shell max-w-3xl py-10 md:py-12">
-            {cfg.editorialParagraphs.map((paragraph, index) => (
-              <p
-                key={index}
-                className={
-                  index === 0
-                    ? "text-sm leading-relaxed text-foreground/80 md:text-base"
-                    : "mt-4 text-sm leading-relaxed text-foreground/80 md:text-base"
-                }
-              >
-                {paragraph}
-              </p>
-            ))}
-          </div>
-        </section>
+        <LandingFeaturedFirmsRail firms={featured} />
 
-        <section className="container-shell py-10 md:py-12">
+        <section className="container-shell py-8 md:py-10">
           <h2 className="text-lg font-semibold text-primary">Sıkça sorulan sorular</h2>
           <div className="mt-4 space-y-2">
             {cfg.faq.map((item) => (
@@ -193,22 +191,6 @@ export async function ServiceCategoryLandingView({ cfg, searchParams }: Props) {
             ))}
           </div>
         </section>
-
-        {featured.length > 0 ? (
-          <section className="border-y border-border/60 bg-surface/25 py-10 md:py-12">
-            <div className="container-shell">
-              <h2 className="text-lg font-semibold text-primary">Öne çıkan firmalar</h2>
-              <p className="mt-1 text-sm text-foreground/65">
-                Kurumsallık skoruna göre bu kategoride öne çıkan ilk {featured.length} firma.
-              </p>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                {featured.map((f) => (
-                  <FirmCard key={f.id} firm={f} />
-                ))}
-              </div>
-            </div>
-          </section>
-        ) : null}
 
         <FirmsListing
           listingPath={canonicalPath}
@@ -226,6 +208,7 @@ export async function ServiceCategoryLandingView({ cfg, searchParams }: Props) {
           countryList={countryListForListing}
           companyTypeList={companyTypeListForListing}
           mainServiceCategoryList={mainServiceCategoryListForListing}
+          specializationTaxonomyOptions={specializationTaxonomy}
           featuredTitle="Tüm firmalar"
           featuredSubtitle="Aşağıdaki filtreler bu ana hizmet kategorisiyle uyumludur; sol panelden daraltabilirsiniz."
         />
