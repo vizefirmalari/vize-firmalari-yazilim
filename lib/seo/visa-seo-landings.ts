@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { parseFirmFilters } from "@/lib/data/firms";
 import type { FirmFilters } from "@/lib/types/firm";
+import type { ListingCategoryLock } from "@/lib/firma/listing-category-lock";
+import { normalizeSpecializationFilterToken } from "@/lib/firma/specialization-match";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
 import { resolveDefaultSiteShareImage } from "@/lib/seo/og-images";
@@ -20,6 +22,9 @@ export const VISA_SEO_LANDING_PATHS = [
 
 export type VisaSeoLandingPath = (typeof VISA_SEO_LANDING_PATHS)[number];
 
+/** Panel taxonomy ile aynı canonical slug; label eşleşmesi kırılgan olmasın diye kodda sabitlenir. */
+export const YUNANISTAN_GOLDEN_VISA_TAXONOMY_SLUG = "yunanistan-golden-visa";
+
 export function isVisaSeoLandingPath(path: string): path is VisaSeoLandingPath {
   return (VISA_SEO_LANDING_PATHS as readonly string[]).includes(path);
 }
@@ -37,6 +42,11 @@ type VisaSeoLandingRow = {
   lockExploreSlug?: string | null;
   lockMainServices?: string[];
   lockVisaTypes?: string[];
+  /**
+   * Ek uzmanlık taxonomy slug’ları (`custom_specializations`); `visaTypes` filtresi ile aynı kanal.
+   * Keşfet slug’ından bağımsız; URL’deki `visaTypes` ile genişletilmez (kilit sıkı kalır).
+   */
+  lockSpecializationTaxonomySlugs?: string[];
 };
 
 export type LandingDef = VisaSeoLandingRow & {
@@ -200,12 +210,12 @@ const LANDINGS: Record<VisaSeoLandingPath, VisaSeoLandingRow> = {
     h1: "Yunanistan Golden Visa Danışmanlık Firmaları",
     heroLead:
       "Golden Visa programı ile Yunanistan’da yatırıma dayalı oturum ve ilgili vize süreçlerinde destek sunan danışmanlık firmalarını burada bulun; turistik başvurulardan farklı belge ve süreç beklentileri için profilleri karşılaştırın.",
-    lockExploreSlug: "yunanistan-vizesi",
+    lockSpecializationTaxonomySlugs: [YUNANISTAN_GOLDEN_VISA_TAXONOMY_SLUG],
     faq: [
       {
         question: "Golden Visa ile turistik vize aynı mıdır?",
         answer:
-          "Hayır. Golden Visa genellikle yatırıma dayalı oturum programlarını ifade eder. Bu sayfa Yunanistan odaklı eşleşen danışmanlık firmalarını listeler.",
+          "Hayır. Golden Visa genellikle yatırıma dayalı oturum programlarını ifade eder. Bu sayfa yalnızca panelde “Yunanistan Golden Visa” ek uzmanlığı tanımlı danışmanlık firmalarını listeler; genel Yunanistan vizesi keşfet eşlemesiyle karıştırılmaz.",
       },
       {
         question: "Yatırım tutarı bilgisi platformda var mıdır?",
@@ -342,6 +352,34 @@ const LANDINGS: Record<VisaSeoLandingPath, VisaSeoLandingRow> = {
   },
 };
 
+/** Panel taxonomy slug’larını filtre token’ına normalize eder (trim, case, format). */
+export function normalizedVisaLandingTaxonomySlugs(
+  slugs: string[] | undefined
+): string[] {
+  if (!slugs?.length) return [];
+  const out: string[] = [];
+  for (const raw of slugs) {
+    const n = normalizeSpecializationFilterToken(raw);
+    if (n) out.push(n);
+  }
+  return [...new Set(out)];
+}
+
+/** SEO vitrin `FirmsListing` kilidi; taxonomy kilidi keşfetten önceliklidir. */
+export function visaSeoLandingListingCategoryLock(cfg: {
+  lockExploreSlug?: string | null;
+  lockMainServices?: string[];
+  lockVisaTypes?: string[];
+  lockSpecializationTaxonomySlugs?: string[];
+}): ListingCategoryLock | null {
+  const tax = normalizedVisaLandingTaxonomySlugs(cfg.lockSpecializationTaxonomySlugs);
+  if (tax.length) return { visaTypes: tax };
+  if (cfg.lockExploreSlug != null) return { exploreSlug: cfg.lockExploreSlug };
+  if (cfg.lockMainServices?.length) return { mainServices: [...cfg.lockMainServices] };
+  if (cfg.lockVisaTypes?.length) return { visaTypes: [...cfg.lockVisaTypes] };
+  return null;
+}
+
 function stripVisaListingTitleSuffix(raw: string): string {
   return raw
     .trim()
@@ -382,18 +420,28 @@ export function mergeVisaLandingServerFilters(
 ): FirmFilters {
   const fromUrl = parseFirmFilters(sp);
   const cfg = LANDINGS[path];
+  const taxonomyLocked = normalizedVisaLandingTaxonomySlugs(cfg.lockSpecializationTaxonomySlugs);
   const lockedServiceOrVisa =
-    Boolean(cfg.lockMainServices?.length) || Boolean(cfg.lockVisaTypes?.length);
+    Boolean(cfg.lockMainServices?.length) ||
+    Boolean(cfg.lockVisaTypes?.length) ||
+    Boolean(taxonomyLocked.length);
   const exploreFocusSlug =
     cfg.lockExploreSlug !== undefined
       ? cfg.lockExploreSlug
       : lockedServiceOrVisa
         ? null
         : fromUrl.exploreFocusSlug;
+
+  const hasStrictVisaLock =
+    Boolean(cfg.lockVisaTypes?.length) || Boolean(taxonomyLocked.length);
+  const visaTypes = hasStrictVisaLock
+    ? [...new Set([...(cfg.lockVisaTypes ?? []), ...taxonomyLocked])]
+    : fromUrl.visaTypes;
+
   return {
     q: fromUrl.q,
     countries: fromUrl.countries,
-    visaTypes: cfg.lockVisaTypes ?? fromUrl.visaTypes,
+    visaTypes,
     expertise: fromUrl.expertise,
     cities: fromUrl.cities,
     mainServices: cfg.lockMainServices ?? fromUrl.mainServices,

@@ -16,7 +16,6 @@ import {
 } from "@/lib/data/public-cms";
 import { getPublicSpecializationTaxonomy } from "@/lib/data/specialization-taxonomy";
 import { hiddenParamsFromFirmFilters } from "@/lib/search/hidden-params-from-firm-filters";
-import type { ListingCategoryLock } from "@/lib/firma/listing-category-lock";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import {
   listingAllFirmsSubtitle,
@@ -27,6 +26,7 @@ import {
 import {
   getVisaSeoLanding,
   mergeVisaLandingServerFilters,
+  visaSeoLandingListingCategoryLock,
   visaSeoLandingListingFocusLabel,
   type VisaSeoLandingPath,
 } from "@/lib/seo/visa-seo-landings";
@@ -44,14 +44,7 @@ export async function VisaSeoLandingView({ routePath, searchParams }: Props) {
 
   const categoryLabel = visaSeoLandingListingFocusLabel(cfg);
 
-  const listingCategoryLock: ListingCategoryLock | null =
-    cfg.lockExploreSlug != null
-      ? { exploreSlug: cfg.lockExploreSlug }
-      : cfg.lockMainServices?.length
-        ? { mainServices: [...cfg.lockMainServices] }
-        : cfg.lockVisaTypes?.length
-          ? { visaTypes: [...cfg.lockVisaTypes] }
-          : null;
+  const listingCategoryLock = visaSeoLandingListingCategoryLock(cfg);
 
   const filters = mergeVisaLandingServerFilters(routePath, sp);
   /** Şerit: sayfa kilidine uyan tüm firma havuzu; URL’den gelen ek filtreler uygulanmaz. */
