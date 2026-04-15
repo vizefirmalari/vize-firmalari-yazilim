@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { getAllFirmSlugs, getFirmBySlug } from "@/lib/data/firms";
+import { getAllFirmSlugs, getFirmBySlug, getFirms } from "@/lib/data/firms";
+import type { FirmFilters } from "@/lib/types/firm";
 import { getSiteUrl } from "@/lib/env";
 import { buildFirmPageMetadata } from "@/lib/seo/firma-metadata";
 import { buildFirmSchemaGraph } from "@/lib/seo/firma-schema";
@@ -13,6 +14,8 @@ import { SectionReveal } from "@/components/home/section-reveal";
 import { resolveFirmCoverageDisplay } from "@/lib/firma/resolve-firm-coverage";
 import { FirmFeedList } from "@/components/firma/firm-feed-list";
 import { getFirmFeedItems } from "@/lib/data/feed";
+import { SimilarFirmsStrip } from "@/components/firma/similar-firms-strip";
+import { pickSimilarFirmsForDetail } from "@/lib/firma/similar-firms";
 import {
   normalizeLegacyServiceLabels,
   SPECIALIZATION_OPTIONS,
@@ -184,7 +187,22 @@ export default async function FirmaPage({ params }: PageProps) {
   const pageUrl = `${siteUrl}/firma/${firm.slug}`;
   const homeUrl = siteUrl.replace(/\/$/, "");
   const schemaGraph = buildFirmSchemaGraph(firm, pageUrl, homeUrl);
-  const firmFeedItems = await getFirmFeedItems(firm.id, firm.slug, 9);
+  const allFirmsFilters: FirmFilters = {
+    q: "",
+    countries: [],
+    visaTypes: [],
+    expertise: [],
+    cities: [],
+    mainServices: [],
+    firmTypes: [],
+    exploreFocusSlug: null,
+    sort: "corp_desc",
+  };
+  const [firmFeedItems, allFirms] = await Promise.all([
+    getFirmFeedItems(firm.id, firm.slug, 9),
+    getFirms(allFirmsFilters),
+  ]);
+  const similarFirms = pickSimilarFirmsForDetail(firm, allFirms, 8);
 
   return (
     <>
@@ -921,6 +939,14 @@ export default async function FirmaPage({ params }: PageProps) {
             </aside>
           </div>
         </div>
+
+        {similarFirms.length > 0 ? (
+          <div className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+            <SectionReveal delayMs={305}>
+              <SimilarFirmsStrip sourceFirmName={firm.name} firms={similarFirms} />
+            </SectionReveal>
+          </div>
+        ) : null}
 
         <div id="firmanin-akisi" className="mx-auto max-w-7xl scroll-mt-28 px-4 pb-14 sm:px-6 lg:px-8">
           <SectionReveal delayMs={315}>
