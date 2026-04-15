@@ -3,7 +3,9 @@ import type { FirmRow } from "@/lib/types/firm";
 
 type Props = {
   firms: FirmRow[];
-  /** Varsayılan: doğal, sayı içermeyen kısa açıklama */
+  /** Boşsa: “Öne çıkan firmalar” */
+  title?: string;
+  /** Boşsa: genel kısa açıklama */
   subtitle?: string;
 };
 
@@ -13,6 +15,7 @@ type Props = {
  */
 export function LandingFeaturedFirmsRail({
   firms,
+  title = "Öne çıkan firmalar",
   subtitle = "Bu kategoride öne çıkan firmaları inceleyin.",
 }: Props) {
   if (firms.length === 0) return null;
@@ -27,7 +30,7 @@ export function LandingFeaturedFirmsRail({
           id="landing-featured-firms-heading"
           className="text-lg font-semibold text-primary"
         >
-          Öne çıkan firmalar
+          {title}
         </h2>
         <p className="mt-1 max-w-2xl text-sm leading-snug text-foreground/65">{subtitle}</p>
 

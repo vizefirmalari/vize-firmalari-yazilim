@@ -1,7 +1,13 @@
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getAdReachSummary, getSocialSummary, type SocialMetricRow } from "@/lib/data/ad-reach";
+import {
+  formatPotentialLeadRangeTr,
+  getAdReachSummary,
+  getSocialSummary,
+  potentialLeadDisplayRange,
+  type SocialMetricRow,
+} from "@/lib/data/ad-reach";
 import Link from "next/link";
 
 type PageProps = { params: Promise<{ firmId: string }> };
@@ -40,8 +46,8 @@ export default async function FirmPanelAdsPage({ params }: PageProps) {
   );
   const combinedPotentialLeads =
     reachSummary.estimatedPotentialLeads + socialSummary.estimatedLeads;
-  const potentialRangeMin = Math.max(0, Math.round(combinedPotentialLeads * 0.8));
-  const potentialRangeMax = Math.round(combinedPotentialLeads * 1.2);
+  const combinedLeadRange = potentialLeadDisplayRange(combinedPotentialLeads);
+  const webLeadRange = potentialLeadDisplayRange(reachSummary.estimatedPotentialLeads);
 
   return (
     <div className="space-y-6">
@@ -57,9 +63,12 @@ export default async function FirmPanelAdsPage({ params }: PageProps) {
           <MetricCard label="Tahmini Tekil Kullanıcı" value={combinedUniqueUsers} />
           <MetricCard
             label="Tahmini Potansiyel Müşteri"
-            value={`${potentialRangeMin.toLocaleString("tr-TR")} - ${potentialRangeMax.toLocaleString("tr-TR")}`}
+            value={formatPotentialLeadRangeTr(combinedLeadRange.min, combinedLeadRange.max)}
           />
         </div>
+        <p className="mt-3 max-w-3xl text-xs leading-relaxed text-white/75">
+          Veriler ortalama performans tahminlerine göre hesaplanır.
+        </p>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
@@ -89,7 +98,13 @@ export default async function FirmPanelAdsPage({ params }: PageProps) {
             <InfoCell label="Topluluk büyüklüğü" value={socialSummary.totalFollowers.toLocaleString("tr-TR")} />
             <InfoCell label="Aylık tahmini erişim" value={socialSummary.totalReach.toLocaleString("tr-TR")} />
             <InfoCell label="Tahmini tıklama" value={socialSummary.estimatedClicks.toLocaleString("tr-TR")} />
-            <InfoCell label="Tahmini potansiyel müşteri" value={socialSummary.estimatedLeads.toLocaleString("tr-TR")} />
+            <InfoCell
+              label="Tahmini potansiyel müşteri"
+              value={formatPotentialLeadRangeTr(
+                socialSummary.estimatedLeadsMin,
+                socialSummary.estimatedLeadsMax
+              )}
+            />
           </div>
           <div className="mt-4">
             <Link
@@ -115,7 +130,10 @@ export default async function FirmPanelAdsPage({ params }: PageProps) {
             <InfoCell label="Aktif reklam alanı" value={reachSummary.activeSlotCapacity.toLocaleString("tr-TR")} />
             <InfoCell label="30g potansiyel gösterim" value={reachSummary.last30Impressions.toLocaleString("tr-TR")} />
             <InfoCell label="Tahmini tekil kullanıcı" value={reachSummary.estimatedUniqueUsers.toLocaleString("tr-TR")} />
-            <InfoCell label="Tahmini potansiyel müşteri" value={reachSummary.estimatedPotentialLeads.toLocaleString("tr-TR")} />
+            <InfoCell
+              label="Tahmini potansiyel müşteri"
+              value={formatPotentialLeadRangeTr(webLeadRange.min, webLeadRange.max)}
+            />
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {reachSummary.slotSummary.map((slot) => (
@@ -141,6 +159,10 @@ export default async function FirmPanelAdsPage({ params }: PageProps) {
           <li>• Reklam alanları içerik üretim hacmine göre dinamik artış gösterir.</li>
           <li>• Daha fazla blog ve akış içeriği, daha yüksek görünürlük envanteri sağlar.</li>
           <li>• Gösterilen değerler son 30 günlük verilerle üretilen tahmini model çıktılarıdır.</li>
+          <li>
+            • Potansiyel müşteri aralığı, tekil tahminin etrafında yapılandırılabilir bir güven bandıdır;
+            erişim ve kullanıcı kaynakları değiştirilmez.
+          </li>
         </ul>
       </section>
     </div>

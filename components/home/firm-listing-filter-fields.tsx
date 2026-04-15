@@ -19,6 +19,7 @@ import {
   POPULAR_OFFICE_CITY_NAMES,
   TURKEY_OFFICE_PROVINCE_NAMES,
 } from "@/lib/constants/turkiye-ofis-sehirleri";
+import { ListingFilterSearchableMultiPicker } from "@/components/home/listing-filter-searchable-multi-picker";
 
 /** Masaüstü sol panelde tek dış scroll; mobil / alt sayfada iç liste kısıtları korunur. */
 const FILTER_INNER_SCROLL_LG_FLUSH =
@@ -529,21 +530,10 @@ function OfficeLocationFilterBlock({
   draft: AppliedListingFilters;
   patch: (partial: Partial<AppliedListingFilters>) => void;
 }) {
-  const [q, setQ] = useState("");
-  const deferredQ = useDeferredValue(q);
-
   const sortedProvinces = useMemo(
     () => [...TURKEY_OFFICE_PROVINCE_NAMES].sort((a, b) => a.localeCompare(b, "tr")),
     []
   );
-
-  const listFiltered = useMemo(() => {
-    const needle = normalizeOfficeCityKey(deferredQ);
-    if (!needle) return sortedProvinces;
-    return sortedProvinces.filter((name) =>
-      normalizeOfficeCityKey(name).includes(needle)
-    );
-  }, [sortedProvinces, deferredQ]);
 
   return (
     <div>
@@ -580,41 +570,28 @@ function OfficeLocationFilterBlock({
       <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-foreground/55">
         Tüm şehirler
       </p>
-      <input
-        type="search"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Şehir ara…"
-        className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-foreground/40"
-        autoComplete="off"
-        enterKeyHint="search"
-      />
-      <div
-        className={`mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
-        role="listbox"
-        aria-label="Ofis konumu şehirleri"
-      >
-        {listFiltered.length === 0 ? (
-          <p className="py-2 text-xs text-foreground/55">Eşleşen şehir yok.</p>
-        ) : null}
-        {listFiltered.map((city) => (
-          <label
-            key={city}
-            className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
-          >
-            <input
-              type="checkbox"
-              checked={draft.cities.includes(city)}
-              onChange={(e) =>
-                patch({
-                  cities: toggleListItem(draft.cities, city, e.target.checked),
-                })
-              }
-              className="accent-primary"
-            />
-            <span className="min-w-0 wrap-break-word leading-snug">{city}</span>
-          </label>
-        ))}
+      <p className="mt-1 text-xs leading-relaxed text-foreground/50">
+        İl adıyla arayın; tam listeyi açıp çoklu seçim yapabilirsiniz.
+      </p>
+      <div className="mt-2">
+        <ListingFilterSearchableMultiPicker
+          variantId="listing-office-city-all"
+          triggerEmptyLabel="Şehir seç"
+          panelEyebrow="Tüm şehirler"
+          panelHint="Firma kaydındaki ofis ili ile eşleşir; arama büyük/küçük harf duyarsızdır."
+          searchPlaceholder="Şehir ara…"
+          listAriaLabel="Ofis konumu şehirleri"
+          selected={draft.cities}
+          optionsSorted={sortedProvinces}
+          normalizeKey={normalizeOfficeCityKey}
+          onToggle={(city, checked) =>
+            patch({
+              cities: toggleListItem(draft.cities, city, checked),
+            })
+          }
+          onClearAll={() => patch({ cities: [] })}
+          clearAriaLabel="Şehir seçimini temizle"
+        />
       </div>
     </div>
   );
@@ -629,22 +606,10 @@ function CountryFullListBlock({
   countryOptions: string[];
   patch: (partial: Partial<AppliedListingFilters>) => void;
 }) {
-  const [q, setQ] = useState("");
-  const deferredQ = useDeferredValue(q);
-
   const sortedAtoZ = useMemo(
     () => [...countryOptions].sort((a, b) => a.localeCompare(b, "tr")),
     [countryOptions]
   );
-
-  /** Tüm ülkeler: popüler kısayollarla çakışsa bile burada tekrar gösterilir (tam liste). */
-  const listForScroll = useMemo(() => {
-    const needle = normalizeCountryKey(deferredQ);
-    return sortedAtoZ.filter((c) => {
-      if (!needle) return true;
-      return normalizeCountryKey(c).includes(needle);
-    });
-  }, [sortedAtoZ, deferredQ]);
 
   return (
     <div>
@@ -654,48 +619,32 @@ function CountryFullListBlock({
       <p className="mt-1 text-xs leading-relaxed text-foreground/50">
         Yalnızca ülke adları; kıta veya bölge etiketleri üstteki bölümde.
       </p>
-      <input
-        type="search"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Ülke ara…"
-        className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-foreground/40"
-        autoComplete="off"
-        enterKeyHint="search"
-      />
-      <div
-        className={`mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
-        role="listbox"
-        aria-label="Ülkeler"
-      >
-        {listForScroll.length === 0 ? (
-          <p className="py-2 text-xs text-foreground/55">Eşleşen ülke yok.</p>
-        ) : null}
-        {listForScroll.map((c) => (
-          <label
-            key={c}
-            className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
-          >
-            <input
-              type="checkbox"
-              checked={draft.coverage.countries.includes(c)}
-              onChange={(e) =>
-                patch({
-                  coverage: {
-                    ...draft.coverage,
-                    countries: toggleListItem(
-                      draft.coverage.countries,
-                      c,
-                      e.target.checked
-                    ),
-                  },
-                })
-              }
-              className="accent-primary"
-            />
-            <span className="min-w-0 wrap-break-word leading-snug">{c}</span>
-          </label>
-        ))}
+      <div className="mt-2">
+        <ListingFilterSearchableMultiPicker
+          variantId="listing-country-full"
+          triggerEmptyLabel="Ülke ara / seç"
+          panelEyebrow="Tüm ülkeler"
+          panelHint="Popüler kısayollarla aynı ülke burada da seçilebilir; arama büyük/küçük harf duyarsızdır."
+          searchPlaceholder="Ülke ara…"
+          listAriaLabel="Ülkeler — tam liste"
+          selected={draft.coverage.countries}
+          optionsSorted={sortedAtoZ}
+          normalizeKey={normalizeCountryKey}
+          onToggle={(c, checked) =>
+            patch({
+              coverage: {
+                ...draft.coverage,
+                countries: toggleListItem(draft.coverage.countries, c, checked),
+              },
+            })
+          }
+          onClearAll={() =>
+            patch({
+              coverage: { ...draft.coverage, countries: [] },
+            })
+          }
+          clearAriaLabel="Ülke seçimini temizle"
+        />
       </div>
     </div>
   );

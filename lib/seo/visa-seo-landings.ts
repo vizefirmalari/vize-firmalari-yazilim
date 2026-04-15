@@ -4,6 +4,7 @@ import type { FirmFilters } from "@/lib/types/firm";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
 import { resolveDefaultSiteShareImage } from "@/lib/seo/og-images";
+import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
 import { VISA_SEO_EDITORIAL_PARAGRAPHS } from "@/lib/seo/visa-seo-editorial";
 
 export const VISA_SEO_LANDING_PATHS = [
@@ -340,6 +341,32 @@ const LANDINGS: Record<VisaSeoLandingPath, VisaSeoLandingRow> = {
     ],
   },
 };
+
+function stripVisaListingTitleSuffix(raw: string): string {
+  return raw
+    .trim()
+    .replace(/\s+Danışmanlık Firmaları\s*$/i, "")
+    .replace(/\s+Veren Firmalar\s*$/i, "")
+    .trim();
+}
+
+/**
+ * Liste / rail başlıklarında kullanılacak kısa odak etiketi — önce `lockMainServices`,
+ * ardından `h1` / `title` sonek temizliği, son çare keşfet `label` (yapılandırma kaynaklı).
+ */
+export function visaSeoLandingListingFocusLabel(cfg: LandingDef): string {
+  const fromServices = cfg.lockMainServices?.[0]?.trim();
+  if (fromServices) return fromServices;
+  const fromH1 = stripVisaListingTitleSuffix(cfg.h1 ?? "");
+  if (fromH1) return fromH1;
+  const fromTitle = stripVisaListingTitleSuffix(cfg.title ?? "");
+  if (fromTitle) return fromTitle;
+  if (cfg.lockExploreSlug) {
+    const cat = getExploreCategoryBySlug(cfg.lockExploreSlug);
+    if (cat?.label?.trim()) return cat.label.trim();
+  }
+  return (cfg.title || cfg.h1 || "Liste").trim();
+}
 
 export function getVisaSeoLanding(path: string): LandingDef | null {
   if (!isVisaSeoLandingPath(path)) return null;

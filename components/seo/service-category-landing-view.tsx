@@ -19,6 +19,12 @@ import { getSiteUrl } from "@/lib/env";
 import { hiddenParamsFromFirmFilters } from "@/lib/search/hidden-params-from-firm-filters";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
+import {
+  listingAllFirmsSubtitle,
+  listingAllFirmsTitle,
+  listingFeaturedFirmsSubtitle,
+  listingFeaturedFirmsTitle,
+} from "@/lib/seo/landing-firms-section-copy";
 import type { ServiceCategoryLandingDef } from "@/lib/seo/service-category-landings";
 import { mergeServiceCategoryLandingFilters } from "@/lib/seo/service-category-landings";
 import { compareFirmRowsWithPlanVisibility } from "@/lib/subscriptions/plan-visibility";
@@ -61,10 +67,11 @@ function CategoryHeroIcon() {
 
 export async function ServiceCategoryLandingView({ cfg, searchParams }: Props) {
   const sp = await searchParams;
-  const filters = mergeServiceCategoryLandingFilters(cfg.mainServiceLabel, sp);
+  const categoryLabel = cfg.mainServiceLabel;
+  const filters = mergeServiceCategoryLandingFilters(categoryLabel, sp);
   /** Şerit: yalnızca bu ana hizmet kategorisindeki firmalar (URL’deki ülke/şehir vb. daraltma uygulanmaz). */
   const featuredFilters = {
-    ...mergeServiceCategoryLandingFilters(cfg.mainServiceLabel, {}),
+    ...mergeServiceCategoryLandingFilters(categoryLabel, {}),
     sort: "corp_desc" as const,
     q: "",
   };
@@ -173,7 +180,11 @@ export async function ServiceCategoryLandingView({ cfg, searchParams }: Props) {
           </div>
         </section>
 
-        <LandingFeaturedFirmsRail firms={featured} />
+        <LandingFeaturedFirmsRail
+          firms={featured}
+          title={listingFeaturedFirmsTitle(categoryLabel)}
+          subtitle={listingFeaturedFirmsSubtitle(categoryLabel)}
+        />
 
         <section className="container-shell py-8 md:py-10">
           <h2 className="text-lg font-semibold text-primary">Sıkça sorulan sorular</h2>
@@ -194,7 +205,7 @@ export async function ServiceCategoryLandingView({ cfg, searchParams }: Props) {
 
         <FirmsListing
           listingPath={canonicalPath}
-          listingCategoryLock={{ mainServices: [cfg.mainServiceLabel] }}
+          listingCategoryLock={{ mainServices: [categoryLabel] }}
           initialFirms={listingFirms}
           initialCountries={filters.countries}
           initialVisaTypes={filters.visaTypes}
@@ -209,8 +220,8 @@ export async function ServiceCategoryLandingView({ cfg, searchParams }: Props) {
           companyTypeList={companyTypeListForListing}
           mainServiceCategoryList={mainServiceCategoryListForListing}
           specializationTaxonomyOptions={specializationTaxonomy}
-          featuredTitle="Tüm firmalar"
-          featuredSubtitle="Aşağıdaki filtreler bu ana hizmet kategorisiyle uyumludur; sol panelden daraltabilirsiniz."
+          featuredTitle={listingAllFirmsTitle(categoryLabel)}
+          featuredSubtitle={listingAllFirmsSubtitle(categoryLabel)}
         />
       </main>
       <SiteFooter />

@@ -11,7 +11,12 @@ import {
   uploadBlogAdAsset,
 } from "@/lib/actions/blog-ads-admin";
 import type { BlogAdRow } from "@/lib/blog/ads";
-import type { AdReachSummary, SocialMetricRow } from "@/lib/data/ad-reach";
+import {
+  formatPotentialLeadRangeTr,
+  potentialLeadDisplayRange,
+  type AdReachSummary,
+  type SocialMetricRow,
+} from "@/lib/data/ad-reach";
 
 type Metrics = {
   impressions: number;
@@ -38,6 +43,7 @@ export function BlogAdsManager({
   countryOptions: string[];
   visaTypeOptions: string[];
 }) {
+  const webPotentialLeadRange = potentialLeadDisplayRange(adReachSummary.estimatedPotentialLeads);
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [socialDraft, setSocialDraft] = useState({
@@ -199,7 +205,12 @@ export function BlogAdsManager({
         </div>
         <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]/55">Tahmini Potansiyel Müşteri</p>
-          <p className="mt-1 text-2xl font-bold text-[#0B3C5D]">{adReachSummary.estimatedPotentialLeads.toLocaleString("tr-TR")}</p>
+          <p className="mt-1 text-2xl font-bold text-[#0B3C5D]">
+            {formatPotentialLeadRangeTr(webPotentialLeadRange.min, webPotentialLeadRange.max)}
+          </p>
+          <p className="mt-1 text-[10px] leading-snug text-[#1A1A1A]/50">
+            Veriler ortalama performans tahminlerine göre hesaplanır (aralık gösterimi).
+          </p>
         </div>
       </section>
 

@@ -19,8 +19,15 @@ import { hiddenParamsFromFirmFilters } from "@/lib/search/hidden-params-from-fir
 import type { ListingCategoryLock } from "@/lib/firma/listing-category-lock";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import {
+  listingAllFirmsSubtitle,
+  listingAllFirmsTitle,
+  listingFeaturedFirmsSubtitle,
+  listingFeaturedFirmsTitle,
+} from "@/lib/seo/landing-firms-section-copy";
+import {
   getVisaSeoLanding,
   mergeVisaLandingServerFilters,
+  visaSeoLandingListingFocusLabel,
   type VisaSeoLandingPath,
 } from "@/lib/seo/visa-seo-landings";
 import { compareFirmRowsWithPlanVisibility } from "@/lib/subscriptions/plan-visibility";
@@ -34,6 +41,8 @@ export async function VisaSeoLandingView({ routePath, searchParams }: Props) {
   const sp = await searchParams;
   const cfg = getVisaSeoLanding(routePath);
   if (!cfg) return null;
+
+  const categoryLabel = visaSeoLandingListingFocusLabel(cfg);
 
   const listingCategoryLock: ListingCategoryLock | null =
     cfg.lockExploreSlug != null
@@ -124,7 +133,11 @@ export async function VisaSeoLandingView({ routePath, searchParams }: Props) {
           </div>
         </section>
 
-        <LandingFeaturedFirmsRail firms={featured} />
+        <LandingFeaturedFirmsRail
+          firms={featured}
+          title={listingFeaturedFirmsTitle(categoryLabel)}
+          subtitle={listingFeaturedFirmsSubtitle(categoryLabel)}
+        />
 
         <section className="container-shell py-8 md:py-10">
           <h2 className="text-lg font-semibold text-primary">Sıkça sorulan sorular</h2>
@@ -160,8 +173,8 @@ export async function VisaSeoLandingView({ routePath, searchParams }: Props) {
           companyTypeList={companyTypeListForListing}
           mainServiceCategoryList={mainServiceCategoryListForListing}
           specializationTaxonomyOptions={specializationTaxonomy}
-          featuredTitle="Tüm firmalar"
-          featuredSubtitle="Aşağıdaki filtreler bu kategoriyle uyumludur; sol panelden daraltabilirsiniz."
+          featuredTitle={listingAllFirmsTitle(categoryLabel)}
+          featuredSubtitle={listingAllFirmsSubtitle(categoryLabel)}
         />
       </main>
       <SiteFooter />
