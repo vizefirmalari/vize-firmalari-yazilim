@@ -500,13 +500,11 @@ export function GlobalSearchBar({
             aria-hidden
           >
             <div className="header-search-marquee-track">
-              <span className="shrink-0 whitespace-nowrap text-[13px] text-foreground/40">
+              <span className="shrink-0 whitespace-nowrap pe-3 text-[13px] text-foreground/40">
                 {placeholder}
-                {" "}
               </span>
-              <span className="shrink-0 whitespace-nowrap text-[13px] text-foreground/40">
+              <span className="shrink-0 whitespace-nowrap pe-3 text-[13px] text-foreground/40">
                 {placeholder}
-                {" "}
               </span>
             </div>
           </div>
