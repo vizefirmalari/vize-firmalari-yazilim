@@ -12,8 +12,8 @@ export function StickyBackButton({ fallbackHref }: { fallbackHref: string }) {
         if (window.history.length > 1) router.back();
         else router.push(fallbackHref);
       }}
-      className="inline-flex h-10 w-auto max-w-full shrink-0 items-center gap-1.5 rounded-2xl border border-border bg-white px-4 text-sm font-medium text-[#0B3C5D] shadow-sm
-        md:h-auto md:min-h-0 md:rounded-xl md:px-3 md:py-2 md:font-semibold"
+      className="inline-flex h-10 w-auto max-w-full shrink-0 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 shadow-sm
+        md:h-auto md:min-h-0 md:gap-1.5 md:rounded-xl md:border-border md:px-3 md:py-2 md:font-semibold md:text-[#0B3C5D] md:shadow-sm"
     >
       ← Geri
     </button>
