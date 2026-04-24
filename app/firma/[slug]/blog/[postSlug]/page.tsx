@@ -317,13 +317,15 @@ export default async function BlogDetailPage({ params }: Props) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       ) : null}
       <SiteHeader />
-      <main className="mx-auto min-w-0 w-full max-w-5xl overflow-x-clip wrap-anywhere px-3 pt-0 pb-24 sm:px-6 md:pt-4 md:pb-14 lg:px-8">
-        {/** Doğal akış: üstte geri, altta firma profili; mobilde sticky (md: aşağıdaki gibi) */}
-        <div className="sticky top-[72px] z-40 w-full bg-transparent px-4 py-2 max-md:mb-2 md:static md:mb-3 md:w-fit md:px-0 md:py-0">
+      <main className="mx-auto min-w-0 w-full max-w-5xl overflow-x-clip wrap-anywhere pt-0 pb-24 max-md:px-0 md:px-6 md:pt-4 md:pb-14 lg:px-8">
+        {/** Mobil: max-w-screen-sm + px-4 — geri, firma, blog aynı hizaya */}
+        <div className="mx-auto w-full min-w-0 max-w-screen-sm px-4 md:max-w-none md:px-0">
+        {/** Geri: mobilde sticky; tüm yatay hizalar container genişliğiyle aynı */}
+        <div className="w-full max-md:sticky max-md:top-[72px] max-md:z-40 max-md:mb-2 max-md:pt-2 md:static md:mb-3 md:pt-0">
           <StickyBackButton fallbackHref={`/firma/${resolvedFirmSlug}`} />
         </div>
 
-        <div className="mt-0 mb-2 flex flex-col gap-2.5 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="mt-0 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-3 md:mb-4">
           <Link
             href={`/firma/${resolvedFirmSlug}`}
             className="flex min-w-0 max-w-full items-center gap-2.5 max-md:rounded-lg sm:gap-3 rounded-xl border border-[#0B3C5D]/10 bg-white p-2.5 sm:p-3 shadow-sm"
@@ -344,7 +346,7 @@ export default async function BlogDetailPage({ params }: Props) {
               <p className="truncate text-sm font-semibold text-[#0B3C5D]">{String(firm?.name ?? postCompanyName ?? "Firma")}</p>
             </div>
           </Link>
-          <div className="flex min-w-0 max-w-full flex-wrap gap-1.5 sm:gap-2">
+          <div className="flex min-w-0 max-w-full flex-wrap gap-1.5 sm:gap-2 max-md:gap-2">
             <Link
               href={`/firma/${resolvedFirmSlug}`}
               className="max-md:rounded-lg rounded-xl border border-[#0B3C5D]/20 bg-[#F7F9FB] px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs font-semibold text-[#0B3C5D] hover:bg-[#EEF2F6]"
@@ -372,7 +374,7 @@ export default async function BlogDetailPage({ params }: Props) {
           </div>
         </div>
 
-        <article className="min-w-0 max-w-full space-y-5 max-md:space-y-3">
+        <article className="mt-0 min-w-0 w-full max-w-full space-y-5 max-md:space-y-3 max-md:mt-0">
           <section className="overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-sm max-md:shadow-[0_1px_8px_rgba(11,60,93,0.05)] sm:shadow-sm">
             {post.cover_image_url ? (
               <div className="flex w-full min-w-0 max-w-full items-center justify-center overflow-x-hidden px-3 pt-3 sm:px-4 sm:pt-4 max-md:px-2.5 max-md:pt-2.5">
@@ -504,6 +506,7 @@ export default async function BlogDetailPage({ params }: Props) {
             }))}
           />
         </article>
+        </div>
       </main>
       <SiteFooter />
     </>
