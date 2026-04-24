@@ -44,9 +44,9 @@ export function FeedCardFeedPostBody({
   const showExpand = needsMore && !expanded;
 
   return (
-    <div className="px-4 pb-2 pt-4 sm:px-5">
+    <div className="min-w-0 max-w-full wrap-anywhere px-3 pt-3 pb-1.5 sm:px-5 sm:pt-4 sm:pb-2">
       <div
-        className={`whitespace-pre-wrap break-words text-[14px] leading-relaxed text-[#374151] ${
+        className={`whitespace-pre-wrap wrap-break-word text-[14px] leading-relaxed text-[#374151] max-md:text-[13px] max-md:leading-[1.55] ${
           showExpand ? "line-clamp-3" : ""
         }`}
       >

@@ -55,6 +55,9 @@ type PostRow = {
   company_logo_url?: string | null;
 };
 
+const blogTiptapBodyClass =
+  "tiptap-public min-w-0 max-w-full overflow-x-hidden wrap-anywhere max-md:[&_p]:text-[15px] max-md:[&_p]:leading-[1.65] max-md:[&_p+_p]:!mt-2.5 max-md:[&_h2]:!text-[1.1rem] max-md:[&_h2]:!leading-tight max-md:[&_h2]:!my-2 max-md:[&_h3]:!text-[1.02rem] max-md:[&_h3]:!leading-snug max-md:[&_h3]:!mt-1.5 max-md:[&_h3]:!mb-0.5 max-md:[&_ol]:!my-1.5 max-md:[&_ul]:!my-1.5 max-md:[&_li]:!text-[15px] max-md:[&_li]:!leading-[1.5] max-md:[&_hr.vf-blog-divider]:!my-3";
+
 const getActiveBlogAds = unstable_cache(
   async () => {
     const service = createSupabaseServiceRoleClient();
@@ -314,13 +317,16 @@ export default async function BlogDetailPage({ params }: Props) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       ) : null}
       <SiteHeader />
-      <main className="mx-auto max-w-5xl px-4 pb-14 pt-4 sm:px-6 lg:px-8">
-        <div className="sticky top-16 z-10 mb-3 w-fit sm:top-20">
+      <main className="mx-auto min-w-0 w-full max-w-5xl overflow-x-hidden wrap-anywhere px-3 pt-2 pb-24 sm:px-6 sm:pt-4 md:pb-14 lg:px-8">
+        <div className="sticky top-16 z-10 mb-2 w-fit max-md:mb-1.5 sm:top-20 sm:mb-3">
           <StickyBackButton fallbackHref={`/firma/${resolvedFirmSlug}`} />
         </div>
 
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Link href={`/firma/${resolvedFirmSlug}`} className="flex min-w-0 items-center gap-3 rounded-xl border border-[#0B3C5D]/10 bg-white p-3 shadow-sm">
+        <div className="mb-3 max-md:mb-2.5 flex flex-col gap-2.5 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <Link
+            href={`/firma/${resolvedFirmSlug}`}
+            className="flex min-w-0 max-w-full items-center gap-2.5 max-md:rounded-lg sm:gap-3 rounded-xl border border-[#0B3C5D]/10 bg-white p-2.5 sm:p-3 shadow-sm"
+          >
             <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#F3F6F8] ring-1 ring-[#0B3C5D]/10">
               {(firm?.logo_url || postCompanyLogo) ? (
                 <Image
@@ -337,8 +343,11 @@ export default async function BlogDetailPage({ params }: Props) {
               <p className="truncate text-sm font-semibold text-[#0B3C5D]">{String(firm?.name ?? postCompanyName ?? "Firma")}</p>
             </div>
           </Link>
-          <div className="flex flex-wrap gap-2">
-            <Link href={`/firma/${resolvedFirmSlug}`} className="rounded-xl border border-[#0B3C5D]/20 bg-[#F7F9FB] px-3 py-2 text-xs font-semibold text-[#0B3C5D] hover:bg-[#EEF2F6]">
+          <div className="flex min-w-0 max-w-full flex-wrap gap-1.5 sm:gap-2">
+            <Link
+              href={`/firma/${resolvedFirmSlug}`}
+              className="max-md:rounded-lg rounded-xl border border-[#0B3C5D]/20 bg-[#F7F9FB] px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs font-semibold text-[#0B3C5D] hover:bg-[#EEF2F6]"
+            >
               Firma sayfası
             </Link>
             <FirmContactSheet
@@ -362,10 +371,10 @@ export default async function BlogDetailPage({ params }: Props) {
           </div>
         </div>
 
-        <article className="space-y-5">
-          <section className="overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-sm">
+        <article className="min-w-0 max-w-full space-y-5 max-md:space-y-3">
+          <section className="overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-sm max-md:shadow-[0_1px_8px_rgba(11,60,93,0.05)] sm:shadow-sm">
             {post.cover_image_url ? (
-              <div className="flex w-full items-center justify-center px-3 pt-3 sm:px-4 sm:pt-4">
+              <div className="flex w-full min-w-0 max-w-full items-center justify-center overflow-x-hidden px-3 pt-3 sm:px-4 sm:pt-4 max-md:px-2.5 max-md:pt-2.5">
                 <Image
                   src={String(post.cover_image_url)}
                   alt={String(post.cover_image_alt || post.title)}
@@ -373,54 +382,60 @@ export default async function BlogDetailPage({ params }: Props) {
                   height={630}
                   priority
                   sizes="(max-width: 1024px) 100vw, 960px"
-                  className="h-auto w-full max-w-full object-contain"
+                  className="h-auto w-full max-w-full min-h-0 object-contain max-md:max-h-[min(40vh,280px)]"
                 />
               </div>
             ) : null}
-            <div className="space-y-2 p-5">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="min-w-0 max-w-full space-y-1.5 p-5 sm:space-y-2 max-md:space-y-1.5 max-md:p-3.5">
+              <div className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5 sm:gap-2">
                 {category?.name ? (
-                  <span className="rounded-full border border-[#0B3C5D]/10 bg-[#F4F7FA] px-2.5 py-1 text-xs font-semibold text-[#0B3C5D]">
+                  <span className="rounded-full border border-[#0B3C5D]/10 bg-[#F4F7FA] px-2.5 py-1 text-xs font-semibold text-[#0B3C5D] max-md:px-2 max-md:py-0.5 max-md:text-[11px]">
                     {String(category.name)}
                   </span>
                 ) : null}
                 {post.published_at ? (
-                  <span className="text-xs text-[#1A1A1A]/55">
+                  <span className="min-w-0 wrap-anywhere text-xs text-[#1A1A1A]/55 max-md:text-[11px]">
                     Yayınlanma tarihi: {formatPublishedAtDisplayTr(String(post.published_at))}
                   </span>
                 ) : null}
               </div>
-              <h1 className="text-2xl font-bold tracking-tight text-[#0B3C5D] sm:text-3xl">{String(post.title)}</h1>
-              <p className="text-sm leading-relaxed text-[#1A1A1A]/75">{String(post.meta_description ?? post.summary ?? "")}</p>
+              <h1 className="font-bold leading-tight tracking-tight text-[#0B3C5D] max-md:text-[22px] md:text-3xl">
+                {String(post.title)}
+              </h1>
+              <p className="text-sm leading-relaxed text-[#1A1A1A]/75 max-md:text-[15px] max-md:leading-[1.55]">
+                {String(post.meta_description ?? post.summary ?? "")}
+              </p>
             </div>
           </section>
 
           <BlogAdSlot ad={topAd} postId={String(post.id)} slot="top" />
 
-          <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
-            <div className="tiptap-public" dangerouslySetInnerHTML={{ __html: first }} />
+          <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm max-md:rounded-2xl max-md:p-4 max-md:shadow-sm">
+            <div className={blogTiptapBodyClass} dangerouslySetInnerHTML={{ __html: first }} />
           </section>
 
           <BlogAdSlot ad={middleAd} postId={String(post.id)} slot="middle" />
 
           {second ? (
-            <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
-              <div className="tiptap-public" dangerouslySetInnerHTML={{ __html: second }} />
+            <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm max-md:rounded-2xl max-md:p-4 max-md:shadow-sm">
+              <div className={blogTiptapBodyClass} dangerouslySetInnerHTML={{ __html: second }} />
             </section>
           ) : null}
 
           {faqItems.length > 0 ? (
-            <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-semibold text-[#0B3C5D]">Sıkça Sorulan Sorular</h2>
-              <div className="mt-3 space-y-2">
+            <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm max-md:rounded-2xl max-md:p-4 max-md:shadow-sm">
+              <h2 className="text-lg font-semibold text-[#0B3C5D] max-md:text-base">Sıkça Sorulan Sorular</h2>
+              <div className="mt-3 max-md:mt-2.5 space-y-2 max-md:space-y-1.5">
                 {faqItems.map((item, index) => {
                   const faqKey = item.id ? String(item.id) : `${item.question}-${index}`;
                   const faqCtas = normalizeBlogCtaButtons(item.cta_buttons);
                   return (
-                    <details key={faqKey} className="rounded-xl border border-[#0B3C5D]/10 bg-[#F8FAFC] px-4 py-3">
-                      <summary className="cursor-pointer text-sm font-semibold text-[#0B3C5D]">{item.question}</summary>
+                    <details key={faqKey} className="rounded-xl border border-[#0B3C5D]/10 bg-[#F8FAFC] px-4 py-3 max-md:px-3 max-md:py-2.5">
+                      <summary className="cursor-pointer text-sm font-semibold text-[#0B3C5D] max-md:text-[13px]">
+                        {item.question}
+                      </summary>
                       <div
-                        className="tiptap-public mt-2 text-sm leading-relaxed text-[#1A1A1A]/75"
+                        className={`${blogTiptapBodyClass} mt-2 text-sm leading-relaxed text-[#1A1A1A]/75 max-md:mt-1.5`}
                         dangerouslySetInnerHTML={{ __html: String(item.answer ?? "") }}
                       />
                       {faqCtas.length > 0 ? (
@@ -440,10 +455,15 @@ export default async function BlogDetailPage({ params }: Props) {
           ) : null}
 
           {ctaButtons.length > 0 ? <BlogCtaButtonsRenderer buttons={ctaButtons} /> : null}
-          <section className="rounded-2xl border border-[#0B3C5D]/10 bg-[#0B3C5D] p-5 text-white shadow-sm">
-            <p className="text-sm font-semibold">Premium danışmanlık desteği alın.</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link href={`/firma/${resolvedFirmSlug}`} className="rounded-xl bg-[#D9A441] px-4 py-2 text-sm font-semibold text-[#1A1A1A]">Firma sayfasına git</Link>
+          <section className="rounded-2xl border border-[#0B3C5D]/10 bg-[#0B3C5D] p-5 text-white shadow-sm max-md:rounded-2xl max-md:p-4 max-md:shadow-sm">
+            <p className="text-sm font-semibold max-md:text-[13px]">Premium danışmanlık desteği alın.</p>
+            <div className="mt-3 max-md:mt-2.5 flex flex-wrap gap-2 max-md:gap-1.5">
+              <Link
+                href={`/firma/${resolvedFirmSlug}`}
+                className="max-md:rounded-lg rounded-xl bg-[#D9A441] px-4 py-2 text-sm font-semibold text-[#1A1A1A] max-md:px-3 max-md:py-1.5 max-md:text-[13px]"
+              >
+                Firma sayfasına git
+              </Link>
               <FirmContactSheet
                 firm={{
                   slug: resolvedFirmSlug,

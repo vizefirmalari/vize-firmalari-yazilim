@@ -10,11 +10,16 @@ export function FeedCardContent({
   targetUrl: string;
 }) {
   return (
-    <div className="px-4 pb-2 pt-4 sm:px-5">
-      <Link href={targetUrl} className="line-clamp-2 text-[16px] leading-[1.4] font-semibold text-[#111827] hover:underline">
+    <div className="min-w-0 max-w-full wrap-anywhere px-3 pt-3 pb-1.5 sm:px-5 sm:pt-4 sm:pb-2">
+      <Link
+        href={targetUrl}
+        className="line-clamp-2 text-[16px] max-md:text-[15px] max-md:leading-snug leading-[1.4] font-semibold text-[#111827] hover:underline"
+      >
         {title}
       </Link>
-      <p className="mt-1.5 line-clamp-2 text-[14px] text-[#4b5563]">{description}</p>
+      <p className="mt-1.5 line-clamp-2 text-[14px] text-[#4b5563] max-md:mt-1 max-md:text-[13px] max-md:leading-relaxed">
+        {description}
+      </p>
     </div>
   );
 }

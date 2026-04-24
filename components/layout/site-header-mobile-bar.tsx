@@ -16,7 +16,7 @@ const headerShellClass =
 export function SiteHeaderMobileBar({ searchValue, hiddenParams, navUser }: Props) {
   return (
     <div
-      className={`${headerShellClass} flex min-h-14 items-center gap-2 py-2 md:hidden`}
+      className={`${headerShellClass} flex min-h-14 items-center gap-1.5 py-1.5 sm:gap-2 md:hidden`}
     >
       <Link
         href="/"

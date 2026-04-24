@@ -194,6 +194,81 @@ function firmMatchesQuery(r: FirmRow, rawQuery: string): boolean {
   return false;
 }
 
+function trFieldIncludes(
+  v: string | null | undefined,
+  needle: string
+): boolean {
+  if (typeof v !== "string" || !v.trim()) return false;
+  return v.toLocaleLowerCase("tr").includes(needle);
+}
+
+function trStringArrayMatch(
+  arr: string[] | null | undefined,
+  needle: string
+): boolean {
+  if (!Array.isArray(arr)) return false;
+  return arr.some(
+    (x) => typeof x === "string" && x.toLocaleLowerCase("tr").includes(needle)
+  );
+}
+
+/**
+ * Başlık / `q` dışı arama: slug, konum, hizmet alanları, etiketler, SEO alanları vb.
+ * Ana sayfa `q` eşleşmesi değil; sadece `/arama` gibi yollar için kullanılır.
+ */
+export function firmMatchesAramaQuery(
+  r: FirmRow,
+  rawQuery: string
+): boolean {
+  const needle = rawQuery.trim().toLocaleLowerCase("tr");
+  if (!needle) return false;
+  if (firmMatchesQuery(r, rawQuery)) return true;
+
+  if (r.slug) {
+    const s = r.slug.toLocaleLowerCase("tr");
+    if (s.includes(needle) || s.includes(needle.replace(/\s+/g, "-"))) {
+      return true;
+    }
+    if (s.replace(/-/g, " ").includes(needle)) return true;
+  }
+  if (trFieldIncludes(r.brand_name, needle)) return true;
+  if (trFieldIncludes(r.city, needle)) return true;
+  if (trFieldIncludes(r.district, needle)) return true;
+  if (trFieldIncludes(r.hq_country, needle)) return true;
+  if (trFieldIncludes(r.seo_title, needle)) return true;
+  if (trFieldIncludes(r.meta_description, needle)) return true;
+  if (trFieldIncludes((r as { og_title?: string | null }).og_title, needle)) {
+    return true;
+  }
+  if (trFieldIncludes((r as { og_description?: string | null }).og_description, needle)) {
+    return true;
+  }
+  if (trFieldIncludes(r.company_type, needle)) return true;
+  if (trFieldIncludes(r.firm_category, needle)) return true;
+  const effCat = effectiveFirmCategoryLabel(r);
+  if (effCat && trFieldIncludes(effCat, needle)) return true;
+
+  if (trStringArrayMatch(r.visa_regions, needle)) return true;
+  if (trStringArrayMatch(r.main_services, needle)) return true;
+  if (trStringArrayMatch(r.sub_services, needle)) return true;
+  if (trStringArrayMatch(r.services, needle)) return true;
+  if (trStringArrayMatch(r.custom_services, needle)) return true;
+  if (trStringArrayMatch(r.tags, needle)) return true;
+
+  return false;
+}
+
+/** Arama / kart sonuçları: listelemede tıklanabilir firma satırı. */
+export function firmIsVisibleInAramaSearchResults(
+  f: FirmRow
+): boolean {
+  const r = f as unknown as Record<string, unknown>;
+  if (r.show_in_search === false) return false;
+  if (r.firm_page_enabled === false) return false;
+  if (r.show_on_card === false) return false;
+  return true;
+}
+
 function normalizeTr(s: string): string {
   return s.trim().toLocaleLowerCase("tr");
 }
@@ -529,6 +604,35 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
   }
 
   return rows;
+}
+
+const ARAMA_BASE_FILTERS: FirmFilters = {
+  q: "",
+  countries: [],
+  visaTypes: [],
+  expertise: [],
+  cities: [],
+  mainServices: [],
+  firmTypes: [],
+  exploreFocusSlug: null,
+  sort: "hype_desc",
+};
+
+/**
+ * Public arama sayfası: tüm yayındaki satırlar üzerinde tam metin, görünürlük kuralları, en fazla 24.
+ */
+export async function searchFirmsForAramaPage(
+  rawQuery: string
+): Promise<FirmRow[]> {
+  const needle = rawQuery.trim();
+  if (!needle) return [];
+  const base = await getFirms(ARAMA_BASE_FILTERS);
+  return base
+    .filter(
+      (r) =>
+        firmIsVisibleInAramaSearchResults(r) && firmMatchesAramaQuery(r, needle)
+    )
+    .slice(0, 24);
 }
 
 export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {

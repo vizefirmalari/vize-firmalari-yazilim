@@ -278,10 +278,12 @@ export function GlobalSearchBar({
   const onSubmit = useCallback(
     (e: FormEvent) => {
       e.preventDefault();
-      const href = buildHomeSearchPath(hiddenParams, { q: query });
+      const t = query.trim();
+      if (!t) return;
+      const href = `/arama?${new URLSearchParams({ q: t })}`;
       navigateTo(href, { kind: "all" });
     },
-    [hiddenParams, navigateTo, query]
+    [navigateTo, query]
   );
 
   const onKeyDown = useCallback(
@@ -384,9 +386,12 @@ export function GlobalSearchBar({
             <button
               type="button"
               className="mt-3 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95"
-              onClick={() =>
-                navigateTo(buildHomeSearchPath(hiddenParams, { q: query }), { kind: "all" })
-              }
+              onClick={() => {
+                const t = query.trim();
+                if (t) {
+                  navigateTo(`/arama?${new URLSearchParams({ q: t })}`, { kind: "all" });
+                }
+              }}
             >
               Metinle tüm sonuçları görüntüle
             </button>
@@ -486,60 +491,74 @@ export function GlobalSearchBar({
         <label htmlFor={inputId} className="sr-only">
           {placeholder}
         </label>
-        {compact ? (
-          <span className="pointer-events-none absolute inset-y-0 left-3 z-[1] inline-flex items-center text-foreground/45">
+        <div className="relative w-full">
+          {compact ? (
+            <span className="pointer-events-none absolute inset-y-0 left-3 z-[1] inline-flex items-center text-foreground/45">
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+                <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M16 16l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </span>
+          ) : null}
+          {showMarqueePlaceholder ? (
+            <div
+              className="pointer-events-none absolute inset-y-0 left-9 right-11 z-0 flex items-center overflow-hidden"
+              aria-hidden
+            >
+              <div className="header-search-marquee-track">
+                <span className="shrink-0 whitespace-nowrap pe-3 text-[13px] text-foreground/40">
+                  {placeholder}
+                </span>
+                <span className="shrink-0 whitespace-nowrap pe-3 text-[13px] text-foreground/40">
+                  {placeholder}
+                </span>
+              </div>
+            </div>
+          ) : null}
+          <input
+            ref={inputRef}
+            id={inputId}
+            name="q"
+            type="search"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setActiveIdx(-1);
+              setOpen(true);
+            }}
+            onFocus={() => setOpen(true)}
+            onKeyDown={onKeyDown}
+            autoComplete="off"
+            enterKeyHint="search"
+            role="combobox"
+            aria-expanded={showPanel}
+            aria-controls={listboxId}
+            aria-autocomplete="list"
+            aria-activedescendant={
+              activeIdx >= 0 && flatItems[activeIdx]
+                ? `${listboxId}-opt-${flatItems[activeIdx].item.id}`
+                : undefined
+            }
+            placeholder={showMarqueePlaceholder ? " " : placeholder}
+            className={`w-full rounded-xl border border-border text-sm text-foreground outline-none transition placeholder:text-foreground/40 focus:border-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+              compact
+                ? `relative z-[2] h-10 pl-9 pr-10 text-[13px] ${showMarqueePlaceholder ? "bg-transparent" : "bg-background"}`
+                : "h-11 bg-background pl-4 pr-12"
+            }`}
+          />
+          <button
+            type="submit"
+            aria-label="Ara"
+            className={`absolute inset-y-0 right-1.5 z-[2] my-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground/50 transition hover:bg-surface hover:text-primary ${
+              compact ? "h-8 w-8" : ""
+            }`}
+          >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
               <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.8" />
               <path d="M16 16l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
-          </span>
-        ) : null}
-        {showMarqueePlaceholder ? (
-          <div
-            className="pointer-events-none absolute inset-y-0 left-9 right-3 z-0 flex items-center overflow-hidden"
-            aria-hidden
-          >
-            <div className="header-search-marquee-track">
-              <span className="shrink-0 whitespace-nowrap pe-3 text-[13px] text-foreground/40">
-                {placeholder}
-              </span>
-              <span className="shrink-0 whitespace-nowrap pe-3 text-[13px] text-foreground/40">
-                {placeholder}
-              </span>
-            </div>
-          </div>
-        ) : null}
-        <input
-          ref={inputRef}
-          id={inputId}
-          name="q"
-          type="search"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setActiveIdx(-1);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          onKeyDown={onKeyDown}
-          autoComplete="off"
-          enterKeyHint="search"
-          role="combobox"
-          aria-expanded={showPanel}
-          aria-controls={listboxId}
-          aria-autocomplete="list"
-          aria-activedescendant={
-            activeIdx >= 0 && flatItems[activeIdx]
-              ? `${listboxId}-opt-${flatItems[activeIdx].item.id}`
-              : undefined
-          }
-          placeholder={showMarqueePlaceholder ? " " : placeholder}
-          className={`w-full rounded-xl border border-border text-sm text-foreground outline-none transition placeholder:text-foreground/40 focus:border-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-            compact
-              ? `relative z-2 h-10 px-3 pl-9 text-[13px] ${showMarqueePlaceholder ? "bg-transparent" : "bg-background"}`
-              : "h-11 bg-background px-4"
-          }`}
-        />
+          </button>
+        </div>
         {Object.entries(hiddenParams).map(([name, value]) => (
           <input key={name} type="hidden" name={name} value={value} />
         ))}

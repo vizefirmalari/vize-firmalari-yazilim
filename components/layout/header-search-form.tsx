@@ -1,13 +1,19 @@
-/** Sunucu bileşeni — masaüstü ve mobil arama alanları ortak mantık */
+/**
+ * Sunucu bileşeni (projede ağırlıklı olarak `GlobalSearchBar` kullanılır)
+ * — gönderim `/arama` sayfasında sonuç üretir.
+ */
 export function HeaderSearchForm({
-  hiddenParams,
   defaultValue,
   inputId,
   className,
   placeholder = "Ülke veya firma ara",
   compact = false,
 }: {
-  hiddenParams: Record<string, string>;
+  /**
+   * @deprecated Ana sayfa filtreleri; `/arama` rotası sadece `q` kullanır.
+   * Geriye dönük imza: çağrıda bırakılan eski `hiddenParams` yok sayılır.
+   */
+  hiddenParams?: Record<string, string>;
   defaultValue: string;
   inputId: string;
   className?: string;
@@ -15,10 +21,7 @@ export function HeaderSearchForm({
   compact?: boolean;
 }) {
   return (
-    <form action="/" method="get" role="search" className={className}>
-      {Object.entries(hiddenParams).map(([name, value]) => (
-        <input key={name} type="hidden" name={name} value={value} />
-      ))}
+    <form action="/arama" method="get" role="search" className={className}>
       <label htmlFor={inputId} className="sr-only">
         Ülke veya firma ara
       </label>

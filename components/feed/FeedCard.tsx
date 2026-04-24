@@ -30,7 +30,7 @@ export function FeedCard({
         : [];
 
   return (
-    <article className="mx-auto w-full max-w-[720px] overflow-hidden rounded-3xl bg-white p-0 shadow-[0_8px_28px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.1)]">
+    <article className="mx-auto w-full min-w-0 max-w-[720px] overflow-hidden rounded-3xl bg-white p-0 shadow-[0_8px_28px_rgba(0,0,0,0.08)] transition wrap-break-word max-md:rounded-2xl max-md:shadow-[0_4px_18px_rgba(0,0,0,0.07)] max-md:hover:shadow-[0_8px_24px_rgba(0,0,0,0.09)] hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.1)]">
       <FeedCardHeader
         logoUrl={item.company_logo}
         companyName={item.company_name}

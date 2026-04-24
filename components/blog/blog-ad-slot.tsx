@@ -49,7 +49,10 @@ export function BlogAdSlot({
 
   if (!ad) return null;
   return (
-    <aside ref={rootRef} className="overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-sm">
+    <aside
+      ref={rootRef}
+      className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-sm max-md:shadow-sm"
+    >
       <a
         href={clickHref}
         target="_blank"
@@ -57,9 +60,9 @@ export function BlogAdSlot({
         className="block"
       >
         {ad.ad_type === "native" ? (
-          <div className="p-4">
+          <div className="p-4 max-md:p-3">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-[#0B3C5D]/60">Sponsorlu</p>
-            <div className="mt-2 flex items-start gap-3">
+            <div className="mt-2 flex items-start gap-3 max-md:mt-1.5 max-md:gap-2.5">
               {ad.sponsor_logo_url ? (
                 <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F4F6F8]">
                   <Image src={ad.sponsor_logo_url} alt={ad.sponsor_name || ad.advertiser_name} fill sizes="40px" className="object-contain" loading="lazy" />

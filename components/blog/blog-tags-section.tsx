@@ -8,7 +8,7 @@ type Props = {
  */
 export function BlogTagsSection({ tags }: Props) {
   return (
-    <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-4 shadow-sm sm:p-5">
+    <section className="min-w-0 max-w-full overflow-x-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white p-3 shadow-sm sm:p-5">
       <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[#0B3C5D]/65 sm:text-sm sm:text-[#0B3C5D]/70">
         Etiketler
       </h2>
