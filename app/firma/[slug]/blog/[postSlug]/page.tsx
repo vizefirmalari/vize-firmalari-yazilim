@@ -318,19 +318,18 @@ export default async function BlogDetailPage({ params }: Props) {
       ) : null}
       <SiteHeader />
       <main className="mx-auto min-w-0 w-full max-w-5xl overflow-x-hidden wrap-anywhere px-3 pt-0 pb-24 sm:px-6 md:pt-4 md:pb-14 lg:px-8">
-        {/** max-md: ince sticky bar — yükseklik yalnızca py-2 + buton; desktop md:static */}
+        {/** Mobilde yalnızca sticky konum; arka plan/border yok (buton kendi stilini taşır) */}
         <div
-          className="h-auto w-full max-w-none
-            max-md:sticky max-md:top-[72px] max-md:z-40 max-md:-mx-3 max-md:mb-2
-            max-md:border-b max-md:border-slate-100 max-md:bg-slate-50/85 max-md:px-4
-            max-md:py-2 max-md:backdrop-blur-md
-            md:static md:z-10 md:mb-3 md:w-fit md:max-w-full md:border-0 md:bg-transparent
-            md:px-0 md:py-0 md:backdrop-blur-none"
+          className="w-fit max-w-full md:static md:z-10 md:mb-3
+            max-md:sticky max-md:top-[72px] max-md:z-40
+            max-md:mb-2 max-md:px-0 max-md:py-2
+            max-md:border-0 max-md:bg-transparent max-md:shadow-none
+            max-md:backdrop-blur-none"
         >
           <StickyBackButton fallbackHref={`/firma/${resolvedFirmSlug}`} />
         </div>
 
-        <div className="mb-2 flex flex-col gap-2.5 sm:mb-4 md:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="mb-2 flex flex-col gap-2.5 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <Link
             href={`/firma/${resolvedFirmSlug}`}
             className="flex min-w-0 max-w-full items-center gap-2.5 max-md:rounded-lg sm:gap-3 rounded-xl border border-[#0B3C5D]/10 bg-white p-2.5 sm:p-3 shadow-sm"
