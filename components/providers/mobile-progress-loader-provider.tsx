@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { MobileProgressLoader } from "@/components/ui/mobile-progress-loader";
 import type { MobileProgressLoaderControls } from "@/hooks/use-mobile-progress-loader";
@@ -9,6 +9,7 @@ import {
   MPM_MIN_DISPLAY_MS,
   MPM_BURST_MS,
   computeIndeterminateProgress,
+  getAnchorElementFromEventTarget,
   shouldHandleInAppAnchorClick,
 } from "@/lib/mobile-progress-loader";
 
@@ -91,6 +92,12 @@ export function MobileProgressLoaderProvider({ children }: Props) {
     finalHide();
   }, [finalHide]);
 
+  const closeIfTask = useCallback(() => {
+    if (modeRef.current === "task" && sessionActiveRef.current) {
+      finalHide();
+    }
+  }, [finalHide]);
+
   const runLoop = useRef<() => void>(undefined);
 
   const scheduleEndFlash = useCallback(
@@ -141,7 +148,7 @@ export function MobileProgressLoaderProvider({ children }: Props) {
     rafIdRef.current = requestAnimationFrame(() => runLoop.current?.());
   }, [scheduleEndFlash]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     runLoop.current = tick;
   }, [tick]);
 
@@ -201,9 +208,8 @@ export function MobileProgressLoaderProvider({ children }: Props) {
     (e: MouseEvent) => {
       if (!isMobile) return;
       if (e.defaultPrevented) return;
-      if (!(e.target instanceof Node)) return;
-      const a = (e.target as Element).closest?.("a[href]");
-      if (!a || !(a instanceof HTMLAnchorElement)) return;
+      const a = getAnchorElementFromEventTarget(e.target);
+      if (!a) return;
       try {
         const cur = new URL(window.location.href);
         if (!shouldHandleInAppAnchorClick(a, e, cur)) return;
@@ -220,7 +226,7 @@ export function MobileProgressLoaderProvider({ children }: Props) {
     return () => document.removeEventListener("click", docClick, false);
   }, [docClick]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
     const m = () => {
       if (!mq.matches) {
@@ -253,6 +259,7 @@ export function MobileProgressLoaderProvider({ children }: Props) {
     startTask,
     done,
     failSafeClose,
+    closeIfTask,
   };
 
   return (

@@ -52,12 +52,12 @@ export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx =
     };
   }, []);
 
-  /** Sohbet değişince veya composer kalkınca global mobil loader’ın açık kalmasını engeller. */
+  /** Sadece mesaj/dosya "task" loader'ını kapatır; sayfa linki (nav) loader'ına karışmaz. */
   useEffect(
     () => () => {
-      mobileLoader.failSafeClose();
+      mobileLoader.closeIfTask();
     },
-    [conversationId, mobileLoader.failSafeClose]
+    [conversationId, mobileLoader.closeIfTask]
   );
 
   const canSend = Boolean(conversationId) && !disabled && !isPending && !uploading;

@@ -75,3 +75,19 @@ export function shouldHandleInAppAnchorClick(
   return true;
 }
 
+/**
+ * Tıklama <a> içi metin/svg vb. yaprak düğümlerinde de anchor’u bulur (Text node’da closest yok).
+ */
+export function getAnchorElementFromEventTarget(
+  t: EventTarget | null
+): HTMLAnchorElement | null {
+  if (t == null) return null;
+  const el =
+    t instanceof Element
+      ? t
+      : (t as Node & { parentElement: Element | null }).parentElement;
+  if (!el) return null;
+  const a = el.closest("a[href]");
+  return a instanceof HTMLAnchorElement ? a : null;
+}
+

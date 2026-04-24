@@ -15,6 +15,11 @@ export type MobileProgressLoaderControls = {
   done: () => void;
   /** Zorunlu kapanış: hata, timeout, takılma. */
   failSafeClose: () => void;
+  /**
+   * Yalnızca "task" oturumunu kapatır; navigasyon yükleyicisine dokunmaz
+   * (sohbet değişiminde kalmış mesaj/dosya loader’ı için).
+   */
+  closeIfTask: () => void;
 };
 
 const noopControls: MobileProgressLoaderControls = {
@@ -24,6 +29,7 @@ const noopControls: MobileProgressLoaderControls = {
   startTask: () => {},
   done: () => {},
   failSafeClose: () => {},
+  closeIfTask: () => {},
 };
 
 /**
