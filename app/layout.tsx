@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
+import { Suspense } from "react";
 import { Toaster } from "sonner";
+import { MobileProgressLoaderProvider } from "@/components/providers/mobile-progress-loader-provider";
 import "./globals.css";
 import { AuthModalProvider } from "@/components/auth/auth-modal-context";
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -104,11 +106,15 @@ gtag('config', 'G-HJ78HJHHMZ');`}
           </div>
         </noscript>
         <OrganizationJsonLd />
-        <AuthModalProvider>
-          {children}
-          <AuthShell />
-          <MobileTabBar />
-        </AuthModalProvider>
+        <Suspense fallback={null}>
+          <MobileProgressLoaderProvider>
+            <AuthModalProvider>
+              {children}
+              <AuthShell />
+              <MobileTabBar />
+            </AuthModalProvider>
+          </MobileProgressLoaderProvider>
+        </Suspense>
         <Toaster richColors position="top-right" />
       </body>
     </html>

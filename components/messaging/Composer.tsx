@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
+import { useMobileProgressLoader } from "@/hooks/use-mobile-progress-loader";
 import { sendChatMessage } from "@/lib/actions/chat-message";
 import { CHAT_ATTACHMENT_MAX_BYTES, validateChatAttachment } from "@/lib/validation/chat-attachment";
 
@@ -22,6 +23,7 @@ type Props = {
  * Mobilde klavye: üstteki ConversationThreadView composer şeridi visualViewport padding ile kalkar.
  */
 export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx = 0 }: Props) {
+  const mobileLoader = useMobileProgressLoader();
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -50,18 +52,31 @@ export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx =
     };
   }, []);
 
+  /** Sohbet değişince veya composer kalkınca global mobil loader’ın açık kalmasını engeller. */
+  useEffect(
+    () => () => {
+      mobileLoader.failSafeClose();
+    },
+    [conversationId, mobileLoader.failSafeClose]
+  );
+
   const canSend = Boolean(conversationId) && !disabled && !isPending && !uploading;
 
   const handleSend = () => {
     if (!conversationId || !text.trim()) return;
     setError(null);
+    mobileLoader.startTask();
     startTransition(async () => {
-      const res = await sendChatMessage(conversationId, text);
-      if (!res.ok) {
-        setError(res.error);
-        return;
+      try {
+        const res = await sendChatMessage(conversationId, text);
+        if (!res.ok) {
+          setError(res.error);
+          return;
+        }
+        setText("");
+      } finally {
+        mobileLoader.done();
       }
-      setText("");
     });
   };
 
@@ -78,6 +93,7 @@ export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx =
 
     setError(null);
     setUploading(true);
+    mobileLoader.startTask();
     try {
       const fd = new FormData();
       fd.set("conversationId", conversationId);
@@ -90,6 +106,7 @@ export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx =
       /* Başarı: DB tetikleyicisi attachment sonrası conversation broadcast — tam liste refresh gerekmez */
     } finally {
       setUploading(false);
+      mobileLoader.done();
     }
   };
 

@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
+import { useMobileProgressLoader } from "@/hooks/use-mobile-progress-loader";
 import {
   ALL_COUNTRIES,
   SERVICE_OPTIONS,
@@ -37,6 +38,7 @@ export function FilterSidebar({
 }: FilterSidebarProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const mobileLoader = useMobileProgressLoader();
   const [showAllCountries, setShowAllCountries] = useState(false);
 
   const q = searchParams.get("q") ?? "";
@@ -58,9 +60,12 @@ export function FilterSidebar({
         else next.set(key, val);
       });
       const qs = next.toString();
+      if (qs !== searchParams.toString()) {
+        mobileLoader.startNavigation();
+      }
       router.push(qs ? `/?${qs}` : "/");
     },
-    [router, searchParams]
+    [router, searchParams, mobileLoader.startNavigation]
   );
 
   const toggleCountry = (c: string) => {
@@ -228,7 +233,12 @@ export function FilterSidebar({
 
         <button
           type="button"
-          onClick={() => router.push("/")}
+          onClick={() => {
+            if (searchParams.toString() !== "") {
+              mobileLoader.startNavigation();
+            }
+            router.push("/");
+          }}
           className="mt-8 w-full rounded-xl border border-[#0B3C5D]/15 py-2.5 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
         >
           Filtreleri temizle

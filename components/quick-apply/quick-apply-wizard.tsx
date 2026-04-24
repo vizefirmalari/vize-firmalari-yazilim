@@ -22,6 +22,7 @@ import {
 import { calculateLeadScore } from "@/lib/quick-apply/scoring";
 import type { LeadFileType, PreferredContactMethod, QuickApplyFormValues, TimelineBucket, VisaType } from "@/lib/quick-apply/types";
 import { TIMELINE_BUCKETS } from "@/lib/quick-apply/types";
+import { useMobileProgressLoader } from "@/hooks/use-mobile-progress-loader";
 import type { SelectedLeadFile } from "@/components/quick-apply/wizard-document-upload";
 import { WizardDocumentUpload } from "@/components/quick-apply/wizard-document-upload";
 import { WizardRegionCountry } from "@/components/quick-apply/wizard-region-country";
@@ -175,6 +176,7 @@ export function QuickApplyWizard({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [applicationNo, setApplicationNo] = useState<string | null>(null);
+  const mobileLoader = useMobileProgressLoader();
 
   const dynamicQuestions = DYNAMIC_QUESTIONS[values.visaType];
   const score = useMemo(
@@ -213,9 +215,10 @@ export function QuickApplyWizard({
   const goPrev = () => setStep((s) => Math.max(0, s - 1));
 
   const submit = async () => {
+    mobileLoader.startTask();
     setSubmitting(true);
     setError(null);
-
+    try {
     const supabaseAuth = createSupabaseBrowserClient();
     if (!supabaseAuth) {
       setSubmitting(false);
@@ -321,6 +324,9 @@ export function QuickApplyWizard({
     setApplicationNo(created.applicationNo);
     setStep(9);
     setSubmitting(false);
+    } finally {
+      mobileLoader.done();
+    }
   };
 
   const advanceDisabled = step > 0 && step < 9 && !canAdvance(step, values);

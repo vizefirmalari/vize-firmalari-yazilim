@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HomepageHorizontalScroller } from "@/components/home/homepage-horizontal-scroller";
+import { useMobileProgressLoader } from "@/hooks/use-mobile-progress-loader";
 
 type Props = {
   categories: Array<{ id: string; name: string }>;
@@ -14,6 +15,7 @@ export function FeedFiltersBar({ categories, countries, visaTypes }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const mobileLoader = useMobileProgressLoader();
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [draftSearch, setDraftSearch] = useState("");
@@ -47,7 +49,11 @@ export function FeedFiltersBar({ categories, countries, visaTypes }: Props) {
     if (!value) next.delete(key);
     else next.set(key, value);
     if (key !== "search") next.delete("offset");
-    router.push(`${pathname}?${next.toString()}`);
+    const newQs = next.toString();
+    if (newQs !== searchParams.toString()) {
+      mobileLoader.startNavigation();
+    }
+    router.push(`${pathname}?${newQs}`);
   };
 
   const openSheet = () => {
@@ -71,7 +77,11 @@ export function FeedFiltersBar({ categories, countries, visaTypes }: Props) {
     setOrDelete("visaType", draftVisaType);
     setOrDelete("premium", draftPremium ? "true" : "");
     next.delete("offset");
-    router.push(`${pathname}?${next.toString()}`);
+    const newQs = next.toString();
+    if (newQs !== searchParams.toString()) {
+      mobileLoader.startNavigation();
+    }
+    router.push(`${pathname}?${newQs}`);
     setSearch(draftSearch.trim());
     setIsSheetOpen(false);
   };
@@ -86,7 +96,11 @@ export function FeedFiltersBar({ categories, countries, visaTypes }: Props) {
     ["search", "category", "country", "visaType", "premium", "offset"].forEach((k) =>
       next.delete(k)
     );
-    router.push(`${pathname}?${next.toString()}`);
+    const newQs = next.toString();
+    if (newQs !== searchParams.toString()) {
+      mobileLoader.startNavigation();
+    }
+    router.push(`${pathname}?${newQs}`);
     setSearch("");
     setIsSheetOpen(false);
   };
