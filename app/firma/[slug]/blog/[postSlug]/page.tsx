@@ -320,8 +320,12 @@ export default async function BlogDetailPage({ params }: Props) {
       <main className="mx-auto min-w-0 w-full max-w-5xl overflow-x-clip wrap-anywhere pt-0 pb-24 max-md:px-0 md:px-6 md:pt-4 md:pb-14 lg:px-8">
         {/** Mobil: max-w-screen-sm + px-4 — geri, firma, blog aynı hizaya */}
         <div className="mx-auto w-full min-w-0 max-w-screen-sm px-4 md:max-w-none md:px-0">
-        {/** Geri: mobilde sticky; tüm yatay hizalar container genişliğiyle aynı */}
-        <div className="w-full max-md:sticky max-md:top-[72px] max-md:z-40 max-md:mb-2 max-md:pt-2 md:static md:mb-3 md:pt-0">
+        {/** Geri: mobilde sticky, dikey: top-64 + pt-0; hizalar üstteki max-w-screen-sm sütununda */}
+        <div
+          className="mx-auto w-full max-w-full max-md:sticky max-md:top-[64px] max-md:z-40 max-md:bg-transparent
+            max-md:pt-0 max-md:pb-2 max-md:mb-2
+            md:static md:z-10 md:mb-3 md:px-0 md:py-0"
+        >
           <StickyBackButton fallbackHref={`/firma/${resolvedFirmSlug}`} />
         </div>
 
