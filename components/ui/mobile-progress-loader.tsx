@@ -14,7 +14,8 @@ type MobileProgressLoaderProps = {
 };
 
 /**
- * Sadece mobil (md: gizli): ortada cam kart, hafif blur, pointer-events none.
+ * Görünürlük yalnızca provider (isMobile) ile; burada responsive gizleme yok.
+ * Ortada cam kart, pointer-events none.
  */
 export function MobileProgressLoader({
   progress,
@@ -35,7 +36,7 @@ export function MobileProgressLoader({
 
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-190 flex items-center justify-center p-4 md:hidden"
+      className="pointer-events-none fixed inset-0 z-[190] flex items-center justify-center p-4"
       role="status"
       aria-live="polite"
       aria-labelledby={statusId}

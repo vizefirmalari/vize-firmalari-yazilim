@@ -24,6 +24,8 @@ type Props = {
  */
 export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx = 0 }: Props) {
   const mobileLoader = useMobileProgressLoader();
+  const closeIfTaskRef = useRef(mobileLoader.closeIfTask);
+  closeIfTaskRef.current = mobileLoader.closeIfTask;
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -55,9 +57,9 @@ export function Composer({ conversationId, disabled, onTyping, keyboardInsetPx =
   /** Sadece mesaj/dosya "task" loader'ını kapatır; sayfa linki (nav) loader'ına karışmaz. */
   useEffect(
     () => () => {
-      mobileLoader.closeIfTask();
+      closeIfTaskRef.current();
     },
-    [conversationId, mobileLoader.closeIfTask]
+    [conversationId]
   );
 
   const canSend = Boolean(conversationId) && !disabled && !isPending && !uploading;

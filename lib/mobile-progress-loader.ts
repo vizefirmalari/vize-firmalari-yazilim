@@ -3,7 +3,42 @@
  * UI katmanı — router veya veri akışı içermez.
  */
 
-export const MPM_MAX_WIDTH = 768;
+/**
+ * Dar pencere (klasik mobil layout). Tailwind `lg` (min 1024) altı.
+ */
+export const MPM_MAX_WIDTH = 1023;
+
+export const MPM_VIEWPORT_MQ = `(max-width: ${MPM_MAX_WIDTH}px)`;
+
+/**
+ * Gerçek dokunmatik cihazlar: büyük tablet / yatay telefon (görünüm >1023) da buraya girer.
+ * Masaüstü fare: genelde `hover: hover` + `pointer: fine` → eşleşmez.
+ */
+export const MPM_TOUCH_PRIMARY_MQ = "(hover: none) and (pointer: coarse)";
+
+const MPM_TOUCH_FALLBACK_WIDTH_MQ = "(max-width: 1280px)";
+
+/**
+ * Tüm telefon / tablet deneyiminde loader: dar görünüm VEYA dokunmatik-birincil
+ * (veya eski tarayıcı yedeği: maxTouchPoints + makul genişlik).
+ */
+export function matchesMobileLoaderTarget(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (window.matchMedia(MPM_VIEWPORT_MQ).matches) return true;
+    if (window.matchMedia(MPM_TOUCH_PRIMARY_MQ).matches) return true;
+  } catch {
+    // matchMedia yok
+  }
+  if (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0) {
+    try {
+      if (window.matchMedia(MPM_TOUCH_FALLBACK_WIDTH_MQ).matches) return true;
+    } catch {
+      // Eski WebKit: genişlik okunamıyorsa yedekleme yapmıyoruz
+    }
+  }
+  return false;
+}
 
 /** Loader en az bu kadar görünsün (hızlı işlemlerde “flash” olmasın). */
 export const MPM_MIN_DISPLAY_MS = 250;

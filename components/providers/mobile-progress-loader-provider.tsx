@@ -10,6 +10,9 @@ import {
   MPM_BURST_MS,
   computeIndeterminateProgress,
   getAnchorElementFromEventTarget,
+  MPM_TOUCH_PRIMARY_MQ,
+  MPM_VIEWPORT_MQ,
+  matchesMobileLoaderTarget,
   shouldHandleInAppAnchorClick,
 } from "@/lib/mobile-progress-loader";
 
@@ -27,9 +30,8 @@ type Props = { children: React.ReactNode };
 export function MobileProgressLoaderProvider({ children }: Props) {
   const routeKey = useRouteKey();
 
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches
-  );
+  /** SSR ile aynı başlangıç (false); canlı tespit useLayoutEffect + matchMedia. */
+  const [isMobile, setIsMobile] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
   );
@@ -227,16 +229,24 @@ export function MobileProgressLoaderProvider({ children }: Props) {
   }, [docClick]);
 
   useLayoutEffect(() => {
-    const mq = window.matchMedia("(max-width: 768px)");
-    const m = () => {
-      if (!mq.matches) {
-        if (uiVisible) failSafeClose();
-      }
-      setIsMobile(mq.matches);
+    const apply = () => {
+      const next = matchesMobileLoaderTarget();
+      if (!next && uiVisible) failSafeClose();
+      setIsMobile(next);
     };
-    m();
-    mq.addEventListener("change", m);
-    return () => mq.removeEventListener("change", m);
+    apply();
+    const mqV = window.matchMedia(MPM_VIEWPORT_MQ);
+    const mqT = window.matchMedia(MPM_TOUCH_PRIMARY_MQ);
+    mqV.addEventListener("change", apply);
+    mqT.addEventListener("change", apply);
+    window.addEventListener("resize", apply);
+    window.addEventListener("orientationchange", apply);
+    return () => {
+      mqV.removeEventListener("change", apply);
+      mqT.removeEventListener("change", apply);
+      window.removeEventListener("resize", apply);
+      window.removeEventListener("orientationchange", apply);
+    };
   }, [uiVisible, failSafeClose]);
 
   useEffect(() => {

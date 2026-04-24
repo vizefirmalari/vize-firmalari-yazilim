@@ -316,11 +316,6 @@ body {
   animation: vfm-mp-ring-spin 2.2s linear infinite;
   will-change: transform;
 }
-@media (width >= 768px) {
-  .vfm-mp-ring-animate {
-    animation: none;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .vfm-mp-ring-animate {
     animation: none;
