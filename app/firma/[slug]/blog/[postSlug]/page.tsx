@@ -317,19 +317,20 @@ export default async function BlogDetailPage({ params }: Props) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       ) : null}
       <SiteHeader />
-      <main className="mx-auto min-w-0 w-full max-w-5xl overflow-x-hidden wrap-anywhere px-3 pt-2 pb-24 sm:px-6 sm:pt-4 md:pb-14 lg:px-8">
+      <main className="mx-auto min-w-0 w-full max-w-5xl overflow-x-hidden wrap-anywhere px-3 pt-0 pb-24 sm:px-6 md:pt-4 md:pb-14 lg:px-8">
+        {/** max-md: ince sticky bar — yükseklik yalnızca py-2 + buton; desktop md:static */}
         <div
-          className="z-20 mb-2 w-full max-w-none sm:mb-3
-            max-md:sticky max-md:top-[72px] max-md:-mx-3 max-md:mb-3
-            max-md:border-b max-md:border-[#0B3C5D]/10 max-md:bg-white/80 max-md:px-3
-            max-md:py-2 max-md:backdrop-blur-md supports-[backdrop-filter]:max-md:bg-white/75
-            md:sticky md:top-20 md:z-10 md:w-fit md:max-w-full md:mx-0
-            md:border-0 md:bg-transparent md:px-0 md:py-0 md:backdrop-blur-none"
+          className="h-auto w-full max-w-none
+            max-md:sticky max-md:top-[72px] max-md:z-40 max-md:-mx-3 max-md:mb-2
+            max-md:border-b max-md:border-slate-100 max-md:bg-slate-50/85 max-md:px-4
+            max-md:py-2 max-md:backdrop-blur-md
+            md:static md:z-10 md:mb-3 md:w-fit md:max-w-full md:border-0 md:bg-transparent
+            md:px-0 md:py-0 md:backdrop-blur-none"
         >
           <StickyBackButton fallbackHref={`/firma/${resolvedFirmSlug}`} />
         </div>
 
-        <div className="mb-3 max-md:mt-1 flex flex-col gap-2.5 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="mb-2 flex flex-col gap-2.5 sm:mb-4 md:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <Link
             href={`/firma/${resolvedFirmSlug}`}
             className="flex min-w-0 max-w-full items-center gap-2.5 max-md:rounded-lg sm:gap-3 rounded-xl border border-[#0B3C5D]/10 bg-white p-2.5 sm:p-3 shadow-sm"
