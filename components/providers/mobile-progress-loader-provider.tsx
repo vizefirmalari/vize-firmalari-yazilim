@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useSearchParams } from "next/navigation";
 import { MobileProgressLoader } from "@/components/ui/mobile-progress-loader";
 import type { MobileProgressLoaderControls } from "@/hooks/use-mobile-progress-loader";
@@ -30,8 +31,10 @@ type Props = { children: React.ReactNode };
 export function MobileProgressLoaderProvider({ children }: Props) {
   const routeKey = useRouteKey();
 
-  /** SSR ile aynı başlangıç (false); canlı tespit useLayoutEffect + matchMedia. */
+  /** SSR ile aynı başlangıç (false); canlı tespit useLayoutEffect. */
   const [isMobile, setIsMobile] = useState(false);
+  const [bodyReady, setBodyReady] = useState(false);
+  const isMobileRef = useRef(false);
   const [reducedMotion, setReducedMotion] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
   );
@@ -156,7 +159,7 @@ export function MobileProgressLoaderProvider({ children }: Props) {
 
   const begin = useCallback(
     (mode: "nav" | "task") => {
-      if (!isMobile) return;
+      if (!isMobileRef.current) return;
       resetRefs();
       sessionActiveRef.current = true;
       modeRef.current = mode;
@@ -175,7 +178,7 @@ export function MobileProgressLoaderProvider({ children }: Props) {
       maxTimerIdRef.current = setTimeout(failSafeClose, MPM_MAX_TIMEOUT_MS);
       rafIdRef.current = requestAnimationFrame(() => runLoop.current?.());
     },
-    [isMobile, failSafeClose, resetRefs]
+    [failSafeClose, resetRefs]
   );
 
   const startNavigation = useCallback(() => {
@@ -187,10 +190,10 @@ export function MobileProgressLoaderProvider({ children }: Props) {
   }, [begin]);
 
   const done = useCallback(() => {
-    if (!isMobile) return;
+    if (!isMobileRef.current) return;
     if (modeRef.current !== "task" || !sessionActiveRef.current) return;
     completingRef.current = true;
-  }, [isMobile]);
+  }, []);
 
   useEffect(() => {
     if (!isMobile) return;
@@ -208,7 +211,7 @@ export function MobileProgressLoaderProvider({ children }: Props) {
 
   const docClick = useCallback(
     (e: MouseEvent) => {
-      if (!isMobile) return;
+      if (!isMobileRef.current) return;
       if (e.defaultPrevented) return;
       const a = getAnchorElementFromEventTarget(e.target);
       if (!a) return;
@@ -220,17 +223,20 @@ export function MobileProgressLoaderProvider({ children }: Props) {
       }
       begin("nav");
     },
-    [isMobile, begin]
+    [begin]
   );
 
   useEffect(() => {
-    document.addEventListener("click", docClick, false);
-    return () => document.removeEventListener("click", docClick, false);
+    /* capture: Link/React önce bubble’da iş yapmadan hedefe göre tespit (iç tık da yakalanır) */
+    document.addEventListener("click", docClick, true);
+    return () => document.removeEventListener("click", docClick, true);
   }, [docClick]);
 
   useLayoutEffect(() => {
+    setBodyReady(true);
     const apply = () => {
       const next = matchesMobileLoaderTarget();
+      isMobileRef.current = next;
       if (!next && uiVisible) failSafeClose();
       setIsMobile(next);
     };
@@ -272,17 +278,21 @@ export function MobileProgressLoaderProvider({ children }: Props) {
     closeIfTask,
   };
 
+  const portalHost =
+    typeof document !== "undefined" && bodyReady && document.body ? document.body : null;
+  const loader = uiVisible && isMobile ? (
+    <MobileProgressLoader
+      progress={displayProgress}
+      completeFlash={completeFlash}
+      reduceMotion={reducedMotion}
+      visible={uiVisible}
+    />
+  ) : null;
+
   return (
     <MobileProgressLoaderContext.Provider value={ctx}>
       {children}
-      {uiVisible && isMobile ? (
-        <MobileProgressLoader
-          progress={displayProgress}
-          completeFlash={completeFlash}
-          reduceMotion={reducedMotion}
-          visible={uiVisible}
-        />
-      ) : null}
+      {portalHost && loader ? createPortal(loader, portalHost) : null}
     </MobileProgressLoaderContext.Provider>
   );
 }

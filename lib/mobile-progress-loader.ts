@@ -19,22 +19,31 @@ export const MPM_TOUCH_PRIMARY_MQ = "(hover: none) and (pointer: coarse)";
 const MPM_TOUCH_FALLBACK_WIDTH_MQ = "(max-width: 1280px)";
 
 /**
- * Tüm telefon / tablet deneyiminde loader: dar görünüm VEYA dokunmatik-birincil
- * (veya eski tarayıcı yedeği: maxTouchPoints + makul genişlik).
+ * Tüm pratik telefon + tablet. `matchMedia` tek başına canlı sitede güvenilmez
+ * (WebView, yatay mod, sistem yazı boyutu, vs.); `innerWidth` + dokunma ile yedeklenir.
+ * Üst sınır: dar masaüstü pencerede nadir yanıp söner; kabul.
  */
 export function matchesMobileLoaderTarget(): boolean {
   if (typeof window === "undefined") return false;
+  const w = window.innerWidth;
+  const tp = typeof navigator !== "undefined" ? navigator.maxTouchPoints : 0;
+
+  if (w <= 1024) return true;
+
+  if (w <= 1600 && tp > 0) return true;
+
   try {
     if (window.matchMedia(MPM_VIEWPORT_MQ).matches) return true;
     if (window.matchMedia(MPM_TOUCH_PRIMARY_MQ).matches) return true;
+    if (w <= 1920 && window.matchMedia("(any-pointer: coarse)").matches) return true;
   } catch {
     // matchMedia yok
   }
-  if (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0) {
+  if (tp > 0) {
     try {
       if (window.matchMedia(MPM_TOUCH_FALLBACK_WIDTH_MQ).matches) return true;
     } catch {
-      // Eski WebKit: genişlik okunamıyorsa yedekleme yapmıyoruz
+      // atla
     }
   }
   return false;

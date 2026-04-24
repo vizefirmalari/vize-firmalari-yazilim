@@ -36,7 +36,7 @@ export function MobileProgressLoader({
 
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-[190] flex items-center justify-center p-4"
+      className="pointer-events-none fixed inset-0 z-[100000] flex items-center justify-center p-4 [max-height:100dvh]"
       role="status"
       aria-live="polite"
       aria-labelledby={statusId}
