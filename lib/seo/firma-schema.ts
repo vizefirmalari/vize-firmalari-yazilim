@@ -41,11 +41,26 @@ export function buildFirmSchemaGraph(
   });
   const coverageAll = [...regions, ...countries];
   const keywords = keywordString(firm);
+  const sameAs = [
+    firm.website,
+    firm.instagram,
+    firm.facebook,
+    firm.linkedin,
+    firm.youtube,
+    firm.twitter,
+    firm.telegram,
+  ]
+    .map((value) => String(value ?? "").trim())
+    .filter((value) => value.length > 0);
+  const streetAddress = String(firm.address ?? "").trim();
+  const addressLocality = String(firm.district ?? "").trim() || String(firm.city ?? "").trim();
+  const addressCountry = String(firm.hq_country ?? "").trim();
+  const postalCode = String(firm.postal_code ?? "").trim();
 
-  const professionalService: Record<string, unknown> = {
-    "@type": "ProfessionalService",
+  const localBusiness: Record<string, unknown> = {
+    "@type": "LocalBusiness",
     name: firm.name,
-    description: firm.description ?? undefined,
+    description: firm.description ?? firm.short_description ?? undefined,
     url: pageUrl,
     telephone: firm.phone ?? undefined,
     email: firm.email ?? undefined,
@@ -62,6 +77,26 @@ export function buildFirmSchemaGraph(
           caption: logoAlt,
         }
       : undefined,
+    address:
+      streetAddress || addressLocality || addressCountry || postalCode
+        ? {
+            "@type": "PostalAddress",
+            streetAddress: streetAddress || undefined,
+            addressLocality: addressLocality || undefined,
+            postalCode: postalCode || undefined,
+            addressCountry: addressCountry || undefined,
+          }
+        : undefined,
+    sameAs: sameAs.length > 0 ? sameAs : undefined,
+  };
+
+  const organization: Record<string, unknown> = {
+    "@type": "Organization",
+    name: firm.name,
+    url: pageUrl,
+    telephone: firm.phone ?? undefined,
+    email: firm.email ?? undefined,
+    sameAs: sameAs.length > 0 ? sameAs : undefined,
   };
 
   const breadcrumb = {
@@ -82,7 +117,7 @@ export function buildFirmSchemaGraph(
     ],
   };
 
-  const graph: object[] = [professionalService, breadcrumb];
+  const graph: object[] = [localBusiness, organization, breadcrumb];
 
   const faq = Array.isArray(firm.faq_json) ? firm.faq_json : [];
   if (faq.length > 0) {

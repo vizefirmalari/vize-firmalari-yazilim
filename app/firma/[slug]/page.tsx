@@ -27,6 +27,7 @@ import {
 } from "@/components/quick-apply/quick-apply-launcher";
 import { buildQuickApplyExpertiseLine, buildQuickApplySubtitle } from "@/lib/quick-apply/firm-intro-branding";
 import { VerifiedFirmBadge } from "@/components/firma/verified-firm-badge";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -202,6 +203,17 @@ export default async function FirmaPage({ params }: PageProps) {
     getFirmFeedItems(firm.id, firm.slug, 9),
     getFirms(allFirmsFilters),
   ]);
+  const supabase = createSupabasePublicClient();
+  const { data: firmBlogPosts } = supabase
+    ? await supabase
+        .from("firm_blog_posts")
+        .select("id,title,slug,published_at")
+        .eq("firm_id", String(firm.id))
+        .eq("status", "published")
+        .not("published_at", "is", null)
+        .order("published_at", { ascending: false })
+        .limit(6)
+    : { data: [] };
   const similarFirms = pickSimilarFirmsForDetail(firm, allFirms, 8);
 
   return (
@@ -576,6 +588,41 @@ export default async function FirmaPage({ params }: PageProps) {
                       </details>
                     ))}
                   </div>
+                  </section>
+                </SectionReveal>
+              ) : null}
+
+              {Array.isArray(firmBlogPosts) && firmBlogPosts.length > 0 ? (
+                <SectionReveal delayMs={195}>
+                  <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                        Firmanın blog yazıları
+                      </h2>
+                      <Link
+                        href="/akis"
+                        className="text-xs font-semibold text-[#328CC1] hover:underline sm:text-sm"
+                      >
+                        Tüm içerik akışı
+                      </Link>
+                    </div>
+                    <ul className="mt-4 space-y-2">
+                      {firmBlogPosts.map((post) => (
+                        <li key={String(post.id)}>
+                          <Link
+                            href={`/firma/${firm.slug}/blog/${String(post.slug ?? "")}`}
+                            className="text-sm font-semibold text-[#0B3C5D] hover:text-[#328CC1] hover:underline"
+                          >
+                            {String(post.title ?? "")}
+                          </Link>
+                          {post.published_at ? (
+                            <p className="mt-0.5 text-xs text-[#1A1A1A]/60">
+                              {new Date(String(post.published_at)).toLocaleDateString("tr-TR")}
+                            </p>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
                   </section>
                 </SectionReveal>
               ) : null}

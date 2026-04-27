@@ -658,6 +658,9 @@ export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {
   }
 
   if (!data) return null;
+  if ((data as { firm_page_enabled?: boolean | null }).firm_page_enabled === false) {
+    return null;
+  }
 
   let firm = normalizeFirmRow(data as Record<string, unknown>);
   const { data: planRaw, error: planErr } = await supabase.rpc("firm_current_plan_type", {

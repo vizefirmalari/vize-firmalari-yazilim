@@ -236,20 +236,44 @@ const getBlogRows = unstable_cache(
       }))
       .filter((r) => slugLooksValid(r.post_slug));
 
-    const missingFirmIds = Array.from(
+    const allFirmIds = Array.from(
       new Set(
         baseRows
-          .filter((r) => !slugLooksValid(r.company_slug) && typeof r.firm_id === "string" && r.firm_id.trim().length > 0)
+          .filter((r) => typeof r.firm_id === "string" && r.firm_id.trim().length > 0)
           .map((r) => String(r.firm_id))
       )
     );
 
+    const firmIdsNeedingSlugLookup = Array.from(
+      new Set(
+        baseRows
+          .filter((r) => typeof r.firm_id === "string" && r.firm_id.trim().length > 0)
+          .map((r) => String(r.firm_id))
+      )
+    );
+
+    let allowedFirmIds = new Set<string>();
+    if (allFirmIds.length > 0) {
+      const { data: allowedRows } = await supabase
+        .from("firms")
+        .select("id,firm_page_enabled,slug")
+        .in("id", allFirmIds)
+        .eq("status", "published")
+        .eq("is_indexable", true);
+      allowedFirmIds = new Set(
+        (allowedRows ?? [])
+          .filter((row) => (row as { firm_page_enabled?: boolean | null }).firm_page_enabled !== false)
+          .filter((row) => slugLooksValid(String((row as { slug?: string | null }).slug ?? "")))
+          .map((row) => String((row as { id?: string }).id ?? ""))
+      );
+    }
+
     let firmSlugById = new Map<string, string>();
-    if (missingFirmIds.length > 0) {
+    if (firmIdsNeedingSlugLookup.length > 0) {
       const { data: firmRows } = await supabase
         .from("firms")
         .select("id,slug")
-        .in("id", missingFirmIds);
+        .in("id", firmIdsNeedingSlugLookup);
       firmSlugById = new Map(
         (firmRows ?? [])
           .map((row) => ({
@@ -262,12 +286,14 @@ const getBlogRows = unstable_cache(
     }
 
     return baseRows
+      .filter((r) => {
+        if (typeof r.firm_id !== "string" || r.firm_id.trim().length === 0) return false;
+        return allowedFirmIds.has(String(r.firm_id));
+      })
       .map((r) => {
-        const fallbackSlug =
+        const canonicalFirmSlug =
           typeof r.firm_id === "string" ? firmSlugById.get(String(r.firm_id)) : undefined;
-        const resolvedCompanySlug = slugLooksValid(r.company_slug)
-          ? r.company_slug
-          : (fallbackSlug ?? "");
+        const resolvedCompanySlug = canonicalFirmSlug ?? "";
         return { ...r, company_slug: resolvedCompanySlug };
       })
       .filter((r) => slugLooksValid(r.company_slug));
@@ -338,7 +364,7 @@ export async function getIndexableUrlsBySection(section: SitemapSection): Promis
         loc: normalizeCanonicalUrl(`/firma/${f.slug}`),
         lastmod: toLastmod(f.updated_at ?? f.created_at) ?? nowIso,
         changefreq: "weekly" as const,
-        priority: 0.64,
+        priority: 0.8,
         images: (() => {
           const logo = normalizeImageSitemapUrl(f.logo_url);
           if (!logo) return undefined;
@@ -356,7 +382,7 @@ export async function getIndexableUrlsBySection(section: SitemapSection): Promis
         loc: normalizeCanonicalUrl(`/firma/${b.company_slug}/blog/${b.post_slug}`),
         lastmod: toLastmod(b.updated_at ?? b.published_at) ?? nowIso,
         changefreq: "monthly" as const,
-        priority: 0.55,
+        priority: 0.7,
         images: (() => {
           const cover = normalizeImageSitemapUrl(b.cover_image_url);
           if (!cover) return undefined;

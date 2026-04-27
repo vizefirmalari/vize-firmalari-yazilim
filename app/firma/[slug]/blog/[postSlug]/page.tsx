@@ -44,6 +44,7 @@ type PostRow = {
   cover_image_alt: string | null;
   body_rich: string | null;
   published_at: string | null;
+  updated_at: string | null;
   tags?: string[] | null;
   cta_buttons?: unknown[] | null;
   related_countries?: string[] | null;
@@ -88,16 +89,16 @@ async function getPublishedPostBySlug(
   postSlug: string
 ) {
   const selectVariants = [
-    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,faq_items,faq_schema_json,category_id,company_slug,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,updated_at,tags,cta_buttons,related_countries,faq_items,faq_schema_json,category_id,company_slug,company_name,company_logo_url",
     // Backward-compatible fallback for environments missing newer blog columns.
-    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,faq_items,category_id,company_slug,company_name,company_logo_url",
-    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,related_countries,category_id,company_slug,company_name,company_logo_url",
-    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,cta_buttons,category_id,company_slug,company_name,company_logo_url",
-    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,related_countries,faq_items,category_id,company_slug,company_name,company_logo_url",
-    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,related_countries,category_id,company_slug,company_name,company_logo_url",
-    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,category_id,company_slug,company_name,company_logo_url",
-    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,category_id,company_name,company_logo_url",
-    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,tags,category_id,company_name",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,updated_at,tags,cta_buttons,related_countries,faq_items,category_id,company_slug,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,updated_at,tags,cta_buttons,related_countries,category_id,company_slug,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,updated_at,tags,cta_buttons,category_id,company_slug,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,updated_at,tags,related_countries,faq_items,category_id,company_slug,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,updated_at,tags,related_countries,category_id,company_slug,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,updated_at,tags,category_id,company_slug,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,updated_at,tags,category_id,company_name,company_logo_url",
+    "id,firm_id,title,slug,summary,meta_description,cover_image_url,cover_image_alt,body_rich,published_at,updated_at,tags,category_id,company_name",
   ] as const;
 
   for (const selectCols of selectVariants) {
@@ -106,6 +107,7 @@ async function getPublishedPostBySlug(
       .select(selectCols)
       .eq("slug", postSlug)
       .eq("status", "published")
+      .not("published_at", "is", null)
       .order("published_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -117,6 +119,7 @@ async function getPublishedPostBySlug(
       .select(selectCols)
       .ilike("slug", postSlug)
       .eq("status", "published")
+      .not("published_at", "is", null)
       .order("published_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -132,10 +135,27 @@ async function getPublishedPostBySlug(
     .select(selectVariants[selectVariants.length - 1])
     .ilike("slug", postSlug)
     .eq("status", "published")
+    .not("published_at", "is", null)
     .order("published_at", { ascending: false })
     .limit(1)
     .maybeSingle();
   return (finalTry.data as PostRow | null) ?? null;
+}
+
+function buildBlogDescriptionFallback(post: PostRow, firmName: string | null): string {
+  const fromMeta = String(post.meta_description ?? "").trim();
+  if (fromMeta) return fromMeta;
+  const fromSummary = String(post.summary ?? "").trim();
+  if (fromSummary) return fromSummary;
+  const title = String(post.title ?? "").trim();
+  const cleanFirmName = String(firmName ?? "").trim();
+  if (title && cleanFirmName) {
+    return `${title} yazısı: ${cleanFirmName} için güncel vize başvuru adımları ve önemli detaylar.`;
+  }
+  if (title) {
+    return `${title} yazısında güncel vize başvuru adımları ve önemli detaylar yer alır.`;
+  }
+  return "Vize başvuru süreçleri ve önemli adımlar hakkında güncel bilgilendirme yazısı.";
 }
 
 export async function generateMetadata({ params }: Props) {
@@ -146,11 +166,32 @@ export async function generateMetadata({ params }: Props) {
   if (!dataClient) return {};
   const db = dataClient;
   const post = await getPublishedPostBySlug(db, postSlug);
-  if (!post?.id) return {};
+  if (!post?.id) {
+    return {
+      title: "Yazı bulunamadı",
+      robots: { index: false, follow: false },
+    };
+  }
   let resolvedSlug = String((post as { company_slug?: string | null }).company_slug ?? slug);
+  let firmName: string | null = String((post as { company_name?: string | null }).company_name ?? "").trim() || null;
   if (!resolvedSlug && post.firm_id) {
-    const { data: firm } = await db.from("firms").select("slug").eq("id", String(post.firm_id)).maybeSingle();
+    const { data: firm } = await db
+      .from("firms")
+      .select("slug,name,status,is_indexable,firm_page_enabled")
+      .eq("id", String(post.firm_id))
+      .maybeSingle();
+    const isPublicFirm =
+      firm?.status === "published" &&
+      firm?.is_indexable !== false &&
+      firm?.firm_page_enabled !== false;
+    if (!isPublicFirm) {
+      return {
+        title: "Yazı bulunamadı",
+        robots: { index: false, follow: false },
+      };
+    }
     resolvedSlug = String(firm?.slug ?? slug);
+    firmName = String(firm?.name ?? "").trim() || firmName;
   }
 
   const siteUrl = getSiteUrl().replace(/\/$/, "");
@@ -160,7 +201,7 @@ export async function generateMetadata({ params }: Props) {
     coverImageAlt: post.cover_image_alt,
     title: String(post.title ?? ""),
   });
-  const desc = String(post.meta_description ?? "").trim() || String(post.summary ?? "").trim();
+  const desc = buildBlogDescriptionFallback(post, firmName);
   return {
     metadataBase: new URL(`${siteUrl}/`),
     title: String(post.title),
@@ -197,6 +238,7 @@ export async function generateMetadata({ params }: Props) {
         },
       ],
     },
+    robots: { index: true, follow: true },
   };
 }
 
@@ -219,10 +261,18 @@ export default async function BlogDetailPage({ params }: Props) {
   const { data: firm } = post.firm_id
     ? await db
         .from("firms")
-        .select("id,slug,name,logo_url,whatsapp,phone,email,website,address,working_hours,main_services,countries,founded_year,firm_category,schengen_expert,usa_visa_expert,student_visa_support,work_visa_support,tourist_visa_support,business_visa_support,family_reunion_support,appeal_support")
+        .select("id,slug,name,logo_url,whatsapp,phone,email,website,address,working_hours,main_services,countries,founded_year,firm_category,status,is_indexable,firm_page_enabled,schengen_expert,usa_visa_expert,student_visa_support,work_visa_support,tourist_visa_support,business_visa_support,family_reunion_support,appeal_support")
         .eq("id", String(post.firm_id))
         .maybeSingle()
     : { data: null };
+
+  const isPublicFirm =
+    firm?.status === "published" &&
+    firm?.is_indexable !== false &&
+    firm?.firm_page_enabled !== false;
+  if (!isPublicFirm) {
+    notFound();
+  }
 
   const expertiseLabels = [
     firm?.schengen_expert ? "Schengen Vizesi" : null,
@@ -261,6 +311,16 @@ export default async function BlogDetailPage({ params }: Props) {
     .order("published_at", { ascending: false })
     .limit(6);
 
+  const { data: sameFirmPosts } = await db
+    .from("firm_blog_posts")
+    .select("id,title,slug,published_at")
+    .eq("status", "published")
+    .not("published_at", "is", null)
+    .eq("firm_id", String(post.firm_id ?? ""))
+    .neq("id", String(post.id))
+    .order("published_at", { ascending: false })
+    .limit(6);
+
   const ads = await getActiveBlogAds();
   const daySeed = new Date().toISOString().slice(0, 10);
   const targetedAds = ads.filter((ad) => {
@@ -290,19 +350,23 @@ export default async function BlogDetailPage({ params }: Props) {
   const publisherLogoUrl =
     resolveToAbsoluteImageUrl(firm?.logo_url != null ? String(firm.logo_url) : null) ??
     resolveToAbsoluteImageUrl(postCompanyLogo != null ? String(postCompanyLogo) : null);
+  const desc = buildBlogDescriptionFallback(post, String(firm?.name ?? postCompanyName ?? "") || null);
   const articleSchema = {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     headline: post.title,
-    description: post.meta_description,
+    description: desc,
     datePublished: post.published_at,
-    dateModified: post.published_at,
+    dateModified: post.published_at ?? post.updated_at ?? post.published_at,
     image: [shareOg.url],
-    mainEntityOfPage: canonical,
-    author: { "@type": "Organization", name: String(firm?.name ?? postCompanyName ?? "") },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": canonical,
+    },
+    author: { "@type": "Organization", name: String(firm?.name ?? postCompanyName ?? SITE_BRAND_NAME) },
     publisher: {
       "@type": "Organization",
-      name: String(firm?.name ?? postCompanyName ?? ""),
+      name: SITE_BRAND_NAME,
       logo: publisherLogoUrl
         ? { "@type": "ImageObject", url: publisherLogoUrl }
         : undefined,
@@ -459,6 +523,67 @@ export default async function BlogDetailPage({ params }: Props) {
 
           {tags.length > 0 ? (
             <BlogTagsSection tags={tags} />
+          ) : null}
+
+          {Array.isArray(sameFirmPosts) && sameFirmPosts.length > 0 ? (
+            <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm max-md:rounded-2xl max-md:p-4 max-md:shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-base font-semibold text-[#0B3C5D] sm:text-lg">
+                  Aynı firmanın diğer blog yazıları
+                </h2>
+                <Link
+                  href={`/firma/${resolvedFirmSlug}`}
+                  className="text-xs font-semibold text-[#328CC1] hover:underline sm:text-sm"
+                >
+                  Firma profiline dön
+                </Link>
+              </div>
+              <ul className="mt-3 space-y-2">
+                {sameFirmPosts.map((item) => (
+                  <li key={String(item.id)}>
+                    <Link
+                      href={`/firma/${resolvedFirmSlug}/blog/${String(item.slug ?? "")}`}
+                      className="text-sm font-semibold text-[#0B3C5D] hover:text-[#328CC1] hover:underline"
+                    >
+                      {String(item.title ?? "")}
+                    </Link>
+                    {item.published_at ? (
+                      <p className="mt-0.5 text-xs text-[#1A1A1A]/60">
+                        {formatPublishedAtDisplayTr(String(item.published_at))}
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {(countries.length > 0 || tags.length > 0) ? (
+            <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm max-md:rounded-2xl max-md:p-4 max-md:shadow-sm">
+              <h2 className="text-base font-semibold text-[#0B3C5D] sm:text-lg">
+                İlgili içerik bağlantıları
+              </h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {countries.slice(0, 6).map((country) => (
+                  <Link
+                    key={`country-${country}`}
+                    href={`/arama?q=${encodeURIComponent(country)}`}
+                    className="inline-flex items-center rounded-lg border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 py-1.5 text-xs font-semibold text-[#0B3C5D] hover:bg-[#EEF2F6]"
+                  >
+                    {country} için firmaları incele
+                  </Link>
+                ))}
+                {tags.slice(0, 6).map((tag) => (
+                  <Link
+                    key={`tag-${tag}`}
+                    href={`/arama?q=${encodeURIComponent(tag)}`}
+                    className="inline-flex items-center rounded-lg border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 py-1.5 text-xs font-semibold text-[#0B3C5D] hover:bg-[#EEF2F6]"
+                  >
+                    {tag} hizmeti için firmaları incele
+                  </Link>
+                ))}
+              </div>
+            </section>
           ) : null}
 
           {ctaButtons.length > 0 ? <BlogCtaButtonsRenderer buttons={ctaButtons} /> : null}

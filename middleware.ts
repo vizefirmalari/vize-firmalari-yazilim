@@ -5,6 +5,7 @@ import {
   indexNowKeyFromTxtPath,
   normalizeIndexNowKeyFromEnv,
 } from "@/lib/seo/indexnow";
+import { resolveLegacySlugRedirectPath } from "@/lib/seo/legacy-slug-redirects";
 
 function withNoStore(res: NextResponse) {
   res.headers.set("Cache-Control", "no-store, must-revalidate");
@@ -24,6 +25,12 @@ function withPrivateNoIndex(res: NextResponse) {
  */
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const legacyRedirectPath = resolveLegacySlugRedirectPath(pathname);
+  if (legacyRedirectPath) {
+    const redirectUrl = new URL(legacyRedirectPath, request.url);
+    redirectUrl.search = request.nextUrl.search;
+    return NextResponse.redirect(redirectUrl, 308);
+  }
 
   const indexNowKey = normalizeIndexNowKeyFromEnv();
   if (indexNowKey) {
