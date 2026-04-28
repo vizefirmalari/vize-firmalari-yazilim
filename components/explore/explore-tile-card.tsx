@@ -4,10 +4,7 @@ import { ExploreEuStarBadge } from "@/components/explore/explore-eu-star-badge";
 import { ExploreTileArt } from "@/components/explore/explore-tile-art";
 import { FlagIcon } from "@/components/explore/flag-icon";
 import type { ExploreCategoryDef, ExploreVisualType } from "@/lib/explore/explore-types";
-import {
-  CARD_VARIANT_GRID,
-  resolveExploreTheme,
-} from "@/lib/explore/explore-visual-themes";
+import { resolveExploreTheme } from "@/lib/explore/explore-visual-themes";
 
 function artWrapperClass(visualType: ExploreVisualType): string {
   switch (visualType) {
@@ -25,14 +22,19 @@ function artWrapperClass(visualType: ExploreVisualType): string {
 }
 
 type Props = {
-  category: ExploreCategoryDef;
+  category: Pick<ExploreCategoryDef, "slug" | "label" | "themeKey">;
   firmCount: number;
   showCount: boolean;
+  featured?: boolean;
 };
 
-export function ExploreTileCard({ category, firmCount, showCount }: Props) {
+export function ExploreTileCard({
+  category,
+  firmCount,
+  showCount,
+  featured = false,
+}: Props) {
   const theme = resolveExploreTheme(category.themeKey);
-  const gridClass = CARD_VARIANT_GRID[theme.cardVariant];
   const href = `/kesfet/${category.slug}`;
   const countLabel =
     firmCount === 0 ? "Henüz firma yok" : `${firmCount} firma`;
@@ -49,34 +51,34 @@ export function ExploreTileCard({ category, firmCount, showCount }: Props) {
   return (
     <Link
       href={href}
-      className={`group relative flex flex-col justify-end overflow-hidden rounded-2xl border border-white/15 p-4 text-white outline-none transition duration-200 hover:border-white/25 hover:brightness-[1.03] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:rounded-3xl md:p-5 ${theme.baseClass} ${theme.shadowClass} ${gridClass} ${theme.grainClass ?? ""}`}
+      className={`group relative flex h-[168px] flex-col overflow-hidden rounded-2xl border border-border/70 bg-white text-foreground outline-none transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(11,60,93,0.14)] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-[182px] lg:h-[198px] ${featured ? "md:h-[208px]" : ""}`}
       aria-label={`${category.label}. ${showCount ? countLabel + ". " : ""}Detay sayfasına git.`}
     >
-      {theme.orbClass ? (
+      <div className={`relative h-[55%] overflow-hidden ${theme.baseClass} ${theme.shadowClass} ${theme.grainClass ?? ""}`}>
+        {theme.orbClass ? (
+          <div
+            className={`pointer-events-none absolute inset-0 ${theme.orbClass}`}
+            aria-hidden
+          />
+        ) : null}
         <div
-          className={`pointer-events-none absolute inset-0 ${theme.orbClass}`}
+          className={`pointer-events-none absolute inset-0 ${theme.overlayClass}`}
           aria-hidden
         />
-      ) : null}
-
-      <div
-        className={`pointer-events-none absolute inset-0 ${theme.overlayClass}`}
-        aria-hidden
-      />
-
-      <div
-        className={`pointer-events-none absolute overflow-hidden opacity-[0.95] ${artWrapperClass(theme.visualType)}`}
-        aria-hidden
-      >
-        <ExploreTileArt id={theme.decorationId} className="h-full w-full" />
+        <div
+          className={`pointer-events-none absolute overflow-hidden opacity-[0.92] ${artWrapperClass(theme.visualType)}`}
+          aria-hidden
+        >
+          <ExploreTileArt id={theme.decorationId} className="h-full w-full" />
+        </div>
       </div>
 
       {theme.flagIso || theme.euStarBadge ? (
         <div
-          className="pointer-events-none absolute right-3 top-3 z-[2] md:right-3.5 md:top-3.5"
+          className="pointer-events-none absolute right-2.5 top-2.5 z-2"
           aria-hidden
         >
-          <div className="rounded-lg border border-white/45 bg-white/22 p-1 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4),0_2px_12px_rgba(0,0,0,0.22)] backdrop-blur-[6px] md:p-1.5">
+          <div className="rounded-lg border border-white/45 bg-white/22 p-1 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4),0_2px_12px_rgba(0,0,0,0.22)] backdrop-blur-[6px]">
             {theme.euStarBadge ? (
               <ExploreEuStarBadge size="sm" />
             ) : theme.flagIso ? (
@@ -86,23 +88,24 @@ export function ExploreTileCard({ category, firmCount, showCount }: Props) {
         </div>
       ) : null}
 
-      <div className="relative z-[3] flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-white/12 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.12em] text-white/90 ring-1 ring-white/20 backdrop-blur-[2px]">
+      <div className="relative z-3 flex h-[45%] flex-col justify-between gap-1.5 px-3 py-2.5 sm:px-3.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="rounded-full bg-primary/8 px-2 py-0.5 text-[0.58rem] font-bold uppercase tracking-[0.12em] text-primary ring-1 ring-primary/15">
             {typeLabel}
           </span>
-          <span className="text-[0.6rem] font-semibold uppercase tracking-wide text-white/55">
-            Keşfet
-          </span>
+          {showCount ? (
+            <span className="text-[11px] font-semibold text-foreground/72">
+              {countLabel}
+            </span>
+          ) : null}
         </div>
-        <span className="text-lg font-bold leading-snug tracking-tight drop-shadow-md md:text-xl">
+        <span className="line-clamp-2 text-sm font-bold leading-snug tracking-tight text-primary sm:text-[0.95rem]">
           {category.label}
         </span>
-        {showCount ? (
-          <span className="text-xs font-medium text-white/88 drop-shadow">
-            {countLabel}
-          </span>
-        ) : null}
+        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary">
+          Keşfet
+          <span aria-hidden>→</span>
+        </span>
       </div>
     </Link>
   );

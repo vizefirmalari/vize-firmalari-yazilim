@@ -44,17 +44,48 @@ export default async function KesfetPage() {
   const filters = parseFirmFilters({});
   const firms = await getFirms(filters);
   const counts = getExploreCounts(firms, EXPLORE_CATEGORIES);
+  const totalCategories = EXPLORE_CATEGORIES.length;
+  const totalFirmMatches = Array.from(counts.values()).reduce((acc, n) => acc + n, 0);
+  const featuredRouteCount = 6;
 
   return (
     <>
       <SiteHeader />
       <ExploreHero
-        title="Vize türüne veya hedef ülkeye göre keşfedin"
-        description="Hizmet kapsamına göre sınıflandırılmış danışmanlık alanlarını görüntüleyin; hedefinize uygun firmaları daha hızlı bulun."
+        compact
+        title="Vize türüne, ülkeye ve sürece göre keşfedin"
+        description="Hedef ülke, vize türü veya başvuru ihtiyacınıza göre hizmet veren firmaları karşılaştırın."
+        hubStats={{ totalCategories, totalFirmMatches, featuredRouteCount }}
       />
       <main className="flex-1 bg-background">
         <div className="container-shell">
           <ExploreTileGrid counts={counts} />
+          <section className="premium-card mb-8 mt-6 border-primary/10 bg-white p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-primary">Keşfet kataloğu nasıl kullanılır?</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <article className="rounded-xl border border-border bg-background p-4">
+                <h3 className="text-sm font-semibold text-primary">Nasıl kullanılır?</h3>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/78">
+                  Arama alanına ülke, vize türü veya süreç adı yazarak kategori kartlarını hızlıca
+                  daraltın ve ihtiyaç duyduğunuz başlığı seçin.
+                </p>
+              </article>
+              <article className="rounded-xl border border-border bg-background p-4">
+                <h3 className="text-sm font-semibold text-primary">Nasıl listelenir?</h3>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/78">
+                  Kategoriler, firma kayıtlarındaki hizmet bölgeleri, uzmanlık alanları ve hizmet
+                  başlıklarına göre sistem tarafından otomatik olarak eşleştirilir.
+                </p>
+              </article>
+              <article className="rounded-xl border border-border bg-background p-4 sm:col-span-2 lg:col-span-1">
+                <h3 className="text-sm font-semibold text-primary">Neden kategori sayfası?</h3>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/78">
+                  Her kategori kartı sizi ilgili `/kesfet/[slug]` sayfasına taşır ve aynı konuda
+                  uzmanlaşan firmaları karşılaştırmayı kolaylaştırır.
+                </p>
+              </article>
+            </div>
+          </section>
         </div>
       </main>
       <SiteFooter />
