@@ -26,6 +26,7 @@ type Props = {
   firmCount: number;
   showCount: boolean;
   featured?: boolean;
+  contextHint?: string;
 };
 
 export function ExploreTileCard({
@@ -33,6 +34,7 @@ export function ExploreTileCard({
   firmCount,
   showCount,
   featured = false,
+  contextHint,
 }: Props) {
   const theme = resolveExploreTheme(category.themeKey);
   const href = `/kesfet/${category.slug}`;
@@ -51,10 +53,10 @@ export function ExploreTileCard({
   return (
     <Link
       href={href}
-      className={`group relative flex h-[168px] flex-col overflow-hidden rounded-2xl border border-border/70 bg-white text-foreground outline-none transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(11,60,93,0.14)] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-[182px] lg:h-[198px] ${featured ? "md:h-[208px]" : ""}`}
+      className={`group relative flex h-[210px] flex-col overflow-hidden rounded-2xl border border-border/70 bg-white text-foreground outline-none transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(11,60,93,0.14)] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:h-[230px] ${featured ? "ring-1 ring-primary/10" : ""}`}
       aria-label={`${category.label}. ${showCount ? countLabel + ". " : ""}Detay sayfasına git.`}
     >
-      <div className={`relative h-[55%] overflow-hidden ${theme.baseClass} ${theme.shadowClass} ${theme.grainClass ?? ""}`}>
+      <div className={`relative h-20 shrink-0 overflow-hidden sm:h-28 md:h-28 lg:h-28 ${theme.baseClass} ${theme.shadowClass} ${theme.grainClass ?? ""}`}>
         {theme.orbClass ? (
           <div
             className={`pointer-events-none absolute inset-0 ${theme.orbClass}`}
@@ -88,7 +90,7 @@ export function ExploreTileCard({
         </div>
       ) : null}
 
-      <div className="relative z-3 flex h-[45%] flex-col justify-between gap-1.5 px-3 py-2.5 sm:px-3.5">
+      <div className="relative z-3 flex min-h-[120px] flex-1 flex-col justify-between p-3.5 sm:min-h-[112px] sm:p-4">
         <div className="flex items-center justify-between gap-2">
           <span className="rounded-full bg-primary/8 px-2 py-0.5 text-[0.58rem] font-bold uppercase tracking-[0.12em] text-primary ring-1 ring-primary/15">
             {typeLabel}
@@ -99,11 +101,16 @@ export function ExploreTileCard({
             </span>
           ) : null}
         </div>
-        <span className="line-clamp-2 text-sm font-bold leading-snug tracking-tight text-primary sm:text-[0.95rem]">
+        <span className="z-10 line-clamp-2 text-base font-bold leading-snug text-primary">
           {category.label}
         </span>
-        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary">
-          Keşfet
+        {contextHint ? (
+          <span className="hidden line-clamp-1 text-[11px] text-foreground/60 sm:block">
+            {contextHint}
+          </span>
+        ) : null}
+        <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-secondary">
+          Firmaları gör
           <span aria-hidden>→</span>
         </span>
       </div>

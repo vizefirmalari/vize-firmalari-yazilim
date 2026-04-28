@@ -53,6 +53,68 @@ const FEATURED_SLUGS = [
   "kanada-vizesi",
   "dubai-vizesi",
 ];
+const CONTEXT_HINTS: Record<string, string> = {
+  "ingiltere-vizesi": "Öğrenci • Çalışma • Global Talent",
+  "schengen-vizesi": "Turistik • Ticari • Aile ziyareti",
+  "almanya-vizesi": "Çalışma • Aile birleşimi • Eğitim",
+  "abd-vizesi": "Turistik • İş • Eğitim",
+  "kanada-vizesi": "Eğitim • Çalışma • Oturum",
+  "dubai-vizesi": "Turistik • İş • Kısa süreli başvuru",
+  "ogrenci-vizesi": "Üniversite • Dil okulu • Sertifika",
+  "calisma-vizesi": "İş teklifi • Profesyonel geçiş • Kariyer",
+  "oturum-islemleri": "Uzatma • Yenileme • Statü geçişi",
+  "vatandaslik-islemleri": "Başvuru dosyası • Hukuki süreç • Takip",
+  "red-sonrasi": "İtiraz • Yeniden başvuru • Stratejik plan",
+};
+
+type ServiceCluster = {
+  id: string;
+  title: string;
+  description: string;
+  items: string[];
+};
+
+const SERVICE_CLUSTERS: ServiceCluster[] = [
+  {
+    id: "travel",
+    title: "Seyahat ve turistik işlemler",
+    description: "Kısa süreli seyahat, rezervasyon ve sigorta odaklı süreçler",
+    items: ["turistik-vize", "schengen-vizesi", "randevu-hizmeti", "konsolosluk-islemleri"],
+  },
+  {
+    id: "education",
+    title: "Eğitim ve kariyer",
+    description: "Eğitim hedefli ve kariyer planlı vize başvuru akışları",
+    items: ["ogrenci-vizesi", "egitim-vizesi", "global-talent-visa", "is-ticari-vize"],
+  },
+  {
+    id: "work-migration",
+    title: "Çalışma ve göç",
+    description: "Çalışma odaklı yerleşim, mesleki geçiş ve uzun süreli planlama",
+    items: ["calisma-vizesi", "gocmenlik-hukuku", "kuzey-amerika", "almanya-vizesi"],
+  },
+  {
+    id: "residency-citizenship",
+    title: "Oturum ve vatandaşlık",
+    description: "Oturum hakkı, vatandaşlık başvuruları ve uzun vadeli yerleşim",
+    items: ["oturum-islemleri", "vatandaslik-islemleri", "yunanistan-vizesi", "dubai-vizesi"],
+  },
+  {
+    id: "file-support",
+    title: "Dosya ve başvuru desteği",
+    description: "Evrak hazırlığı, randevu yönetimi ve resmi başvuru koordinasyonu",
+    items: ["evrak-basvuru-danismanligi", "randevu-hizmeti", "konsolosluk-islemleri", "red-sonrasi"],
+  },
+];
+
+const DECISION_RAIL = [
+  { label: "Ülkeye göre firma bul", targetId: "kesfet-sec-regional" },
+  { label: "Vize türüne göre ara", targetId: "kesfet-sec-visa_type" },
+  { label: "Oturum / vatandaşlık süreçleri", targetId: "service-clusters" },
+  { label: "Red sonrası destek", targetId: "kesfet-sec-process" },
+  { label: "Eğitim / çalışma süreçleri", targetId: "service-clusters" },
+  { label: "Evrak ve randevu desteği", targetId: "service-clusters" },
+];
 
 function normalizeText(value: string): string {
   return value
@@ -101,6 +163,10 @@ export function ExploreCatalogClient({ sections }: Props) {
   }, [sections, normalizedQuery, activeSection]);
 
   const allTiles = useMemo(() => sections.flatMap((section) => section.tiles), [sections]);
+  const tileBySlug = useMemo(
+    () => new Map(allTiles.map((tile) => [tile.slug, tile])),
+    [allTiles]
+  );
   const featuredTiles = useMemo(
     () =>
       FEATURED_SLUGS.map((slug) => allTiles.find((tile) => tile.slug === slug)).filter(
@@ -109,7 +175,26 @@ export function ExploreCatalogClient({ sections }: Props) {
     [allTiles]
   );
 
-  const noResult = visibleSections.length === 0;
+  const visibleServiceClusters = useMemo(() => {
+    return SERVICE_CLUSTERS.map((cluster) => {
+      const chips = cluster.items
+        .map((slug) => tileBySlug.get(slug))
+        .filter((tile): tile is ExploreCatalogTile => Boolean(tile))
+        .map((tile) => ({
+          slug: tile.slug,
+          label: tile.label,
+          firmCount: tile.firmCount,
+        }))
+        .filter((chip) => {
+          if (!normalizedQuery) return true;
+          const haystack = normalizeText(`${cluster.title} ${cluster.description} ${chip.label}`);
+          return haystack.includes(normalizedQuery);
+        });
+      return { ...cluster, chips };
+    }).filter((cluster) => cluster.chips.length > 0);
+  }, [tileBySlug, normalizedQuery]);
+
+  const noResult = visibleSections.length === 0 && visibleServiceClusters.length === 0;
 
   function handleTabClick(tab: ExploreCatalogSection["id"] | "expertise" | "all") {
     setActiveSection(tab);
@@ -123,12 +208,36 @@ export function ExploreCatalogClient({ sections }: Props) {
 
   return (
     <div className="space-y-7 pb-28 pt-3 md:space-y-9 md:pb-10 md:pt-4">
+      <section className="rounded-2xl border border-border/70 bg-white p-3 shadow-[0_1px_6px_rgba(11,60,93,0.06)] sm:p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-primary sm:text-base">Neye ihtiyacınız var?</h2>
+          <span className="rounded-full bg-secondary/12 px-2 py-0.5 text-[11px] font-semibold text-secondary">
+            Akıllı keşif
+          </span>
+        </div>
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {DECISION_RAIL.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => {
+                const el = document.getElementById(item.targetId);
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="shrink-0 rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
       {featuredTiles.length > 0 ? (
         <section className="rounded-2xl border border-border/70 bg-white p-3 shadow-[0_1px_6px_rgba(11,60,93,0.06)] sm:p-4">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-primary sm:text-base">Öne çıkanlar</h2>
+            <h2 className="text-sm font-bold text-primary sm:text-base">En çok aranan vize rotaları</h2>
             <span className="rounded-full bg-primary/8 px-2 py-0.5 text-[11px] font-semibold text-primary">
-              Hızlı geçiş
+              Premium rotalar
             </span>
           </div>
           <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
@@ -139,7 +248,7 @@ export function ExploreCatalogClient({ sections }: Props) {
                 className="shrink-0 rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label={`${tile.label} kategorisini keşfet`}
               >
-                {tile.label}
+                {tile.label} • {tile.firmCount} firma
               </Link>
             ))}
           </div>
@@ -250,6 +359,7 @@ export function ExploreCatalogClient({ sections }: Props) {
                     firmCount={tile.firmCount}
                     showCount
                     featured={section.id === "popular" && index < 2}
+                    contextHint={CONTEXT_HINTS[tile.slug]}
                   />
                 </div>
               ))}
@@ -257,6 +367,71 @@ export function ExploreCatalogClient({ sections }: Props) {
           </section>
         );
       })}
+
+      {visibleServiceClusters.length > 0 ? (
+        <section id="service-clusters" className="space-y-4 rounded-2xl border border-border/70 bg-white p-4 shadow-[0_1px_6px_rgba(11,60,93,0.06)] sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-primary md:text-xl">Hizmet amacına göre keşfet</h2>
+              <p className="mt-1 text-sm text-foreground/65">
+                Gerçek hizmet eşleşmelerine göre gruplandırılmış keşif yolları
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {visibleServiceClusters.map((cluster) => (
+              <article key={cluster.id} className="rounded-xl border border-border bg-background p-3">
+                <h3 className="text-sm font-semibold text-primary">{cluster.title}</h3>
+                <p className="mt-1 text-xs leading-relaxed text-foreground/70">{cluster.description}</p>
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {cluster.chips.map((chip) => (
+                    <Link
+                      key={`${cluster.id}-${chip.slug}`}
+                      href={`/kesfet/${chip.slug}`}
+                      className="rounded-lg border border-border bg-white px-2 py-1 text-[11px] font-semibold text-primary transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      aria-label={`${chip.label} kategorisinde firmaları gör`}
+                    >
+                      {chip.label} ({chip.firmCount})
+                    </Link>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="grid gap-3 md:grid-cols-3">
+        {[
+          {
+            title: "En çok firma bulunan kategoriler",
+            desc: "Yüksek firma yoğunluğuna sahip rotalarla hızlı başlangıç yapın.",
+            href: "/kesfet/schengen-vizesi",
+          },
+          {
+            title: "Uzmanlık gerektiren başvurular",
+            desc: "Dosya kalitesi ve süreç yönetimi kritik olan alanları inceleyin.",
+            href: "/kesfet/global-talent-visa",
+          },
+          {
+            title: "Red sonrası ve hukuki süreçler",
+            desc: "Riskli süreçlerde uzmanlığı olan firmalara odaklanın.",
+            href: "/kesfet/red-sonrasi",
+          },
+        ].map((card) => (
+          <Link
+            key={card.title}
+            href={card.href}
+            className="rounded-xl border border-border bg-white p-4 shadow-[0_1px_6px_rgba(11,60,93,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(11,60,93,0.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <h3 className="text-sm font-semibold text-primary">{card.title}</h3>
+            <p className="mt-1.5 text-xs leading-relaxed text-foreground/70">{card.desc}</p>
+            <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-secondary">
+              Firmaları gör <span aria-hidden>→</span>
+            </span>
+          </Link>
+        ))}
+      </section>
     </div>
   );
 }

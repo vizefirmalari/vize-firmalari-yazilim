@@ -134,80 +134,83 @@ export function ExploreHero({
   }
 
   return (
-    <div className="relative overflow-hidden border-b border-border/80 bg-linear-to-br from-primary/[0.07] via-background to-secondary/8">
-      <div
-        className="pointer-events-none absolute -right-20 -top-28 h-56 w-56 rounded-full bg-secondary/18 blur-3xl"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-primary/12 blur-3xl"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.35] mix-blend-multiply"
-        aria-hidden
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230B3C5D' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}
-      />
-      <div className={`container-shell relative ${compact ? "py-5 md:py-7" : "py-9 md:py-11"}`}>
-        <div className="grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] md:gap-5">
-          <div>
-            <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-secondary">
-              Keşfet
-            </p>
-            <h1 className="mt-2.5 max-w-88 text-2xl font-bold leading-tight tracking-tight text-primary md:max-w-2xl md:text-[1.75rem]">
-              {title}
-            </h1>
-            <p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-foreground/72 md:text-base">
-              {description}
-            </p>
+    <div className="bg-background">
+      <div className={`container-shell ${compact ? "py-4 md:py-5" : "py-8 md:py-10"}`}>
+        <section className="relative overflow-hidden rounded-[28px] bg-linear-to-br from-[#06324f] via-[#0b4f76] to-[#123b5c] text-white shadow-xl">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-35"
+            aria-hidden
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.18), transparent 38%), radial-gradient(circle at 84% 12%, rgba(123,211,255,0.2), transparent 30%)",
+            }}
+          />
+          <div
+            className="pointer-events-none absolute inset-0 opacity-18"
+            aria-hidden
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='72' height='72' viewBox='0 0 72 72' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.16'%3E%3Ccircle cx='36' cy='36' r='1.6'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+          <div className="relative grid gap-6 p-6 md:grid-cols-[1.4fr_0.8fr] md:p-8 lg:p-10">
+            <div>
+              <span className="inline-flex rounded-full border border-white/30 bg-white/12 px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-white/95">
+                KEŞFET
+              </span>
+              <h1 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight md:text-[1.9rem]">
+                {title}
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/88 md:text-base">
+                {description}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="rounded-full border border-white/25 bg-white/12 px-3 py-1 text-xs font-semibold text-white/92">
+                  Popüler rotalar
+                </span>
+                <span className="rounded-full border border-white/25 bg-white/12 px-3 py-1 text-xs font-semibold text-white/92">
+                  Vize türleri
+                </span>
+                <span className="rounded-full border border-white/25 bg-white/12 px-3 py-1 text-xs font-semibold text-white/92">
+                  Süreç desteği
+                </span>
+              </div>
+            </div>
+
+            {hubStats ? (
+              <div className="hidden gap-3 md:grid">
+                <article className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-white/75">Toplam kategori</p>
+                  <p className="mt-1 text-2xl font-bold">{hubStats.totalCategories}</p>
+                </article>
+                <article className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-white/75">Firma eşleşmesi</p>
+                  <p className="mt-1 text-2xl font-bold">{hubStats.totalFirmMatches}</p>
+                </article>
+                <article className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-white/75">Popüler rota</p>
+                  <p className="mt-1 text-2xl font-bold">{hubStats.featuredRouteCount}</p>
+                </article>
+              </div>
+            ) : null}
           </div>
+
           {hubStats ? (
-            <div className="hidden grid-cols-1 gap-2.5 md:grid">
-              <div className="rounded-xl border border-primary/15 bg-white/80 p-3 shadow-[0_8px_20px_rgba(11,60,93,0.08)] backdrop-blur-sm">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-foreground/55">
-                  Toplam kategori
-                </p>
-                <p className="mt-1 text-lg font-bold text-primary">{hubStats.totalCategories}</p>
-              </div>
-              <div className="rounded-xl border border-primary/15 bg-white/80 p-3 shadow-[0_8px_20px_rgba(11,60,93,0.08)] backdrop-blur-sm">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-foreground/55">
-                  Toplam firma eşleşmesi
-                </p>
-                <p className="mt-1 text-lg font-bold text-primary">{hubStats.totalFirmMatches}</p>
-              </div>
-              <div className="rounded-xl border border-primary/15 bg-white/80 p-3 shadow-[0_8px_20px_rgba(11,60,93,0.08)] backdrop-blur-sm">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-foreground/55">
-                  Popüler vize rotaları
-                </p>
-                <p className="mt-1 text-lg font-bold text-primary">{hubStats.featuredRouteCount}</p>
-              </div>
+            <div className="relative -mt-1 flex gap-2 overflow-x-auto px-6 pb-5 md:hidden">
+              <article className="min-w-[128px] shrink-0 rounded-xl border border-white/15 bg-white/12 p-3 backdrop-blur">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/75">Kategori</p>
+                <p className="mt-1 text-lg font-bold">{hubStats.totalCategories}</p>
+              </article>
+              <article className="min-w-[140px] shrink-0 rounded-xl border border-white/15 bg-white/12 p-3 backdrop-blur">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/75">Eşleşme</p>
+                <p className="mt-1 text-lg font-bold">{hubStats.totalFirmMatches}</p>
+              </article>
+              <article className="min-w-[128px] shrink-0 rounded-xl border border-white/15 bg-white/12 p-3 backdrop-blur">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/75">Rota</p>
+                <p className="mt-1 text-lg font-bold">{hubStats.featuredRouteCount}</p>
+              </article>
             </div>
           ) : null}
-        </div>
-        {hubStats ? (
-          <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1 md:hidden">
-            <div className="min-w-[150px] shrink-0 rounded-xl border border-primary/15 bg-white/85 p-2.5 shadow-[0_8px_18px_rgba(11,60,93,0.08)]">
-              <p className="text-[0.6rem] font-semibold uppercase tracking-wide text-foreground/55">
-                Toplam kategori
-              </p>
-              <p className="mt-1 text-base font-bold text-primary">{hubStats.totalCategories}</p>
-            </div>
-            <div className="min-w-[180px] shrink-0 rounded-xl border border-primary/15 bg-white/85 p-2.5 shadow-[0_8px_18px_rgba(11,60,93,0.08)]">
-              <p className="text-[0.6rem] font-semibold uppercase tracking-wide text-foreground/55">
-                Toplam firma eşleşmesi
-              </p>
-              <p className="mt-1 text-base font-bold text-primary">{hubStats.totalFirmMatches}</p>
-            </div>
-            <div className="min-w-[170px] shrink-0 rounded-xl border border-primary/15 bg-white/85 p-2.5 shadow-[0_8px_18px_rgba(11,60,93,0.08)]">
-              <p className="text-[0.6rem] font-semibold uppercase tracking-wide text-foreground/55">
-                Popüler vize rotaları
-              </p>
-              <p className="mt-1 text-base font-bold text-primary">{hubStats.featuredRouteCount}</p>
-            </div>
-          </div>
-        ) : null}
+        </section>
       </div>
     </div>
   );
