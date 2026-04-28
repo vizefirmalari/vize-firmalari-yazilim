@@ -60,6 +60,22 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
     },
   },
   {
+    slug: "almanya-vizesi",
+    label: "Almanya Vizesi",
+    shortDescription: "Almanya odaklı vize başvurularında uzman firmalar.",
+    listIntro:
+      "Almanya vizesi ve ilişkili başvuru süreçlerinde hizmet veren firmalar aşağıda listelenmiştir.",
+    sectionId: "popular",
+    sectionOrder: 25,
+    themeKey: "country-schengen",
+    priority: 82,
+    minFirmCount: 1,
+    match: {
+      countryAliasesAny: ["almanya", "germany", "federal almanya", "berlin"],
+      serviceNeedlesAny: ["almanya vize", "germany visa"],
+    },
+  },
+  {
     slug: "schengen-vizesi",
     label: "Schengen Vizesi",
     shortDescription: "Schengen bölgesi ve Avrupa seyahat vizeleri.",
@@ -135,6 +151,38 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
     },
   },
   {
+    slug: "fransa-vizesi",
+    label: "Fransa Vizesi",
+    shortDescription: "Fransa başvurularında danışmanlık sunan firmalar.",
+    listIntro:
+      "Fransa vize süreçlerinde hizmet veren firmaları bu sayfada karşılaştırabilirsiniz.",
+    sectionId: "popular",
+    sectionOrder: 65,
+    themeKey: "country-schengen",
+    priority: 69,
+    minFirmCount: 1,
+    match: {
+      countryAliasesAny: ["fransa", "france", "paris"],
+      serviceNeedlesAny: ["fransa vize", "france visa"],
+    },
+  },
+  {
+    slug: "hollanda-vizesi",
+    label: "Hollanda Vizesi",
+    shortDescription: "Hollanda odaklı vize süreçlerinde hizmet veren firmalar.",
+    listIntro:
+      "Hollanda vize başvurularında danışmanlık veren firmalar aşağıda listelenmiştir.",
+    sectionId: "popular",
+    sectionOrder: 66,
+    themeKey: "country-schengen",
+    priority: 68,
+    minFirmCount: 1,
+    match: {
+      countryAliasesAny: ["hollanda", "netherlands", "amsterdam"],
+      serviceNeedlesAny: ["hollanda vize", "netherlands visa"],
+    },
+  },
+  {
     slug: "calisma-vizesi",
     label: "Çalışma Vizesi",
     shortDescription: "Çalışma ve istihdam amaçlı vize danışmanlığı.",
@@ -164,6 +212,22 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
     match: {
       specializationKeysAny: ["student_visa_support"],
       serviceNeedlesAny: ["öğrenci vizesi", "ogrenci vizesi", "student visa", "öğrenci"],
+    },
+  },
+  {
+    slug: "global-talent-visa",
+    label: "Global Talent Visa",
+    shortDescription: "Global Talent Visa süreçlerinde uzman firmalar.",
+    listIntro:
+      "Global Talent Visa ve yetenek bazlı başvurularda hizmet veren firmalar listelenmiştir.",
+    sectionId: "visa_type",
+    sectionOrder: 25,
+    themeKey: "visa-work",
+    priority: 77,
+    minFirmCount: 1,
+    match: {
+      visaRegionLabelsAny: [R_UK],
+      serviceNeedlesAny: ["global talent", "talent visa", "high potential individual"],
     },
   },
   {
@@ -253,6 +317,21 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
     },
   },
   {
+    slug: "vatandaslik-islemleri",
+    label: "Vatandaşlık İşlemleri",
+    shortDescription: "Vatandaşlık başvuruları için danışmanlık veren firmalar.",
+    listIntro:
+      "Vatandaşlık ve uzun vadeli yerleşim süreçlerinde destek sunan firmaları inceleyin.",
+    sectionId: "process",
+    sectionOrder: 15,
+    themeKey: "process-residence",
+    priority: 66,
+    minFirmCount: 1,
+    match: {
+      serviceNeedlesAny: ["vatandaşlık", "vatandaslik", "citizenship"],
+    },
+  },
+  {
     slug: "red-sonrasi",
     label: "Red Sonrası Başvuru",
     shortDescription: "İtiraz ve yeniden başvuru desteği.",
@@ -289,6 +368,21 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
         "dosya hazırlığı",
         "dosya hazirligi",
       ],
+    },
+  },
+  {
+    slug: "gocmenlik-hukuku",
+    label: "Göçmenlik Hukuku",
+    shortDescription: "Göçmenlik hukuku ve itiraz süreçlerinde hizmet veren firmalar.",
+    listIntro:
+      "Göçmenlik hukuku alanında danışmanlık sunan firmaları bu sayfada karşılaştırabilirsiniz.",
+    sectionId: "process",
+    sectionOrder: 35,
+    themeKey: "process-appeal",
+    priority: 65,
+    minFirmCount: 1,
+    match: {
+      serviceNeedlesAny: ["göçmenlik hukuku", "gocmenlik hukuku", "immigration law"],
     },
   },
   {

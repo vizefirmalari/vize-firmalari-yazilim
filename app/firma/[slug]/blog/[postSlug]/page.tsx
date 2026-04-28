@@ -19,6 +19,7 @@ import { getSiteUrl } from "@/lib/env";
 import { resolveFirmBlogPostOgImage, resolveToAbsoluteImageUrl } from "@/lib/seo/blog-og-image";
 import { formatPublishedAtDisplayTr } from "@/lib/datetime/parse-instant";
 import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
+import { resolveExploreHrefByTerm } from "@/lib/explore/explore-links";
 
 type Props = {
   params: Promise<{ slug: string; postSlug: string }>;
@@ -567,7 +568,7 @@ export default async function BlogDetailPage({ params }: Props) {
                 {countries.slice(0, 6).map((country) => (
                   <Link
                     key={`country-${country}`}
-                    href={`/arama?q=${encodeURIComponent(country)}`}
+                    href={resolveExploreHrefByTerm(country) ?? `/arama?q=${encodeURIComponent(country)}`}
                     className="inline-flex items-center rounded-lg border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 py-1.5 text-xs font-semibold text-[#0B3C5D] hover:bg-[#EEF2F6]"
                   >
                     {country} için firmaları incele
@@ -576,7 +577,7 @@ export default async function BlogDetailPage({ params }: Props) {
                 {tags.slice(0, 6).map((tag) => (
                   <Link
                     key={`tag-${tag}`}
-                    href={`/arama?q=${encodeURIComponent(tag)}`}
+                    href={resolveExploreHrefByTerm(tag) ?? `/arama?q=${encodeURIComponent(tag)}`}
                     className="inline-flex items-center rounded-lg border border-[#0B3C5D]/15 bg-[#F7F9FB] px-3 py-1.5 text-xs font-semibold text-[#0B3C5D] hover:bg-[#EEF2F6]"
                   >
                     {tag} hizmeti için firmaları incele

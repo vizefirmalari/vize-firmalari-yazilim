@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FeaturedFirmCard } from "@/components/home/featured-firm-card";
+import { HomepageHorizontalScroller } from "@/components/home/homepage-horizontal-scroller";
 import { ExploreEmptyState } from "@/components/explore/explore-empty-state";
 import { ExploreFirmResults } from "@/components/explore/explore-firm-results";
 import { ExploreHero } from "@/components/explore/explore-hero";
@@ -16,6 +18,7 @@ import { getFirms, parseFirmFilters } from "@/lib/data/firms";
 import {
   mergeCountryFilterOptionsFromFirms,
 } from "@/lib/firma/listing-filter-options";
+import { sortFirms } from "@/lib/firma/listing-filters";
 import { getPublicFilterCountries } from "@/lib/data/public-cms";
 import { getPublicSpecializationTaxonomy } from "@/lib/data/specialization-taxonomy";
 import { absoluteUrl } from "@/lib/seo/canonical";
@@ -37,8 +40,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Keşfet" };
   }
   const path = `/kesfet/${cat.slug}`;
-  const title = `${cat.label} — Vize firmaları`;
-  const description = cat.shortDescription;
+  const title = `${cat.label} İçin Hizmet Veren Firmalar | ${SITE_BRAND_NAME}`;
+  const description = `${cat.label} süreçlerinde hizmet veren firmaları inceleyin, karşılaştırın ve size uygun danışmanlık profilini keşfedin.`;
   const img = resolveDefaultSiteShareImage();
 
   return {
@@ -79,9 +82,56 @@ export default async function KesfetSlugPage({ params }: PageProps) {
     getPublicSpecializationTaxonomy(),
   ]);
   const countryList = mergeCountryFilterOptionsFromFirms(dbCountries, matched);
+  const featuredFirms = sortFirms([...matched], "corp_desc").slice(0, 8);
+  const seoParagraphs = [
+    `${category.label} odağında danışmanlık firması seçerken, firmanın gerçekten bu süreçte aktif hizmet verdiğini kontrol etmek kritik önem taşır.`,
+    `Bu sayfada listelenen firmalar, açıklama metinlerine göre değil; sistemdeki hizmet ülkeleri, uzmanlık alanları ve hizmet etiketleri üzerinden eşleşen kayıtlarla sunulur.`,
+    `İlk temas aşamasında danışmanlık kapsamı, işlem adımları, evrak hazırlık desteği ve başvuru takibi gibi kalemlerin açık şekilde netleştirilmesi sürecin verimliliğini artırır.`,
+    `Firma karşılaştırmasında yalnızca fiyat değil; süreç şeffaflığı, iletişim kalitesi, uzmanlık geçmişi ve kurumsal doğrulama sinyalleri birlikte değerlendirilmelidir.`,
+    `${category.label} için uygun danışmanlık partnerini belirlerken, hizmet modeli ve başvuru planı üzerinden en az iki ya da üç firma profili kıyaslanması daha sağlıklı karar verir.`,
+    `Bu landing sayfası düzenli olarak güncellenir; böylece ilgili alanda hizmet veren firmaları tek URL altında daha net ve güvenilir biçimde inceleyebilirsiniz.`,
+  ];
+  const collectionJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        name: `${category.label} İçin Hizmet Veren Firmalar`,
+        description: category.shortDescription,
+        url: absoluteUrl(`/kesfet/${category.slug}`),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Ana Sayfa",
+            item: absoluteUrl("/"),
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: category.label,
+            item: absoluteUrl(`/kesfet/${category.slug}`),
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: "Firmalar",
+            item: absoluteUrl(`/kesfet/${category.slug}`),
+          },
+        ],
+      },
+    ],
+  };
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+      />
       <SiteHeader />
       <ExploreHero
         mode="category"
@@ -118,6 +168,22 @@ export default async function KesfetSlugPage({ params }: PageProps) {
             <ExploreEmptyState categoryLabel={category.label} />
           ) : (
             <>
+              <section className="mb-7">
+                <h2 className="text-xl font-semibold text-primary"> {category.label} için Öne Çıkan Firmalar</h2>
+                <p className="mt-1 text-sm text-foreground/65">
+                  Bu kategoride öne çıkan firma profillerini hızlıca karşılaştırabilirsiniz.
+                </p>
+                <div className="mt-4">
+                  <HomepageHorizontalScroller gapClass="gap-4 md:gap-5">
+                    {featuredFirms.map((firm) => (
+                      <div key={firm.id} className="featured-showcase-card-fix shrink-0 snap-start">
+                        <FeaturedFirmCard firm={firm} />
+                      </div>
+                    ))}
+                  </HomepageHorizontalScroller>
+                </div>
+              </section>
+
               <p className="mb-4 text-sm text-foreground/65">
                 <span className="font-semibold tabular-nums text-foreground/80">
                   {matched.length}
@@ -127,10 +193,21 @@ export default async function KesfetSlugPage({ params }: PageProps) {
               <ExploreFirmResults
                 firms={matched}
                 countryList={countryList}
-                listTitle={`${category.label} — Firmalar`}
+                listTitle={`${category.label} İçin Hizmet Veren Tüm Firmalar`}
                 listSubtitle={category.shortDescription}
+                listingCategoryLock={{ exploreSlug: category.slug }}
                 specializationTaxonomyOptions={specializationTaxonomy}
               />
+              <section className="premium-card mt-10 border-primary/10 bg-white p-5 sm:p-6">
+                <h2 className="text-lg font-semibold text-primary">
+                  {category.label} başvurularında firma seçimi rehberi
+                </h2>
+                <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground/80">
+                  {seoParagraphs.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </div>
+              </section>
             </>
           )}
         </div>

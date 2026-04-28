@@ -110,56 +110,56 @@ const QUICK_DISCOVER: HomeQuickDiscoverItem[] = [
     id: "schengen",
     label: "Schengen Vizesi",
     shortLabel: "Schengen",
-    href: "/?visaTypes=schengen_expert#firmalar",
+    href: "/kesfet/schengen-vizesi",
     icon: "globe",
   },
   {
     id: "abd",
     label: "ABD Vizesi",
     shortLabel: "ABD",
-    href: "/?visaTypes=usa_visa_expert#firmalar",
+    href: "/kesfet/abd-vizesi",
     icon: "flag",
   },
   {
     id: "ogrenci",
     label: "Öğrenci Vizesi",
     shortLabel: "Öğrenci",
-    href: "/?visaTypes=student_visa_support#firmalar",
+    href: "/kesfet/ogrenci-vizesi",
     icon: "graduation",
   },
   {
     id: "calisma",
     label: "Çalışma Vizesi",
     shortLabel: "Çalışma",
-    href: "/?visaTypes=work_visa_support#firmalar",
+    href: "/kesfet/calisma-vizesi",
     icon: "briefcase",
   },
   {
     id: "oturum",
     label: "Oturum",
     shortLabel: "Oturum",
-    href: `/?mainServices=${encodeURIComponent("Oturum")}#firmalar`,
+    href: "/kesfet/oturum-islemleri",
     icon: "home",
   },
   {
     id: "vatandaslik",
     label: "Vatandaşlık",
     shortLabel: "Vatandaşlık",
-    href: `/?mainServices=${encodeURIComponent("Vatandaşlık")}#firmalar`,
+    href: "/kesfet/vatandaslik-islemleri",
     icon: "badge",
   },
   {
     id: "randevu",
     label: "Randevu Hizmeti",
     shortLabel: "Randevu",
-    href: `/?mainServices=${encodeURIComponent("Randevu Hizmeti")}#firmalar`,
+    href: "/kesfet/randevu-hizmeti",
     icon: "calendar",
   },
   {
     id: "goc",
     label: "Göçmenlik Hukuku",
     shortLabel: "Göçmenlik Hukuku",
-    href: `/?mainServices=${encodeURIComponent("Göçmenlik Hukuku")}#firmalar`,
+    href: "/kesfet/gocmenlik-hukuku",
     icon: "scales",
   },
 ];
@@ -206,9 +206,12 @@ function destinationHref(
   d: (typeof HOME_DESTINATIONS)[number]
 ): string {
   if (d.kind === "explore") {
-    return `/?hedef=${encodeURIComponent(d.slug)}#firmalar`;
+    return `/kesfet/${d.slug}`;
   }
-  return `/?countries=${d.countries.map((c) => encodeURIComponent(c)).join(",")}#firmalar`;
+  if (d.title === "Almanya") return "/kesfet/almanya-vizesi";
+  if (d.title === "Fransa") return "/kesfet/fransa-vizesi";
+  if (d.title === "Hollanda") return "/kesfet/hollanda-vizesi";
+  return "/kesfet";
 }
 
 export function buildHomeQuickDiscoverItems(): HomeQuickDiscoverItem[] {
@@ -325,6 +328,16 @@ export function buildHomeCityCards(firms: FirmRow[]): HomeLinkCard[] {
 }
 
 export function buildHomeSpecialtyCards(firms: FirmRow[]): HomeLinkCard[] {
+  const slugBySpecialization: Partial<Record<SpecializationKey, string>> = {
+    schengen_expert: "schengen-vizesi",
+    usa_visa_expert: "abd-vizesi",
+    student_visa_support: "ogrenci-vizesi",
+    work_visa_support: "calisma-vizesi",
+    tourist_visa_support: "turistik-vize",
+    business_visa_support: "is-ticari-vize",
+    family_reunion_support: "aile-birlesimi",
+    appeal_support: "red-sonrasi",
+  };
   const out: HomeLinkCard[] = [];
   for (const key of HOME_SPECIALTY_KEYS) {
     const count = countFiltered(firms, { visaTypes: [key] });
@@ -333,7 +346,7 @@ export function buildHomeSpecialtyCards(firms: FirmRow[]): HomeLinkCard[] {
       id: `spec-${key}`,
       title: SPECIALIZATION_LABELS[key],
       count,
-      href: `/?visaTypes=${key}#firmalar`,
+      href: slugBySpecialization[key] ? `/kesfet/${slugBySpecialization[key]}` : "/kesfet",
       specKey: key,
     });
   }
@@ -341,6 +354,21 @@ export function buildHomeSpecialtyCards(firms: FirmRow[]): HomeLinkCard[] {
 }
 
 export function buildHomeMainServiceCards(firms: FirmRow[]): HomeLinkCard[] {
+  const slugByMainService: Record<string, string> = {
+    "Vize Hizmeti": "schengen-vizesi",
+    Oturum: "oturum-islemleri",
+    Vatandaşlık: "vatandaslik-islemleri",
+    Pasaport: "evrak-basvuru-danismanligi",
+    "Evrak / Danışmanlık": "evrak-basvuru-danismanligi",
+    "Randevu Hizmeti": "randevu-hizmeti",
+    Tercüme: "evrak-basvuru-danismanligi",
+    "Hukuki Danışmanlık": "gocmenlik-hukuku",
+    "Uzun dönemli / D tipi vizeler": "calisma-vizesi",
+    "Yurtdışı Eğitim Danışmanlığı": "egitim-vizesi",
+    "Başvuru Süreç Yönetimi": "evrak-basvuru-danismanligi",
+    "Konsolosluk İşlemleri": "konsolosluk-islemleri",
+    "Göçmenlik Hukuku": "gocmenlik-hukuku",
+  };
   const out: HomeLinkCard[] = [];
   for (const label of HOME_MAIN_SERVICE_LABELS) {
     const count = countFiltered(firms, { mainServiceLabels: [label] });
@@ -349,13 +377,28 @@ export function buildHomeMainServiceCards(firms: FirmRow[]): HomeLinkCard[] {
       id: `svc-${label}`,
       title: label,
       count,
-      href: `/?mainServices=${encodeURIComponent(label)}#firmalar`,
+      href: slugByMainService[label] ? `/kesfet/${slugByMainService[label]}` : "/kesfet",
     });
   }
   return out;
 }
 
 export function buildHomeMainServiceTiles(firms: FirmRow[]): HomeServiceTile[] {
+  const slugByMainService: Record<string, string> = {
+    "Vize Hizmeti": "schengen-vizesi",
+    Oturum: "oturum-islemleri",
+    Vatandaşlık: "vatandaslik-islemleri",
+    Pasaport: "evrak-basvuru-danismanligi",
+    "Evrak / Danışmanlık": "evrak-basvuru-danismanligi",
+    "Randevu Hizmeti": "randevu-hizmeti",
+    Tercüme: "evrak-basvuru-danismanligi",
+    "Hukuki Danışmanlık": "gocmenlik-hukuku",
+    "Uzun dönemli / D tipi vizeler": "calisma-vizesi",
+    "Yurtdışı Eğitim Danışmanlığı": "egitim-vizesi",
+    "Başvuru Süreç Yönetimi": "evrak-basvuru-danismanligi",
+    "Konsolosluk İşlemleri": "konsolosluk-islemleri",
+    "Göçmenlik Hukuku": "gocmenlik-hukuku",
+  };
   const seen = new Set<string>();
   const tiles: HomeServiceTile[] = [];
 
@@ -368,7 +411,7 @@ export function buildHomeMainServiceTiles(firms: FirmRow[]): HomeServiceTile[] {
       id: `svc-${label}`,
       title: displayTitle ?? label,
       count,
-      href: `/?mainServices=${encodeURIComponent(label)}#firmalar`,
+      href: slugByMainService[label] ? `/kesfet/${slugByMainService[label]}` : "/kesfet",
       tileSize: "md",
     });
   };

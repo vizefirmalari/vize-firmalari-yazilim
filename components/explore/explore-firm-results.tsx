@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { FirmsListing } from "@/components/home/firms-listing";
+import type { ListingCategoryLock } from "@/lib/firma/listing-category-lock";
 import type { FirmRow } from "@/lib/types/firm";
 
 type Props = {
@@ -8,6 +9,7 @@ type Props = {
   countryList: string[];
   listTitle: string;
   listSubtitle: string;
+  listingCategoryLock?: ListingCategoryLock | null;
   specializationTaxonomyOptions?: { slug: string; label: string }[];
 };
 
@@ -37,6 +39,7 @@ export function ExploreFirmResults({
   countryList,
   listTitle,
   listSubtitle,
+  listingCategoryLock = null,
   specializationTaxonomyOptions = [],
 }: Props) {
   return (
@@ -48,6 +51,8 @@ export function ExploreFirmResults({
         countryList={countryList}
         featuredTitle={listTitle}
         featuredSubtitle={listSubtitle}
+        listingPath={undefined}
+        listingCategoryLock={listingCategoryLock}
         specializationTaxonomyOptions={specializationTaxonomyOptions}
       />
     </Suspense>

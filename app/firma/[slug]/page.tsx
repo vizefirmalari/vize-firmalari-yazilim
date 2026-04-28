@@ -28,6 +28,7 @@ import {
 import { buildQuickApplyExpertiseLine, buildQuickApplySubtitle } from "@/lib/quick-apply/firm-intro-branding";
 import { VerifiedFirmBadge } from "@/components/firma/verified-firm-badge";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
+import { resolveExploreHrefByTerm } from "@/lib/explore/explore-links";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -104,6 +105,11 @@ export default async function FirmaPage({ params }: PageProps) {
   const hasSubServices = subServices.length > 0;
   const hasCustomServices = customServices.length > 0;
   const hasSpecialization = specializationFlags.length > 0;
+  const relatedExploreTerms = Array.from(
+    new Set([...countries.slice(0, 4), ...specializationFlags.slice(0, 4)])
+  )
+    .map((term) => ({ term, href: resolveExploreHrefByTerm(term) }))
+    .filter((row): row is { term: string; href: string } => Boolean(row.href));
 
   const hasProcess =
     Boolean(firm.service_process_text?.trim()) ||
@@ -588,6 +594,27 @@ export default async function FirmaPage({ params }: PageProps) {
                       </details>
                     ))}
                   </div>
+                  </section>
+                </SectionReveal>
+              ) : null}
+
+              {relatedExploreTerms.length > 0 ? (
+                <SectionReveal delayMs={188}>
+                  <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm">
+                    <h2 className="text-lg font-semibold text-[#0B3C5D]">
+                      İlgili keşif sayfaları
+                    </h2>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {relatedExploreTerms.map((item) => (
+                        <Link
+                          key={`${item.term}-${item.href}`}
+                          href={item.href}
+                          className="inline-flex items-center rounded-lg border border-[#0B3C5D]/12 bg-[#F7F9FB] px-3 py-1.5 text-xs font-semibold text-[#0B3C5D] hover:bg-[#EEF2F6]"
+                        >
+                          {item.term} için firmaları keşfet
+                        </Link>
+                      ))}
+                    </div>
                   </section>
                 </SectionReveal>
               ) : null}

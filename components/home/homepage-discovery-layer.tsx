@@ -35,7 +35,7 @@ export function HomepageDiscoveryLayer({ firms }: { firms: FirmRow[] }) {
         <HomepageDiscoverySection
           id="hizli-kesif"
           title="Hızlı keşif"
-          description="Kısa yollarla doğrudan filtreli listeye geçin."
+          description="Kısa yollarla doğrudan ilgili özel sonuç sayfasına geçin."
           seeAllHref="/kesfet"
         >
           <HomepageQuickDiscoverStrip items={quickItems} />
