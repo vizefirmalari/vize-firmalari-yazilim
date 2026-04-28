@@ -12,6 +12,15 @@ export type ExploreCardVariant = "hero" | "wide" | "square" | "compact";
 /** Görsel aile: ülke / bölge kartları destinasyon; vize ve süreç kartları daha soyut. */
 export type ExploreVisualType = "country" | "region" | "visa_type" | "process";
 
+export type ExploreHeroVisual = {
+  flagEmoji?: string;
+  visualType?: ExploreVisualType | "generic";
+  visualLabel?: string;
+  accentColor?: "navy-red" | "navy-gold" | "navy-blue" | "navy-sky" | "navy-emerald";
+  heroImage?: string;
+  flagImage?: string;
+};
+
 /**
  * Bir keşfet kategorisinin firmayla eşleşme kuralları (OR mantığı: herhangi biri yeterli).
  */
@@ -48,6 +57,8 @@ export type ExploreCategoryDef = {
   minFirmCount: number;
   /** true ise minFirmCount yok sayılır ve karo gösterilir */
   alwaysShow?: boolean;
+  /** Opsiyonel hero görsel vurgusu (emoji/etiket/rengi). */
+  visual?: ExploreHeroVisual;
 };
 
 export type ExploreSectionDef = {

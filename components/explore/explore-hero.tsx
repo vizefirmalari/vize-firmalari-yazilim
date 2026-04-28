@@ -3,12 +3,14 @@ import Link from "next/link";
 import { ExploreEuStarBadge } from "@/components/explore/explore-eu-star-badge";
 import { ExploreTileArt } from "@/components/explore/explore-tile-art";
 import { FlagIcon } from "@/components/explore/flag-icon";
+import type { ExploreHeroVisual } from "@/lib/explore/explore-types";
 import type { ExploreThemeDef } from "@/lib/explore/explore-visual-themes";
 
 type Props = {
   mode?: "hub" | "category";
   /** Kategori detayında kartla aynı görsel dil */
   theme?: ExploreThemeDef | null;
+  visual?: ExploreHeroVisual | null;
   title: string;
   description: string;
   backHref?: string;
@@ -18,11 +20,23 @@ type Props = {
 export function ExploreHero({
   mode = "hub",
   theme = null,
+  visual = null,
   title,
   description,
   backHref,
   backLabel = "Keşfet",
 }: Props) {
+  const accentClass =
+    visual?.accentColor === "navy-red"
+      ? "from-[#0B3C5D]/60 via-[#0B3C5D]/30 to-[#B63A3A]/20"
+      : visual?.accentColor === "navy-gold"
+        ? "from-[#0B3C5D]/60 via-[#0B3C5D]/30 to-[#D9A441]/25"
+        : visual?.accentColor === "navy-sky"
+          ? "from-[#0B3C5D]/60 via-[#0B3C5D]/30 to-[#328CC1]/25"
+          : visual?.accentColor === "navy-emerald"
+            ? "from-[#0B3C5D]/60 via-[#0B3C5D]/30 to-[#2f9d7e]/22"
+            : "from-[#0B3C5D]/60 via-[#0B3C5D]/30 to-[#5f87c5]/24";
+
   if (mode === "category" && theme) {
     return (
       <div
@@ -35,7 +49,7 @@ export function ExploreHero({
           />
         ) : null}
         <div
-          className={`pointer-events-none absolute inset-0 bg-gradient-to-b ${theme.heroOverlayClass}`}
+          className={`pointer-events-none absolute inset-0 bg-linear-to-b ${theme.heroOverlayClass}`}
           aria-hidden
         />
         <div
@@ -46,7 +60,7 @@ export function ExploreHero({
         </div>
         {theme.flagIso || theme.euStarBadge ? (
           <div
-            className="pointer-events-none absolute right-4 top-[4.5rem] z-[1] md:right-6 md:top-1/2 md:-translate-y-1/2"
+            className="pointer-events-none absolute right-4 top-18 z-1 md:right-6 md:top-1/2 md:-translate-y-1/2"
             aria-hidden
           >
             <div className="rounded-lg border border-white/45 bg-white/22 p-1.5 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4),0_2px_12px_rgba(0,0,0,0.2)] backdrop-blur-[6px]">
@@ -58,34 +72,61 @@ export function ExploreHero({
             </div>
           </div>
         ) : null}
-        <div className="container-shell relative z-[2] py-9 md:py-11">
-          {backHref ? (
-            <nav aria-label="Gezinti" className="mb-5">
-              <Link
-                href={backHref}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/88 transition hover:text-white"
-              >
-                <span aria-hidden>←</span>
-                {backLabel}
-              </Link>
-            </nav>
-          ) : null}
-          <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-white/65">
-            Keşfet
-          </p>
-          <h1 className="mt-2.5 max-w-xl text-2xl font-bold leading-tight tracking-tight drop-shadow-sm md:text-3xl">
-            {title}
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/88 md:text-base">
-            {description}
-          </p>
+        <div className="container-shell relative z-2 py-9 md:py-11">
+          <div className="grid items-center gap-5 md:grid-cols-[1fr_300px]">
+            <div>
+              {backHref ? (
+                <nav aria-label="Gezinti" className="mb-5">
+                  <Link
+                    href={backHref}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/88 transition hover:text-white"
+                  >
+                    <span aria-hidden>←</span>
+                    {backLabel}
+                  </Link>
+                </nav>
+              ) : null}
+              <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-white/65">
+                Keşfet
+              </p>
+              <h1 className="mt-2.5 max-w-xl text-2xl font-bold leading-tight tracking-tight drop-shadow-sm md:text-3xl">
+                {title}
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/88 md:text-base">
+                {description}
+              </p>
+              <div className="mt-4 md:hidden">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/15 px-3 py-1.5 backdrop-blur-md">
+                  <span className="text-lg leading-none" aria-hidden>
+                    {visual?.flagEmoji ?? "🌍"}
+                  </span>
+                  <span className="text-xs font-semibold text-white/92">
+                    {visual?.visualLabel ?? title}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative hidden justify-self-end md:block" aria-hidden>
+              <div className={`absolute inset-0 rounded-3xl bg-linear-to-br ${accentClass} blur-2xl`} />
+              <div className="relative w-[280px] rounded-3xl border border-white/35 bg-white/14 p-6 shadow-[0_12px_36px_rgba(11,60,93,0.3)] backdrop-blur-xl">
+                <div className="text-6xl leading-none">{visual?.flagEmoji ?? "🌍"}</div>
+                <p className="mt-4 text-sm font-semibold text-white/95">
+                  {visual?.visualLabel ?? title}
+                </p>
+                <p className="mt-1 text-xs text-white/80">
+                  Vize danışmanlığı ve başvuru süreçleri
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative overflow-hidden border-b border-border/80 bg-gradient-to-br from-primary/[0.07] via-background to-secondary/[0.08]">
+    <div className="relative overflow-hidden border-b border-border/80 bg-linear-to-br from-primary/[0.07] via-background to-secondary/8">
       <div
         className="pointer-events-none absolute -right-20 -top-28 h-56 w-56 rounded-full bg-secondary/18 blur-3xl"
         aria-hidden
@@ -105,7 +146,7 @@ export function ExploreHero({
         <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-secondary">
           Keşfet
         </p>
-        <h1 className="mt-3 max-w-[22rem] text-2xl font-bold leading-tight tracking-tight text-primary md:max-w-2xl md:text-[1.75rem]">
+        <h1 className="mt-3 max-w-88 text-2xl font-bold leading-tight tracking-tight text-primary md:max-w-2xl md:text-[1.75rem]">
           {title}
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-foreground/72 md:text-base">

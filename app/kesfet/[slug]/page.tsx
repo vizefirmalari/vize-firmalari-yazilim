@@ -136,6 +136,7 @@ export default async function KesfetSlugPage({ params }: PageProps) {
       <ExploreHero
         mode="category"
         theme={exploreTheme}
+        visual={category.visual ?? null}
         title={category.label}
         description={category.listIntro}
         backHref="/kesfet"

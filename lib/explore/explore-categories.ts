@@ -19,6 +19,12 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
     themeKey: "country-dubai",
     priority: 90,
     minFirmCount: 1,
+    visual: {
+      flagEmoji: "🇦🇪",
+      visualType: "country",
+      visualLabel: "Dubai / BAE Vizesi",
+      accentColor: "navy-gold",
+    },
     match: {
       visaRegionLabelsAny: [R_UAE],
       countryAliasesAny: [
@@ -45,6 +51,12 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
     themeKey: "country-uk",
     priority: 88,
     minFirmCount: 1,
+    visual: {
+      flagEmoji: "🇬🇧",
+      visualType: "country",
+      visualLabel: "İngiltere Vizesi",
+      accentColor: "navy-red",
+    },
     match: {
       visaRegionLabelsAny: [R_UK],
       countryAliasesAny: [
@@ -70,6 +82,12 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
     themeKey: "country-schengen",
     priority: 82,
     minFirmCount: 1,
+    visual: {
+      flagEmoji: "🇩🇪",
+      visualType: "country",
+      visualLabel: "Almanya Vizesi",
+      accentColor: "navy-gold",
+    },
     match: {
       countryAliasesAny: ["almanya", "germany", "federal almanya", "berlin"],
       serviceNeedlesAny: ["almanya vize", "germany visa"],
@@ -86,6 +104,12 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
     themeKey: "region-schengen",
     priority: 92,
     minFirmCount: 1,
+    visual: {
+      flagEmoji: "🇪🇺",
+      visualType: "region",
+      visualLabel: "Schengen Vizesi",
+      accentColor: "navy-blue",
+    },
     match: {
       visaRegionLabelsAny: [R_SCHENGEN],
       specializationKeysAny: ["schengen_expert"],
@@ -103,6 +127,12 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
     themeKey: "country-usa",
     priority: 86,
     minFirmCount: 1,
+    visual: {
+      flagEmoji: "🇺🇸",
+      visualType: "country",
+      visualLabel: "ABD Vizesi",
+      accentColor: "navy-red",
+    },
     match: {
       visaRegionLabelsAny: [R_USA],
       specializationKeysAny: ["usa_visa_expert"],
@@ -128,6 +158,12 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
     themeKey: "country-canada",
     priority: 84,
     minFirmCount: 1,
+    visual: {
+      flagEmoji: "🇨🇦",
+      visualType: "country",
+      visualLabel: "Kanada Vizesi",
+      accentColor: "navy-red",
+    },
     match: {
       visaRegionLabelsAny: [R_CA],
       countryAliasesAny: ["kanada", "canada"],
@@ -161,6 +197,12 @@ export const EXPLORE_CATEGORIES: ExploreCategoryDef[] = [
     themeKey: "country-schengen",
     priority: 69,
     minFirmCount: 1,
+    visual: {
+      flagEmoji: "🇫🇷",
+      visualType: "country",
+      visualLabel: "Fransa Vizesi",
+      accentColor: "navy-red",
+    },
     match: {
       countryAliasesAny: ["fransa", "france", "paris"],
       serviceNeedlesAny: ["fransa vize", "france visa"],
