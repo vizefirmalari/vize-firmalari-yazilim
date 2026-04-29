@@ -2,13 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { FirmBlogEditorForm } from "@/components/firm-panel/firm-blog-editor-form";
+import { FirmBlogCoverManagerRow } from "@/components/firm-panel/firm-blog-cover-manager-row";
+import { FirmBlogRevalidateCachesButton } from "@/components/firm-panel/firm-blog-revalidate-caches-button";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type PageProps = {
   params: Promise<{ firmId: string }>;
-  searchParams: Promise<{ post?: string; category?: string }>;
+  searchParams: Promise<{ post?: string; category?: string; focus?: string }>;
 };
 
 async function getInitialPostForEdit(
@@ -48,13 +50,15 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
   const { data: firm } = await supabase
     .from("firms")
     .select(
-      "id, name, brand_name, countries, schengen_expert, usa_visa_expert, student_visa_support, work_visa_support, tourist_visa_support, business_visa_support, family_reunion_support, appeal_support"
+      "id, slug, name, brand_name, countries, schengen_expert, usa_visa_expert, student_visa_support, work_visa_support, tourist_visa_support, business_visa_support, family_reunion_support, appeal_support"
     )
     .eq("id", firmId)
     .maybeSingle();
   if (!firm) notFound();
 
   const postId = typeof sp.post === "string" && sp.post.trim() ? sp.post.trim() : null;
+  const scrollToCover =
+    typeof sp.focus === "string" && sp.focus.trim().toLowerCase() === "cover";
   let initialPost: {
     id: string;
     title: string;
@@ -104,12 +108,14 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
     }
   }
 
-  const { data: recentPosts } = await supabase
+  const { data: coverMgmtPosts } = await supabase
     .from("firm_blog_posts")
-    .select("id, title, status, updated_at, category_id")
+    .select("id, title, slug, status, updated_at, category_id, cover_image_url")
     .eq("firm_id", firmId)
     .order("updated_at", { ascending: false })
-    .limit(8);
+    .limit(50);
+
+  const firmSlug = firm.slug ? String(firm.slug) : "";
 
   const { data: categories } = await supabase
     .from("blog_categories")
@@ -117,8 +123,6 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
-  const categoryMap = new Map((categories ?? []).map((c) => [String(c.id), String(c.name)]));
-
   const { data: relatedPosts } = await supabase
     .from("firm_blog_posts")
     .select("id,title,slug,category_id")
@@ -149,6 +153,7 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
       <FirmBlogEditorForm
         key={initialPost?.id ?? "new-post"}
         firmId={firmId}
+        scrollToCoverSection={scrollToCover}
         initialPost={initialPost}
         firmCountries={firmCountries}
         firmVisaTypes={firmVisaTypes}
@@ -163,32 +168,38 @@ export default async function FirmBlogCreatePage({ params, searchParams }: PageP
 
       <section className="rounded-2xl border border-[#1A1A1A]/10 bg-white p-4 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0B3C5D]/70">
-          Yayın arşivi
+          Yayınlar ve kapak yönetimi
         </p>
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-          {(recentPosts ?? []).map((p) => (
-            <li
+        <p className="mt-1 text-xs text-[#1A1A1A]/60">
+          Akış ve blog detay aynı <span className="font-mono">cover_image_url</span> alanını kullanır; ayrı bir
+          feed tablosu yoktur. Kapak değişince yeni dosya benzersiz adrese yüklenir ve veritabanı güncellenir.
+        </p>
+        {!firmSlug ? (
+          <p className="mt-2 text-xs text-[#B42318]">Firma slug bulunamadı; blog URL önizlemesi çalışmayabilir.</p>
+        ) : null}
+        <div className="mt-4 rounded-xl border border-[#1A1A1A]/8 bg-[#F8FAFC] p-3">
+          <FirmBlogRevalidateCachesButton firmId={firmId} />
+        </div>
+        <ul className="mt-4 space-y-3">
+          {(coverMgmtPosts ?? []).map((p) => (
+            <FirmBlogCoverManagerRow
               key={String(p.id)}
-              className="flex items-center justify-between rounded-xl border border-[#1A1A1A]/10 bg-[#F8FAFC] px-3 py-2"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-[#0B3C5D]">
-                  {String(p.title || "Başlıksız")}
-                </p>
-                <p className="text-xs text-[#1A1A1A]/55">{String(p.status)}</p>
-                <p className="text-[11px] text-[#0B3C5D]/70">
-                  {p.category_id ? categoryMap.get(String(p.category_id)) ?? "Kategori" : "Kategori yok"}
-                </p>
-              </div>
-              <Link
-                href={`/panel/${firmId}/paylasim/blog?post=${String(p.id)}`}
-                className="text-xs font-semibold text-[#0B3C5D] hover:underline"
-              >
-                Düzenle
-              </Link>
-            </li>
+              firmId={firmId}
+              postId={String(p.id)}
+              postSlug={String(p.slug ?? "")}
+              title={String(p.title || "Başlıksız")}
+              status={String(p.status ?? "")}
+              initialCoverUrl={p.cover_image_url ? String(p.cover_image_url) : null}
+              editHref={`/panel/${firmId}/paylasim/blog?post=${String(p.id)}&focus=cover`}
+              publicBlogHref={
+                firmSlug ? `/firma/${firmSlug}/blog/${String(p.slug ?? "")}` : null
+              }
+            />
           ))}
         </ul>
+        {(coverMgmtPosts ?? []).length === 0 ? (
+          <p className="mt-3 text-sm text-[#1A1A1A]/55">Henüz blog kaydı yok.</p>
+        ) : null}
       </section>
     </div>
   );

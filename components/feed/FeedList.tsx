@@ -20,7 +20,7 @@ function FeedSkeleton() {
   return (
     <div className="mx-auto w-full max-w-[720px] animate-pulse overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
       <div className="h-14 bg-[#f3f4f6]" />
-      <div className="aspect-1200/640 bg-[#eef2f7]" />
+      <div className="w-full rounded-lg bg-[#eef2f7]" style={{ aspectRatio: "1200 / 640" }} />
       <div className="space-y-2 p-4">
         <div className="h-4 w-4/5 rounded bg-[#eef2f7]" />
         <div className="h-4 w-3/5 rounded bg-[#eef2f7]" />

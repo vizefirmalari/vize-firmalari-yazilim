@@ -1,7 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
+
+import { FirmBlogCoverDisplay } from "@/components/blog/firm-blog-cover-display";
 
 export function FeedCardImageCarousel({
   urls,
@@ -22,17 +23,9 @@ export function FeedCardImageCarousel({
   const url = urls[safeIdx]!;
 
   return (
-    <div className="relative w-full overflow-hidden bg-slate-100">
-      <a href={targetUrl} className="block w-full">
-        <Image
-          src={url}
-          alt={alt}
-          width={1200}
-          height={630}
-          className="block h-auto w-full max-w-full object-contain"
-          sizes="(max-width: 768px) 100vw, 720px"
-          loading="lazy"
-        />
+    <div className="relative min-w-0 w-full bg-slate-100">
+      <a href={targetUrl} className="block min-w-0 w-full">
+        <FirmBlogCoverDisplay src={url} alt={alt} />
       </a>
       {urls.length > 1 ? (
         <>

@@ -7,6 +7,9 @@ import type { BlogAdRow } from "@/lib/blog/ads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 
+/** Kapak güncellemeleri hemen görülsün — feed verisi doğrudan DB’den çekilir. */
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Akış",
   description: "Firma odaklı içerik akışı",

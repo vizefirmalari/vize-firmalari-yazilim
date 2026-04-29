@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { FirmBlogCoverDisplay } from "@/components/blog/firm-blog-cover-display";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
@@ -20,6 +21,8 @@ import { resolveFirmBlogPostOgImage, resolveToAbsoluteImageUrl } from "@/lib/seo
 import { formatPublishedAtDisplayTr } from "@/lib/datetime/parse-instant";
 import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
 import { resolveExploreHrefByTerm } from "@/lib/explore/explore-links";
+
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ slug: string; postSlug: string }>;
@@ -446,15 +449,11 @@ export default async function BlogDetailPage({ params }: Props) {
         <article className="mt-0 min-w-0 w-full max-w-full space-y-5 max-md:space-y-3 max-md:mt-0">
           <section className="overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-sm max-md:shadow-[0_1px_8px_rgba(11,60,93,0.05)] sm:shadow-sm">
             {post.cover_image_url ? (
-              <div className="relative w-full overflow-hidden rounded-2xl bg-slate-100">
-                <Image
+              <div className="min-w-0 w-full">
+                <FirmBlogCoverDisplay
                   src={String(post.cover_image_url)}
                   alt={String(post.cover_image_alt || post.title)}
-                  width={1200}
-                  height={630}
                   priority
-                  sizes="(max-width: 1024px) 100vw, 960px"
-                  className="block h-auto w-full max-w-full object-contain"
                 />
               </div>
             ) : null}

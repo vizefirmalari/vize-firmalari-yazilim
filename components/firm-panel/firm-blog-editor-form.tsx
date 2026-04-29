@@ -14,11 +14,16 @@ import {
   type BlogCtaPlatform,
 } from "@/lib/blog/cta-buttons";
 import { createFirmBlogCategory } from "@/lib/actions/firm-blog-category";
-import { saveFirmBlogPost, uploadFirmBlogCoverImage } from "@/lib/actions/firm-panel-blog";
+import {
+  saveFirmBlogPost,
+  updateFirmBlogCoverOnly,
+  uploadFirmBlogCoverImage,
+} from "@/lib/actions/firm-panel-blog";
 import {
   sanitizeFirmBlogBodyRichForStorage,
   sanitizeFirmBlogPastedHtml,
 } from "@/lib/blog/firm-blog-body-html";
+import { FirmBlogCoverDisplay } from "@/components/blog/firm-blog-cover-display";
 import {
   formatNowTurkeyDatetimeLocalValue,
   turkeyDatetimeLocalInputToUtcIso,
@@ -35,6 +40,8 @@ import { splitBodyForMiddleAd } from "@/lib/blog/split-body-for-middle-ad";
 
 type Props = {
   firmId: string;
+  /** Yayın arşivi "Kapak görselini yenile" ile doğrudan kapak bloğuna kaydırır */
+  scrollToCoverSection?: boolean;
   initialPost: {
     id: string;
     title: string;
@@ -129,6 +136,7 @@ function initFaqItemsFromPost(initialPost: Props["initialPost"]): FirmBlogFaqIte
 
 export function FirmBlogEditorForm({
   firmId,
+  scrollToCoverSection = false,
   initialPost,
   firmCountries,
   firmVisaTypes,
@@ -230,6 +238,17 @@ export function FirmBlogEditorForm({
       if (coverLocalPreview) URL.revokeObjectURL(coverLocalPreview);
     };
   }, [coverLocalPreview]);
+
+  useEffect(() => {
+    if (!scrollToCoverSection) return;
+    const t = window.setTimeout(() => {
+      document.getElementById("firm-blog-hero-cover")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 150);
+    return () => window.clearTimeout(t);
+  }, [scrollToCoverSection]);
 
   const editor = useEditor(
     {
@@ -682,6 +701,19 @@ export function FirmBlogEditorForm({
         return null;
       }
       setCoverUrl(res.url);
+      if (postId) {
+        const patch = await updateFirmBlogCoverOnly({
+          firmId,
+          postId,
+          coverImageUrl: res.url,
+        });
+        if (!patch.ok) {
+          setMessage(patch.error);
+          setMessageTone("error");
+          return null;
+        }
+        router.refresh();
+      }
       return res.url;
     } catch {
       setMessage("Görsel yüklenemedi veya zaman aşımına uğradı. Daha küçük bir görsel ile tekrar deneyin.");
@@ -831,7 +863,7 @@ export function FirmBlogEditorForm({
           </div>
 
           <div className="space-y-3">
-            <div>
+            <div id="firm-blog-hero-cover">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0B3C5D]/70">
                   Hero görsel
                 </label>
@@ -870,15 +902,18 @@ export function FirmBlogEditorForm({
                     />
                     {coverUploading ? "Yükleniyor..." : "Görsel yükle"}
                   </label>
-                  {(coverLocalPreview || coverUrl) ? (
-                    <div className="w-full overflow-hidden rounded-xl border border-[#1A1A1A]/12 bg-[#F8FAFC] sm:w-52">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={coverLocalPreview || coverUrl} alt="" className="h-24 w-full object-contain" />
-                    </div>
-                  ) : null}
+                  <div className="w-full min-w-0 shrink-0 sm:max-w-xl">
+                    <FirmBlogCoverDisplay
+                      src={coverLocalPreview || coverUrl || null}
+                      alt="Hero görsel önizleme"
+                      showEmptyPlaceholder
+                      outerClassName="rounded-xl! border border-[#1A1A1A]/12"
+                    />
+                  </div>
                   </div>
                   <p className="text-xs text-[#1A1A1A]/55">
-                    Önerilen ölçü: 1200 × 630. Yüklenen dosya otomatik URL ile eşlenir.
+                    Önerilen ölçü: 1200 × 630 (sosyal paylaşım için). Yüklenen dosya doğrudan Storage
+                    public URL olarak kaydedilir (kırpma veya thumbnail adresi kullanılmaz).
                   </p>
                   <p className={`text-xs ${coverUrl ? "text-[#067647]" : coverPendingFile ? "text-[#9A6700]" : "text-[#B42318]"}`}>
                     {coverUrl
@@ -1239,11 +1274,15 @@ export function FirmBlogEditorForm({
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0B3C5D]/70">
               Open Graph önizleme
             </p>
-            <div className="mt-2 overflow-hidden rounded-xl border border-[#1A1A1A]/10 bg-[#F8FAFC]">
-              {coverUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={coverLocalPreview || coverUrl} alt="" className="h-28 w-full object-contain bg-[#EEF2F6]" />
-              ) : null}
+            <div className="mt-2 rounded-xl border border-[#1A1A1A]/10 bg-[#F8FAFC] overflow-hidden">
+              <div className="max-w-xl">
+                <FirmBlogCoverDisplay
+                  src={coverLocalPreview || coverUrl || null}
+                  alt="Hero görsel önizleme"
+                  showEmptyPlaceholder
+                  outerClassName="rounded-xl!"
+                />
+              </div>
               <div className="space-y-1 p-3">
                 <p className="text-sm font-semibold text-[#0B3C5D]">{title || "Başlık önizlemesi"}</p>
                 <p className="text-xs text-[#1A1A1A]/65">{metaDescription || "Meta açıklama önizlemesi"}</p>

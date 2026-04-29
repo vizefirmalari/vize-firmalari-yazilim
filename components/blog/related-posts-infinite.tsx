@@ -1,7 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+
+import { FirmBlogCoverDisplay } from "@/components/blog/firm-blog-cover-display";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type RelatedItem = {
@@ -81,16 +82,11 @@ export function RelatedPostsInfinite({
             className="min-w-0 max-w-full overflow-hidden rounded-xl border border-[#0B3C5D]/10 bg-[#F8FAFC] transition hover:bg-[#F1F5F9] max-md:rounded-[0.7rem] wrap-anywhere"
           >
             {item.coverImageUrl ? (
-              <div className="relative w-full overflow-hidden rounded-2xl bg-[#F1F5F9]">
-                <Image
-                  src={item.coverImageUrl}
-                  alt={item.title}
-                  width={1200}
-                  height={630}
-                  className="block h-auto w-full max-w-full object-contain"
-                  sizes="(max-width: 768px) 100vw, 320px"
-                />
-              </div>
+              <FirmBlogCoverDisplay
+                src={item.coverImageUrl}
+                alt={item.title}
+                outerClassName="rounded-none! bg-[#F1F5F9]"
+              />
             ) : null}
             <div className="min-w-0 max-w-full space-y-0.5 p-2.5 sm:space-y-1 sm:p-3 wrap-break-word">
               <p className="line-clamp-2 text-sm font-semibold text-[#0B3C5D] max-md:text-[13px] max-md:leading-snug">{item.title}</p>

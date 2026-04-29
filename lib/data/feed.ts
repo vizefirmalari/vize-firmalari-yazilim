@@ -189,6 +189,7 @@ export async function getFirmFeedItems(
       company_slug: String((row as { company_slug?: string | null }).company_slug ?? firmSlug),
       title: String(row.title ?? ""),
       description: String(row.summary ?? ""),
+      // Blog kartı için `image_url` yalnızca `firm_blog_posts.cover_image_url` (ayrı feed_items satırı yok).
       image_url: row.cover_image_url ? String(row.cover_image_url) : null,
       created_at: String(row.published_at),
       like_count: likeCountMap.get(postId) ?? 0,
@@ -452,6 +453,7 @@ async function computeFeedPage(
           company_slug: firmSlug,
           title: String(row.title ?? ""),
           description: String(row.summary ?? ""),
+          // Akış `/akis`: kart görseli = `firm_blog_posts.cover_image_url` (dinamik; cache başka yerde tutulamaz).
           image_url: row.cover_image_url ? String(row.cover_image_url) : null,
           created_at: String(row.published_at),
           like_count: likeCount,

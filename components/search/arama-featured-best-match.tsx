@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 
+import { FirmBlogCoverDisplay } from "@/components/blog/firm-blog-cover-display";
 import type { FeaturedBestMatch } from "@/lib/search/site-search";
 import { SEARCH_BLOG_COVER_FALLBACK } from "@/lib/search/site-search";
 
@@ -52,15 +52,12 @@ export function AramaFeaturedBestMatch({
           href={featured.guide.href}
           className="group mt-5 flex flex-col overflow-hidden rounded-xl border border-border/80 bg-background transition hover:border-secondary/55 sm:flex-row"
         >
-          <div className="relative w-full overflow-hidden rounded-2xl bg-slate-100 sm:w-52">
-            <Image
+          <div className="min-w-0 w-full shrink-0 sm:w-52">
+            <FirmBlogCoverDisplay
               src={featured.guide.coverImageUrl || SEARCH_BLOG_COVER_FALLBACK}
               alt=""
-              width={1200}
-              height={630}
-              className="block h-auto w-full max-w-full object-contain"
-              sizes="(max-width: 640px) 100vw, 208px"
               priority
+              outerClassName="rounded-2xl!"
             />
           </div>
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 p-4 sm:p-5">

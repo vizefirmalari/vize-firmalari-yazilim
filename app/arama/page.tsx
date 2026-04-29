@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import Link from "next/link";
-import Image from "next/image";
 import { redirect } from "next/navigation";
+
+import { FirmBlogCoverDisplay } from "@/components/blog/firm-blog-cover-display";
 
 import { FirmCard } from "@/components/home/firm-card";
 import { GlobalSearchBar } from "@/components/layout/global-search-bar";
@@ -584,15 +585,10 @@ export default async function AramaPage({ searchParams }: PageProps) {
                               href={g.href}
                               className="flex h-full min-h-0 flex-col outline-none focus-visible:ring-2 focus-visible:ring-secondary"
                             >
-                              <div className="relative w-full overflow-hidden rounded-2xl bg-slate-100">
-                                <Image
+                              <div className="min-w-0 w-full">
+                                <FirmBlogCoverDisplay
                                   src={g.coverImageUrl || SEARCH_BLOG_COVER_FALLBACK}
                                   alt=""
-                                  width={1200}
-                                  height={630}
-                                  className="block h-auto w-full max-w-full object-contain"
-                                  sizes="(max-width: 768px) 100vw, 50vw"
-                                  loading="lazy"
                                 />
                               </div>
                               <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">

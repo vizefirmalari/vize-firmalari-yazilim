@@ -2,7 +2,8 @@
 
 import { useMemo, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
+
+import { FirmBlogCoverDisplay } from "@/components/blog/firm-blog-cover-display";
 import type { LatestBlogGuide } from "@/lib/explore/latest-blog-guides";
 
 type Props = {
@@ -73,16 +74,12 @@ export function LatestBlogGuidesSlider({ items }: Props) {
             className="group min-w-[82vw] snap-start overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_6px_rgba(11,60,93,0.07)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(11,60,93,0.12)] sm:min-w-[46vw] lg:min-w-[31%] xl:min-w-[24%]"
           >
             <Link href={item.href} className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-primary">
-              <div className="relative w-full overflow-hidden rounded-2xl bg-primary/6">
+              <div className="relative min-w-0 w-full overflow-hidden rounded-2xl bg-primary/6">
                 {item.coverImageUrl ? (
-                  <Image
+                  <FirmBlogCoverDisplay
                     src={item.coverImageUrl}
                     alt={item.title}
-                    width={1200}
-                    height={630}
-                    className="block h-auto w-full max-w-full object-contain"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 46vw, 24vw"
-                    loading="lazy"
+                    outerClassName="rounded-none! bg-transparent"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-primary/90 to-secondary/85 text-sm font-semibold text-white/90">

@@ -45,7 +45,6 @@ export function FirmFeedList({ items }: { items: FeedItem[] }) {
             imageUrl={item.image_url}
             alt={item.title}
             targetUrl={item.target_url}
-            postId={item.id}
           />
           <FeedCardContent
             title={item.title}

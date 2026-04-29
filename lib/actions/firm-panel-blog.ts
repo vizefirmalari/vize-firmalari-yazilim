@@ -54,6 +54,39 @@ function uniqueText(values: string[]): string[] {
   return out;
 }
 
+/** Akış / arama / keşfet ve firma blog detayı önbelleğini günceller. */
+function revalidateFirmBlogPublicSurfaces(opts: {
+  firmId: string;
+  firmSlug: string | null;
+  postSlug: string | null;
+}) {
+  const { firmId, firmSlug, postSlug } = opts;
+  revalidatePath("/");
+  revalidatePath("/akis");
+  revalidatePath("/arama");
+  revalidatePath("/kesfet");
+  try {
+    revalidatePath("/akis", "layout");
+    revalidatePath("/kesfet", "layout");
+  } catch {
+    /* Next sürümüne bağlı */
+  }
+  revalidatePath("/api/feed/items");
+  revalidatePath(`/panel/${firmId}/paylasim`);
+  revalidatePath(`/panel/${firmId}/paylasim/blog`);
+  if (firmSlug) {
+    revalidatePath(`/firma/${firmSlug}`);
+    try {
+      revalidatePath(`/firma/${firmSlug}`, "layout");
+    } catch {
+      /* ignore */
+    }
+    if (postSlug) {
+      revalidatePath(`/firma/${firmSlug}/blog/${postSlug}`);
+    }
+  }
+}
+
 function isMissingColumnError(error: { message?: string } | null): boolean {
   const msg = String(error?.message ?? "").toLowerCase();
   return msg.includes("could not find the") && msg.includes("column");
@@ -233,11 +266,11 @@ export async function saveFirmBlogPost(
     }
   }
 
-  revalidatePath("/");
-  revalidatePath("/akis");
-  revalidatePath(`/panel/${firmId}/paylasim`);
-  revalidatePath(`/panel/${firmId}/paylasim/blog`);
-  revalidatePath(`/firma/${String(firm.slug)}`);
+  revalidateFirmBlogPublicSurfaces({
+    firmId,
+    firmSlug: firm.slug ? String(firm.slug) : null,
+    postSlug: slug,
+  });
 
   if (status === "published" && firm.slug) {
     const blogUrl = absoluteUrl(`/firma/${String(firm.slug)}/blog/${slug}`);
@@ -245,6 +278,146 @@ export async function saveFirmBlogPost(
   }
 
   return { ok: true, id: savedId, status };
+}
+
+/**
+ * Yayınlanmış tüm blog yazıları için ortak önbellik yenilemesi.
+ * `firm_blog_posts.cover_image_url` tekil tablodur; akış ayrı bir `feed_items` satırı kullanmaz.
+ */
+export async function revalidateFirmBlogCachesForFirm(
+  firmIdRaw: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const firmId = firmIdRaw.trim();
+  if (!firmId) return { ok: false, error: "Geçersiz firma." };
+  await requireFirmPanelAccess(firmId);
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "Sunucu bağlantısı kurulamadı." };
+  const adminSupabase = createSupabaseServiceRoleClient() ?? supabase;
+
+  const { data: firmRow } = await adminSupabase
+    .from("firms")
+    .select("slug")
+    .eq("id", firmId)
+    .maybeSingle();
+  const firmSlug = firmRow?.slug ? String(firmRow.slug) : null;
+
+  const { data: published } = await adminSupabase
+    .from("firm_blog_posts")
+    .select("slug")
+    .eq("firm_id", firmId)
+    .eq("status", "published")
+    .not("published_at", "is", null);
+
+  revalidatePath("/");
+  revalidatePath("/akis");
+  revalidatePath("/arama");
+  revalidatePath("/kesfet");
+  try {
+    revalidatePath("/akis", "layout");
+    revalidatePath("/kesfet", "layout");
+  } catch {
+    /* ignore */
+  }
+  revalidatePath("/api/feed/items");
+  revalidatePath(`/panel/${firmId}/paylasim`);
+  revalidatePath(`/panel/${firmId}/paylasim/blog`);
+  if (firmSlug) {
+    revalidatePath(`/firma/${firmSlug}`);
+    try {
+      revalidatePath(`/firma/${firmSlug}`, "layout");
+    } catch {
+      /* ignore */
+    }
+    for (const row of published ?? []) {
+      const ps = String((row as { slug?: string }).slug ?? "").trim();
+      if (ps) revalidatePath(`/firma/${firmSlug}/blog/${ps}`);
+    }
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Sadece `cover_image_url` günceller; slug/SEO/metadata/yayın içeriği değişmez.
+ * Panel upload sonrası DB ile senkron ve ön yüz önbelliği güncellenir.
+ */
+export async function updateFirmBlogCoverOnly(payload: {
+  firmId: string;
+  postId: string;
+  coverImageUrl: string | null;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const firmId = payload.firmId.trim();
+  const postId = payload.postId.trim();
+  if (!firmId || !postId) return { ok: false, error: "Geçersiz istek." };
+
+  await requireFirmPanelAccess(firmId);
+
+  const rawTrimmed =
+    payload.coverImageUrl === null || payload.coverImageUrl === undefined
+      ? ""
+      : String(payload.coverImageUrl).trim();
+
+  if (!rawTrimmed) {
+    return { ok: false, error: "Yeni kapak için geçerli bir HTTPS URL gerekli." };
+  }
+  if (rawTrimmed.length > 2048 || !/^https:\/\/.+/i.test(rawTrimmed)) {
+    return { ok: false, error: "Geçersiz görsel bağlantısı (HTTPS, doğrudan URL gerekli)." };
+  }
+  const lower = rawTrimmed.toLowerCase();
+  if (lower.includes("/storage/v1/render/") || lower.includes("/render/image")) {
+    return {
+      ok: false,
+      error:
+        "Dönüştürülmüş/thumbnail bağlantıları kullanılmaz; yalnızca orijinal depo (public) adresi kabul edilir.",
+    };
+  }
+  const coverImageUrl = rawTrimmed;
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "Sunucu bağlantısı kurulamadı." };
+  const adminSupabase = createSupabaseServiceRoleClient() ?? supabase;
+
+  const { data: postRow, error: postErr } = await adminSupabase
+    .from("firm_blog_posts")
+    .select("id, slug, cover_image_url")
+    .eq("id", postId)
+    .eq("firm_id", firmId)
+    .maybeSingle();
+  if (postErr || !postRow?.id) {
+    return { ok: false, error: postErr?.message ?? "Yazı bulunamadı." };
+  }
+
+  const oldUrl = String(postRow.cover_image_url ?? "").trim();
+  if (oldUrl === coverImageUrl) {
+    return {
+      ok: false,
+      error:
+        "Yeni dosya farklı bir adreste olmalı (veritabanındaki URL ile aynı). Yüklemeyi tekrar deneyin.",
+    };
+  }
+
+  const { data: firmRow } = await adminSupabase
+    .from("firms")
+    .select("slug")
+    .eq("id", firmId)
+    .maybeSingle();
+
+  const nowIso = new Date().toISOString();
+  const { error } = await adminSupabase
+    .from("firm_blog_posts")
+    .update({ cover_image_url: coverImageUrl, updated_at: nowIso })
+    .eq("id", postId)
+    .eq("firm_id", firmId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidateFirmBlogPublicSurfaces({
+    firmId,
+    firmSlug: firmRow?.slug ? String(firmRow.slug) : null,
+    postSlug: postRow.slug ? String(postRow.slug) : null,
+  });
+
+  return { ok: true };
 }
 
 export async function uploadFirmBlogCoverImage(
@@ -270,12 +443,12 @@ export async function uploadFirmBlogCoverImage(
   const supabase = serviceRole ?? (await createSupabaseServerClient());
   if (!supabase) return { ok: false, error: "Sunucu bağlantısı kurulamadı." };
 
-  const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const path = `firms/${firmId}/blog-cover/${stamp}.${ext}`;
+  const fileId = `${Date.now()}-${randomUUID().replace(/-/g, "").slice(0, 16)}`;
+  const path = `firms/${firmId}/blog-cover/${fileId}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const { error } = await supabase.storage.from("media").upload(path, buffer, {
     contentType: file.type || "image/jpeg",
-    upsert: true,
+    cacheControl: "31536000",
   });
   if (error) return { ok: false, error: error.message };
 

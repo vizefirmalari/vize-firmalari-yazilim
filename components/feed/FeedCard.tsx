@@ -48,7 +48,6 @@ export function FeedCard({
           imageUrl={item.image_url}
           alt={item.title}
           targetUrl={item.target_url}
-          postId={item.id}
         />
       )}
       {isFeedPost ? (

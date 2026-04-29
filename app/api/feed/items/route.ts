@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getFeedItemsPage } from "@/lib/data/feed";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const offset = Number(url.searchParams.get("offset") || "0");
