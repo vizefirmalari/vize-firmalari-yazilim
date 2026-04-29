@@ -12,7 +12,7 @@ export type GlobalSearchItem = {
   title: string;
   subtitle?: string;
   href: string;
-  kind: "country" | "firm" | "visa" | "service" | "explore" | "all";
+  kind: "country" | "firm" | "visa" | "service" | "explore" | "all" | "guide";
 };
 
 export type GlobalSearchGroup = {

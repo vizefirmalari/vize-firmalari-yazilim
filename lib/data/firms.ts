@@ -619,20 +619,27 @@ const ARAMA_BASE_FILTERS: FirmFilters = {
 };
 
 /**
- * Public arama sayfası: tüm yayındaki satırlar üzerinde tam metin, görünürlük kuralları, en fazla 24.
+ * Public arama sayfası: tüm yayındaki satırlar üzerinde tam metin, görünürlük kuralları; varsayılan üst sınır 24.
+ * `matchNeedles` verilirse herhangi bir iğne ile eşleşme yeterli (synonym genişlemesi).
  */
 export async function searchFirmsForAramaPage(
-  rawQuery: string
+  rawQuery: string,
+  options?: { limit?: number; matchNeedles?: string[] }
 ): Promise<FirmRow[]> {
-  const needle = rawQuery.trim();
-  if (!needle) return [];
+  const needles =
+    Array.isArray(options?.matchNeedles) && options.matchNeedles.some((x) => x.trim().length > 0)
+      ? [...new Set(options.matchNeedles.map((x) => x.trim()).filter(Boolean))]
+      : [rawQuery.trim()].filter(Boolean);
+  if (needles.length === 0) return [];
+  const cap = typeof options?.limit === "number" && options.limit > 0 ? options.limit : 24;
   const base = await getFirms(ARAMA_BASE_FILTERS);
   return base
     .filter(
       (r) =>
-        firmIsVisibleInAramaSearchResults(r) && firmMatchesAramaQuery(r, needle)
+        firmIsVisibleInAramaSearchResults(r) &&
+        needles.some((needle) => firmMatchesAramaQuery(r, needle))
     )
-    .slice(0, 24);
+    .slice(0, cap);
 }
 
 export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {

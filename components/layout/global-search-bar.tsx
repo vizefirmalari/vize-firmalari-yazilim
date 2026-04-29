@@ -16,12 +16,58 @@ import {
 
 import type { GlobalSearchGroup, GlobalSearchItem } from "@/lib/search/global-search-response";
 import { highlightSearchMatch } from "@/lib/search/highlight-search-match";
-import {
-  isHomeFilteredListingHref,
-  markHomeListingScrollAfterSearch,
-  shouldMarkScrollAfterSearchNav,
-} from "@/lib/search/home-listing-scroll";
-import { buildHomeSearchPath } from "@/lib/search/home-search-url";
+import { getSearchSessionId, postSearchEvent } from "@/lib/search/search-analytics-client";
+import { canonicalizeSearchQueryForSeo } from "@/lib/search/search-synonyms";
+
+function inferHeaderSuggestionClick(trimmedQuery: string, href: string): void {
+  const cq = canonicalizeSearchQueryForSeo(trimmedQuery);
+  if (cq.length < 2) return;
+  const sid = getSearchSessionId();
+  const ref = typeof window !== "undefined" ? window.location.pathname : "";
+
+  const pathOnly = href.split(/[?#]/)[0] ?? "";
+
+  if (pathOnly.startsWith("/firma/") && pathOnly.includes("/blog/")) {
+    const parts = pathOnly.split("/").filter(Boolean);
+    const firmSlug = parts[1] ?? "";
+    const blogSlug = parts[3] ?? "";
+    void postSearchEvent({
+      type: "click",
+      query: cq,
+      result_type: "blog",
+      result_slug: `${firmSlug}:${blogSlug}`,
+      source: "header_suggestion",
+      user_session: sid || undefined,
+      referrer: ref || undefined,
+    });
+    return;
+  }
+  const segs = pathOnly.split("/").filter(Boolean);
+  if (pathOnly.startsWith("/firma/") && segs.length === 2) {
+    void postSearchEvent({
+      type: "click",
+      query: cq,
+      result_type: "firm",
+      result_slug: segs[1] ?? "",
+      source: "header_suggestion",
+      user_session: sid || undefined,
+      referrer: ref || undefined,
+    });
+    return;
+  }
+  if (pathOnly.startsWith("/kesfet/")) {
+    const slug = pathOnly.replace(/^\/kesfet\//, "");
+    void postSearchEvent({
+      type: "click",
+      query: cq,
+      result_type: "category",
+      result_slug: slug,
+      source: "header_suggestion",
+      user_session: sid || undefined,
+      referrer: ref || undefined,
+    });
+  }
+}
 
 type ApiResponse = {
   ok: boolean;
@@ -31,7 +77,8 @@ type ApiResponse = {
 };
 
 type Props = {
-  hiddenParams: Record<string, string>;
+  /** @deprecated Artık kullanılmıyor; kimlik doğruluğu için bırakıldı */
+  hiddenParams?: Record<string, string>;
   defaultValue: string;
   inputId: string;
   className?: string;
@@ -39,7 +86,7 @@ type Props = {
   compact?: boolean;
 };
 
-const DEBOUNCE_MS = 200;
+const DEBOUNCE_MS = 260;
 const MIN_CHARS = 2;
 /** Mobil tab bar (~h-16) + güvenli pay — `fixed` panel max-yüksekliği */
 const MOBILE_TABBAR_RESERVE_PX = 92;
@@ -60,6 +107,18 @@ function SuggestionIcon({ kind }: { kind: GlobalSearchItem["kind"] }) {
             stroke="currentColor"
             strokeWidth="1.2"
             strokeLinecap="round"
+          />
+        </svg>
+      );
+    case "guide":
+      return (
+        <svg viewBox="0 0 24 24" className={cls} fill="none" aria-hidden>
+          <path
+            d="M6 20V4l8 3v14l-4-2-4 2Zm8-17v14"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       );
@@ -100,18 +159,18 @@ function SuggestionIcon({ kind }: { kind: GlobalSearchItem["kind"] }) {
   }
 }
 
-function popularSuggestions(hiddenParams: Record<string, string>): { title: string; href: string }[] {
+function popularSuggestions(): { title: string; href: string }[] {
   return [
     { title: "Schengen", href: "/kesfet/schengen-vizesi" },
     { title: "İngiltere", href: "/kesfet/ingiltere-vizesi" },
     { title: "ABD", href: "/kesfet/abd-vizesi" },
-    { title: "Öğrenci vizesi", href: buildHomeSearchPath(hiddenParams, { visaTypes: ["Öğrenci Vizesi"] }) },
-    { title: "Çalışma vizesi", href: buildHomeSearchPath(hiddenParams, { visaTypes: ["Çalışma Vizesi"] }) },
+    { title: "Öğrenci vizesi", href: "/kesfet/ogrenci-vizesi" },
+    { title: "Çalışma vizesi", href: "/kesfet/calisma-vizesi" },
   ];
 }
 
 export function GlobalSearchBar({
-  hiddenParams,
+  hiddenParams: _hiddenParams,
   defaultValue,
   inputId,
   className,
@@ -193,10 +252,7 @@ export function GlobalSearchBar({
     setLoading(true);
     const sp = new URLSearchParams();
     sp.set("q", debounced);
-    Object.entries(hiddenParams).forEach(([k, v]) => {
-      if (v) sp.set(k, v);
-    });
-    fetch(`/api/public/global-search?${sp.toString()}`, { signal: ac.signal })
+    fetch(`/api/search/suggestions?${sp.toString()}`, { signal: ac.signal })
       .then((r) => r.json() as Promise<ApiResponse>)
       .then((data) => {
         if (!data.ok) return;
@@ -213,7 +269,7 @@ export function GlobalSearchBar({
         if (!ac.signal.aborted) setLoading(false);
       });
     return () => ac.abort();
-  }, [debounced, hiddenParams]);
+  }, [debounced]);
 
   const flatItems = useMemo(() => {
     const out: { group: string; item: GlobalSearchItem; flatIndex: number }[] = [];
@@ -261,27 +317,28 @@ export function GlobalSearchBar({
   }, [activeIdx, flatItems, listboxId]);
 
   const navigateTo = useCallback(
-    (href: string, item?: Pick<GlobalSearchItem, "kind">) => {
+    (href: string) => {
+      const t = query.trim();
+      if (href.startsWith("/firma/") || href.startsWith("/kesfet/")) {
+        inferHeaderSuggestionClick(t, href);
+      }
       setOpen(false);
       setActiveIdx(-1);
-      if (item && shouldMarkScrollAfterSearchNav(href, item.kind)) {
-        markHomeListingScrollAfterSearch();
-      }
       if (compact) {
         queueMicrotask(() => inputRef.current?.blur());
       }
       router.push(href);
     },
-    [compact, router]
+    [compact, query, router]
   );
 
   const onSubmit = useCallback(
     (e: FormEvent) => {
       e.preventDefault();
-      const t = query.trim();
-      if (!t) return;
+      const t = canonicalizeSearchQueryForSeo(query.trim());
+      if (t.length < MIN_CHARS) return;
       const href = `/arama?${new URLSearchParams({ q: t })}`;
-      navigateTo(href, { kind: "all" });
+      navigateTo(href);
     },
     [navigateTo, query]
   );
@@ -319,13 +376,13 @@ export function GlobalSearchBar({
       }
       if (e.key === "Enter" && activeIdx >= 0 && flatItems[activeIdx]) {
         e.preventDefault();
-        navigateTo(flatItems[activeIdx].item.href, flatItems[activeIdx].item);
+        navigateTo(flatItems[activeIdx].item.href);
       }
     },
     [activeIdx, flatItems, navigateTo, open, query]
   );
 
-  const popular = useMemo(() => popularSuggestions(hiddenParams), [hiddenParams]);
+  const popular = useMemo(() => popularSuggestions(), []);
 
   const suggestionPanel =
     showPanel ? (
@@ -360,7 +417,6 @@ export function GlobalSearchBar({
                   key={p.href}
                   href={p.href}
                   onClick={() => {
-                    if (isHomeFilteredListingHref(p.href)) markHomeListingScrollAfterSearch();
                     if (compact) queueMicrotask(() => inputRef.current?.blur());
                     setOpen(false);
                   }}
@@ -387,13 +443,13 @@ export function GlobalSearchBar({
               type="button"
               className="mt-3 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95"
               onClick={() => {
-                const t = query.trim();
-                if (t) {
-                  navigateTo(`/arama?${new URLSearchParams({ q: t })}`, { kind: "all" });
+                const t = canonicalizeSearchQueryForSeo(query.trim());
+                if (t.length >= MIN_CHARS) {
+                  navigateTo(`/arama?${new URLSearchParams({ q: t })}`);
                 }
               }}
             >
-              Metinle tüm sonuçları görüntüle
+              Tüm sonuçları gör
             </button>
             <div className="mt-3 flex flex-wrap gap-2">
               {popular.map((p) => (
@@ -401,7 +457,6 @@ export function GlobalSearchBar({
                   key={p.href}
                   href={p.href}
                   onClick={() => {
-                    if (isHomeFilteredListingHref(p.href)) markHomeListingScrollAfterSearch();
                     if (compact) queueMicrotask(() => inputRef.current?.blur());
                     setOpen(false);
                   }}
@@ -440,7 +495,7 @@ export function GlobalSearchBar({
                             useMobileWidePanel ? "min-h-12 px-4 py-3" : "min-h-11 px-3 py-2.5"
                           } ${active ? "bg-primary/8 text-primary" : "text-foreground hover:bg-surface"}`}
                           onMouseEnter={() => setActiveIdx(globalIndex)}
-                          onClick={() => navigateTo(item.href, item)}
+                          onClick={() => navigateTo(item.href)}
                         >
                           <span className="mt-0.5">
                             <SuggestionIcon kind={item.kind} />
@@ -482,6 +537,26 @@ export function GlobalSearchBar({
               </div>
             ))
           : null}
+
+        {showSuggestions && !loading && !narrow && trimmedQuery.length >= MIN_CHARS ? (
+          <div
+            className={`border-t border-border/80 px-3 py-2.5 sm:px-4 ${useMobileWidePanel ? "" : ""}`}
+          >
+            <Link
+              href={`/arama?${new URLSearchParams({
+                q: canonicalizeSearchQueryForSeo(trimmedQuery),
+              })}`}
+              onClick={() => {
+                setOpen(false);
+                setActiveIdx(-1);
+                if (compact) queueMicrotask(() => inputRef.current?.blur());
+              }}
+              className="flex min-h-11 w-full items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-[0.98]"
+            >
+              Tüm sonuçları gör
+            </Link>
+          </div>
+        ) : null}
       </div>
     ) : null;
 
@@ -559,9 +634,6 @@ export function GlobalSearchBar({
             </svg>
           </button>
         </div>
-        {Object.entries(hiddenParams).map(([name, value]) => (
-          <input key={name} type="hidden" name={name} value={value} />
-        ))}
       </form>
 
       {useMobileWidePanel && suggestionPanel && typeof document !== "undefined"

@@ -18,6 +18,7 @@ const nav = [
   },
   { href: "/admin/firm-panel", label: "Firma panel", icon: "▣" },
   { href: "/admin/firma-iletisim-analizi", label: "Firma İletişim Analizi", icon: "✉" },
+  { href: "/admin/arama-analizi", label: "Arama analizi", icon: "⌕" },
   { href: "/admin/growth", label: "İşini Büyüt", icon: "↑" },
   { href: "/admin/firm-admin-messages", label: "Firma — yönetim sohbeti", icon: "✉" },
   { href: "/admin/filters/countries", label: "Ülkeler", icon: "⌖" },
