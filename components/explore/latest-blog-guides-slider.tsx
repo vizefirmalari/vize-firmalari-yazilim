@@ -72,13 +72,13 @@ export function LatestBlogGuidesSlider({ items }: Props) {
             className="group min-w-[82vw] snap-start overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_6px_rgba(11,60,93,0.07)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(11,60,93,0.12)] sm:min-w-[46vw] lg:min-w-[31%] xl:min-w-[24%]"
           >
             <Link href={item.href} className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-primary">
-              <div className="relative aspect-video overflow-hidden bg-primary/6">
+              <div className="relative aspect-1200/630 overflow-hidden bg-primary/6">
                 {item.coverImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={item.coverImageUrl}
                     alt={item.title}
-                    className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                    className="h-full w-full object-contain"
                     loading="lazy"
                   />
                 ) : (
