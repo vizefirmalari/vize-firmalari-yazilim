@@ -21,6 +21,10 @@ export type FirmBlogCoverDisplayProps = {
   showEmptyPlaceholder?: boolean;
   /** Liste / özet: daha düşük boşluk ve max yükseklik */
   compact?: boolean;
+  /** NEXT_PUBLIC_FEED_COVER_DEBUG=1 — /akis teşhis paneli ve img kök öznitelikleri */
+  diagAkisCover?: boolean;
+  diagFeedImageUrl?: string | null;
+  diagDbCoverImageUrl?: string | null;
 };
 
 export function FirmBlogCoverDisplay({
@@ -31,13 +35,18 @@ export function FirmBlogCoverDisplay({
   fallbackSrc = DEFAULT_BLOG_COVER_FALLBACK,
   showEmptyPlaceholder = false,
   compact = false,
+  diagAkisCover = false,
+  diagFeedImageUrl,
+  diagDbCoverImageUrl,
 }: FirmBlogCoverDisplayProps) {
   const resolved = typeof src === "string" ? src.trim() : "";
   /** ok: asıl URL; fallback: yedek; failed: her ikisi de yüklenmedi */
   const [loadState, setLoadState] = useState<"ok" | "fallback" | "failed">("ok");
+  const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
 
   useEffect(() => {
     setLoadState("ok");
+    setNaturalSize(null);
   }, [resolved]);
 
   const wrapClass = `w-full min-w-0 overflow-hidden rounded-2xl bg-slate-100 ${outerClassName ?? ""}`;
@@ -83,15 +92,51 @@ export function FirmBlogCoverDisplay({
   }
 
   const imgSrc = loadState === "fallback" ? fallbackSrc : resolved;
+  const urlMatchDiag =
+    typeof diagFeedImageUrl === "string" &&
+    typeof diagDbCoverImageUrl === "string" &&
+    diagFeedImageUrl.trim() === diagDbCoverImageUrl.trim();
 
   return (
     <div className={wrapClass}>
+      {diagAkisCover && resolved ? (
+        <div className="rounded-t-2xl border-b border-dashed border-[#1A1A1A]/12 bg-[#F8FAFC] px-2 py-1.5 font-mono text-[10px] leading-snug text-[#1A1A1A]/85">
+          <div>feed item image_url (FeedItem): {diagFeedImageUrl ?? "(yok)"}</div>
+          <div>
+            firm_blog_posts.cover_image_url (DB snapshot):{" "}
+            {diagDbCoverImageUrl ?? "(yok)"}
+          </div>
+          <div>Aynı string mi?: {urlMatchDiag ? "evet" : "hayır veya eksik prop"}</div>
+          <div>kullanılan komponent: FirmBlogCoverDisplay</div>
+          <div className={naturalSize ? "text-[#0B3C5D]" : ""}>
+            doğal px (naturalWidth × naturalHeight):{" "}
+            {naturalSize ? `${naturalSize.w} × ${naturalSize.h}` : "bekleniyor…"}
+          </div>
+          <p className="mt-1 pt-1 text-[9px] text-[#1A1A1A]/55">
+            Kontrol: aynı adresi tarayıcıda yeni sekmede aç; tam görünüyorsa kırpma CSS/parent ile
+            oluşmuş olabilir, dosya doğru ise natural boyut beklenişe uygun olmalı.
+          </p>
+        </div>
+      ) : null}
       <img
         src={imgSrc}
         alt={alt}
         loading={priority ? "eager" : "lazy"}
         decoding="async"
         {...(priority ? { fetchPriority: "high" as const } : {})}
+        data-cover-src={imgSrc}
+        data-component="FirmBlogCoverDisplay"
+        {...(diagAkisCover
+          ? {
+              onLoad: (e: React.SyntheticEvent<HTMLImageElement>) => {
+                const el = e.currentTarget;
+                setNaturalSize({
+                  w: el.naturalWidth,
+                  h: el.naturalHeight,
+                });
+              },
+            }
+          : {})}
         onError={() => {
           setLoadState((prev) => {
             if (prev === "ok") return resolved !== fallbackSrc ? "fallback" : "failed";

@@ -15,6 +15,8 @@ export function FeedCard({
   liveLikeCount?: number;
   onLiveLikeCountChange?: (count: number) => void;
 }) {
+  const feedCoverDiag = process.env.NEXT_PUBLIC_FEED_COVER_DEBUG === "1";
+
   const kurumsallikSkoru = Math.round(Math.max(0, Math.min(100, Number(item.corporateness_score ?? 0))));
   const hypeSkoru =
     typeof item.firm_hype_score === "number" && Number.isFinite(item.firm_hype_score)
@@ -48,6 +50,9 @@ export function FeedCard({
           imageUrl={item.image_url}
           alt={item.title}
           targetUrl={item.target_url}
+          diagAkisCover={feedCoverDiag && item.type === "blog"}
+          diagFeedImageUrl={item.image_url}
+          diagDbCoverImageUrl={item.debug_blog_cover_db_url ?? null}
         />
       )}
       {isFeedPost ? (

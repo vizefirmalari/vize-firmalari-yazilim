@@ -447,8 +447,9 @@ export async function uploadFirmBlogCoverImage(
   const path = `firms/${firmId}/blog-cover/${fileId}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const { error } = await supabase.storage.from("media").upload(path, buffer, {
-    contentType: file.type || "image/jpeg",
+    contentType: file.type || "application/octet-stream",
     cacheControl: "31536000",
+    upsert: false,
   });
   if (error) return { ok: false, error: error.message };
 

@@ -34,6 +34,11 @@ export type FeedItem = {
   admin_score: number;
   /** Varsayılan true; akış gönderisinde beğeni yok (blog post_likes ile bağlı değil). */
   likes_enabled?: boolean;
+  /**
+   * Geçici teşhis (NEXT_PUBLIC_FEED_COVER_DEBUG=1): blog satırında firma_blog_posts.cover_image_url
+   * ile FeedItem.image_url doğrulanır (aynı sorgudan gelir).
+   */
+  debug_blog_cover_db_url?: string | null;
 };
 
 export type FeedSort = "smart" | "new" | "trending" | "top";
@@ -191,6 +196,7 @@ export async function getFirmFeedItems(
       description: String(row.summary ?? ""),
       // Blog kartı için `image_url` yalnızca `firm_blog_posts.cover_image_url` (ayrı feed_items satırı yok).
       image_url: row.cover_image_url ? String(row.cover_image_url) : null,
+      debug_blog_cover_db_url: row.cover_image_url ? String(row.cover_image_url) : null,
       created_at: String(row.published_at),
       like_count: likeCountMap.get(postId) ?? 0,
       is_liked: likedSet.has(postId),
@@ -455,6 +461,7 @@ async function computeFeedPage(
           description: String(row.summary ?? ""),
           // Akış `/akis`: kart görseli = `firm_blog_posts.cover_image_url` (dinamik; cache başka yerde tutulamaz).
           image_url: row.cover_image_url ? String(row.cover_image_url) : null,
+          debug_blog_cover_db_url: row.cover_image_url ? String(row.cover_image_url) : null,
           created_at: String(row.published_at),
           like_count: likeCount,
           is_liked: likedSet.has(postId),

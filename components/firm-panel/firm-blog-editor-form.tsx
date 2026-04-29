@@ -223,7 +223,7 @@ export function FirmBlogEditorForm({
       const diff = Math.abs(ratio - target);
       if (diff > 0.08) {
         setCoverAspectWarn(
-          `Görsel oranı ${img.width}x${img.height}. Önerilen: 1200x630 (yaklaşık 1.91:1).`
+          `Önerilen ölçü 1200 × 630’dur; farklı ölçüler de kırpılmadan yüklenir. (Yüklenen: ${img.width}×${img.height})`
         );
       } else {
         setCoverAspectWarn(null);
@@ -658,47 +658,39 @@ export function FirmBlogEditorForm({
 
   const uploadCoverFile = async (file: File): Promise<string | null> => {
     try {
-      let uploadFile: File = file;
-      if (file.type.startsWith("image/")) {
-        try {
-          const bitmap = await createImageBitmap(file);
-          const canvas = document.createElement("canvas");
-          const maxSide = 1600;
-          const ratio = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-          canvas.width = Math.max(1, Math.round(bitmap.width * ratio));
-          canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
-          const context = canvas.getContext("2d");
-          if (context) {
-            context.drawImage(bitmap, 0, 0);
-            const toWebp = (quality: number) =>
-              new Promise<Blob | null>((resolve) =>
-                canvas.toBlob((blob) => resolve(blob), "image/webp", quality)
-              );
-            let quality = 0.86;
-            let webpBlob = await toWebp(quality);
-            while (webpBlob && webpBlob.size > 900 * 1024 && quality > 0.56) {
-              quality -= 0.08;
-              webpBlob = await toWebp(quality);
-            }
-            if (webpBlob) {
-              uploadFile = new File([webpBlob], `${file.name.replace(/\.[^.]+$/, "")}.webp`, {
-                type: "image/webp",
-              });
-            }
-          }
-        } catch {
-          uploadFile = file;
-        }
+      if (process.env.NODE_ENV === "development") {
+        console.log("[BlogCoverUpload] selected File", {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+        });
+        const intrinsic = await new Promise<{ w: number; h: number } | null>((resolve) => {
+          const url = URL.createObjectURL(file);
+          const im = new window.Image();
+          im.onload = () => {
+            resolve({ w: im.naturalWidth, h: im.naturalHeight });
+            URL.revokeObjectURL(url);
+          };
+          im.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(null);
+          };
+          im.src = url;
+        });
+        if (intrinsic) console.log("[BlogCoverUpload] intrinsic px (okuma; yüklenen dosya değişmez)", intrinsic);
       }
 
       const fd = new FormData();
       fd.set("firmId", firmId);
-      fd.set("file", uploadFile);
+      fd.set("file", file);
       const res = await withTimeout(uploadFirmBlogCoverImage(fd), 45000);
       if (!res.ok) {
         setMessage(res.error);
         setMessageTone("error");
         return null;
+      }
+      if (process.env.NODE_ENV === "development") {
+        console.log("[BlogCoverUpload] publicUrl → cover_image_url", res.url);
       }
       setCoverUrl(res.url);
       if (postId) {
@@ -742,7 +734,7 @@ export function FirmBlogEditorForm({
             Tek H1 + H2/H3 hiyerarşisi önerilir
           </span>
           <span className="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold">
-            Hero görsel: 1200 × 630
+            Önerilen kapak: 1200 × 630 (zorunlu değil)
           </span>
           <span className="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold">
             Taslak · Planla · Yayınla
@@ -912,8 +904,8 @@ export function FirmBlogEditorForm({
                   </div>
                   </div>
                   <p className="text-xs text-[#1A1A1A]/55">
-                    Önerilen ölçü: 1200 × 630 (sosyal paylaşım için). Yüklenen dosya doğrudan Storage
-                    public URL olarak kaydedilir (kırpma veya thumbnail adresi kullanılmaz).
+                    Önerilen ölçü: 1200 × 630 (sosyal paylaşım için). Seçtiğiniz dosya dönüştürülmeden
+                    Storage’a yüklenir; kırpma, yeniden boyutlandırma veya thumbnail üretimi yapılmaz.
                   </p>
                   <p className={`text-xs ${coverUrl ? "text-[#067647]" : coverPendingFile ? "text-[#9A6700]" : "text-[#B42318]"}`}>
                     {coverUrl
