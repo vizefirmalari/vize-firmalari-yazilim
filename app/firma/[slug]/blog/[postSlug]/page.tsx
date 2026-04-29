@@ -446,7 +446,7 @@ export default async function BlogDetailPage({ params }: Props) {
         <article className="mt-0 min-w-0 w-full max-w-full space-y-5 max-md:space-y-3 max-md:mt-0">
           <section className="overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-sm max-md:shadow-[0_1px_8px_rgba(11,60,93,0.05)] sm:shadow-sm">
             {post.cover_image_url ? (
-              <div className="flex w-full min-w-0 max-w-full items-center justify-center overflow-x-hidden px-3 pt-3 sm:px-4 sm:pt-4 max-md:px-2.5 max-md:pt-2.5">
+              <div className="relative w-full overflow-hidden rounded-2xl bg-slate-100">
                 <Image
                   src={String(post.cover_image_url)}
                   alt={String(post.cover_image_alt || post.title)}
@@ -454,7 +454,7 @@ export default async function BlogDetailPage({ params }: Props) {
                   height={630}
                   priority
                   sizes="(max-width: 1024px) 100vw, 960px"
-                  className="h-auto w-full max-w-full min-h-0 object-contain max-md:max-h-[min(40vh,280px)]"
+                  className="block h-auto w-full max-w-full object-contain"
                 />
               </div>
             ) : null}

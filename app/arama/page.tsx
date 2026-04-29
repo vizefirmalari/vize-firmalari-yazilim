@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { FirmCard } from "@/components/home/firm-card";
@@ -577,18 +578,20 @@ export default async function AramaPage({ searchParams }: PageProps) {
                         {guidesSlice.map((g) => (
                           <article
                             key={g.id}
-                            className="group overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_6px_rgba(11,60,93,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(11,60,93,0.1)]"
+                            className="group overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_6px_rgba(11,60,93,0.06)] transition hover:shadow-[0_14px_28px_rgba(11,60,93,0.1)]"
                           >
                             <Link
                               href={g.href}
                               className="flex h-full min-h-0 flex-col outline-none focus-visible:ring-2 focus-visible:ring-secondary"
                             >
-                              <div className="relative aspect-video overflow-hidden bg-primary/7">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
+                              <div className="relative w-full overflow-hidden rounded-2xl bg-slate-100">
+                                <Image
                                   src={g.coverImageUrl || SEARCH_BLOG_COVER_FALLBACK}
                                   alt=""
-                                  className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                                  width={1200}
+                                  height={630}
+                                  className="block h-auto w-full max-w-full object-contain"
+                                  sizes="(max-width: 768px) 100vw, 50vw"
                                   loading="lazy"
                                 />
                               </div>

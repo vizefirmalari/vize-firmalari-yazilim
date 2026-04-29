@@ -81,8 +81,15 @@ export function RelatedPostsInfinite({
             className="min-w-0 max-w-full overflow-hidden rounded-xl border border-[#0B3C5D]/10 bg-[#F8FAFC] transition hover:bg-[#F1F5F9] max-md:rounded-[0.7rem] wrap-anywhere"
           >
             {item.coverImageUrl ? (
-              <div className="relative aspect-1200/630 w-full max-w-full min-h-0 min-w-0 overflow-hidden bg-[#F1F5F9]">
-                <Image src={item.coverImageUrl} alt={item.title} fill className="object-contain" sizes="(max-width: 768px) 100vw, 320px" />
+              <div className="relative w-full overflow-hidden rounded-2xl bg-[#F1F5F9]">
+                <Image
+                  src={item.coverImageUrl}
+                  alt={item.title}
+                  width={1200}
+                  height={630}
+                  className="block h-auto w-full max-w-full object-contain"
+                  sizes="(max-width: 768px) 100vw, 320px"
+                />
               </div>
             ) : null}
             <div className="min-w-0 max-w-full space-y-0.5 p-2.5 sm:space-y-1 sm:p-3 wrap-break-word">
