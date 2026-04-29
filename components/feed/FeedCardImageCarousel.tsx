@@ -15,21 +15,21 @@ export function FeedCardImageCarousel({
   const [idx, setIdx] = useState(0);
   if (urls.length === 0) {
     return (
-      <a href={targetUrl} className="flex aspect-1200/640 w-full items-center justify-center bg-[#f9fafb]" />
+      <a href={targetUrl} className="w-full overflow-hidden bg-slate-100" />
     );
   }
   const safeIdx = Math.min(idx, urls.length - 1);
   const url = urls[safeIdx]!;
 
   return (
-    <div className="relative aspect-1200/640 w-full bg-[#f9fafb]">
-      <a href={targetUrl} className="relative block h-full w-full">
+    <div className="relative w-full overflow-hidden bg-slate-100">
+      <a href={targetUrl} className="block w-full">
         <Image
           src={url}
           alt={alt}
           width={1200}
-          height={640}
-          className="max-h-full max-w-full object-contain"
+          height={630}
+          className="block h-auto w-full max-w-full object-contain"
           sizes="(max-width: 768px) 100vw, 720px"
           loading="lazy"
         />
