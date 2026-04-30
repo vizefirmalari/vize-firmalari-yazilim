@@ -19,6 +19,7 @@ import {
   updateFirmBlogCoverOnly,
   uploadFirmBlogCoverImage,
 } from "@/lib/actions/firm-panel-blog";
+import { firmBlogCoverUploadFailureMessage } from "@/lib/blog/firm-blog-cover-limits";
 import {
   sanitizeFirmBlogBodyRichForStorage,
   sanitizeFirmBlogPastedHtml,
@@ -683,7 +684,7 @@ export function FirmBlogEditorForm({
       const fd = new FormData();
       fd.set("firmId", firmId);
       fd.set("file", file);
-      const res = await withTimeout(uploadFirmBlogCoverImage(fd), 45000);
+      const res = await withTimeout(uploadFirmBlogCoverImage(fd), 90000);
       if (!res.ok) {
         setMessage(res.error);
         setMessageTone("error");
@@ -707,8 +708,8 @@ export function FirmBlogEditorForm({
         router.refresh();
       }
       return res.url;
-    } catch {
-      setMessage("Görsel yüklenemedi veya zaman aşımına uğradı. Daha küçük bir görsel ile tekrar deneyin.");
+    } catch (uploadErr: unknown) {
+      setMessage(firmBlogCoverUploadFailureMessage(uploadErr, process.env.NODE_ENV === "development"));
       setMessageTone("error");
       return null;
     }
@@ -881,10 +882,8 @@ export function FirmBlogEditorForm({
                           const uploaded = await uploadCoverFile(file);
                           if (!uploaded) return;
                           setCoverPendingFile(null);
-                        } catch {
-                          setMessage(
-                            "Görsel yüklenemedi veya zaman aşımına uğradı. Daha küçük bir görsel ile tekrar deneyin."
-                          );
+                        } catch (err: unknown) {
+                          setMessage(firmBlogCoverUploadFailureMessage(err, process.env.NODE_ENV === "development"));
                           setMessageTone("error");
                         } finally {
                           setCoverUploading(false);

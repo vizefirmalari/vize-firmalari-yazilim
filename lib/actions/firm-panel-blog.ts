@@ -12,6 +12,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import { submitIndexNowUrls } from "@/lib/seo/indexnow";
+import { FIRM_BLOG_COVER_MAX_BYTES, FIRM_BLOG_COVER_MAX_MB } from "@/lib/blog/firm-blog-cover-limits";
 
 type SaveMode = "draft" | "scheduled" | "published";
 
@@ -432,6 +433,13 @@ export async function uploadFirmBlogCoverImage(
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false, error: "Dosya seçilmedi." };
+  }
+  if (file.size > FIRM_BLOG_COVER_MAX_BYTES) {
+    const mb = (file.size / (1024 * 1024)).toFixed(1);
+    return {
+      ok: false,
+      error: `Kapak görseli çok büyük (${mb} MB). En fazla ${FIRM_BLOG_COVER_MAX_MB} MB yükleyebilirsiniz; JPEG veya WebP sıkıştırılmış dosya kullanın.`,
+    };
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";

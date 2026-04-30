@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
+import { FIRM_BLOG_COVER_MAX_MB } from "./lib/blog/firm-blog-cover-limits";
+
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      /** Varsayılan 1 MB; kapak görseli FormData ile bu sınırı aşıyordu. @see FIRM_BLOG_COVER_MAX_BYTES */
+      bodySizeLimit: `${FIRM_BLOG_COVER_MAX_MB}mb`,
+    },
+  },
   async redirects() {
     return [
       { source: "/firma-panel", destination: "/panel", permanent: false },

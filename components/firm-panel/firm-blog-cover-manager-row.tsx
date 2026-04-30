@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useState, useTransition } from "react";
 
 import { FirmBlogCoverDisplay } from "@/components/blog/firm-blog-cover-display";
+import { firmBlogCoverUploadFailureMessage } from "@/lib/blog/firm-blog-cover-limits";
 import {
   updateFirmBlogCoverOnly,
   uploadFirmBlogCoverImage,
@@ -24,7 +25,7 @@ type Props = {
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("TIMEOUT")), ms);
+    const timer = setTimeout(() => reject(new Error("UPLOAD_TIMEOUT")), ms);
     promise
       .then((value) => {
         clearTimeout(timer);
@@ -71,7 +72,7 @@ export function FirmBlogCoverManagerRow({
         const fd = new FormData();
         fd.set("firmId", firmId);
         fd.set("file", file);
-        const up = await withTimeout(uploadFirmBlogCoverImage(fd), 60000);
+        const up = await withTimeout(uploadFirmBlogCoverImage(fd), 90000);
         if (!up.ok) {
           setMessage(up.error);
           setMessageTone("error");
@@ -98,8 +99,8 @@ export function FirmBlogCoverManagerRow({
         setLastNewUrl(newUrl);
         setMessage("Kapak görseli güncellendi.");
         setMessageTone("success");
-      } catch {
-        setMessage("Yükleme zaman aşımına uğradı veya başarısız oldu.");
+      } catch (err: unknown) {
+        setMessage(firmBlogCoverUploadFailureMessage(err, process.env.NODE_ENV === "development"));
         setMessageTone("error");
       } finally {
         setBusy(false);
