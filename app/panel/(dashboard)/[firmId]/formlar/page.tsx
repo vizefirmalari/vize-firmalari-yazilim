@@ -8,6 +8,7 @@ import {
   getFirmLeadDistinctFieldValues,
   type FirmLeadListFilters,
 } from "@/lib/data/firm-panel-leads";
+import { getVisaCaseIdForSourceLead } from "@/lib/data/visa-cases";
 
 type PageProps = {
   params: Promise<{ firmId: string }>;
@@ -37,10 +38,13 @@ export default async function FirmPanelLeadsPage({ params, searchParams }: PageP
 
   const applicationIdParam = first(sp.applicationId);
 
-  const [list, distinct, detail] = await Promise.all([
+  const [list, distinct, detail, existingOpsCaseId] = await Promise.all([
     getFirmLeadApplications(firmId, filters),
     getFirmLeadDistinctFieldValues(firmId),
     applicationIdParam ? getFirmLeadApplicationDetail(firmId, applicationIdParam) : Promise.resolve(null),
+    applicationIdParam
+      ? getVisaCaseIdForSourceLead(firmId, applicationIdParam)
+      : Promise.resolve(null),
   ]);
 
   const selectedId = applicationIdParam;
@@ -121,6 +125,7 @@ export default async function FirmPanelLeadsPage({ params, searchParams }: PageP
               applicationId={applicationIdParam}
               application={detail.application as Record<string, unknown>}
               files={detail.files}
+              existingOpsCaseId={existingOpsCaseId}
             />
           )}
         </div>

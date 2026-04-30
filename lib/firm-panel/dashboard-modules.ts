@@ -60,6 +60,15 @@ export const FIRM_DASHBOARD_MODULES: readonly FirmDashboardModule[] = [
     href: "/panel/{firmId}/formlar",
   },
   {
+    id: "visa-operations",
+    title: "Vize Operasyonları",
+    description:
+      "Kazanılan müşteri başvuru dosyalarını; durum, finans ve evraklar ile lead’den sonra yönetin.",
+    status: "aktif",
+    actionLabel: "Takibe al",
+    href: "/panel/{firmId}/visa-operations",
+  },
+  {
     id: "contact-admin",
     title: "Yönetim ile Mesajlaş",
     description: "Platform ekibiyle destek ve koordinasyon merkezi.",

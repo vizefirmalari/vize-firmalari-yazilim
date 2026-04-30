@@ -19,3 +19,8 @@ export function userInboxTopic(userId: string): string {
 export function firmInboxTopic(firmId: string): string {
   return `firm-inbox:${firmId}`;
 }
+
+/** Firma paneli — Vize Operasyonları (mesaj kutusu kanallarından ayrı) */
+export function firmVisaCasesTopic(firmId: string): string {
+  return `firm-visa-cases:${firmId}`;
+}

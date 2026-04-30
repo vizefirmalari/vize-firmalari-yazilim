@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { FirmLeadOpsConversion } from "@/components/visa-operations/firm-lead-ops-conversion";
 import { FirmLeadFileDownloadButton } from "@/components/firm-panel/firm-lead-file-download";
 import {
   LEAD_PRIORITY_LABELS,
@@ -35,6 +36,7 @@ type Props = {
   applicationId: string;
   application: Record<string, unknown>;
   files: FileRow[];
+  existingOpsCaseId?: string | null;
 };
 
 function subScore(row: Record<string, unknown>, key: string): string {
@@ -60,7 +62,13 @@ function CardLabel({ title, value }: { title: string; value: string }) {
   );
 }
 
-export function FirmLeadApplicationDetailPanel({ firmId, applicationId, application: a, files }: Props) {
+export function FirmLeadApplicationDetailPanel({
+  firmId,
+  applicationId,
+  application: a,
+  files,
+  existingOpsCaseId,
+}: Props) {
   const visaKey = a.visa_type as VisaType;
   const timelineBucket = a.timeline_bucket as keyof typeof TIMELINE_BUCKET_LABELS | undefined;
 
@@ -179,6 +187,10 @@ export function FirmLeadApplicationDetailPanel({ firmId, applicationId, applicat
             : "Bu başvuru için otomatik skor gerekçesi kaydı bulunmuyor."}
         </p>
       </InfoSection>
+
+      <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-[0_2px_12px_rgba(11,60,93,0.04)]">
+        <FirmLeadOpsConversion firmId={firmId} leadId={applicationId} existingCaseId={existingOpsCaseId ?? null} />
+      </div>
 
       <section className="rounded-2xl border border-[#0B3C5D]/12 bg-[#0B3C5D] p-6 text-white shadow-[0_10px_36px_rgba(11,60,93,0.2)]">
         <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/70">Lead skoru</h3>
