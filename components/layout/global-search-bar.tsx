@@ -66,6 +66,23 @@ function inferHeaderSuggestionClick(trimmedQuery: string, href: string): void {
       user_session: sid || undefined,
       referrer: ref || undefined,
     });
+    return;
+  }
+  if (pathOnly === "/arama") {
+    const qs = href.split("?")[1]?.split("#")[0];
+    const qp = new URLSearchParams(qs ?? "");
+    const targetQ = qp.get("q")?.trim() ?? "";
+    if (targetQ) {
+      void postSearchEvent({
+        type: "click",
+        query: cq,
+        result_type: "category",
+        result_slug: `arama:${canonicalizeSearchQueryForSeo(targetQ)}`,
+        source: "header_suggestion",
+        user_session: sid || undefined,
+        referrer: ref || undefined,
+      });
+    }
   }
 }
 
@@ -74,6 +91,7 @@ type ApiResponse = {
   query: string;
   groups: GlobalSearchGroup[];
   narrow?: boolean;
+  footerHref?: string;
 };
 
 type Props = {
@@ -137,6 +155,7 @@ function SuggestionIcon({ kind }: { kind: GlobalSearchItem["kind"] }) {
       );
     case "visa":
     case "service":
+    case "taxonomy":
       return (
         <svg viewBox="0 0 24 24" className={cls} fill="none" aria-hidden>
           <path
@@ -161,11 +180,11 @@ function SuggestionIcon({ kind }: { kind: GlobalSearchItem["kind"] }) {
 
 function popularSuggestions(): { title: string; href: string }[] {
   return [
-    { title: "Schengen", href: "/kesfet/schengen-vizesi" },
-    { title: "İngiltere", href: "/kesfet/ingiltere-vizesi" },
-    { title: "ABD", href: "/kesfet/abd-vizesi" },
-    { title: "Öğrenci vizesi", href: "/kesfet/ogrenci-vizesi" },
-    { title: "Çalışma vizesi", href: "/kesfet/calisma-vizesi" },
+    { title: "Schengen", href: "/arama?q=schengen" },
+    { title: "İngiltere", href: "/arama?q=ingiltere" },
+    { title: "ABD", href: "/arama?q=abd" },
+    { title: "Öğrenci vizesi", href: "/arama?q=ogrenci" },
+    { title: "Çalışma vizesi", href: "/arama?q=calisma" },
   ];
 }
 
@@ -319,7 +338,7 @@ export function GlobalSearchBar({
   const navigateTo = useCallback(
     (href: string) => {
       const t = query.trim();
-      if (href.startsWith("/firma/") || href.startsWith("/kesfet/")) {
+      if (href.startsWith("/firma/") || href.startsWith("/kesfet/") || href.startsWith("/arama")) {
         inferHeaderSuggestionClick(t, href);
       }
       setOpen(false);
@@ -501,6 +520,11 @@ export function GlobalSearchBar({
                             <SuggestionIcon kind={item.kind} />
                           </span>
                           <span className="min-w-0 flex-1">
+                            {item.badge ? (
+                              <span className="mb-1 inline-flex rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-secondary">
+                                {item.badge}
+                              </span>
+                            ) : null}
                             <span
                               className={`block font-semibold leading-snug ${
                                 useMobileWidePanel ? "line-clamp-2 break-words" : ""

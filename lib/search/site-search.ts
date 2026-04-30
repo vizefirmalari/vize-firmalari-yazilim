@@ -13,6 +13,12 @@ import {
   collectMatchNeedles,
   normalizeForRankingCompare,
 } from "@/lib/search/search-synonyms";
+import {
+  buildTaxonomyFilterPayload,
+  resolveKesfetPageForSlug,
+  searchTaxonomySuggestions,
+  type TaxonomySearchSuggestionRow,
+} from "@/lib/search/search-taxonomy";
 
 /** Güvenlik tavanı — bellek içi filtreleme */
 export const ARAMA_SEARCH_MAX_FIRM_ROWS = 500;
@@ -70,6 +76,7 @@ export type SiteSearchResults = {
 export type SiteSearchDataset = SiteSearchResults & {
   needles: string[];
   canonicalQuery: string;
+  taxonomySuggestions: TaxonomySearchSuggestionRow[];
 };
 
 /** Nitelik düşük / thin içerik: Google için noindex koridoru — kesfet sayfaları etkilenmez */
@@ -84,9 +91,13 @@ export function isThinSearchIndexingPayload(counts: {
 export function shouldIndexSearchPage(params: {
   queryLength: number;
   thin: boolean;
+  /** Toplam görünür genel içerik (firma + rehber + kategori satırı) */
+  totalCombined?: number;
 }): boolean {
   if (params.queryLength < 2) return false;
-  return !params.thin;
+  if (params.thin) return false;
+  if (typeof params.totalCombined === "number" && params.totalCombined < 3) return false;
+  return true;
 }
 
 export function buildZeroResultRecoverySuggestions(rawQuery: string): ZeroRecoveryItem[] {
@@ -636,6 +647,7 @@ export async function getSiteSearchDataset(displayRaw: string): Promise<SiteSear
       normalizedQuery: canonicalQuery,
       canonicalQuery,
       needles: [],
+      taxonomySuggestions: [],
       firms: [],
       guides: [],
       categories: [],
@@ -650,12 +662,37 @@ export async function getSiteSearchDataset(displayRaw: string): Promise<SiteSear
     };
   }
 
-  const needles = collectMatchNeedles(normalizedDisplay);
+  let cmsCountryLabels: string[] = [];
+  try {
+    const cr = await getPublicFilterCountries();
+    cmsCountryLabels = cr.map((r) => String(r.name ?? "").trim()).filter(Boolean);
+  } catch {
+    cmsCountryLabels = [];
+  }
+
+  const taxonomyBag = buildTaxonomyFilterPayload(normalizedDisplay, {
+    extraCountryLabels: cmsCountryLabels,
+  });
+
+  const baseNeedles = collectMatchNeedles(normalizedDisplay);
+  const needles = [
+    ...new Set(
+      [...baseNeedles, ...taxonomyBag.needles].map((s) => s.trim()).filter((s) => s.length >= 2)
+    ),
+  ];
+
+  const semantics =
+    taxonomyBag.semanticIntents.length > 0 ? taxonomyBag.semanticIntents : undefined;
+
+  const taxonomySuggestions = searchTaxonomySuggestions(normalizedDisplay, {
+    extraCountryLabels: cmsCountryLabels,
+  });
 
   const [firmRows, guides, exploreHits, supplementary] = await Promise.all([
     searchFirmsForAramaPage(normalizedDisplay, {
       limit: ARAMA_SEARCH_MAX_FIRM_ROWS,
       matchNeedles: needles,
+      semanticIntents: semantics,
     }),
     searchBlogPosts(normalizedDisplay, ARAMA_SEARCH_MAX_GUIDE_ROWS, needles),
     searchExploreCategories(normalizedDisplay, 80, needles),
@@ -674,6 +711,7 @@ export async function getSiteSearchDataset(displayRaw: string): Promise<SiteSear
     normalizedQuery: canonicalQuery,
     canonicalQuery,
     needles,
+    taxonomySuggestions,
     firms: firmsRanked,
     guides,
     categories: categoriesMerged,
@@ -716,17 +754,18 @@ export type SearchSuggestionPayload = {
     label: string;
     items: Array<{
       id: string;
-      kind: "firm" | "guide" | "explore" | "all";
+      kind: "firm" | "guide" | "explore" | "all" | "taxonomy";
       title: string;
       subtitle?: string;
       href: string;
+      badge?: string;
     }>;
   }[];
   footerHref: string;
   narrow: boolean;
 };
 
-/** Header dropdown — tek skor sırası: firma / rehber / Keşfet havuzunda birleşik sıralama */
+/** Header dropdown — sıra: güçlü taksonomi > firma başlığı > rehber > Keşfet */
 export async function buildSearchSuggestionsPayload(rawQuery: string): Promise<SearchSuggestionPayload> {
   const normalized = normalizeSearchQuery(rawQuery);
   const canonical = canonicalizeSearchQueryForSeo(rawQuery);
@@ -737,10 +776,54 @@ export async function buildSearchSuggestionsPayload(rawQuery: string): Promise<S
     return { query: canonical || normalized, groups: [], footerHref, narrow: true };
   }
 
-  const needles = collectMatchNeedles(normalized);
+  let cmsCountryLabels: string[] = [];
+  try {
+    const cr = await getPublicFilterCountries();
+    cmsCountryLabels = cr.map((r) => String(r.name ?? "").trim()).filter(Boolean);
+  } catch {
+    cmsCountryLabels = [];
+  }
+
+  const taxonomyBag = buildTaxonomyFilterPayload(normalized, {
+    extraCountryLabels: cmsCountryLabels,
+  });
+  const baseNeedles = collectMatchNeedles(normalized);
+  const needles = [
+    ...new Set(
+      [...baseNeedles, ...taxonomyBag.needles].map((s) => s.trim()).filter((s) => s.length >= 2)
+    ),
+  ];
+  const semantics =
+    taxonomyBag.semanticIntents.length > 0 ? taxonomyBag.semanticIntents : undefined;
+
+  const taxRows = searchTaxonomySuggestions(normalized, {
+    extraCountryLabels: cmsCountryLabels,
+  });
+
+  const kesfetFromTaxonomy: SearchSuggestionPayload["groups"][0]["items"][number][] = [];
+  const seenKes = new Set<string>();
+  for (const tr of taxRows) {
+    if (!tr.kesfetSlug) continue;
+    if (seenKes.has(tr.kesfetSlug)) continue;
+    const page = resolveKesfetPageForSlug(tr.kesfetSlug);
+    if (!page) continue;
+    seenKes.add(tr.kesfetSlug);
+    kesfetFromTaxonomy.push({
+      id: `kes-${tr.kesfetSlug}`,
+      kind: "explore",
+      title: `${page.title} — kategori sayfası`,
+      subtitle: page.description,
+      href: `/kesfet/${encodeURIComponent(page.slug)}`,
+      badge: "Keşfet",
+    });
+  }
 
   const [firmsPool, guidesPool, explode, countries] = await Promise.all([
-    searchFirmsForAramaPage(normalized, { limit: 40, matchNeedles: needles }),
+    searchFirmsForAramaPage(normalized, {
+      limit: 40,
+      matchNeedles: needles,
+      semanticIntents: semantics,
+    }),
     searchBlogPosts(normalized, 24, needles),
     searchExploreCategories(normalized, 24, needles),
     searchSupplementaryCountryHints(normalized, 14, needles),
@@ -755,9 +838,18 @@ export async function buildSearchSuggestionsPayload(rawQuery: string): Promise<S
     firmsPool,
     guidesPool,
     categoryMerged
-  ).slice(0, 14);
+  ).slice(0, 12);
 
-  const items: SearchSuggestionPayload["groups"][0]["items"] = ranked.map((r) => {
+  const filterItems: SearchSuggestionPayload["groups"][0]["items"] = taxRows.slice(0, 10).map((tr) => ({
+    id: tr.id,
+    kind: "taxonomy" as const,
+    title: tr.title,
+    subtitle: tr.subtitle,
+    href: tr.href,
+    badge: tr.badge,
+  }));
+
+  const rankedItems: SearchSuggestionPayload["groups"][0]["items"] = ranked.map((r) => {
     if (r.kind === "firm" && r.firm) {
       const f = r.firm;
       return {
@@ -789,10 +881,18 @@ export async function buildSearchSuggestionsPayload(rawQuery: string): Promise<S
     };
   });
 
-  const substantive = ranked.length > 0;
-  const groups: SearchSuggestionPayload["groups"] = substantive
-    ? [{ id: "ranked", label: "Önerilenler", items }]
-    : [];
+  const groups: SearchSuggestionPayload["groups"] = [];
+  if (filterItems.length) {
+    groups.push({ id: "taxonomy-filters", label: "Filtre ve kategori", items: filterItems });
+  }
+  if (rankedItems.length) {
+    groups.push({ id: "ranked", label: "Firmalar ve rehberler", items: rankedItems });
+  }
+  if (kesfetFromTaxonomy.length) {
+    groups.push({ id: "kesfet-pages", label: "Keşfet vitrinleri", items: kesfetFromTaxonomy.slice(0, 5) });
+  }
+
+  const substantive = groups.length > 0;
 
   return {
     query: canonical,

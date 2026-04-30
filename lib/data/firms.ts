@@ -16,6 +16,40 @@ import { attachFirmCustomSpecializations } from "@/lib/data/specialization-taxon
 import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
 import { firmMatchesExploreCategory } from "@/lib/explore/explore-match";
 import { effectiveFirmCategoryLabel } from "@/lib/firma/listing-filter-options";
+import type { FirmSearchSemanticIntent } from "@/lib/search/search-taxonomy";
+
+export function firmMatchesSemanticIntents(
+  f: FirmRow,
+  intents: FirmSearchSemanticIntent[]
+): boolean {
+  if (!intents?.length) return false;
+  return intents.some((intent) => {
+    if (intent.kind === "trust") {
+      if (intent.flag === "tax") return f.has_tax_certificate === true;
+      if (intent.flag === "license") return Boolean(f.license_number?.trim());
+      if (intent.flag === "physical") return f.has_physical_office === true;
+      if (intent.flag === "office_verified") return f.office_address_verified === true;
+      return false;
+    }
+    if (intent.kind === "service_mode") {
+      if (intent.flag === "online") {
+        const web = f.website?.trim();
+        const wq = f.website_quality_level;
+        return Boolean(web && wq !== "none");
+      }
+      if (intent.flag === "face") return f.has_physical_office === true;
+      if (intent.flag === "remote") return f.has_physical_office === false;
+      if (intent.flag === "weekend") return f.weekend_support === true;
+      return false;
+    }
+    if (intent.kind === "language_pro") {
+      if (intent.flag === "multilingual") return (f.supported_languages?.length ?? 0) >= 2;
+      if (intent.flag === "corp_domain") return f.has_corporate_domain === true;
+      return false;
+    }
+    return false;
+  });
+}
 
 const MOCK_FIRMS: FirmRow[] = [
   {
@@ -624,20 +658,27 @@ const ARAMA_BASE_FILTERS: FirmFilters = {
  */
 export async function searchFirmsForAramaPage(
   rawQuery: string,
-  options?: { limit?: number; matchNeedles?: string[] }
+  options?: {
+    limit?: number;
+    matchNeedles?: string[];
+    semanticIntents?: FirmSearchSemanticIntent[];
+  }
 ): Promise<FirmRow[]> {
   const needles =
     Array.isArray(options?.matchNeedles) && options.matchNeedles.some((x) => x.trim().length > 0)
       ? [...new Set(options.matchNeedles.map((x) => x.trim()).filter(Boolean))]
       : [rawQuery.trim()].filter(Boolean);
-  if (needles.length === 0) return [];
+  const semantics = options?.semanticIntents?.length ? options.semanticIntents : [];
+  const hasNeedles = needles.length > 0;
+  if (!hasNeedles && semantics.length === 0) return [];
   const cap = typeof options?.limit === "number" && options.limit > 0 ? options.limit : 24;
   const base = await getFirms(ARAMA_BASE_FILTERS);
   return base
     .filter(
       (r) =>
         firmIsVisibleInAramaSearchResults(r) &&
-        needles.some((needle) => firmMatchesAramaQuery(r, needle))
+        ((hasNeedles && needles.some((needle) => firmMatchesAramaQuery(r, needle))) ||
+          (semantics.length > 0 && firmMatchesSemanticIntents(r, semantics)))
     )
     .slice(0, cap);
 }

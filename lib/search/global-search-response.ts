@@ -12,7 +12,9 @@ export type GlobalSearchItem = {
   title: string;
   subtitle?: string;
   href: string;
-  kind: "country" | "firm" | "visa" | "service" | "explore" | "all" | "guide";
+  kind: "country" | "firm" | "visa" | "service" | "explore" | "all" | "guide" | "taxonomy";
+  /** Taksonomi / gelişmiş filtre öneri etiketi (örn. Ülke, Ana hizmet) */
+  badge?: string;
 };
 
 export type GlobalSearchGroup = {

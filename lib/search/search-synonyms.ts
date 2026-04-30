@@ -15,7 +15,10 @@ export function canonicalizeSearchQueryForSeo(raw: string): string {
  */
 function expandQueryLower(lower: string): string {
   return lower
-    .replace(/\bgreen card\b/g, "göçmenlik")
+    .replace(/\bamerika\b/gi, "abd")
+    .replace(/\bunited states\b/g, "abd")
+    .replace(/\bingiltere vizesi\b/g, "ingiltere")
+    .replace(/\bgreen card\b/g, "green card başvuruları")
     .replace(/\bwork permit\b/g, "çalışma izni")
     .replace(/\bvisa refusal\b/g, "ret")
     .replace(/\bfamily reunion\b/g, "aile birleşimi")

@@ -13,7 +13,6 @@ import {
   AramaResultClickCapture,
   AramaSearchImpression,
 } from "@/components/search/arama-search-tracker";
-import { findExactKesfetCategoryForQuery } from "@/lib/search/kesfet-exact-match";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { canonicalizeSearchQueryForSeo } from "@/lib/search/search-synonyms";
@@ -126,7 +125,11 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const isIndexable =
     meetsLen &&
     canonical.length >= MIN_INDEXABLE_QUERY_LEN &&
-    shouldIndexSearchPage({ queryLength: canonical.length, thin }) &&
+    shouldIndexSearchPage({
+      queryLength: canonical.length,
+      thin,
+      totalCombined: total,
+    }) &&
     total > 0;
 
   if (!rawQ.length) {
@@ -177,14 +180,6 @@ export default async function AramaPage({ searchParams }: PageProps) {
     redirect(buildAramaPath(canonicalQ, reqFirmPage, reqBlogPage));
   }
 
-  const exactKesfet =
-    meetsLen && canonicalQ.length >= MIN_INDEXABLE_QUERY_LEN
-      ? findExactKesfetCategoryForQuery(canonicalQ)
-      : null;
-  if (exactKesfet && reqFirmPage === 1 && reqBlogPage === 1) {
-    redirect(`/kesfet/${exactKesfet.slug}`);
-  }
-
   const data = meetsLen && canonicalQ.length ? await getSiteSearchDatasetCached(canonicalQ) : null;
 
   const firmTotal = data?.counts.firms ?? 0;
@@ -218,7 +213,11 @@ export default async function AramaPage({ searchParams }: PageProps) {
   const shouldIndexMetadata =
     meetsLen &&
     canonicalQ.length >= MIN_INDEXABLE_QUERY_LEN &&
-    shouldIndexSearchPage({ queryLength: canonicalQ.length, thin }) &&
+    shouldIndexSearchPage({
+      queryLength: canonicalQ.length,
+      thin,
+      totalCombined: totalCombined,
+    }) &&
     totalCombined > 0;
 
   const canonicalUrl = buildSearchCanonicalUrl(canonicalQ, effFirmPage, effBlogPage);
@@ -432,6 +431,14 @@ export default async function AramaPage({ searchParams }: PageProps) {
                 >
                   Kategoriler
                 </a>
+                {data?.taxonomySuggestions?.length ? (
+                  <a
+                    href={`/arama?q=${qc}#arama-filtre-oneriler`}
+                    className="rounded-full border border-white/25 px-4 py-2 text-white/90 transition hover:bg-white/10"
+                  >
+                    Filtre önerileri
+                  </a>
+                ) : null}
                 <a
                   href={`/arama?q=${qc}#arama-kesfet-ici`}
                   className="rounded-full border border-white/25 px-4 py-2 text-white/90 transition hover:bg-white/10"
@@ -490,6 +497,43 @@ export default async function AramaPage({ searchParams }: PageProps) {
               <div id="arama-ozeti" className="scroll-mt-28 space-y-12 sm:space-y-14">
                 {featured ? (
                   <AramaFeaturedBestMatch featured={featured} queryLabel={displayQuery} />
+                ) : null}
+
+                {data.taxonomySuggestions && data.taxonomySuggestions.length > 0 ? (
+                  <section
+                    id="arama-filtre-oneriler"
+                    aria-labelledby="heading-tax-filters"
+                    className="scroll-mt-28"
+                  >
+                    <h2
+                      id="heading-tax-filters"
+                      className="mb-4 text-xl font-bold text-primary sm:text-2xl"
+                    >
+                      İlgili filtre önerileri
+                    </h2>
+                    <p className="mb-5 max-w-2xl text-sm leading-relaxed text-foreground/75">
+                      Aradığınız terime göre önceliklendirilmiş ülke, bölge, hizmet ve kurumsallık bağlamı; tıklayınca bu
+                      sonuç görünümünde kalmaya devam edersiniz.
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {data.taxonomySuggestions.slice(0, 12).map((row) => (
+                        <Link
+                          key={row.id}
+                          href={row.href}
+                          className="flex flex-col rounded-2xl border border-border bg-surface p-4 text-left shadow-sm transition hover:border-secondary/50 hover:bg-background"
+                        >
+                          <span className="inline-flex w-fit rounded-full border border-border bg-background px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-secondary">
+                            {row.badge}
+                          </span>
+                          <span className="mt-2 text-base font-bold text-primary">{row.title}</span>
+                          <span className="mt-1 line-clamp-2 text-xs leading-snug text-foreground/65">
+                            {row.subtitle}
+                          </span>
+                          <span className="mt-3 text-xs font-semibold text-secondary">Sonuçlara git →</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </section>
                 ) : null}
 
                 {kesfetGridItems.length > 0 ? (
