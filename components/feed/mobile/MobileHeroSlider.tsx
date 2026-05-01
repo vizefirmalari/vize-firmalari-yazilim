@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FeedHubBlogPost } from "@/lib/data/feed";
 import { FeedCardRelativeTime } from "@/components/feed/feed-card-relative-time";
 
@@ -10,6 +10,43 @@ type Props = {
 };
 
 const INTERVAL_MS = 5500;
+
+const arrowBtnBase =
+  "absolute top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 touch-manipulation items-center justify-center rounded-full border border-gray-200 bg-white/95 shadow-lg backdrop-blur-sm transition-transform active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]";
+
+function ChevronLeftGlyph({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M15 18l-6-6 6-6"
+        stroke="currentColor"
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ChevronRightGlyph({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M9 18l6-6-6-6"
+        stroke="currentColor"
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function visibleDotRange(safeIndex: number, n: number): { start: number; end: number } {
+  const start = Math.max(0, safeIndex - 4);
+  const end = Math.min(n - 1, safeIndex + 4);
+  return { start, end };
+}
 
 export function MobileHeroSlider({ posts }: Props) {
   const [index, setIndex] = useState(0);
@@ -47,13 +84,15 @@ export function MobileHeroSlider({ posts }: Props) {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
+  const dotRange = useMemo(() => visibleDotRange(safeIndex, n), [safeIndex, n]);
+
   if (n === 0) return null;
   const current = posts[safeIndex];
 
   return (
-    <section aria-roledescription="carousel" aria-label="Öne çıkan yazılar" className="relative">
+    <section aria-roledescription="carousel" aria-label="Öne çıkan yazılar">
       <div
-        className="overflow-hidden rounded-[15px] border border-[#e5e7eb] bg-white shadow-sm"
+        className="relative overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-sm"
         onTouchStart={(e) => {
           touchStartX.current = e.touches[0]?.clientX ?? null;
           setPaused(true);
@@ -110,32 +149,60 @@ export function MobileHeroSlider({ posts }: Props) {
             );
           })}
         </div>
+
+        <div
+          className="pointer-events-none absolute inset-0 z-[11] rounded-2xl bg-black/10"
+          aria-hidden
+        />
+
+        {n > 1 ? (
+          <>
+            <button
+              type="button"
+              aria-label="Önceki"
+              className={`${arrowBtnBase} left-3`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setPaused(true);
+                goPrev();
+              }}
+            >
+              <ChevronLeftGlyph className="h-5 w-5 shrink-0 text-gray-800" />
+            </button>
+            <button
+              type="button"
+              aria-label="Sonraki"
+              className={`${arrowBtnBase} right-3`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setPaused(true);
+                goNext();
+              }}
+            >
+              <ChevronRightGlyph className="h-5 w-5 shrink-0 text-gray-800" />
+            </button>
+          </>
+        ) : null}
       </div>
 
       {n > 1 ? (
-        <div className="mt-3 flex items-center justify-center gap-4">
-          <button
-            type="button"
-            aria-label="Önceki"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-[#374151] shadow-sm hover:bg-[#f9fafb]"
-            onClick={() => {
-              setPaused(true);
-              goPrev();
-            }}
-          >
-            <span className="text-lg leading-none" aria-hidden="true">
-              ‹
-            </span>
-          </button>
-          <div className="flex max-w-[200px] flex-wrap justify-center gap-1.5" role="tablist" aria-label="Slayt">
-            {posts.map((p, i) => (
+        <div
+          className="mx-auto mt-3 flex max-w-full flex-nowrap items-center justify-center gap-1.5 overflow-hidden"
+          role="tablist"
+          aria-label="Slayt"
+        >
+          {Array.from({ length: dotRange.end - dotRange.start + 1 }, (_, k) => dotRange.start + k).map((i) => {
+            const p = posts[i]!;
+            return (
               <button
                 key={p.id}
                 type="button"
                 role="tab"
                 aria-selected={i === safeIndex}
                 aria-label={`Slayt ${i + 1}`}
-                className={`h-1.5 rounded-full transition-[width] ${
+                className={`h-1.5 shrink-0 rounded-full transition-[width] ${
                   i === safeIndex ? "w-6 bg-[#0B3C5D]" : "w-1.5 bg-[#d1d5db]"
                 }`}
                 onClick={() => {
@@ -143,21 +210,8 @@ export function MobileHeroSlider({ posts }: Props) {
                   setIndex(i);
                 }}
               />
-            ))}
-          </div>
-          <button
-            type="button"
-            aria-label="Sonraki"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-[#374151] shadow-sm hover:bg-[#f9fafb]"
-            onClick={() => {
-              setPaused(true);
-              goNext();
-            }}
-          >
-            <span className="text-lg leading-none" aria-hidden="true">
-              ›
-            </span>
-          </button>
+            );
+          })}
         </div>
       ) : null}
     </section>
