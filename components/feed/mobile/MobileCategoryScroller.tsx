@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FEED_CATEGORY_DEFS } from "@/lib/feed/feed-categories";
+import { getAkisCategoryNavOrderedDefs } from "@/lib/feed/feed-categories";
 
 type Props = {
   className?: string;
@@ -12,6 +12,7 @@ type Props = {
  */
 export function MobileCategoryScroller({ className = "", activeSlug = null }: Props) {
   const normalizedActive = activeSlug?.trim().toLowerCase() ?? null;
+  const defs = getAkisCategoryNavOrderedDefs();
 
   return (
     <nav
@@ -21,7 +22,7 @@ export function MobileCategoryScroller({ className = "", activeSlug = null }: Pr
       <div
         className="flex flex-nowrap gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
-        {FEED_CATEGORY_DEFS.map((c) => {
+        {defs.map((c) => {
           const active = normalizedActive === c.slug;
           return (
           <Link

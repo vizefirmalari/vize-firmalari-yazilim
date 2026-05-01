@@ -405,6 +405,30 @@ export const FEED_CATEGORY_DEFS: readonly FeedCategoryDef[] = DEFS_BUILDER;
 
 const BY_SLUG = new Map<string, FeedCategoryDef>(FEED_CATEGORY_DEFS.map((c) => [c.slug, c]));
 
+/** Üst kategori şeridinde `/akis` ve landing sayfalarında önce görünür; altında FEED_CATEGORY_DEFS’in geri kalanı (yatay kaydırma ile). */
+export const AKIS_CATEGORY_NAV_PRIMARY_SLUGS: readonly string[] = [
+  "goc-uluslararasi-koruma",
+  "golden-visa-yatirimci-oturumu",
+  "erasmus-basvuru",
+  "yunanistan-golden-visa",
+  "dubai-vizesi",
+  "iltica-uluslararasi-koruma",
+  "yurtdisi-saglik-kariyeri",
+] as const;
+
+const AKIS_NAV_PRIMARY_SLUG_SET = new Set<string>(AKIS_CATEGORY_NAV_PRIMARY_SLUGS);
+
+/** Önce {@link AKIS_CATEGORY_NAV_PRIMARY_SLUGS}, ardından kalan tüm akış kategorileri tanım sırasıyla. */
+export function getAkisCategoryNavOrderedDefs(): FeedCategoryDef[] {
+  const primary: FeedCategoryDef[] = [];
+  for (const slug of AKIS_CATEGORY_NAV_PRIMARY_SLUGS) {
+    const row = BY_SLUG.get(slug);
+    if (row) primary.push(row);
+  }
+  const rest = FEED_CATEGORY_DEFS.filter((c) => !AKIS_NAV_PRIMARY_SLUG_SET.has(c.slug));
+  return [...primary, ...rest];
+}
+
 export function getFeedCategoryBySlug(slug: string): FeedCategoryDef | null {
   if (!slug || typeof slug !== "string") return null;
   return BY_SLUG.get(slug.trim().toLowerCase()) ?? null;

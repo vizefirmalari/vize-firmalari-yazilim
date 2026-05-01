@@ -1,13 +1,10 @@
-import { FeedCategoryNav } from "@/components/feed/FeedCategoryNav";
-import { MobileCategoryScroller } from "@/components/feed/mobile/MobileCategoryScroller";
+import { AkisBreakingTicker } from "@/components/feed/akis-breaking-ticker";
+import { AkisCategoryNav } from "@/components/feed/akis-category-nav";
+import { DesktopNewsHome } from "@/components/feed/desktop/DesktopNewsHome";
 import { MobileFeedLayout } from "@/components/feed/mobile/MobileFeedLayout";
 import { FeedFiltersBar } from "@/components/feed/FeedFiltersBar";
 import { FeedList } from "@/components/feed/FeedList";
-import { LatestTicker } from "@/components/feed/LatestTicker";
-import { LeadStoryGrid } from "@/components/feed/LeadStoryGrid";
-import { NewsCategoryBlock } from "@/components/feed/NewsCategoryBlock";
 import { NewsHomeLayout } from "@/components/feed/NewsHomeLayout";
-import { MoreContentSection } from "@/components/feed/MoreContentSection";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import {
@@ -17,6 +14,7 @@ import {
   type FeedQuery,
 } from "@/lib/data/feed";
 import type { AkisNewsHomeBuilt } from "@/lib/feed/akis-news-home-data";
+import { buildAkisBreakingTickerItems } from "@/lib/feed/akis-breaking-pool";
 import { buildAkisNewsHomeData } from "@/lib/feed/akis-news-home-data";
 import type { BlogAdRow } from "@/lib/blog/ads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -97,20 +95,19 @@ export default async function AkisPage({
   );
   const queryString = qp.toString();
 
-  const filteredNewsBlocks =
-    newsHome?.sections.filter((s) => s.posts.length > 0) ?? [];
-
   const hubChronological =
     hubSnapshots.length > 0
       ? [...hubSnapshots].sort((a, b) => b.created_at.localeCompare(a.created_at))
       : [];
   const mobileSliderPosts = hubChronological.slice(0, 20);
   const mobileMixedPosts = hubChronological.slice(20);
+  const breakingTickerItems =
+    newsHome ? buildAkisBreakingTickerItems(newsHome) : [];
 
   return (
     <>
       <SiteHeader />
-      <main className="border-b border-[#e5e7eb]/80 bg-white py-7 sm:py-9">
+      <main className="border-b border-[#e5e7eb]/80 bg-white pt-7 pb-2 sm:py-9">
         {hasActiveFilters ? (
           <NewsHomeLayout>
             <div className="mb-10">
@@ -133,29 +130,20 @@ export default async function AkisPage({
           </NewsHomeLayout>
         ) : (
           <NewsHomeLayout>
-            <h1 className="mb-4 text-2xl font-bold tracking-tight text-[#111827] md:mb-6 md:text-2xl">
+            <h1 className="mb-4 text-2xl font-bold tracking-tight text-[#111827] md:mb-4 md:text-2xl">
               Rehber merkezi
             </h1>
 
-            <MobileCategoryScroller className="mb-5 block md:hidden" />
-
             {newsHome && newsHome.sliderPosts.length > 0 ? (
               <>
+                <AkisCategoryNav className="mb-1 block md:hidden" />
+                <AkisBreakingTicker className="mb-5 block md:hidden" items={breakingTickerItems} intervalMs={4000} />
+
                 <div className="block md:hidden">
                   <MobileFeedLayout sliderPosts={mobileSliderPosts} mixedPosts={mobileMixedPosts} />
                 </div>
 
-                <div className="hidden md:block">
-                  <FeedCategoryNav className="mb-7 sm:mb-8" />
-                  <LeadStoryGrid sliderPosts={newsHome.sliderPosts} sideFour={newsHome.sideFour} />
-                  <LatestTicker posts={newsHome.tickerFive} />
-                  <div className="mt-1 md:mt-2">
-                    {filteredNewsBlocks.map((filled, idx) => (
-                      <NewsCategoryBlock key={filled.config.viewAllSlug} filled={filled} isFirst={idx === 0} />
-                    ))}
-                  </div>
-                  <MoreContentSection posts={newsHome.moreStories} />
-                </div>
+                <DesktopNewsHome newsHome={newsHome} breakingTickerItems={breakingTickerItems} />
               </>
             ) : (
               <div className="rounded-md border border-[#e5e7eb] bg-[#fafafa] px-6 py-12 text-center">

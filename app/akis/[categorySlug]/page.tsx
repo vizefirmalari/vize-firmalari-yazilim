@@ -127,7 +127,7 @@ export default async function AkisCategoryLandingPage({
               </Link>
             </div>
           ) : (
-            <div className="mt-10 grid grid-cols-1 gap-4 pb-[120px] md:grid-cols-2 md:gap-5 md:pb-14 lg:grid-cols-3 lg:gap-6">
+            <div className="mt-10 grid grid-cols-1 gap-4 pb-3 md:grid-cols-2 md:gap-5 md:pb-14 lg:grid-cols-3 lg:gap-6">
               {posts.map((p) => (
                 <FeedPortalCard key={p.id} post={p} categoryLabel={def.title} />
               ))}

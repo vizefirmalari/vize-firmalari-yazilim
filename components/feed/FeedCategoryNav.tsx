@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FEED_CATEGORY_DEFS } from "@/lib/feed/feed-categories";
+import { getAkisCategoryNavOrderedDefs } from "@/lib/feed/feed-categories";
 import { HomepageHorizontalScroller } from "@/components/home/homepage-horizontal-scroller";
 
 type Props = {
@@ -11,6 +11,7 @@ type Props = {
 /** İnce üst haber navigasyonu — `feed-categories` içindeki tüm kategoriler → `/akis/[slug]` */
 export function FeedCategoryNav({ className = "", activeSlug = null }: Props) {
   const normalizedActive = activeSlug?.trim().toLowerCase() ?? null;
+  const defs = getAkisCategoryNavOrderedDefs();
 
   return (
     <nav
@@ -23,7 +24,7 @@ export function FeedCategoryNav({ className = "", activeSlug = null }: Props) {
         flushMobile={false}
         className="w-full py-1.5 sm:py-2"
       >
-        {FEED_CATEGORY_DEFS.map((c) => {
+        {defs.map((c) => {
           const active = normalizedActive === c.slug;
           return (
             <Link

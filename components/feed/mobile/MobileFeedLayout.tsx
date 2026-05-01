@@ -12,7 +12,7 @@ type Props = {
 /** Mobil `/akis`: üstte slider, altta kategori başlıksız ritimli akış */
 export function MobileFeedLayout({ sliderPosts, mixedPosts }: Props) {
   return (
-    <div className="flex flex-col pb-[120px]">
+    <div className="flex flex-col pb-3">
       <MobileHeroSlider posts={sliderPosts} />
 
       {mixedPosts.length > 0 ? (

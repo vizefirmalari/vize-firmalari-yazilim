@@ -129,12 +129,26 @@ export function buildAkisNewsHomeData(params: {
       if (!postMatchesAnyDef(p, defs)) continue;
       posts.push(p);
       used.add(p.id);
-      if (posts.length >= 4) break;
+      if (posts.length >= 5) break;
     }
     sections.push({ config, posts });
   }
 
-  const moreStories = chronological.filter((p) => !used.has(p.id)).slice(0, AKIS_MORE_STORIES_POOL);
+  let moreStories = chronological.filter((p) => !used.has(p.id)).slice(0, AKIS_MORE_STORIES_POOL);
+
+  /** Küçük hub’larda veya tüm içerik üst manşet/section’da tükendiğinde alt grid boş kalmasın (slider hariç tekrar doldur). */
+  if (moreStories.length < 18 && chronological.length > sliderPosts.length) {
+    const sliderIds = new Set(sliderPosts.map((p) => p.id));
+    const seen = new Set(moreStories.map((p) => p.id));
+    for (const p of chronological) {
+      if (sliderIds.has(p.id)) continue;
+      if (seen.has(p.id)) continue;
+      seen.add(p.id);
+      moreStories.push(p);
+      if (moreStories.length >= AKIS_MORE_STORIES_POOL) break;
+    }
+  }
+
   const usedBlogIds = Array.from(used);
 
   return {
