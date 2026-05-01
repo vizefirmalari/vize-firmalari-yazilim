@@ -2,16 +2,21 @@ import { z } from "zod";
 
 export const firmStatusSchema = z.enum(["draft", "published", "inactive"]);
 
-const emptyToUndef = (v: unknown) =>
-  v === "" || v === null || v === undefined ? undefined : v;
+/** Kenar boşlukları at (kopyala-yapıştır); boşsa undefined — email/url doğrulaması yanlış negatif vermesin. */
+function trimEmptyToUndef(v: unknown): unknown {
+  if (v === null || v === undefined) return undefined;
+  if (typeof v !== "string") return v;
+  const t = v.trim();
+  return t === "" ? undefined : t;
+}
 
 const optionalUrl = z.preprocess(
-  emptyToUndef,
+  trimEmptyToUndef,
   z.union([z.string().url(), z.undefined()]).optional()
 );
 
 const optionalEmail = z.preprocess(
-  emptyToUndef,
+  trimEmptyToUndef,
   z.union([z.string().email(), z.undefined()]).optional()
 );
 
