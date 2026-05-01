@@ -10,7 +10,12 @@ import { NewsHomeLayout } from "@/components/feed/NewsHomeLayout";
 import { MoreContentSection } from "@/components/feed/MoreContentSection";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { fetchFeedHubBlogSnapshots, getFeedItemsPage, type FeedQuery } from "@/lib/data/feed";
+import {
+  fetchFeedHubBlogSnapshots,
+  getFeedItemsPage,
+  type FeedHubBlogPost,
+  type FeedQuery,
+} from "@/lib/data/feed";
 import type { AkisNewsHomeBuilt } from "@/lib/feed/akis-news-home-data";
 import { buildAkisNewsHomeData } from "@/lib/feed/akis-news-home-data";
 import type { BlogAdRow } from "@/lib/blog/ads";
@@ -48,6 +53,7 @@ export default async function AkisPage({
   let countries: string[] = [];
 
   let newsHome: AkisNewsHomeBuilt | null = null;
+  let hubSnapshots: FeedHubBlogPost[] = [];
 
   const hasActiveFilters = Boolean(query.category || query.country || query.visaType || query.premium || query.search);
 
@@ -75,7 +81,7 @@ export default async function AkisPage({
       categories = catResult;
       countries = ctrResult;
     } else {
-      const hubSnapshots = await fetchFeedHubBlogSnapshots(280);
+      hubSnapshots = await fetchFeedHubBlogSnapshots(280);
       newsHome = buildAkisNewsHomeData({ hub: hubSnapshots });
     }
   } catch (error) {
@@ -93,6 +99,13 @@ export default async function AkisPage({
 
   const filteredNewsBlocks =
     newsHome?.sections.filter((s) => s.posts.length > 0) ?? [];
+
+  const hubChronological =
+    hubSnapshots.length > 0
+      ? [...hubSnapshots].sort((a, b) => b.created_at.localeCompare(a.created_at))
+      : [];
+  const mobileSliderPosts = hubChronological.slice(0, 20);
+  const mobileMixedPosts = hubChronological.slice(20);
 
   return (
     <>
@@ -128,13 +141,8 @@ export default async function AkisPage({
 
             {newsHome && newsHome.sliderPosts.length > 0 ? (
               <>
-                <div className="block pb-[120px] md:hidden">
-                  <MobileFeedLayout
-                    lead={newsHome.sliderPosts[0]!}
-                    featured={[...newsHome.sideFour, ...newsHome.tickerFive]}
-                    latest={newsHome.moreStories}
-                    sections={filteredNewsBlocks}
-                  />
+                <div className="block md:hidden">
+                  <MobileFeedLayout sliderPosts={mobileSliderPosts} mixedPosts={mobileMixedPosts} />
                 </div>
 
                 <div className="hidden md:block">
