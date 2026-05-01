@@ -13,7 +13,7 @@ export default async function VisaOperationsPage({ params }: PageProps) {
 
   return (
     <VisaOperationsRefreshShell firmId={firmId}>
-      <div className="mx-auto max-w-[1600px] space-y-8">
+      <div className="mx-auto w-full min-w-0 max-w-[1600px] space-y-8">
         <header>
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0B3C5D]/65">Vize operasyonları</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#0B3C5D] sm:text-3xl">Operasyon kontrol masası</h1>

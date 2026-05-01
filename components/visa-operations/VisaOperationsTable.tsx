@@ -37,7 +37,7 @@ export function VisaOperationsTable({ firmId, rows }: Props) {
   }, [rows, query, statusFilter, paymentFilter]);
 
   return (
-    <div className="space-y-5">
+    <div className="w-full min-w-0 max-w-full space-y-5">
       <div className="flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center xl:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
           <CreateCaseDialog
@@ -108,8 +108,9 @@ export function VisaOperationsTable({ firmId, rows }: Props) {
           </p>
         </div>
       ) : (
-        <div className="-mx-1 overflow-x-auto rounded-xl border border-[#0B3C5D]/12 bg-white pb-px shadow-sm sm:-mx-0">
-          <table className="min-w-[1280px] w-full caption-bottom border-collapse text-left">
+        <div className="w-full max-w-full min-w-0 overflow-hidden">
+          <div className="w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain rounded-2xl border border-[#0B3C5D]/12 bg-white pb-px shadow-sm [-webkit-overflow-scrolling:touch]">
+            <table className="min-w-[1600px] w-full caption-bottom border-collapse text-left">
             <thead className="sticky top-0 z-[2] shadow-[inset_0_-1px_0_0_rgba(11,60,93,0.09)] backdrop-blur-sm">
               <tr className="bg-[#F5F9FC]/95">
                 <th
@@ -169,6 +170,7 @@ export function VisaOperationsTable({ firmId, rows }: Props) {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>
