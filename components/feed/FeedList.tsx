@@ -86,7 +86,7 @@ export function FeedList({ initialItems, hasMoreInitial, adPool, queryString, ha
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [items.length, loading, hasMore]);
+  }, [items.length, loading, hasMore, queryString]);
 
   if (items.length === 0 && !loading) {
     return (

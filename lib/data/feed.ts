@@ -52,6 +52,8 @@ export type FeedQuery = {
   premium?: boolean;
   search?: string;
   sort?: FeedSort;
+  /** `/akis` haber bölgelerinde gösterilmiş blog yazıları tam akışta tekrar etmesin. */
+  excludeBlogIds?: string[];
 };
 
 const WEIGHTS = {
@@ -556,7 +558,9 @@ async function computeFeedPage(
     const items: FeedItem[] = [...blogItems, ...feedItems];
 
     const q = query.search?.trim().toLowerCase() ?? "";
+    const excludeBlog = new Set((query.excludeBlogIds ?? []).map(String));
     const filtered = items.filter((item) => {
+      if (item.type === "blog" && excludeBlog.has(item.id)) return false;
       if (query.premium && item.premium_score <= 0) return false;
       if (q) {
         const inCompany = item.company_name.toLowerCase().includes(q);

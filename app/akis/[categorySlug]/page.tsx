@@ -4,12 +4,11 @@ import { notFound } from "next/navigation";
 
 import { AkisCategoryBreadcrumbs } from "@/components/feed/akis-category-breadcrumbs";
 import { AkisCategoryJsonLd } from "@/components/feed/akis-category-jsonld";
-import { AkisFeedTopicChips } from "@/components/feed/akis-feed-topic-chips";
+import { FeedCategoryNav } from "@/components/feed/FeedCategoryNav";
 import { FeedPortalCard } from "@/components/feed/FeedPortalCard";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getAkisCategoryLandingPosts } from "@/lib/feed/akis-category-data";
-import { FEED_CATEGORY_DEFS } from "@/lib/feed/feed-categories";
 import { getSiteUrl } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
@@ -76,6 +75,11 @@ export default async function AkisCategoryLandingPage({
   return (
     <>
       <SiteHeader />
+      <div className="bg-white">
+        <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8">
+          <FeedCategoryNav activeSlug={def.slug} />
+        </div>
+      </div>
       <AkisCategoryJsonLd
         categoryTitle={def.title}
         canonicalUrl={canonicalUrl}
@@ -99,8 +103,6 @@ export default async function AkisCategoryLandingPage({
               </p>
             </div>
           </header>
-
-          <AkisFeedTopicChips defs={FEED_CATEGORY_DEFS} activeSlug={def.slug} />
 
           {!posts.length ? (
             <div className="mt-10 rounded-2xl border border-[#e5e7eb] bg-[#f9fafb] px-5 py-10 text-center">

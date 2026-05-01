@@ -397,6 +397,10 @@ function def(base: FeedCategory, matchers: readonly string[]): FeedCategoryDef {
   return { ...base, matchers };
 }
 
+/**
+ * Tüm yayın kategorileri (`/akis/[slug]` SEO landing’leri + üst kategori navigasyonu).
+ * Sıra: haber sitesi üst bar ile uyumlu sabit liste; yeni kategori eklendiğinde buraya ve gerekirse hub önceliğine eklenir.
+ */
 export const FEED_CATEGORY_DEFS: readonly FeedCategoryDef[] = DEFS_BUILDER;
 
 const BY_SLUG = new Map<string, FeedCategoryDef>(FEED_CATEGORY_DEFS.map((c) => [c.slug, c]));
