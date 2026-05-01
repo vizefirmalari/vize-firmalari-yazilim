@@ -1,4 +1,6 @@
 import { FeedCategoryNav } from "@/components/feed/FeedCategoryNav";
+import { MobileCategoryScroller } from "@/components/feed/mobile/MobileCategoryScroller";
+import { MobileFeedLayout } from "@/components/feed/mobile/MobileFeedLayout";
 import { FeedFiltersBar } from "@/components/feed/FeedFiltersBar";
 import { FeedList } from "@/components/feed/FeedList";
 import { LatestTicker } from "@/components/feed/LatestTicker";
@@ -19,7 +21,7 @@ import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Akış",
+  title: "Rehber merkezi",
   description: "Firma odaklı içerik akışı",
 };
 
@@ -99,7 +101,7 @@ export default async function AkisPage({
         {hasActiveFilters ? (
           <NewsHomeLayout>
             <div className="mb-10">
-              <h1 className="text-xl font-bold tracking-tight text-[#111827] sm:text-2xl">Akış</h1>
+              <h1 className="text-xl font-bold tracking-tight text-[#111827] sm:text-2xl">Rehber merkezi</h1>
               <FeedFiltersBar
                 categories={categories}
                 countries={countries}
@@ -118,20 +120,34 @@ export default async function AkisPage({
           </NewsHomeLayout>
         ) : (
           <NewsHomeLayout>
-            <h1 className="mb-5 text-xl font-bold tracking-tight text-[#111827] sm:mb-6 sm:text-2xl">Akış</h1>
+            <h1 className="mb-4 text-2xl font-bold tracking-tight text-[#111827] md:mb-6 md:text-2xl">
+              Rehber merkezi
+            </h1>
 
-            <FeedCategoryNav className="mb-7 sm:mb-8" />
+            <MobileCategoryScroller className="mb-5 block md:hidden" />
 
             {newsHome && newsHome.sliderPosts.length > 0 ? (
               <>
-                <LeadStoryGrid sliderPosts={newsHome.sliderPosts} sideFour={newsHome.sideFour} />
-                <LatestTicker posts={newsHome.tickerFive} />
-                <div className="mt-1 md:mt-2">
-                  {filteredNewsBlocks.map((filled, idx) => (
-                    <NewsCategoryBlock key={filled.config.viewAllSlug} filled={filled} isFirst={idx === 0} />
-                  ))}
+                <div className="block pb-[120px] md:hidden">
+                  <MobileFeedLayout
+                    lead={newsHome.sliderPosts[0]!}
+                    featured={[...newsHome.sideFour, ...newsHome.tickerFive]}
+                    latest={newsHome.moreStories}
+                    sections={filteredNewsBlocks}
+                  />
                 </div>
-                <MoreContentSection posts={newsHome.moreStories} />
+
+                <div className="hidden md:block">
+                  <FeedCategoryNav className="mb-7 sm:mb-8" />
+                  <LeadStoryGrid sliderPosts={newsHome.sliderPosts} sideFour={newsHome.sideFour} />
+                  <LatestTicker posts={newsHome.tickerFive} />
+                  <div className="mt-1 md:mt-2">
+                    {filteredNewsBlocks.map((filled, idx) => (
+                      <NewsCategoryBlock key={filled.config.viewAllSlug} filled={filled} isFirst={idx === 0} />
+                    ))}
+                  </div>
+                  <MoreContentSection posts={newsHome.moreStories} />
+                </div>
               </>
             ) : (
               <div className="rounded-md border border-[#e5e7eb] bg-[#fafafa] px-6 py-12 text-center">

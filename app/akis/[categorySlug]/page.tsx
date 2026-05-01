@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { AkisCategoryBreadcrumbs } from "@/components/feed/akis-category-breadcrumbs";
 import { AkisCategoryJsonLd } from "@/components/feed/akis-category-jsonld";
 import { FeedCategoryNav } from "@/components/feed/FeedCategoryNav";
+import { MobileCategoryScroller } from "@/components/feed/mobile/MobileCategoryScroller";
 import { FeedPortalCard } from "@/components/feed/FeedPortalCard";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -77,7 +78,13 @@ export default async function AkisCategoryLandingPage({
       <SiteHeader />
       <div className="bg-white">
         <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8">
-          <FeedCategoryNav activeSlug={def.slug} />
+          <MobileCategoryScroller
+            activeSlug={def.slug}
+            className="block border-y border-[#e5e7eb] bg-[#f8fafc] py-2 md:hidden"
+          />
+          <div className="hidden md:block">
+            <FeedCategoryNav activeSlug={def.slug} />
+          </div>
         </div>
       </div>
       <AkisCategoryJsonLd
@@ -120,7 +127,7 @@ export default async function AkisCategoryLandingPage({
               </Link>
             </div>
           ) : (
-            <div className="mt-10 grid grid-cols-1 gap-4 pb-14 md:grid-cols-2 md:gap-5 lg:grid-cols-3 lg:gap-6">
+            <div className="mt-10 grid grid-cols-1 gap-4 pb-[120px] md:grid-cols-2 md:gap-5 md:pb-14 lg:grid-cols-3 lg:gap-6">
               {posts.map((p) => (
                 <FeedPortalCard key={p.id} post={p} categoryLabel={def.title} />
               ))}
