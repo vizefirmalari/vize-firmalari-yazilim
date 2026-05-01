@@ -1,8 +1,10 @@
 import type { BlogCtaButton } from "@/lib/blog/cta-buttons";
 import { parseInstantMs } from "@/lib/datetime/parse-instant";
 import { resolveFeedPostCtaButtons } from "@/lib/data/feed-post-cta-buttons";
+import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 
 export type FeedItem = {
   id: string;
@@ -255,6 +257,23 @@ export async function getFirmFeedItems(
   return merged.slice(0, limit);
 }
 
+/**
+ * Turbopack: `a || b ?? c` gibi ifadeler parse edilmiyor. Slug birleştirmesi yalnızca burada yapılmalı.
+ */
+function resolvePublishedBlogFirmSlugForUrl(
+  companySlugRaw: string | null | undefined,
+  firmById: { slug?: string | null } | undefined,
+  firmBySlug: { slug?: string | null } | undefined
+): string {
+  const fromRow = String(companySlugRaw ?? "").trim();
+  if (fromRow.length > 0) return fromRow;
+  const idSlug = firmById?.slug;
+  if (typeof idSlug === "string" && idSlug.trim().length > 0) return idSlug.trim();
+  const slugSlug = firmBySlug?.slug;
+  if (typeof slugSlug === "string" && slugSlug.trim().length > 0) return slugSlug.trim();
+  return "";
+}
+
 async function computeFeedPage(
   offset: number,
   limit: number,
@@ -422,12 +441,14 @@ async function computeFeedPage(
       .map<FeedItem>((row) => {
         const postId = String(row.id);
         const firmId = String(row.firm_id);
-        const rowCompanySlug = String((row as { company_slug?: string | null }).company_slug ?? "");
+        const rowCompanySlug = String((row as { company_slug?: string | null }).company_slug ?? "").trim();
         const firmById = firmMap.get(firmId);
         const firmBySlug = rowCompanySlug ? firmSlugMap.get(rowCompanySlug) : undefined;
         const firm = firmById ?? firmBySlug;
-        const firmSlug = String(
-          (row as { company_slug?: string | null }).company_slug ?? firmById?.slug ?? firmBySlug?.slug ?? ""
+        const firmSlug = resolvePublishedBlogFirmSlugForUrl(
+          (row as { company_slug?: string | null }).company_slug,
+          firmById,
+          firmBySlug
         );
         const target_url = `/firma/${firmSlug}/blog/${String(row.slug)}`;
         const likeCount = likeCountMap.get(postId) ?? 0;
@@ -560,6 +581,307 @@ async function computeFeedPage(
   } catch (error) {
     console.error("computeFeedPage error:", error);
     return { items: [], hasMore: false };
+  }
+}
+
+/** `/akis` içerik merkezi: tam `tags[]` dizisi ile kategori eşlemesi (liste kartındaki 2 etiket sınırı yok). */
+export type FeedHubBlogPost = {
+  id: string;
+  title: string;
+  description: string;
+  image_url: string | null;
+  created_at: string;
+  target_url: string;
+  category_name: string | null;
+  tags: string[];
+  company_name: string;
+};
+
+export type FeedStoryStripItem = {
+  id: string;
+  company_name: string;
+  company_slug: string;
+  excerpt: string;
+  image_url: string | null;
+  target_url: string;
+  created_at: string;
+};
+
+/** Son yayınlanan blog yazıları — `/akis` kategori blokları için. */
+export async function fetchFeedHubBlogSnapshots(limit = 280): Promise<FeedHubBlogPost[]> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const service = createSupabaseServiceRoleClient();
+    const dataClient = service ?? supabase;
+    if (!dataClient) return [];
+
+    const cap = Math.min(400, Math.max(20, Math.floor(limit)));
+    const { data: rowsRaw, error } = await dataClient
+      .from("firm_blog_posts")
+      .select(
+        "id,title,summary,cover_image_url,published_at,company_name,company_slug,slug,category_id,tags,firm_id"
+      )
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .order("published_at", { ascending: false })
+      .limit(cap);
+
+    if (error || !rowsRaw?.length) {
+      if (error) console.error("fetchFeedHubBlogSnapshots error:", error.message);
+      return [];
+    }
+
+    const rows = rowsRaw as Array<{
+      id: string;
+      title: string | null;
+      summary: string | null;
+      cover_image_url: string | null;
+      published_at: string;
+      company_name: string | null;
+      company_slug: string | null;
+      slug: string;
+      category_id: string | null;
+      tags: unknown;
+      firm_id: string;
+    }>;
+
+    const { data: categories } = await dataClient.from("blog_categories").select("id,name");
+    const categoryMap = new Map((categories ?? []).map((c) => [String(c.id), String(c.name)]));
+
+    const firmIdList = Array.from(new Set(rows.map((r) => String(r.firm_id))));
+    const rowCompanySlugs = Array.from(
+      new Set(rows.map((r) => String(r.company_slug ?? "").trim()).filter(Boolean))
+    );
+
+    const [{ data: firmsById }, { data: firmsBySlug }] = await Promise.all([
+      firmIdList.length > 0
+        ? dataClient.from("firms").select("id,slug").in("id", firmIdList)
+        : Promise.resolve({ data: [] as { id: string; slug: string }[] | null }),
+      rowCompanySlugs.length > 0
+        ? dataClient.from("firms").select("id,slug").in("slug", rowCompanySlugs)
+        : Promise.resolve({ data: [] as { id: string; slug: string }[] | null }),
+    ]);
+
+    const firmMap = new Map((firmsById ?? []).map((f) => [String(f.id), f]));
+    const firmSlugMap = new Map((firmsBySlug ?? []).map((f) => [String(f.slug), f]));
+
+    const out: FeedHubBlogPost[] = [];
+    for (const row of rows) {
+      const firmId = String(row.firm_id);
+      const rowCompanySlug = String(row.company_slug ?? "").trim();
+      const firmById = firmMap.get(firmId);
+      const firmBySlug = rowCompanySlug ? firmSlugMap.get(rowCompanySlug) : undefined;
+      const firmSlug = resolvePublishedBlogFirmSlugForUrl(row.company_slug, firmById, firmBySlug);
+      if (!firmSlug) continue;
+      const tags = Array.isArray(row.tags) ? row.tags.map((t) => String(t)) : [];
+      out.push({
+        id: String(row.id),
+        title: String(row.title ?? ""),
+        description: String(row.summary ?? ""),
+        image_url: row.cover_image_url ? String(row.cover_image_url) : null,
+        created_at: String(row.published_at),
+        target_url: `/firma/${firmSlug}/blog/${String(row.slug)}`,
+        category_name: row.category_id ? (categoryMap.get(String(row.category_id)) ?? null) : null,
+        tags,
+        company_name: String(row.company_name ?? ""),
+      });
+    }
+
+    return out;
+  } catch (e) {
+    console.error("fetchFeedHubBlogSnapshots exception:", e);
+    return [];
+  }
+}
+
+function publicIndexableFirmSlugOk(slug: string): boolean {
+  const t = String(slug ?? "").trim();
+  return t.length > 0 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(t);
+}
+
+/**
+ * `unstable_cache` / sitemap için: cookie + kullanıcı oturumu yok.
+ * Yalnızca yayımda, indekslenebilir ve firma sayfası açık firmaların blog yazıları (sitemap blog ile uyumlu).
+ */
+export async function fetchFeedHubBlogSnapshotsPublicForMatching(limit = 450): Promise<FeedHubBlogPost[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = createSupabasePublicClient();
+  if (!supabase) return [];
+
+  const cap = Math.min(600, Math.max(20, Math.floor(limit)));
+  try {
+    const { data: rowsRaw, error } = await supabase
+      .from("firm_blog_posts")
+      .select(
+        "id,title,summary,cover_image_url,published_at,company_name,company_slug,slug,category_id,tags,firm_id"
+      )
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .order("published_at", { ascending: false })
+      .limit(cap);
+
+    if (error || !rowsRaw?.length) {
+      if (error) console.error("fetchFeedHubBlogSnapshotsPublicForMatching error:", error.message);
+      return [];
+    }
+
+    const rows = rowsRaw as Array<{
+      id: string;
+      title: string | null;
+      summary: string | null;
+      cover_image_url: string | null;
+      published_at: string;
+      company_name: string | null;
+      company_slug: string | null;
+      slug: string;
+      category_id: string | null;
+      tags: unknown;
+      firm_id: string;
+    }>;
+
+    const firmIdList = Array.from(new Set(rows.map((r) => String(r.firm_id))));
+
+    let allowedFirmIds = new Set<string>();
+    if (firmIdList.length > 0) {
+      const { data: allowedRows } = await supabase
+        .from("firms")
+        .select("id,firm_page_enabled,slug")
+        .in("id", firmIdList)
+        .eq("status", "published")
+        .eq("is_indexable", true);
+      allowedFirmIds = new Set(
+        (allowedRows ?? [])
+          .filter((row) => (row as { firm_page_enabled?: boolean | null }).firm_page_enabled !== false)
+          .filter((row) => publicIndexableFirmSlugOk(String((row as { slug?: string | null }).slug ?? "")))
+          .map((row) => String((row as { id?: string }).id ?? ""))
+      );
+    }
+
+    let firmSlugById = new Map<string, string>();
+    if (firmIdList.length > 0) {
+      const { data: firmRows } = await supabase.from("firms").select("id,slug").in("id", firmIdList);
+      firmSlugById = new Map(
+        (firmRows ?? [])
+          .map((row) => ({
+            id: String((row as { id?: string }).id ?? ""),
+            slug: String((row as { slug?: string }).slug ?? ""),
+          }))
+          .filter((row) => row.id.length > 0 && publicIndexableFirmSlugOk(row.slug))
+          .map((row) => [row.id, row.slug])
+      );
+    }
+
+    const { data: categories } = await supabase.from("blog_categories").select("id,name");
+    const categoryMap = new Map((categories ?? []).map((c) => [String(c.id), String(c.name)]));
+
+    const out: FeedHubBlogPost[] = [];
+    for (const row of rows) {
+      if (!allowedFirmIds.has(String(row.firm_id))) continue;
+      const firmSlug =
+        typeof row.firm_id === "string" ? firmSlugById.get(String(row.firm_id)) ?? "" : "";
+      if (!publicIndexableFirmSlugOk(firmSlug)) continue;
+      if (!publicIndexableFirmSlugOk(String(row.slug ?? ""))) continue;
+
+      const tags = Array.isArray(row.tags) ? row.tags.map((t) => String(t)) : [];
+      out.push({
+        id: String(row.id),
+        title: String(row.title ?? ""),
+        description: String(row.summary ?? ""),
+        image_url: row.cover_image_url ? String(row.cover_image_url) : null,
+        created_at: String(row.published_at),
+        target_url: `/firma/${firmSlug}/blog/${String(row.slug)}`,
+        category_name: row.category_id ? (categoryMap.get(String(row.category_id)) ?? null) : null,
+        tags,
+        company_name: String(row.company_name ?? ""),
+      });
+    }
+
+    return out;
+  } catch (e) {
+    console.error("fetchFeedHubBlogSnapshotsPublicForMatching exception:", e);
+    return [];
+  }
+}
+
+/** Kısa akış gönderileri (`firm_feed_posts`) — yatay “Güncel paylaşımlar” şeridi. */
+export async function fetchFeedStoryStripItems(limit = 14): Promise<FeedStoryStripItem[]> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const service = createSupabaseServiceRoleClient();
+    const dataClient = service ?? supabase;
+    if (!dataClient) return [];
+
+    const cap = Math.min(40, Math.max(4, Math.floor(limit)));
+
+    const { data: feedRaw, error } = await dataClient
+      .from("firm_feed_posts")
+      .select("id,firm_id,body,image_urls,published_at")
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .order("published_at", { ascending: false })
+      .limit(cap);
+
+    if (error || !feedRaw?.length) {
+      if (error) console.error("fetchFeedStoryStripItems error:", error.message);
+      return [];
+    }
+
+    const rows = feedRaw as Array<{
+      id: string;
+      firm_id: string;
+      body: string;
+      image_urls: unknown;
+      published_at: string;
+    }>;
+
+    const firmIds = Array.from(new Set(rows.map((r) => String(r.firm_id))));
+    const { data: firms } =
+      firmIds.length > 0
+        ? await dataClient.from("firms").select("id,slug,name,brand_name").in("id", firmIds)
+        : { data: [] };
+
+    const firmMap = new Map(
+      (firms ?? []).map((f) => [
+        String(f.id),
+        { slug: String(f.slug ?? ""), name: String(f.brand_name ?? f.name ?? "") },
+      ])
+    );
+
+    const stripItems: FeedStoryStripItem[] = [];
+    const parseUrls = (raw: unknown): string[] => {
+      if (!Array.isArray(raw)) return [];
+      return raw.filter((u): u is string => typeof u === "string" && u.trim().length > 0).map((u) => u.trim());
+    };
+
+    const excerptOf = (body: string) => {
+      const t = body.replace(/\s+/g, " ").trim();
+      if (t.length <= 120) return t;
+      return `${t.slice(0, 117)}…`;
+    };
+
+    for (const row of rows) {
+      const firm = firmMap.get(String(row.firm_id));
+      if (!firm?.slug) continue;
+      const body = String(row.body ?? "").trim();
+      if (body.length < 1) continue;
+      const urls = parseUrls(row.image_urls);
+
+      stripItems.push({
+        id: String(row.id),
+        company_name: firm.name,
+        company_slug: firm.slug,
+        excerpt: excerptOf(body),
+        image_url: urls[0] ?? null,
+        target_url: `/firma/${firm.slug}`,
+        created_at: String(row.published_at),
+      });
+      if (stripItems.length >= cap) break;
+    }
+
+    return stripItems;
+  } catch (e) {
+    console.error("fetchFeedStoryStripItems exception:", e);
+    return [];
   }
 }
 

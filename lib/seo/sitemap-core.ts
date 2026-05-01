@@ -10,6 +10,7 @@ import {
 } from "@/lib/country-guides/taxonomy";
 import { listPublicDocumentPages } from "@/lib/seo/public-routes";
 import { resolveToAbsoluteImageUrl } from "@/lib/seo/blog-og-image";
+import { getCachedAkisFeedCategoryLandingSitemapSlice } from "@/lib/seo/akis-feed-category-sitemap";
 
 /** Google sitemap urlset — priority 0.0–1.0 (opsiyonel). */
 export type SitemapUrl = {
@@ -351,10 +352,23 @@ export async function getIndexableUrlsBySection(section: SitemapSection): Promis
   const nowIso = new Date().toISOString();
 
   if (section === "static") {
-    return buildStaticSectionUrls().map((entry) => ({
+    let entries: SitemapUrl[] = buildStaticSectionUrls().map((entry) => ({
       ...entry,
       lastmod: nowIso,
     }));
+    try {
+      const akisCategories = await getCachedAkisFeedCategoryLandingSitemapSlice();
+      const akisCategoryLandings: SitemapUrl[] = akisCategories.map((x) => ({
+        loc: normalizeCanonicalUrl(`/akis/${x.slug}`),
+        lastmod: toLastmod(x.lastmodIso) ?? nowIso,
+        changefreq: "daily" as const,
+        priority: 0.74,
+      }));
+      entries = dedupeUrls([...entries, ...akisCategoryLandings]);
+    } catch (e) {
+      console.error("akis feed category sitemap error:", e);
+    }
+    return entries;
   }
 
   if (section === "firms") {
