@@ -27,7 +27,7 @@ export async function createSpecializationTaxonomyFromPanel(
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false, error: "Supabase yapılandırması eksik." };
 
-  let base = slugify(label);
+  const base = slugify(label);
   if (!base) return { ok: false, error: "Geçerli bir slug üretilemedi." };
   if (RESERVED_SPECIALIZATION_SLUGS.has(base)) {
     return {

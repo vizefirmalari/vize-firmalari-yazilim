@@ -99,7 +99,7 @@ export default async function PanelHomePage() {
               >
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F4F6F8] ring-1 ring-[#0B3C5D]/10">
                   {m.logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                     
                     <img src={m.logoUrl} alt="" className="h-full w-full object-contain" />
                   ) : (
                     <span className="text-lg font-bold text-[#0B3C5D]/35">

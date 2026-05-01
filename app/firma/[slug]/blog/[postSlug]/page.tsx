@@ -106,6 +106,8 @@ async function getPublishedPostBySlug(
   ] as const;
 
   for (const selectCols of selectVariants) {
+    // Dinamik select stringleri — generated tipler tüm sütun kombinasyonlarını kapsamaz.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- PostgREST şema geriye dönük varyantları
     const postsTable = dataClient.from("firm_blog_posts") as any;
     const primary = await postsTable
       .select(selectCols)
@@ -134,6 +136,7 @@ async function getPublishedPostBySlug(
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- son deneme select kümesi (yukarıdaki gibi)
   const postsTable = dataClient.from("firm_blog_posts") as any;
   const finalTry = await postsTable
     .select(selectVariants[selectVariants.length - 1])

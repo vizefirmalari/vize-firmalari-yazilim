@@ -55,7 +55,7 @@ export default async function FirmPanelSectionLayout({ children, params }: Props
           <div className="flex items-center gap-3 px-4 py-5 sm:px-5">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/15">
               {logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
+                 
                 <img src={logoUrl} alt="" className="h-full w-full object-contain" />
               ) : (
                 <span className="text-lg font-bold text-white/80">{name.slice(0, 1).toUpperCase()}</span>

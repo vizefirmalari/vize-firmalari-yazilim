@@ -23,7 +23,7 @@ export function SiteHeaderMobileBar({ searchValue, hiddenParams, navUser }: Prop
         aria-label="Vize Firmaları — Ana sayfa"
         className="group flex shrink-0 items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 focus-visible:ring-offset-2"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+        { }
         <img
           src={SITE_HEADER_LOGO_URL}
           alt=""

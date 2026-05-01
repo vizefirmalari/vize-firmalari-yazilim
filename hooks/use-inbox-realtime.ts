@@ -21,7 +21,10 @@ type Options = {
  */
 export function useInboxRealtime({ topic, enabled, onInboxPing, playSoundOnPing = false }: Options) {
   const pingRef = useRef(onInboxPing);
-  pingRef.current = onInboxPing;
+
+  useEffect(() => {
+    pingRef.current = onInboxPing;
+  }, [onInboxPing]);
 
   useEffect(() => {
     if (!enabled || !topic) {

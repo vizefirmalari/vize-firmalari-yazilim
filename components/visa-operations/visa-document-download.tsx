@@ -12,6 +12,7 @@ export function VisaDocumentDownloadButton({ firmId, caseId, filePath, fileName 
     <div className="flex flex-col items-end gap-1">
       <button
         type="button"
+        aria-label={`İndir: ${fileName}`}
         disabled={pending}
         onClick={() => {
           setErr(null);

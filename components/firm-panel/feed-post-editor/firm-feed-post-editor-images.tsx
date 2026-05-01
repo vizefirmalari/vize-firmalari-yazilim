@@ -87,7 +87,7 @@ export const FirmFeedPostEditorImages = memo(function FirmFeedPostEditorImages({
             key={`${url}-${idx}`}
             className="relative flex w-24 flex-col gap-1 rounded-xl border border-[#0B3C5D]/10 bg-[#F8FAFC] p-1"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            { }
             <img src={url} alt="" className="h-20 w-full rounded-lg object-cover" />
             <div className="flex gap-1">
               <button

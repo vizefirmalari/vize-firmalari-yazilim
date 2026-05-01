@@ -161,7 +161,7 @@ export function FirmAccountSecurity() {
           ) : (
             <div className="flex max-w-lg flex-col gap-4 sm:flex-row sm:items-start">
               <div className="rounded-xl border border-[#1A1A1A]/10 bg-white p-3 shadow-sm">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                { }
                 <img src={mfaQr} alt="MFA QR" className="h-40 w-40 object-contain" />
               </div>
               <div className="min-w-0 flex-1 space-y-3">

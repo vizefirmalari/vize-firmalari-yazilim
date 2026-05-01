@@ -23,7 +23,7 @@ export function CountryGuideCard({ country }: CountryGuideCardProps) {
         className="flex min-w-0 flex-1 flex-col gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/35 focus-visible:ring-offset-2"
       >
         <div className="flex items-start gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          { }
           <img
             src={flagSrc}
             alt=""

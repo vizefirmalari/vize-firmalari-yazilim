@@ -101,7 +101,7 @@ export function SiteHeaderMobileDrawer({
               className="flex items-start gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40"
               onClick={close}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              { }
               <img
                 src={SITE_HEADER_LOGO_URL}
                 alt=""

@@ -75,7 +75,10 @@ export function useConversationRealtime({
   const typingClearRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const statusCb = useRef(onChannelStatus);
-  statusCb.current = onChannelStatus;
+
+  useEffect(() => {
+    statusCb.current = onChannelStatus;
+  }, [onChannelStatus]);
 
   useEffect(() => {
     setMessages(initialMessages);

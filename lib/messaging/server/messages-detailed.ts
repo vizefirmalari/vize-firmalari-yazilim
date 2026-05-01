@@ -61,7 +61,8 @@ export async function loadConversationMessagesDetailed(
             storage_path: String(att.storage_path),
           }
         : null;
-      const { message_attachments: _, ...rest } = row;
+      const { message_attachments, ...rest } = row;
+      void message_attachments;
       return { ...rest, attachment };
     })
     .reverse();

@@ -123,7 +123,6 @@ export async function saveFirmBlogPost(
   const metaDescription = payload.metaDescription.trim();
   const bodyRich = sanitizeFirmBlogBodyRichForStorage(payload.bodyRich.trim());
   const bodyPlainText = payload.bodyPlainText.trim();
-  const words = bodyPlainText.split(/\s+/).map((s) => s.trim()).filter(Boolean).length;
   const faqItems = payload.faqItems
     .map((x) => {
       const id = typeof x.id === "string" && x.id.trim() ? x.id.trim() : randomUUID();

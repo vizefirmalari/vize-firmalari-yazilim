@@ -6,10 +6,6 @@ import {
   type SpecializationKey,
 } from "@/lib/constants/firm-specializations";
 
-function normalizeTr(s: string): string {
-  return s.trim().toLocaleLowerCase("tr");
-}
-
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**

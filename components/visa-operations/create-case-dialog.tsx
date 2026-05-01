@@ -1,18 +1,34 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { createVisaCaseAction } from "@/lib/visa-operations/actions";
 
-type Props = { firmId: string };
+type Props = {
+  firmId: string;
+  triggerLabel?: string;
+  /** false: oluşturduktan sonra listede kal, liste yenilenir */
+  navigateToDetailOnCreate?: boolean;
+};
 
-export function CreateCaseDialog({ firmId }: Props) {
+export function CreateCaseDialog({
+  firmId,
+  triggerLabel = "Yeni operasyon dosyası",
+  navigateToDetailOnCreate = true,
+}: Props) {
   const titleId = useId();
   const router = useRouter();
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || pending) return;
+    const t = window.setTimeout(() => nameInputRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, [open, pending]);
 
   return (
     <>
@@ -24,7 +40,7 @@ export function CreateCaseDialog({ firmId }: Props) {
         }}
         className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#0B3C5D] px-4 text-sm font-semibold text-white transition hover:bg-[#0A3552]"
       >
-        Yeni operasyon dosyası
+        {triggerLabel}
       </button>
 
       {open ? (
@@ -76,7 +92,9 @@ export function CreateCaseDialog({ firmId }: Props) {
                     return;
                   }
                   setOpen(false);
-                  router.push(`/panel/${firmId}/visa-operations/${r.caseId}`);
+                  if (navigateToDetailOnCreate) {
+                    router.push(`/panel/${firmId}/visa-operations/${r.caseId}`);
+                  }
                   router.refresh();
                 });
               }}
@@ -86,6 +104,7 @@ export function CreateCaseDialog({ firmId }: Props) {
                   Müşteri adı <span className="text-[#0B3C5D]">*</span>
                 </label>
                 <input
+                  ref={nameInputRef}
                   id={`${titleId}-name`}
                   name="customerName"
                   required

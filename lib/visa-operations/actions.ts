@@ -6,8 +6,16 @@ import { VISA_TYPE_LABELS } from "@/lib/quick-apply/config";
 import type { VisaType } from "@/lib/quick-apply/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+import { normalizeVisaFinanceCurrency } from "@/lib/visa-operations/finance-currency";
+import type { VisaPaymentStatus } from "@/lib/visa-operations/finance-labels";
+import { VISA_PAYMENT_STATUSES } from "@/lib/visa-operations/finance-labels";
 import type { VisaCaseStatus } from "@/lib/visa-operations/status";
 import { isValidVisaCaseStatus } from "@/lib/visa-operations/status";
+import {
+  compareIsoDateOnly,
+  inclusiveDaysBetween,
+  isValidIsoDateOnly,
+} from "@/lib/visa-operations/travel-duration";
 
 function nullableText(v: unknown): string | null {
   if (typeof v !== "string") return null;
@@ -21,6 +29,30 @@ function parseOptionalMoney(v: FormDataEntryValue | null): number | null {
   if (raw === "") return null;
   const n = Number.parseFloat(raw.replace(",", "."));
   return Number.isFinite(n) ? n : null;
+}
+
+function parseOptionalInt(v: FormDataEntryValue | null): number | null {
+  if (v == null) return null;
+  const raw = typeof v === "string" ? v.trim() : "";
+  if (raw === "") return null;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+function revalidateVisaCase(firmId: string, caseId: string): void {
+  revalidatePath(`/panel/${firmId}/visa-operations`);
+  revalidatePath(`/panel/${firmId}/visa-operations/${caseId}`);
+}
+
+const ALLOWED_PRIORITY = ["normal", "acil", "çok_acil"] as const;
+const ALLOWED_DOC_DEL = ["bekliyor", "eksik", "tamamlandı"] as const;
+const ALLOWED_BIO = ["bekliyor", "randevu_alındı", "tamamlandı", "gerek_yok"] as const;
+const ALLOWED_PASS_DEL = ["bekliyor", "teslim_alındı", "müşteriye_teslim_edildi"] as const;
+
+function parseAllowed<T extends readonly string[]>(raw: FormDataEntryValue | null, allowed: T): T[number] | null {
+  const s = typeof raw === "string" ? raw.trim() : "";
+  if (!s || !(allowed as readonly string[]).includes(s)) return null;
+  return s as T[number];
 }
 
 export async function createVisaCaseAction(
@@ -74,7 +106,7 @@ export async function createVisaCaseAction(
   return { ok: true, caseId: id };
 }
 
-export async function updateVisaCaseCoreAction(formData: FormData): Promise<{ ok: false; error: string } | void> {
+export async function updateVisaCaseIdentityAction(formData: FormData): Promise<{ ok: false; error: string } | void> {
   const firmId = nullableText(formData.get("firmId"));
   const caseId = nullableText(formData.get("caseId"));
   if (!firmId || !caseId) return { ok: false, error: "Geçersiz istek." };
@@ -90,19 +122,200 @@ export async function updateVisaCaseCoreAction(formData: FormData): Promise<{ ok
     phone: nullableText(formData.get("phone")),
     email: nullableText(formData.get("email")),
     passport_no: nullableText(formData.get("passportNo")),
-    country: nullableText(formData.get("country")),
-    visa_type: nullableText(formData.get("visaType")),
-    appointment_date: nullableText(formData.get("appointmentDate")),
-    travel_date: nullableText(formData.get("travelDate")),
-    internal_note: nullableText(formData.get("internalNote")),
+    passport_expiry_date: nullableText(formData.get("passportExpiryDate")),
+    identity_no: nullableText(formData.get("identityNo")),
+    birth_date: nullableText(formData.get("birthDate")),
+    nationality: nullableText(formData.get("nationality")),
     public_tracking_code: nullableText(formData.get("publicTrackingCode")),
   };
 
   const { error } = await supabase.from("visa_cases").update(patch).eq("firm_id", firmId).eq("id", caseId);
   if (error) return { ok: false, error: error.message };
 
+  revalidateVisaCase(firmId, caseId);
+}
+
+export async function updateVisaCaseApplicationAction(
+  formData: FormData
+): Promise<{ ok: false; error: string } | void> {
+  const firmId = nullableText(formData.get("firmId"));
+  const caseId = nullableText(formData.get("caseId"));
+  if (!firmId || !caseId) return { ok: false, error: "Geçersiz istek." };
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "Sunucu yapılandırması eksik." };
+
+  const prio = parseAllowed(formData.get("priority"), ALLOWED_PRIORITY);
+  if (!prio) return { ok: false, error: "Geçersiz öncelik seçimi." };
+
+  const patch = {
+    country: nullableText(formData.get("country")),
+    visa_type: nullableText(formData.get("visaType")),
+    appointment_date: nullableText(formData.get("appointmentDate")),
+    application_center: nullableText(formData.get("applicationCenter")),
+    application_city: nullableText(formData.get("applicationCity")),
+    assigned_staff_name: nullableText(formData.get("assignedStaffName")),
+    priority: prio,
+  };
+
+  const { error } = await supabase.from("visa_cases").update(patch).eq("firm_id", firmId).eq("id", caseId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidateVisaCase(firmId, caseId);
+}
+
+export async function updateVisaCaseTravelAction(formData: FormData): Promise<{ ok: false; error: string } | void> {
+  const firmId = nullableText(formData.get("firmId"));
+  const caseId = nullableText(formData.get("caseId"));
+  if (!firmId || !caseId) return { ok: false, error: "Geçersiz istek." };
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "Sunucu yapılandırması eksik." };
+
+  const travelDate = nullableText(formData.get("travelDate"));
+  const travelEndDate = nullableText(formData.get("travelEndDate"));
+  let stayDays = parseOptionalInt(formData.get("stayDurationDays"));
+
+  if (travelDate && !isValidIsoDateOnly(travelDate)) {
+    return { ok: false, error: "Seyahat başlangıç tarihi geçersiz." };
+  }
+  if (travelEndDate && !isValidIsoDateOnly(travelEndDate)) {
+    return { ok: false, error: "Seyahat bitiş tarihi geçersiz." };
+  }
+  if (travelDate && travelEndDate) {
+    if (compareIsoDateOnly(travelEndDate, travelDate) < 0) {
+      return { ok: false, error: "Seyahat bitiş tarihi başlangıçtan önce olamaz." };
+    }
+    if (stayDays === null) {
+      stayDays = inclusiveDaysBetween(travelDate, travelEndDate);
+    }
+  }
+
+  if (stayDays !== null && stayDays < 1) {
+    return { ok: false, error: "Kalış süresi en az 1 gün olmalıdır." };
+  }
+
+  const patch = {
+    travel_date: travelDate,
+    travel_end_date: travelEndDate,
+    stay_duration_days: stayDays,
+    travel_purpose: nullableText(formData.get("travelPurpose")),
+    sponsor_status: nullableText(formData.get("sponsorStatus")),
+  };
+
+  const { error } = await supabase.from("visa_cases").update(patch).eq("firm_id", firmId).eq("id", caseId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidateVisaCase(firmId, caseId);
+}
+
+export async function updateVisaCaseOperationsAction(
+  formData: FormData
+): Promise<{ ok: false; error: string } | void> {
+  const firmId = nullableText(formData.get("firmId"));
+  const caseId = nullableText(formData.get("caseId"));
+  if (!firmId || !caseId) return { ok: false, error: "Geçersiz istek." };
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "Sunucu yapılandırması eksik." };
+
+  const docDel = parseAllowed(formData.get("documentDeliveryStatus"), ALLOWED_DOC_DEL);
+  const bio = parseAllowed(formData.get("biometricStatus"), ALLOWED_BIO);
+  const passDel = parseAllowed(formData.get("passportDeliveryStatus"), ALLOWED_PASS_DEL);
+  if (!docDel || !bio || !passDel) {
+    return { ok: false, error: "Geçersiz operasyon durumu seçimi." };
+  }
+
+  const patch = {
+    document_delivery_status: docDel,
+    biometric_status: bio,
+    passport_delivery_status: passDel,
+    next_action: nullableText(formData.get("nextAction")),
+    next_action_date: nullableText(formData.get("nextActionDate")),
+    internal_note: nullableText(formData.get("internalNote")),
+  };
+
+  const { error } = await supabase.from("visa_cases").update(patch).eq("firm_id", firmId).eq("id", caseId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidateVisaCase(firmId, caseId);
+}
+
+export async function patchVisaCasePaymentStatusAction(payload: {
+  firmId: string;
+  caseId: string;
+  paymentStatus: VisaPaymentStatus;
+}): Promise<{ ok: false; error: string } | { ok: true }> {
+  const firmId = nullableText(payload.firmId);
+  const caseId = nullableText(payload.caseId);
+  if (!firmId || !caseId) return { ok: false, error: "Geçersiz istek." };
+  if (!VISA_PAYMENT_STATUSES.includes(payload.paymentStatus)) {
+    return { ok: false, error: "Geçersiz ödeme durumu." };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "Sunucu yapılandırması eksik." };
+
+  const { error } = await supabase
+    .from("visa_case_finance")
+    .update({ payment_status: payload.paymentStatus })
+    .eq("firm_id", firmId)
+    .eq("case_id", caseId);
+
+  if (error) return { ok: false, error: error.message };
+
   revalidatePath(`/panel/${firmId}/visa-operations`);
   revalidatePath(`/panel/${firmId}/visa-operations/${caseId}`);
+  return { ok: true };
+}
+
+export async function patchVisaCaseInternalNoteAction(payload: {
+  firmId: string;
+  caseId: string;
+  internalNote: string | null;
+}): Promise<{ ok: false; error: string } | { ok: true }> {
+  const firmId = nullableText(payload.firmId);
+  const caseId = nullableText(payload.caseId);
+  if (!firmId || !caseId) return { ok: false, error: "Geçersiz istek." };
+
+  let internal_note: string | null = null;
+  if (payload.internalNote != null) {
+    const t = payload.internalNote.trim();
+    internal_note = t === "" ? null : t;
+  }
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "Sunucu yapılandırması eksik." };
+
+  const { error } = await supabase
+    .from("visa_cases")
+    .update({ internal_note })
+    .eq("firm_id", firmId)
+    .eq("id", caseId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/panel/${firmId}/visa-operations`);
+  revalidatePath(`/panel/${firmId}/visa-operations/${caseId}`);
+  return { ok: true };
+}
+
+export async function deleteVisaCaseAction(
+  firmId: string,
+  caseId: string
+): Promise<{ ok: false; error: string } | { ok: true }> {
+  const fid = nullableText(firmId);
+  const cid = nullableText(caseId);
+  if (!fid || !cid) return { ok: false, error: "Geçersiz istek." };
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "Sunucu yapılandırması eksik." };
+
+  const { error } = await supabase.from("visa_cases").delete().eq("firm_id", fid).eq("id", cid);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/panel/${fid}/visa-operations`);
+  return { ok: true };
 }
 
 export async function setVisaCaseStatusAction(payload: {
@@ -147,6 +360,9 @@ export async function updateVisaCaseFinanceAction(formData: FormData): Promise<{
     consulate_fee: parseOptionalMoney(formData.get("consulateFee")),
     service_fee: parseOptionalMoney(formData.get("serviceFee")),
     total_fee: parseOptionalMoney(formData.get("totalFee")),
+    consulate_fee_currency: normalizeVisaFinanceCurrency(formData.get("consulateFeeCurrency")),
+    service_fee_currency: normalizeVisaFinanceCurrency(formData.get("serviceFeeCurrency")),
+    total_fee_currency: normalizeVisaFinanceCurrency(formData.get("totalFeeCurrency")),
     payment_status: paymentStatus ?? "bekliyor",
     invoice_status: invoiceStatus ?? "bekliyor",
   };
@@ -159,8 +375,7 @@ export async function updateVisaCaseFinanceAction(formData: FormData): Promise<{
 
   if (error) return { ok: false, error: error.message };
 
-  revalidatePath(`/panel/${firmId}/visa-operations`);
-  revalidatePath(`/panel/${firmId}/visa-operations/${caseId}`);
+  revalidateVisaCase(firmId, caseId);
 }
 
 export async function convertLeadToVisaCaseAction(

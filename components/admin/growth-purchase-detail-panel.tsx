@@ -95,7 +95,7 @@ export function GrowthPurchaseDetailPanel({ model }: { model: GrowthPurchaseDeta
           <div className="mt-4 flex gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#1A1A1A]/10 bg-[#F7F9FB]">
               {logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
+                 
                 <img src={logoUrl} alt="" className="h-full w-full object-contain" />
               ) : (
                 <span className="text-lg font-bold text-[#0B3C5D]/40">{firmName.slice(0, 1)}</span>

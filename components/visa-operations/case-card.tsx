@@ -3,6 +3,7 @@ import Link from "next/link";
 import { VISA_CASE_STATUS_VARIANT } from "@/lib/visa-operations/status";
 import type { VisaCaseRow } from "@/lib/visa-operations/types";
 
+import { CasePriorityBadge } from "@/components/visa-operations/case-priority-badge";
 import { StatusBadge } from "@/components/visa-operations/status-badge";
 
 function formatShortDate(iso: string | null | undefined): string {
@@ -30,6 +31,7 @@ export function CaseCard({ firmId, row }: Props) {
           </Link>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusBadge statusKey={row.status} variant={variant} />
+            {row.priority && row.priority !== "normal" ? <CasePriorityBadge priority={row.priority} /> : null}
             {row.public_tracking_code ? (
               <span className="text-[11px] font-medium text-[#1A1A1A]/50">#{row.public_tracking_code}</span>
             ) : null}

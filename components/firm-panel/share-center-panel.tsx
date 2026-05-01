@@ -250,7 +250,7 @@ export function ShareCenterPanel({
           <div className="mt-2 flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/12 ring-1 ring-white/20">
               {logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
+                 
                 <img src={logoUrl} alt="" className="h-full w-full object-contain" />
               ) : (
                 <span className="text-lg font-bold text-white/80">{firmName.slice(0, 1).toUpperCase()}</span>

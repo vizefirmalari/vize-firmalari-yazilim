@@ -19,7 +19,7 @@ export function sanitizeFirmBlogBodyRichForStorage(html: string): string {
  */
 export function sanitizeFirmBlogPastedHtml(html: string): string {
   if (!html) return html;
-  let working = html.replace(/<\s*hr\b[^>]*>/gi, "");
+  const working = html.replace(/<\s*hr\b[^>]*>/gi, "");
 
   if (typeof document === "undefined") {
     return working;

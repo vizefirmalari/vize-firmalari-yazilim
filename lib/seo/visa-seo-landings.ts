@@ -453,7 +453,7 @@ export function mergeVisaLandingServerFilters(
 
 export async function buildVisaSeoMetadata(
   path: VisaSeoLandingPath,
-  sp: Record<string, string | string[] | undefined>
+  _sp: Record<string, string | string[] | undefined>
 ): Promise<Metadata> {
   const cfg = LANDINGS[path];
   const canonical = absoluteUrl(path);

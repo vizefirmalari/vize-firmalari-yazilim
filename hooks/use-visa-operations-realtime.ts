@@ -20,7 +20,10 @@ type Options = {
  */
 export function useVisaOperationsRealtime({ firmId, enabled = true, onVisaCaseEvent }: Options) {
   const pingRef = useRef(onVisaCaseEvent);
-  pingRef.current = onVisaCaseEvent;
+
+  useEffect(() => {
+    pingRef.current = onVisaCaseEvent;
+  }, [onVisaCaseEvent]);
 
   useEffect(() => {
     if (!enabled || !firmId) return;

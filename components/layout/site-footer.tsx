@@ -249,7 +249,7 @@ export function SiteFooter() {
             {/* 1–2. Brand + contact: grouped on mobile */}
             <div className="rounded-2xl border border-primary/10 bg-white p-4 shadow-[0_2px_12px_rgba(11,60,93,0.05)] lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
               <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:gap-3 lg:gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                { }
                 <img
                   src={SITE_HEADER_LOGO_URL}
                   alt={logoAlt}

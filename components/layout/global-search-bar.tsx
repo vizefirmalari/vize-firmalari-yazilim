@@ -189,13 +189,14 @@ function popularSuggestions(): { title: string; href: string }[] {
 }
 
 export function GlobalSearchBar({
-  hiddenParams: _hiddenParams,
+  hiddenParams: _deprecatedHiddenParams,
   defaultValue,
   inputId,
   className,
   placeholder = "Ülke veya firma ara",
   compact = false,
 }: Props) {
+  void _deprecatedHiddenParams;
   const router = useRouter();
   const listboxId = useId().replace(/:/g, "");
   const rootRef = useRef<HTMLDivElement>(null);

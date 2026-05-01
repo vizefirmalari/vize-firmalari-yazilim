@@ -50,7 +50,7 @@ export default async function MesajlarPage({ searchParams }: PageProps) {
 
   await supabase.rpc("accept_firm_panel_invites_for_user");
 
-  let conversationId = sp.c?.trim() ?? null;
+  const conversationId = sp.c?.trim() ?? null;
 
   if (!conversationId && sp.firm?.trim()) {
     const { data: ensured, error: ensureErr } = await supabase.rpc("ensure_user_firm_conversation", {

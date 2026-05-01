@@ -100,7 +100,7 @@ export function GrowthPurchaseRequestsTable({ rows }: { rows: Record<string, unk
                 <div className="flex items-center gap-2">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#1A1A1A]/10 bg-[#F7F9FB]">
                     {r.firm_logo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
+                       
                       <img src={r.firm_logo} alt="" className="h-full w-full object-contain" />
                     ) : (
                       <span className="text-xs font-bold text-[#0B3C5D]/35">{r.firm_name.slice(0, 1)}</span>

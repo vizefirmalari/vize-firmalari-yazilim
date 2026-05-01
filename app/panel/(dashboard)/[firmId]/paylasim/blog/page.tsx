@@ -26,6 +26,7 @@ async function getInitialPostForEdit(
   ] as const;
 
   for (const selectCols of selectVariants) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- panel edit: sütun seti ortamdan ortama değişebilir
     const result = await (supabase.from("firm_blog_posts") as any)
       .select(selectCols)
       .eq("id", postId)

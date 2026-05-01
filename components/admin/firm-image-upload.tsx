@@ -55,7 +55,7 @@ export function FirmImageUpload({
       <p className="text-sm font-medium text-[#0B3C5D]">{label}</p>
       {value ? (
         <div className="flex flex-wrap items-end gap-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          { }
           <img src={value} alt="" className={`border border-[#0B3C5D]/10 bg-white ${preview}`} />
           <div className="flex flex-wrap gap-2">
             <label className="inline-flex cursor-pointer items-center rounded-xl border border-[#0B3C5D]/20 bg-white px-3 py-2 text-xs font-semibold text-[#0B3C5D] hover:bg-[#eef2f6]">
@@ -149,7 +149,7 @@ export function FirmImageArrayUpload({
       <div className="flex flex-wrap gap-3">
         {urls.map((u, i) => (
           <div key={`${u}-${i}`} className="relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            { }
             <img
               src={u}
               alt=""

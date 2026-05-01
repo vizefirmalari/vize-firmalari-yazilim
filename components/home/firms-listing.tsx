@@ -327,7 +327,7 @@ export function FirmsListing({
     });
     setSort(initialSort);
     // Yalnızca URL / sunucu filtre senkronu; firms realtime ile bounds değişince sıfırlanmaz.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- bounds, initialCountries, initialVisaTypes, initialSort: urlKey ile birlikte güncellenir
+     
   }, [urlKey, setAppliedFiltersWithLock]);
 
   const listingScrollKey = useMemo(

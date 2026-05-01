@@ -411,7 +411,7 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
             <>
               <header className="rounded-2xl border border-border bg-white p-6 shadow-[0_2px_14px_rgba(11,60,93,0.06)] sm:p-8">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  { }
                   <img
                     src={flagSrc}
                     alt=""

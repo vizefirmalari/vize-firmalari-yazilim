@@ -54,7 +54,7 @@ export function WizardCountryFlag({
     <span
       className={`inline-flex shrink-0 overflow-hidden rounded-[3px] ${border} ${className}`}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- harici CDN; next.config dışı */}
+      { }
       <img
         src={flagUrlForIso(iso, d.w)}
         alt=""

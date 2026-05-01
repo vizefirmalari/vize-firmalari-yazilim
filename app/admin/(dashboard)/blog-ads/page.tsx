@@ -38,7 +38,9 @@ export default async function AdminBlogAdsPage() {
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
 
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const sinceDate = new Date();
+  sinceDate.setUTCDate(sinceDate.getUTCDate() - 30);
+  const since = sinceDate.toISOString();
   const { data: events } = await supabase
     .from("blog_ad_events")
     .select("blog_ad_id,event_type,slot_position,created_at")

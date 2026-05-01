@@ -433,7 +433,6 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
 
   out.sort((a, b) => {
     const hype = (x: FirmRow) => x.hype_score ?? x.raw_hype_score * 100;
-    const mp = (x: FirmRow) => x.manual_priority ?? 0;
     switch (f.sort) {
       case "hype_asc":
         return hype(a) - hype(b);

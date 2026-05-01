@@ -94,7 +94,7 @@ export default async function HesabimPage() {
               <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-background ring-1 ring-primary/10">
                 {avatarUrl ? (
                   // OAuth sağlayıcı URL’leri çeşitli; next/image domain listesine bağlı kalmamak için
-                  // eslint-disable-next-line @next/next/no-img-element
+                   
                   <img
                     src={avatarUrl}
                     alt=""

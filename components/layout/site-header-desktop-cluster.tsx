@@ -30,7 +30,7 @@ export function SiteHeaderDesktopCluster({
             aria-label="Vize Firmaları — Ana sayfa"
             className="group flex min-w-0 shrink-0 items-center gap-2 sm:gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface lg:gap-3.5"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            { }
             <img
               src={SITE_HEADER_LOGO_URL}
               alt=""

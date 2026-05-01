@@ -1,26 +1,37 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import type { VisaCaseDetailPack } from "@/lib/data/visa-cases";
-import { VISA_CASE_STATUS_VARIANT } from "@/lib/visa-operations/status";
 
+import { visaDetailCardClass } from "@/components/visa-operations/case-form-styles";
+import { CaseDetailSummary } from "@/components/visa-operations/case-detail-summary";
+import { CaseIdentityForm } from "@/components/visa-operations/case-identity-form";
+import { CaseApplicationForm } from "@/components/visa-operations/case-application-form";
+import { CaseTravelForm } from "@/components/visa-operations/case-travel-form";
+import { CaseOperationsForm } from "@/components/visa-operations/case-operations-form";
 import { CaseEventsTimeline } from "@/components/visa-operations/case-events-timeline";
-import { CaseCoreFields } from "@/components/visa-operations/case-core-fields";
 import { FinanceBox } from "@/components/visa-operations/finance-box";
 import { DocumentUploader } from "@/components/visa-operations/document-uploader";
 import { VisaDocumentDownloadButton } from "@/components/visa-operations/visa-document-download";
-import { StatusBadge } from "@/components/visa-operations/status-badge";
-import { StatusSelect } from "@/components/visa-operations/status-select";
 import { formatVisaDisplayDate } from "@/components/visa-operations/format-display";
 
 type Props = { firmId: string; pack: VisaCaseDetailPack };
 
+function DetailSection({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+  return (
+    <section className={visaDetailCardClass}>
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-[#0B3C5D]/90">{title}</h2>
+      {hint ? <p className="mt-1 text-xs text-[#1A1A1A]/50">{hint}</p> : null}
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
 export function CaseDetail({ firmId, pack }: Props) {
   const c = pack.case;
-  const variant =
-    VISA_CASE_STATUS_VARIANT[c.status as keyof typeof VISA_CASE_STATUS_VARIANT] ?? "neutral";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href={`/panel/${firmId}/visa-operations`}
@@ -29,50 +40,51 @@ export function CaseDetail({ firmId, pack }: Props) {
           ← Operasyon dosyaları
         </Link>
         <p className="text-[11px] text-[#1A1A1A]/45">
-          Oluşturulma {formatVisaDisplayDate(c.created_at)} · Son güncelleme {formatVisaDisplayDate(c.updated_at)}
+          Oluşturulma {formatVisaDisplayDate(c.created_at)} · Güncelleme {formatVisaDisplayDate(c.updated_at)}
         </p>
       </div>
 
-      <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-6 shadow-[0_4px_22px_rgba(11,60,93,0.06)]">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-xs font-medium text-[#1A1A1A]/50">{c.public_tracking_code ? `#${c.public_tracking_code}` : "Dosya özeti"}</p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight text-[#0B3C5D]">{c.customer_name}</h1>
-            <div className="mt-3">
-              <StatusBadge statusKey={c.status} variant={variant} />
-            </div>
-          </div>
-          <div className="w-full rounded-2xl border border-[#0B3C5D]/12 bg-[#F7F9FB] px-4 py-3 sm:max-w-sm">
-            <StatusSelect firmId={firmId} caseId={c.id} initialStatus={c.status} />
-          </div>
+      <CaseDetailSummary firmId={firmId} c={c} />
+
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="flex flex-col gap-6">
+          <DetailSection title="Kimlik ve kişi bilgileri" hint="Temel iletişim ve kimlik alanları müşteri görünümleriyle uyumlu tutulmalıdır.">
+            <CaseIdentityForm firmId={firmId} data={c} />
+          </DetailSection>
+
+          <DetailSection title="Başvuru bilgileri" hint="Konsolosluk/merkez ve dosya sorumlusu sahada netlik sağlar.">
+            <CaseApplicationForm firmId={firmId} data={c} />
+          </DetailSection>
+
+          <DetailSection title="Seyahat bilgileri" hint="Başlangıç ve bitiş tarihleri tutarlı olduğunda kalış süresi otomatik hesaplanabilir.">
+            <CaseTravelForm firmId={firmId} data={c} />
+          </DetailSection>
         </div>
 
-        <div className="mt-6 grid gap-2 text-sm text-[#1A1A1A]/75 sm:grid-cols-2">
-          <p>Telefon: {c.phone?.trim() ? c.phone : "—"}</p>
-          <p>E-posta: {c.email?.trim() ? c.email : "—"}</p>
-          <p>Ülke: {c.country?.trim() ? c.country : "—"}</p>
-          <p>Vize/işlem tipi: {c.visa_type?.trim() ? c.visa_type : "—"}</p>
-          <p>Randevu: {formatVisaDisplayDate(c.appointment_date)}</p>
-          <p>Seyahat: {formatVisaDisplayDate(c.travel_date)}</p>
-          {c.source_lead_id ? (
-            <p className="sm:col-span-2 text-xs font-medium text-[#0B3C5D]">
-              Kaynak lead: bağlı (geri dönmez; lead kaydı aynen duruyor).
+        <div className="flex flex-col gap-6">
+          <DetailSection title="Operasyon takip" hint="Evrak, biyometri ve pasaport akışı ile sonraki aksiyon; üst özette de özetlenir.">
+            <CaseOperationsForm firmId={firmId} data={c} />
+          </DetailSection>
+
+          <FinanceBox firmId={firmId} caseId={c.id} finance={pack.finance} />
+
+          <section className={`${visaDetailCardClass} border-dashed border-[#0B3C5D]/16`}>
+            <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#1A1A1A]/45">Senkron</h2>
+            <p className="mt-3 text-sm leading-relaxed text-[#1A1A1A]/72">
+              Kayıtlı değişiklikler bağlı olduğunuz Realtime bildirimiyle liste ve detayda otomatik yenilenir — sayfayı
+              sık sık yenilemeniz gerekmez.
             </p>
-          ) : null}
+            <Link
+              href={`/panel/${firmId}/formlar`}
+              className="mt-4 inline-flex min-h-10 items-center rounded-xl border border-[#0B3C5D]/22 px-4 text-xs font-semibold text-[#0B3C5D] hover:bg-[#F7F9FB]"
+            >
+              Gelen başvurulara dön
+            </Link>
+          </section>
         </div>
-      </section>
+      </div>
 
-      <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-[0_2px_12px_rgba(11,60,93,0.04)]">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-[#0B3C5D]/90">Kimlik bilgisi</h2>
-        <p className="mt-2 text-xs text-[#1A1A1A]/50">Takip kodu dahil sahada sık güncellenen alanları buradan yönetin.</p>
-        <div className="mt-4">
-          <CaseCoreFields firmId={firmId} data={c} />
-        </div>
-      </section>
-
-      <FinanceBox firmId={firmId} caseId={c.id} finance={pack.finance} />
-
-      <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-[0_2px_12px_rgba(11,60,93,0.04)]">
+      <section className={visaDetailCardClass}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-wide text-[#0B3C5D]/90">Evraklar</h3>
@@ -106,25 +118,10 @@ export function CaseDetail({ firmId, pack }: Props) {
         </ul>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.95fr)]">
-        <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-[#0B3C5D]/90">Durum tarihçesi</h3>
-          <div className="mt-3">
-            <CaseEventsTimeline events={pack.events} />
-          </div>
-        </div>
-        <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
-          <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#1A1A1A]/45">Not</h3>
-          <p className="mt-3 text-sm leading-relaxed text-[#1A1A1A]/72">
-            Finans güncellenince veya yeni dosya yüklendiğinde bu ekranı Realtime bildirimiyle otomatik
-            güncellersiniz — sayfayı kapatmadan bileşik bilgi senkron kalır.
-          </p>
-          <Link
-            href={`/panel/${firmId}/formlar`}
-            className="mt-4 inline-flex min-h-10 items-center rounded-xl border border-[#0B3C5D]/22 px-4 text-xs font-semibold text-[#0B3C5D] hover:bg-[#F7F9FB]"
-          >
-            Gelen başvurulara geri dön
-          </Link>
+      <section>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-[#0B3C5D]/90">Durum tarihçesi</h3>
+        <div className="mt-3">
+          <CaseEventsTimeline events={pack.events} />
         </div>
       </section>
     </div>

@@ -32,7 +32,7 @@ export function LogoUpload({ value, onChange }: LogoUploadProps) {
     <div className="space-y-3">
       {value ? (
         <div className="flex items-center gap-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          { }
           <img
             src={value}
             alt="Logo önizleme"

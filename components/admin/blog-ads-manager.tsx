@@ -229,7 +229,7 @@ export function BlogAdsManager({
         <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-[#1A1A1A]/55">Sosyal medya metrikleri</h2>
           <p className="mt-1 text-xs text-[#1A1A1A]/60">
-            Firma panelindeki "Sosyal Medyada Reklam Ver" kartı bu verilerle senkron çalışır.
+            {`Firma panelindeki "Sosyal Medyada Reklam Ver" kartı bu verilerle senkron çalışır.`}
           </p>
           <div className="mt-3 overflow-x-auto rounded-xl border border-[#0B3C5D]/10">
             <table className="min-w-[680px] w-full text-left text-sm">
