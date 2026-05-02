@@ -100,12 +100,12 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-0 gap-y-0.5">
+          <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-0 gap-y-0.5">
             <h3 className="min-w-0 break-words text-base font-bold leading-snug text-primary">
               {firm.name}
             </h3>
             <FirmNameBadges firm={firm} size="card" className="shrink-0" />
-          </div>
+          </span>
           {badgeLine ? (
             <p className="mt-1 line-clamp-2 text-[10px] font-medium leading-tight text-foreground/50">
               {badgeLine}

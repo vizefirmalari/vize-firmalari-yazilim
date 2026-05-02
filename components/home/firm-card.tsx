@@ -167,10 +167,12 @@ export function FirmCard({ firm }: FirmCardProps) {
           </div>
         </div>
         <div className="mt-4 flex w-full max-w-full flex-wrap items-center justify-center gap-x-0 gap-y-1 px-1 sm:mt-3.5">
-          <h3 className="min-w-0 max-w-full text-center text-[1.375rem] font-bold leading-snug text-[#0B3C5D] sm:text-xl sm:font-semibold sm:leading-snug">
-            {firm.name}
-          </h3>
-          <FirmNameBadges firm={firm} size="card" className="justify-center" />
+          <span className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-0 gap-y-1">
+            <h3 className="min-w-0 max-w-full text-center text-[1.375rem] font-bold leading-snug text-[#0B3C5D] sm:text-xl sm:font-semibold sm:leading-snug">
+              {firm.name}
+            </h3>
+            <FirmNameBadges firm={firm} size="card" className="justify-center" />
+          </span>
         </div>
         {firm.short_badge ? (
           <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-[#D9A441] sm:mt-1.5">
