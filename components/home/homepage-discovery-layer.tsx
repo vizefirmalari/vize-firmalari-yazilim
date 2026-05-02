@@ -4,7 +4,7 @@ import { HomepageHorizontalScroller } from "@/components/home/homepage-horizonta
 import { HomepageQuickDiscoverStrip } from "@/components/home/homepage-quick-discover-strip";
 import { HomepageServiceCompactGrid } from "@/components/home/homepage-service-compact-grid";
 import { HomepageSpecialtyVisualGrid } from "@/components/home/homepage-specialty-visual-grid";
-import { FeaturedFirmCard } from "@/components/home/featured-firm-card";
+import { FirmCard } from "@/components/home/firm-card";
 import {
   buildHomeDestinationCards,
   buildHomeMainServiceTiles,
@@ -96,8 +96,11 @@ export function HomepageDiscoveryLayer({
               >
                 <HomepageHorizontalScroller gapClass="gap-4 md:gap-5">
                   {featured.map((f) => (
-                    <div key={f.id} className="featured-showcase-card-fix shrink-0 snap-start">
-                      <FeaturedFirmCard firm={f} />
+                    <div
+                      key={f.id}
+                      className="h-full w-[min(22.5rem,calc(100vw-2.25rem))] shrink-0 snap-start sm:w-90"
+                    >
+                      <FirmCard firm={f} />
                     </div>
                   ))}
                 </HomepageHorizontalScroller>
