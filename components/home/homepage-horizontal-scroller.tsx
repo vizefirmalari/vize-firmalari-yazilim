@@ -13,6 +13,8 @@ type Props = {
   /** Kartlar arası gap Tailwind sınıfı */
   gapClass?: string;
   className?: string;
+  /** Kaydırma alanı alt iç boşluğu (varsayılan: ince scrollbar için `pb-2`). */
+  scrollAreaPbClass?: string;
   /** Yatay snap */
   snap?: boolean;
   /**
@@ -26,6 +28,7 @@ export function HomepageHorizontalScroller({
   children,
   gapClass = "gap-3 md:gap-4",
   className = "",
+  scrollAreaPbClass = "pb-2",
   snap = true,
   flushMobile = true,
 }: Props) {
@@ -130,7 +133,7 @@ export function HomepageHorizontalScroller({
         <div
           ref={scrollerRef}
           onScroll={updateArrows}
-          className={`overflow-x-auto overflow-y-hidden pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] ${snapClass}`}
+          className={`overflow-x-auto overflow-y-hidden [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] ${scrollAreaPbClass} ${snapClass}`.trim()}
         >
           <div
             ref={innerRef}

@@ -812,8 +812,10 @@ export function FirmsListing({
 
           <div
             id="firmalar"
-            className={`scroll-mt-28 border-t border-border/70 pt-12 lg:pt-14 ${
-              children ? "mt-12 lg:mt-14" : "mt-6 lg:mt-8"
+            className={`scroll-mt-28 ${
+              children
+                ? "border-t-0 pt-3 lg:pt-5"
+                : "border-t border-border/70 mt-6 lg:mt-8 pt-12 lg:pt-14"
             }`}
           >
           <h2 className="text-2xl font-bold text-primary">{featuredTitle}</h2>

@@ -41,7 +41,7 @@ export function HomepageDiscoveryLayer({
     featured.length > 0;
 
   return (
-    <div className="w-full border-b border-border/80 bg-linear-to-b from-surface/18 via-background/55 to-background pb-4 pt-9 md:pb-8 md:pt-11">
+    <div className="w-full border-b border-border/80 bg-linear-to-b from-surface/18 via-background/55 to-background pb-0 pt-9 md:pb-1 md:pt-11">
       <div className="flex w-full flex-col gap-12 md:gap-16">
         <HomepageDiscoverySection
           id="hizli-kesif"
@@ -94,7 +94,10 @@ export function HomepageDiscoveryLayer({
                 description="Firmalar; yasal yapı, ekip kapasitesi, dijital varlık ve hizmet kapsamına göre değerlendirilir."
                 seeAllHref="/?sort=corp_desc#firmalar"
               >
-                <HomepageHorizontalScroller gapClass="gap-4 md:gap-5">
+                <HomepageHorizontalScroller
+                  gapClass="gap-4 md:gap-5"
+                  scrollAreaPbClass="pb-0"
+                >
                   {featured.map((f) => (
                     <div
                       key={f.id}
