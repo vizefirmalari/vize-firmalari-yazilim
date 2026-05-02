@@ -201,7 +201,7 @@ export function FirmBadgeInfoDialog({
       <button
         ref={triggerRef}
         type="button"
-        className={`relative z-20 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 focus-visible:ring-offset-2 ${triggerClassName}`}
+        className={`relative z-20 m-0 inline-flex shrink-0 appearance-none rounded-none border-0 bg-transparent p-0 shadow-none outline-none ring-offset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:ring-offset-0 ${triggerClassName}`}
         aria-label={ariaLabel}
         aria-expanded={open}
         aria-haspopup="dialog"

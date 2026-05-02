@@ -23,7 +23,7 @@ export function FirmNameBadges({ firm, size = "card", className = "" }: Props) {
   const verifiedVariant = size === "detail" ? "hero" : "card";
 
   return (
-    <span className={`ml-1.5 inline-flex shrink-0 items-center gap-2 ${className}`}>
+    <span className={`inline-flex shrink-0 items-center gap-2 ${className}`}>
       {verified ? (
         <VerifiedFirmBadge
           isVerified

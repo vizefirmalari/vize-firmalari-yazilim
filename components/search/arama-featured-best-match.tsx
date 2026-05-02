@@ -33,7 +33,7 @@ export function AramaFeaturedBestMatch({
             {featured.firm.name.slice(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <span className="inline-flex flex-wrap items-center gap-x-0 gap-y-1">
+            <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
               <p className="text-lg font-bold text-primary group-hover:text-secondary">
                 {featured.firm.name}
               </p>

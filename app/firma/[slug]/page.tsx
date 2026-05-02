@@ -263,11 +263,15 @@ export default async function FirmaPage({ params }: PageProps) {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <span className="inline-flex flex-wrap items-center gap-x-0 gap-y-1.5">
+                  <span className="flex min-w-0 flex-wrap items-center gap-2 gap-y-2">
                     <h1 className="min-w-0 text-3xl font-bold tracking-tight text-white sm:text-4xl">
                       {firm.name}
                     </h1>
-                    <FirmNameBadges firm={firm} size="detail" className="shrink-0" />
+                    <FirmNameBadges
+                      firm={firm}
+                      size="detail"
+                      className="shrink-0 items-center [&_button]:focus-visible:ring-white/70"
+                    />
                   </span>
                   <p className="mt-2 text-sm text-white/80">
                     <span>

@@ -77,10 +77,12 @@ export function VerifiedFirmBadge({
 }: Props) {
   if (!isVerified) return null;
 
-  /** Kart 30px, detay 34px — Yasal Bilgi rozeti ile aynı çap */
-  const badgeDiameter =
-    variant === "hero" ? "h-[34px] w-[34px] min-h-[34px] min-w-[34px]" : "h-[30px] w-[30px] min-h-[30px] min-w-[30px]";
-  const badgePx = variant === "hero" ? 34 : 30;
+  /** Kart 30px; detay hero 44px (`h-11`) — sarmallı şeffaf */
+  const px = variant === "hero" ? 44 : 30;
+  const badgeBox =
+    variant === "hero"
+      ? "h-11 w-11 min-h-11 min-w-11"
+      : "h-[30px] w-[30px] min-h-[30px] min-w-[30px]";
   const logoAlt = `${companyName} logosu`;
 
   return (
@@ -88,15 +90,15 @@ export function VerifiedFirmBadge({
       ariaLabel={`${companyName} — doğrulanmış firma bilgisi`}
       srDialogTitle={EXPLAIN_TITLE}
       srContextLine={companyName}
-      triggerClassName={`relative box-border inline-flex items-center justify-center overflow-hidden rounded-full shadow-sm transition hover:opacity-95 ${badgeDiameter} ${className}`}
+      triggerClassName={`relative inline-flex items-center justify-center ${badgeBox} ${className}`}
       triggerChildren={
         <Image
           src={VERIFIED_FIRM_BADGE_IMAGE_URL}
           alt=""
-          width={badgePx}
-          height={badgePx}
+          width={px}
+          height={px}
           className="object-contain object-center"
-          sizes={variant === "hero" ? "34px" : "30px"}
+          sizes={`${px}px`}
           aria-hidden
         />
       }

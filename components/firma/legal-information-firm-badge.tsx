@@ -10,7 +10,6 @@ import {
 type Props = {
   companyName: string;
   logoUrl: string | null | undefined;
-  /** Kart vs detay rozeti ölçüsü (`VerifiedFirmBadge` ile aynı) */
   variant?: "card" | "hero";
   className?: string;
 };
@@ -21,24 +20,28 @@ export function LegalInformationFirmBadge({
   variant = "card",
   className = "",
 }: Props) {
-  const badgeDiameter =
-    variant === "hero" ? "h-[34px] w-[34px] min-h-[34px] min-w-[34px]" : "h-[30px] w-[30px] min-h-[30px] min-w-[30px]";
-  const imgPx = variant === "hero" ? 34 : 30;
+  const badgeBox =
+    variant === "hero"
+      ? "h-11 w-11 min-h-11 min-w-11"
+      : "h-[30px] w-[30px] min-h-[30px] min-w-[30px]";
   const logoAlt = `${companyName} logosu`;
+  const imgClass =
+    variant === "hero" ? "h-10 w-10 object-contain object-center" : "h-6 w-6 object-contain object-center";
+  const imgPx = variant === "hero" ? 40 : 24;
 
   return (
     <FirmBadgeInfoDialog
       ariaLabel="Yasal bilgi beyanı hakkında bilgi"
       srDialogTitle={LEGAL_INFO_BADGE_DIALOG_TITLE}
       srContextLine={companyName}
-      triggerClassName={`inline-flex shrink-0 items-center justify-center transition hover:opacity-95 ${badgeDiameter} ${className}`}
+      triggerClassName={`inline-flex shrink-0 items-center justify-center ${badgeBox} ${className}`}
       triggerChildren={
         <img
           src={LEGAL_INFORMATION_BADGE_IMAGE_URL}
           alt=""
           width={imgPx}
           height={imgPx}
-          className="h-full w-full object-contain object-center"
+          className={imgClass}
           decoding="async"
           aria-hidden
         />
