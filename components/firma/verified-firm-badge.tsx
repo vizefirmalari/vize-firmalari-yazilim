@@ -180,10 +180,8 @@ export function VerifiedFirmBadge({
   const imgSize =
     variant === "hero" ? "h-5 w-5 sm:h-6 sm:w-6" : "h-[18px] w-[18px] sm:h-5 sm:w-5";
   const minTap = variant === "hero" ? "min-h-9 min-w-9 sm:min-h-10 sm:min-w-10" : "min-h-9 min-w-9";
-  const ringSurface =
-    variant === "hero"
-      ? "ring-2 ring-white shadow-[0_2px_10px_rgba(11,60,93,0.22)]"
-      : "ring-1 ring-[#0B3C5D]/12 shadow-[0_1px_6px_rgba(11,60,93,0.12)]";
+  /** Doğrulandı rozeti — Yasal Bilgi rozetinden ayırt etmek için hafif mavi zemin */
+  const verifiedSurface = "border border-blue-200 bg-blue-50 shadow-sm";
 
   const openSheet = () => {
     setOpen(true);
@@ -264,7 +262,7 @@ export function VerifiedFirmBadge({
       <button
         ref={triggerRef}
         type="button"
-        className={`relative z-20 inline-flex shrink-0 items-center justify-center rounded-full bg-white p-0.5 transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 focus-visible:ring-offset-2 ${ringSurface} ${minTap} ${className}`}
+        className={`relative z-20 inline-flex shrink-0 items-center justify-center rounded-full p-0.5 transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 focus-visible:ring-offset-2 ${verifiedSurface} ${minTap} ${className}`}
         aria-label={`${companyName} — doğrulanmış firma bilgisi`}
         aria-expanded={open}
         aria-haspopup="dialog"

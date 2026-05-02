@@ -26,7 +26,7 @@ import {
   QuickApplyLauncher,
 } from "@/components/quick-apply/quick-apply-launcher";
 import { buildQuickApplyExpertiseLine, buildQuickApplySubtitle } from "@/lib/quick-apply/firm-intro-branding";
-import { VerifiedFirmBadge } from "@/components/firma/verified-firm-badge";
+import { FirmNameBadges } from "@/components/firms/FirmNameBadges";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { resolveExploreHrefByTerm } from "@/lib/explore/explore-links";
 
@@ -263,17 +263,11 @@ export default async function FirmaPage({ params }: PageProps) {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                  <div className="flex flex-wrap items-center gap-x-0 gap-y-1.5">
                     <h1 className="min-w-0 text-3xl font-bold tracking-tight text-white sm:text-4xl">
                       {firm.name}
                     </h1>
-                    <VerifiedFirmBadge
-                      isVerified={firm.verified_badge === true}
-                      companyName={firm.name}
-                      logoUrl={firm.logo_url}
-                      variant="hero"
-                      className="shrink-0"
-                    />
+                    <FirmNameBadges firm={firm} size="detail" className="shrink-0" />
                   </div>
                   <p className="mt-2 text-sm text-white/80">
                     <span>

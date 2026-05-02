@@ -86,6 +86,8 @@ export type FirmRow = {
   tax_number?: string | null;
   tax_office?: string | null;
   license_number?: string | null;
+  /** DB’de lisans ile senkron; panelde tek alan olarak yönetilir */
+  permit_number?: string | null;
   license_description?: string | null;
   has_blog?: boolean | null;
 

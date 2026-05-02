@@ -14,14 +14,25 @@ import {
 } from "@/lib/homepage/discovery-model";
 import type { FirmRow } from "@/lib/types/firm";
 
-export function HomepageDiscoveryLayer({ firms }: { firms: FirmRow[] }) {
+export function HomepageDiscoveryLayer({
+  firms,
+  featuredFirmIds = [],
+}: {
+  firms: FirmRow[];
+  /** Ana sayfa ayarlarından; doluysa vitrin havuzu panel sırasına göre (ilk 20 kimlik). */
+  featuredFirmIds?: string[];
+}) {
   const quickItems = buildHomeQuickDiscoverItems();
   const destinations = buildHomeDestinationCards(firms);
   const specialties = buildHomeSpecialtyCards(firms);
   const serviceTiles = buildHomeMainServiceTiles(firms);
-  const featured = getFeaturedFirmsForHome(firms, 12).filter(
+  const filteredForBrand = firms.filter(
     (firm) => firm.name.trim().toLocaleLowerCase("tr") !== "vize firmaları"
-  ).slice(0, 8);
+  );
+  const featured = getFeaturedFirmsForHome(filteredForBrand, {
+    featuredFirmIds,
+    limit: 20,
+  });
 
   const hasBodyBlocks =
     destinations.length > 0 ||
@@ -79,8 +90,8 @@ export function HomepageDiscoveryLayer({ firms }: { firms: FirmRow[] }) {
             {featured.length > 0 ? (
               <HomepageDiscoverySection
                 id="one-cikan"
-                title="Öne çıkan bölüm"
-                description="Firma kartları değişmeden, vitrinde öne çıkan seçkiler."
+                title="Kurumsallık Skoru En Yüksek Firmalar"
+                description="Firmalar; yasal yapı, ekip kapasitesi, dijital varlık ve hizmet kapsamına göre değerlendirilir."
                 seeAllHref="/?sort=corp_desc#firmalar"
               >
                 <HomepageHorizontalScroller gapClass="gap-4 md:gap-5">

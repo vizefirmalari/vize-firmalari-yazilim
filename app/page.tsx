@@ -155,7 +155,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             cms?.featured_section_title?.trim() || undefined
           }
         >
-          <HomepageDiscoveryLayer firms={discoveryFirms} />
+          <HomepageDiscoveryLayer
+            firms={discoveryFirms}
+            featuredFirmIds={cms?.featured_firm_ids ?? []}
+          />
         </FirmsListing>
       </main>
       <SiteFooter />

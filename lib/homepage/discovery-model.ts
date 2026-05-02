@@ -427,10 +427,40 @@ export function buildHomeMainServiceTiles(firms: FirmRow[]): HomeServiceTile[] {
   return tiles;
 }
 
+/** Ana sayfa kurumsallık vitrini için varsayılan üst sınır. */
+export const HOMEPAGE_CORP_SCORE_SHOWCASE_LIMIT = 20;
+
+export type HomeFeaturedShowcaseOpts = {
+  /** Boşsa: tüm `firms` içinden Kurumsallık Skoru sıralaması. Doluysa: yalnızca buradaki ID'lerden (ilk `limit` adet) seçilen havuz */
+  featuredFirmIds?: string[];
+  limit?: number;
+};
+
+/**
+ * Ana sayfadaki Kurumsallık Skoru şeridi için firma sırası.
+ * Panel sırasında tanımlı ilk `limit` kimlikten oluşan havuz, Kurumsallık Skoru (yüksek → düşük) ile sıralanır.
+ */
 export function getFeaturedFirmsForHome(
   firms: FirmRow[],
-  limit = 10
+  opts?: HomeFeaturedShowcaseOpts
 ): FirmRow[] {
-  const sorted = sortFirms([...firms], "corp_desc");
+  const limit =
+    typeof opts?.limit === "number" && opts.limit > 0
+      ? opts.limit
+      : HOMEPAGE_CORP_SCORE_SHOWCASE_LIMIT;
+  const pinned = opts?.featuredFirmIds ?? [];
+  const pins = pinned.slice(0, limit).filter((id): id is string => Boolean(id));
+
+  let pool: FirmRow[];
+  if (pins.length > 0) {
+    const byId = new Map(firms.map((f) => [f.id, f]));
+    pool = pins
+      .map((id) => byId.get(id))
+      .filter((row): row is FirmRow => row != null);
+  } else {
+    pool = [...firms];
+  }
+
+  const sorted = sortFirms(pool, "corp_desc");
   return sorted.slice(0, limit);
 }

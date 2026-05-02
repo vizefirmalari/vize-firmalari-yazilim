@@ -23,7 +23,7 @@ import {
 } from "@/lib/firma/listing-filter-options";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 import { FirmOfficeCityBadge } from "@/components/firma/firm-office-city-badge";
-import { VerifiedFirmBadge } from "@/components/firma/verified-firm-badge";
+import { FirmNameBadges } from "@/components/firms/FirmNameBadges";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -166,17 +166,11 @@ export function FirmCard({ firm }: FirmCardProps) {
             )}
           </div>
         </div>
-        <div className="mt-4 flex w-full max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 px-1 sm:mt-3.5">
+        <div className="mt-4 flex w-full max-w-full flex-wrap items-center justify-center gap-x-0 gap-y-1 px-1 sm:mt-3.5">
           <h3 className="min-w-0 max-w-full text-center text-[1.375rem] font-bold leading-snug text-[#0B3C5D] sm:text-xl sm:font-semibold sm:leading-snug">
             {firm.name}
           </h3>
-          <VerifiedFirmBadge
-            isVerified={firm.verified_badge === true}
-            companyName={firm.name}
-            logoUrl={firm.logo_url}
-            variant="card"
-            className="shrink-0"
-          />
+          <FirmNameBadges firm={firm} size="card" className="justify-center" />
         </div>
         {firm.short_badge ? (
           <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-[#D9A441] sm:mt-1.5">
