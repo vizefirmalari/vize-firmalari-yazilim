@@ -11,6 +11,12 @@ export const SITE_DEFAULT_TITLE = SITE_BRAND_NAME;
 export const SITE_DEFAULT_DESCRIPTION =
   "Vize danışmanlık firmalarını karşılaştırın; Kurumsallık Skoru, hizmetler ve iletişim bilgileri tek yerde. Doğru firmayı bulmanıza yardımcı olan karşılaştırma ve danışmanlık platformu.";
 
+/** Kök `metadata.title.template` (`%s | ${SITE_BRAND_NAME}`) ile çakışmayı önlemek için segment sonundaki `| Marka` sonekini kaldırır. */
+export function stripTrailingBrandPipeFromTitleSegment(segment: string): string {
+  const escaped = SITE_BRAND_NAME.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return segment.replace(new RegExp(`\\s*\\|\\s*${escaped}\\s*$`, "i"), "").trim();
+}
+
 /**
  * Varsayılan OG / X (Twitter) / LinkedIn vb. paylaşım görseli — `public/og-share.png`.
  * Firma ve blog yazıları kendi görselleriyle bu URL’yi metadata’da geçersiz kılar.

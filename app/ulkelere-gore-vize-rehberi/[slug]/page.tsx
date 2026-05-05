@@ -12,7 +12,7 @@ import {
 } from "@/lib/country-guides/taxonomy";
 import { COUNTRY_GUIDE_TOPIC_LABELS } from "@/lib/country-guides/topics";
 import { absoluteUrl } from "@/lib/seo/canonical";
-import { SITE_BRAND_NAME } from "@/lib/seo/defaults";
+import { SITE_BRAND_NAME, stripTrailingBrandPipeFromTitleSegment } from "@/lib/seo/defaults";
 import { resolveDefaultSiteShareImage } from "@/lib/seo/og-images";
 import { flagUrlForIso } from "@/lib/firma/country-flag";
 import { AmerikaCountryGuideView } from "@/components/country-guides/amerika-country-guide-view";
@@ -231,7 +231,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                                                   }
                                                 : resolveDefaultSiteShareImage();
   return {
-    title: entry.seoTitle,
+    title: stripTrailingBrandPipeFromTitleSegment(entry.seoTitle),
     description: entry.metaDescription,
     ...(slug === AMERIKA_SLUG ? { keywords: AMERIKA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === ALMANYA_SLUG ? { keywords: ALMANYA_SEO_KEYWORD_TAGS } : {}),

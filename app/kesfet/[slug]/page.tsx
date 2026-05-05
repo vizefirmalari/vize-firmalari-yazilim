@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Keşfet" };
   }
   const path = `/kesfet/${cat.slug}`;
-  const title = `${cat.label} İçin Hizmet Veren Firmalar | ${SITE_BRAND_NAME}`;
+  const title = `${cat.label} İçin Hizmet Veren Firmalar`;
   const description = `${cat.label} süreçlerinde hizmet veren firmaları inceleyin, karşılaştırın ve size uygun danışmanlık profilini keşfedin.`;
   const img = resolveDefaultSiteShareImage();
 

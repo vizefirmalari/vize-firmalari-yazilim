@@ -735,25 +735,35 @@ export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {
 }
 
 export async function getAllFirmSlugs(): Promise<string[]> {
+  const mockSlugs = () =>
+    MOCK_FIRMS.filter(
+      (f) =>
+        f.is_indexable !== false &&
+        (f as { firm_page_enabled?: boolean | null }).firm_page_enabled !== false
+    ).map((f) => f.slug);
+
   if (!isSupabaseConfigured()) {
-    return MOCK_FIRMS.map((f) => f.slug);
+    return mockSlugs();
   }
 
   const supabase = createSupabasePublicClient();
   if (!supabase) {
-    return MOCK_FIRMS.map((f) => f.slug);
+    return mockSlugs();
   }
 
   const { data, error } = await supabase
     .from("firms")
-    .select("slug")
-    .eq("status", "published");
+    .select("slug,is_indexable,firm_page_enabled")
+    .eq("status", "published")
+    .eq("is_indexable", true);
   if (error) {
     console.error("[getAllFirmSlugs]", error.message);
-    return MOCK_FIRMS.map((f) => f.slug);
+    return mockSlugs();
   }
 
-  return (data ?? []).map((r: { slug: string }) => r.slug);
+  return (data ?? [])
+    .filter((r: { firm_page_enabled?: boolean | null }) => r.firm_page_enabled !== false)
+    .map((r: { slug: string }) => r.slug);
 }
 
 export type SitemapFirmRow = {

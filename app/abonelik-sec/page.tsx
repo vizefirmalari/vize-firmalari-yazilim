@@ -4,7 +4,7 @@ import { SubscriptionLandingClient } from "@/components/subscription/subscriptio
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata = {
-  title: "Abonelik planları | Vize Firmaları",
+  title: "Abonelik planları",
   description:
     "Tüm firmalar tam panel erişimine sahiptir. Abonelik planları liste sıralaması, görünürlük ve promosyon gücünü artırır.",
   robots: { index: false, follow: false },

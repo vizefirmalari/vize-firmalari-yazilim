@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { CheckoutPageClient } from "@/components/membership/checkout-page-client";
 
 export const metadata = {
-  title: "Ödeme | Vize Firmaları",
+  title: "Ödeme",
   robots: { index: false, follow: false },
 };
 

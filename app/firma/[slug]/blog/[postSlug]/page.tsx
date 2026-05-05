@@ -222,7 +222,7 @@ export async function generateMetadata({ params }: Props) {
       locale: "tr_TR",
       type: "article",
       publishedTime: post.published_at ?? undefined,
-      modifiedTime: post.published_at ?? undefined,
+      modifiedTime: post.updated_at ?? post.published_at ?? undefined,
       images: [
         {
           url: og.url,
