@@ -1,13 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 /** `lib/search/site-search` SEARCH_BLOG_COVER_FALLBACK ile aynı; site geneli OG yedek görseli */
 const DEFAULT_BLOG_COVER_FALLBACK = "/og-share.png";
 
+/** Tek sütun mobil (~max-w-screen-sm + padding), masaüstü kart genişliği üst sınırı */
+const SIZES_DETAIL =
+  "(max-width: 768px) min(100vw - 2rem, 560px), (max-width: 1152px) min(100vw - 3rem, 832px), 896px";
+const SIZES_COMPACT = "(max-width: 768px) min(24vw, 140px), 140px";
+
 /**
- * Blog / akış kapak: sabit oran yok; görsel doğal en-boy oranında, kırpılmadan (object-contain).
- * 1200×630 yalnızca editörde önerilen paylaşım ölçüsü; burada zorunlu değil.
+ * Blog / akış kapak: sabit oran zorunlu değil; görsel doğal en-boy oranında, kırpılmadan (`object-contain`).
+ * 1200×630 yalnızca editörde önerilen paylaşım ölçüsü; raster istek genişliği `sizes` ile sınırlanır.
  */
 
 export type FirmBlogCoverDisplayProps = {
@@ -91,7 +97,7 @@ export function FirmBlogCoverDisplay({
     );
   }
 
-  const imgSrc = loadState === "fallback" ? fallbackSrc : resolved;
+  const displaySrc = loadState === "fallback" ? fallbackSrc : resolved;
   const urlMatchDiag =
     typeof diagFeedImageUrl === "string" &&
     typeof diagDbCoverImageUrl === "string" &&
@@ -118,33 +124,31 @@ export function FirmBlogCoverDisplay({
           </p>
         </div>
       ) : null}
-      <img
-        src={imgSrc}
+      <Image
+        src={displaySrc}
         alt={alt}
-        loading={priority ? "eager" : "lazy"}
-        decoding="async"
-        {...(priority ? { fetchPriority: "high" as const } : {})}
-        data-cover-src={imgSrc}
+        width={1200}
+        height={630}
+        sizes={compact ? SIZES_COMPACT : SIZES_DETAIL}
+        priority={Boolean(priority)}
+        {...(!priority ? { loading: "lazy" as const } : { fetchPriority: "high" as const })}
+        className={`mx-auto block h-auto w-full max-w-full object-contain object-center ${imgMax}`}
+        draggable={false}
+        data-cover-src={displaySrc}
         data-component="FirmBlogCoverDisplay"
-        {...(diagAkisCover
-          ? {
-              onLoad: (e: React.SyntheticEvent<HTMLImageElement>) => {
-                const el = e.currentTarget;
-                setNaturalSize({
-                  w: el.naturalWidth,
-                  h: el.naturalHeight,
-                });
-              },
-            }
-          : {})}
+        onLoadingComplete={(imgEl) => {
+          if (!diagAkisCover) return;
+          setNaturalSize({
+            w: imgEl.naturalWidth,
+            h: imgEl.naturalHeight,
+          });
+        }}
         onError={() => {
           setLoadState((prev) => {
             if (prev === "ok") return resolved !== fallbackSrc ? "fallback" : "failed";
             return "failed";
           });
         }}
-        className={`mx-auto block h-auto w-full max-w-full object-contain object-center ${imgMax}`}
-        draggable={false}
       />
     </div>
   );

@@ -30,7 +30,6 @@ export function buildFirmPageMetadata(
     firm.seo_title?.trim() ||
     `${firm.name} | ${SITE_BRAND_NAME}`;
   const ogDesc = firm.og_description?.trim() || description;
-  const indexable = firm.is_indexable !== false;
 
   const logoAlt = firmLogoAlt(firm);
   const ogAlt = firmOgImageAlt(firm);
@@ -55,8 +54,8 @@ export function buildFirmPageMetadata(
       description: ogDesc,
       images: [share.url],
     },
-    robots: indexable
-      ? { index: true, follow: true }
-      : { index: false, follow: true },
+    // Bu meta yalnızca `getFirmBySlug` ile açılmış yayındaki kamu firma URL’leri için üretilir;
+    // yayındaki profiller için noindex yayınlamıyoruz (sitemap ve tarama uyumu).
+    robots: { index: true, follow: true },
   };
 }

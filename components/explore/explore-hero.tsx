@@ -87,20 +87,20 @@ export function ExploreHero({
                 <nav aria-label="Gezinti" className="mb-5">
                   <Link
                     href={backHref}
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/88 transition hover:text-white"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/93 transition hover:text-white"
                   >
                     <span aria-hidden>←</span>
                     {backLabel}
                   </Link>
                 </nav>
               ) : null}
-              <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-white/65">
+              <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-white/72">
                 Keşfet
               </p>
               <h1 className="mt-2.5 max-w-xl text-2xl font-bold leading-tight tracking-tight drop-shadow-sm md:text-3xl">
                 {title}
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/88 md:text-base">
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/93 md:text-base">
                 {description}
               </p>
               <div className="mt-4 md:hidden">
@@ -108,7 +108,7 @@ export function ExploreHero({
                   <span className="text-lg leading-none" aria-hidden>
                     {visual?.flagEmoji ?? "🌍"}
                   </span>
-                  <span className="text-xs font-semibold text-white/92">
+                  <span className="text-xs font-semibold text-white/95">
                     {visual?.visualLabel ?? title}
                   </span>
                 </div>
@@ -154,23 +154,23 @@ export function ExploreHero({
           />
           <div className="relative grid gap-6 p-6 md:grid-cols-[1.4fr_0.8fr] md:p-8 lg:p-10">
             <div>
-              <span className="inline-flex rounded-full border border-white/30 bg-white/12 px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-white/95">
+              <span className="inline-flex rounded-full border border-white/30 bg-white/12 px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-white">
                 KEŞFET
               </span>
               <h1 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight md:text-[1.9rem]">
                 {title}
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/88 md:text-base">
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/93 md:text-base">
                 {description}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
-                <span className="rounded-full border border-white/25 bg-white/12 px-3 py-1 text-xs font-semibold text-white/92">
+                <span className="rounded-full border border-white/25 bg-white/12 px-3 py-1 text-xs font-semibold text-white/95">
                   Popüler rotalar
                 </span>
-                <span className="rounded-full border border-white/25 bg-white/12 px-3 py-1 text-xs font-semibold text-white/92">
+                <span className="rounded-full border border-white/25 bg-white/12 px-3 py-1 text-xs font-semibold text-white/95">
                   Vize türleri
                 </span>
-                <span className="rounded-full border border-white/25 bg-white/12 px-3 py-1 text-xs font-semibold text-white/92">
+                <span className="rounded-full border border-white/25 bg-white/12 px-3 py-1 text-xs font-semibold text-white/95">
                   Süreç desteği
                 </span>
               </div>
@@ -179,15 +179,15 @@ export function ExploreHero({
             {hubStats ? (
               <div className="hidden gap-3 md:grid">
                 <article className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-white/75">Toplam kategori</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-white/82">Toplam kategori</p>
                   <p className="mt-1 text-2xl font-bold">{hubStats.totalCategories}</p>
                 </article>
                 <article className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-white/75">Firma eşleşmesi</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-white/82">Firma eşleşmesi</p>
                   <p className="mt-1 text-2xl font-bold">{hubStats.totalFirmMatches}</p>
                 </article>
                 <article className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-white/75">Popüler rota</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-white/82">Popüler rota</p>
                   <p className="mt-1 text-2xl font-bold">{hubStats.featuredRouteCount}</p>
                 </article>
               </div>
@@ -197,15 +197,15 @@ export function ExploreHero({
           {hubStats ? (
             <div className="relative -mt-1 flex gap-2 overflow-x-auto px-6 pb-5 md:hidden">
               <article className="min-w-[128px] shrink-0 rounded-xl border border-white/15 bg-white/12 p-3 backdrop-blur">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/75">Kategori</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/82">Kategori</p>
                 <p className="mt-1 text-lg font-bold">{hubStats.totalCategories}</p>
               </article>
               <article className="min-w-[140px] shrink-0 rounded-xl border border-white/15 bg-white/12 p-3 backdrop-blur">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/75">Eşleşme</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/82">Eşleşme</p>
                 <p className="mt-1 text-lg font-bold">{hubStats.totalFirmMatches}</p>
               </article>
               <article className="min-w-[128px] shrink-0 rounded-xl border border-white/15 bg-white/12 p-3 backdrop-blur">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/75">Rota</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/82">Rota</p>
                 <p className="mt-1 text-lg font-bold">{hubStats.featuredRouteCount}</p>
               </article>
             </div>

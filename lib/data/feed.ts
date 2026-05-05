@@ -704,8 +704,8 @@ function publicIndexableFirmSlugOk(slug: string): boolean {
 }
 
 /**
- * `unstable_cache` / sitemap için: cookie + kullanıcı oturumu yok.
- * Yalnızca yayımda, indekslenebilir ve firma sayfası açık firmaların blog yazıları (sitemap blog ile uyumlu).
+ * `unstable_cache` / feed eşlemesi için: cookie + kullanıcı oturumu yok.
+ * Blog URL filtresi `lib/seo/sitemap-core.ts` (`getBlogRows` / blog sitemap) ile aynı firma yayın kurallarında tutulur.
  */
 export async function fetchFeedHubBlogSnapshotsPublicForMatching(limit = 450): Promise<FeedHubBlogPost[]> {
   if (!isSupabaseConfigured()) return [];
@@ -751,8 +751,7 @@ export async function fetchFeedHubBlogSnapshotsPublicForMatching(limit = 450): P
         .from("firms")
         .select("id,firm_page_enabled,slug")
         .in("id", firmIdList)
-        .eq("status", "published")
-        .eq("is_indexable", true);
+        .eq("status", "published");
       allowedFirmIds = new Set(
         (allowedRows ?? [])
           .filter((row) => (row as { firm_page_enabled?: boolean | null }).firm_page_enabled !== false)

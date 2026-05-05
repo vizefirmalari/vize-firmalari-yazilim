@@ -114,10 +114,14 @@ function MobileTabBarInner() {
               );
             }
 
+            const tabAria =
+              tab.href === "/" ? `${tab.label} — alt gezinme çubuğu` : `${tab.label} sekmesi`;
+
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
+                aria-label={tabAria}
                 className={`inline-flex min-w-14 touch-manipulation flex-col items-center justify-center gap-0.5 px-1 text-xs ${
                   active ? "text-[#0B3C5D]" : "text-[#9ca3af]"
                 }`}

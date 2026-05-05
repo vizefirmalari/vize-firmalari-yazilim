@@ -253,6 +253,7 @@ export default async function FirmaPage({ params }: PageProps) {
                       }
                       width={80}
                       height={80}
+                      sizes="80px"
                       className="h-full w-full object-contain"
                       priority
                     />

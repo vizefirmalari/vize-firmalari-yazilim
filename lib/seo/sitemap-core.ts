@@ -168,9 +168,8 @@ const getFirmRows = unstable_cache(
 
     const { data } = await supabase
       .from("firms")
-      .select("slug,name,logo_url,logo_alt_text,updated_at,created_at,status,is_indexable,firm_page_enabled")
-      .eq("status", "published")
-      .eq("is_indexable", true);
+      .select("slug,name,logo_url,logo_alt_text,updated_at,created_at,status,firm_page_enabled")
+      .eq("status", "published");
 
     return (data ?? [])
       .filter((r) => (r as { firm_page_enabled?: boolean | null }).firm_page_enabled !== false)
@@ -185,7 +184,7 @@ const getFirmRows = unstable_cache(
       .filter((r) => slugLooksValid(r.slug))
       .filter((r) => !isDummyOrTestSlug(r.slug));
   },
-  ["sitemap-firms-v1"],
+  ["sitemap-firms-v2"],
   { revalidate: 900 }
 );
 
@@ -259,8 +258,7 @@ const getBlogRows = unstable_cache(
         .from("firms")
         .select("id,firm_page_enabled,slug")
         .in("id", allFirmIds)
-        .eq("status", "published")
-        .eq("is_indexable", true);
+        .eq("status", "published");
       allowedFirmIds = new Set(
         (allowedRows ?? [])
           .filter((row) => (row as { firm_page_enabled?: boolean | null }).firm_page_enabled !== false)
@@ -299,9 +297,25 @@ const getBlogRows = unstable_cache(
       })
       .filter((r) => slugLooksValid(r.company_slug));
   },
-  ["sitemap-blog-v2"],
+  ["sitemap-blog-v3"],
   { revalidate: 900 }
 );
+
+/** `/sitemaps/blog.xml` ile aynı satır kümesinin özet görünümü (`getBlogRows` üzerinden; tek kaynak). */
+export type SitemapBlogRow = {
+  firm_slug: string;
+  post_slug: string;
+  published_at: string | null;
+};
+
+export async function getSitemapBlogEntries(): Promise<SitemapBlogRow[]> {
+  const rows = await getBlogRows();
+  return rows.map((r) => ({
+    firm_slug: r.company_slug,
+    post_slug: r.post_slug,
+    published_at: r.published_at,
+  }));
+}
 
 function buildStaticSectionUrls(): SitemapUrl[] {
   const rows: SitemapUrl[] = [

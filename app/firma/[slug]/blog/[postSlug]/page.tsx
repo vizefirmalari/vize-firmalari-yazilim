@@ -179,30 +179,42 @@ export async function generateMetadata({ params }: Props) {
       robots: { index: false, follow: false },
     };
   }
-  let resolvedSlug = String((post as { company_slug?: string | null }).company_slug ?? slug);
-  let firmName: string | null = String((post as { company_name?: string | null }).company_name ?? "").trim() || null;
-  if (!resolvedSlug && post.firm_id) {
+
+  let resolvedSlug = "";
+  let firmName: string | null =
+    String((post as { company_name?: string | null }).company_name ?? "").trim() || null;
+
+  if (post.firm_id) {
     const { data: firm } = await db
       .from("firms")
-      .select("slug,name,status,is_indexable,firm_page_enabled")
+      .select("slug,name,status,firm_page_enabled")
       .eq("id", String(post.firm_id))
       .maybeSingle();
-    const isPublicFirm =
-      firm?.status === "published" &&
-      firm?.is_indexable !== false &&
-      firm?.firm_page_enabled !== false;
+    const isPublicFirm = firm?.status === "published" && firm?.firm_page_enabled !== false;
     if (!isPublicFirm) {
       return {
         title: "Yazı bulunamadı",
         robots: { index: false, follow: false },
       };
     }
-    resolvedSlug = String(firm?.slug ?? slug);
+    resolvedSlug = String(firm?.slug ?? "").trim();
     firmName = String(firm?.name ?? "").trim() || firmName;
   }
 
+  if (!resolvedSlug) {
+    resolvedSlug = String((post as { company_slug?: string | null }).company_slug ?? slug).trim();
+  }
+
+  if (!resolvedSlug) {
+    return {
+      title: "Yazı bulunamadı",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const pathPostSlug = String(post.slug ?? postSlug).trim() || postSlug;
   const siteUrl = getSiteUrl().replace(/\/$/, "");
-  const canonical = `${siteUrl}/firma/${resolvedSlug}/blog/${postSlug}`;
+  const canonical = `${siteUrl}/firma/${resolvedSlug}/blog/${pathPostSlug}`;
   const og = resolveFirmBlogPostOgImage({
     coverImageUrl: post.cover_image_url,
     coverImageAlt: post.cover_image_alt,
@@ -268,15 +280,12 @@ export default async function BlogDetailPage({ params }: Props) {
   const { data: firm } = post.firm_id
     ? await db
         .from("firms")
-        .select("id,slug,name,logo_url,whatsapp,phone,email,website,address,working_hours,main_services,countries,founded_year,firm_category,status,is_indexable,firm_page_enabled,schengen_expert,usa_visa_expert,student_visa_support,work_visa_support,tourist_visa_support,business_visa_support,family_reunion_support,appeal_support")
+        .select("id,slug,name,logo_url,whatsapp,phone,email,website,address,working_hours,main_services,countries,founded_year,firm_category,status,firm_page_enabled,schengen_expert,usa_visa_expert,student_visa_support,work_visa_support,tourist_visa_support,business_visa_support,family_reunion_support,appeal_support")
         .eq("id", String(post.firm_id))
         .maybeSingle()
     : { data: null };
 
-  const isPublicFirm =
-    firm?.status === "published" &&
-    firm?.is_indexable !== false &&
-    firm?.firm_page_enabled !== false;
+  const isPublicFirm = firm?.status === "published" && firm?.firm_page_enabled !== false;
   if (!isPublicFirm) {
     notFound();
   }
@@ -295,8 +304,9 @@ export default async function BlogDetailPage({ params }: Props) {
   const resolvedFirmSlug = String(firm?.slug ?? postCompanySlug ?? "");
   if (!resolvedFirmSlug) notFound();
 
-  if (resolvedFirmSlug !== slug) {
-    redirect(`/firma/${resolvedFirmSlug}/blog/${postSlug}`);
+  const canonicalPostSlug = String(post.slug ?? postSlug).trim() || postSlug;
+  if (resolvedFirmSlug !== slug || canonicalPostSlug !== postSlug) {
+    redirect(`/firma/${resolvedFirmSlug}/blog/${canonicalPostSlug}`);
   }
 
   const { data: category } = post.category_id
@@ -348,7 +358,7 @@ export default async function BlogDetailPage({ params }: Props) {
   const bottomPool = targetedAds.filter((x) => x.position === "bottom" && x.id !== topAd?.id && x.id !== middleAd?.id);
   const bottomAd = pickWeightedAd(bottomPool, `${post.id}-bottom-${daySeed}`);
 
-  const canonical = `${getSiteUrl().replace(/\/$/, "")}/firma/${resolvedFirmSlug}/blog/${postSlug}`;
+  const canonical = `${getSiteUrl().replace(/\/$/, "")}/firma/${resolvedFirmSlug}/blog/${canonicalPostSlug}`;
   const shareOg = resolveFirmBlogPostOgImage({
     coverImageUrl: post.cover_image_url,
     coverImageAlt: post.cover_image_alt,

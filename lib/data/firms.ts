@@ -737,9 +737,7 @@ export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {
 export async function getAllFirmSlugs(): Promise<string[]> {
   const mockSlugs = () =>
     MOCK_FIRMS.filter(
-      (f) =>
-        f.is_indexable !== false &&
-        (f as { firm_page_enabled?: boolean | null }).firm_page_enabled !== false
+      (f) => (f as { firm_page_enabled?: boolean | null }).firm_page_enabled !== false
     ).map((f) => f.slug);
 
   if (!isSupabaseConfigured()) {
@@ -753,9 +751,8 @@ export async function getAllFirmSlugs(): Promise<string[]> {
 
   const { data, error } = await supabase
     .from("firms")
-    .select("slug,is_indexable,firm_page_enabled")
-    .eq("status", "published")
-    .eq("is_indexable", true);
+    .select("slug,firm_page_enabled")
+    .eq("status", "published");
   if (error) {
     console.error("[getAllFirmSlugs]", error.message);
     return mockSlugs();
@@ -772,19 +769,16 @@ export type SitemapFirmRow = {
   is_indexable: boolean | null;
 };
 
-export type SitemapBlogRow = {
-  firm_slug: string;
-  post_slug: string;
-  published_at: string | null;
-};
-
 /**
- * Sitemap için: yalnızca yayında ve indekslemeye açık firmalar.
- * `is_indexable === false` olanlar hariç (null / true = dahil).
+ * Sitemap / harici senaryolar: yayındaki ve kamu firma sayfası açık kayıtlar.
+ * Kanonik sitemap mantığı `lib/seo/sitemap-core.ts` içindedir.
  */
 export async function getSitemapFirmEntries(): Promise<SitemapFirmRow[]> {
   if (!isSupabaseConfigured()) {
-    return MOCK_FIRMS.filter((f) => f.is_indexable !== false).map((f) => ({
+    return MOCK_FIRMS.filter(
+      (f) =>
+        (f as { firm_page_enabled?: boolean | null }).firm_page_enabled !== false
+    ).map((f) => ({
       slug: f.slug,
       created_at: f.created_at,
       is_indexable: f.is_indexable ?? true,
@@ -793,7 +787,10 @@ export async function getSitemapFirmEntries(): Promise<SitemapFirmRow[]> {
 
   const supabase = createSupabasePublicClient();
   if (!supabase) {
-    return MOCK_FIRMS.filter((f) => f.is_indexable !== false).map((f) => ({
+    return MOCK_FIRMS.filter(
+      (f) =>
+        (f as { firm_page_enabled?: boolean | null }).firm_page_enabled !== false
+    ).map((f) => ({
       slug: f.slug,
       created_at: f.created_at,
       is_indexable: f.is_indexable ?? true,
@@ -802,12 +799,15 @@ export async function getSitemapFirmEntries(): Promise<SitemapFirmRow[]> {
 
   const { data, error } = await supabase
     .from("firms")
-    .select("slug, created_at, is_indexable")
+    .select("slug, created_at, is_indexable, firm_page_enabled")
     .eq("status", "published");
 
   if (error) {
     console.error("[getSitemapFirmEntries]", error.message);
-    return MOCK_FIRMS.filter((f) => f.is_indexable !== false).map((f) => ({
+    return MOCK_FIRMS.filter(
+      (f) =>
+        (f as { firm_page_enabled?: boolean | null }).firm_page_enabled !== false
+    ).map((f) => ({
       slug: f.slug,
       created_at: f.created_at,
       is_indexable: f.is_indexable ?? true,
@@ -815,37 +815,14 @@ export async function getSitemapFirmEntries(): Promise<SitemapFirmRow[]> {
   }
 
   return (data ?? [])
-    .filter((r: SitemapFirmRow) => r.is_indexable !== false)
+    .filter((r: SitemapFirmRow & { firm_page_enabled?: boolean | null }) => {
+      if (r.firm_page_enabled === false) return false;
+      const slugOk = /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(r.slug ?? "").trim());
+      return slugOk;
+    })
     .map((r: SitemapFirmRow) => ({
       slug: r.slug,
       created_at: r.created_at,
       is_indexable: r.is_indexable,
     }));
-}
-
-export async function getSitemapBlogEntries(): Promise<SitemapBlogRow[]> {
-  if (!isSupabaseConfigured()) return [];
-  const supabase = createSupabasePublicClient();
-  if (!supabase) return [];
-
-  const { data, error } = await supabase
-    .from("firm_blog_posts")
-    .select("slug, published_at, firms!inner(slug)")
-    .eq("status", "published")
-    .not("published_at", "is", null)
-    .order("published_at", { ascending: false })
-    .limit(45000);
-
-  if (error) {
-    console.error("[getSitemapBlogEntries]", error.message);
-    return [];
-  }
-
-  return (data ?? []).map(
-    (row: { slug: string; published_at: string | null; firms: { slug: string } | { slug: string }[] }) => ({
-      firm_slug: Array.isArray(row.firms) ? String(row.firms[0]?.slug ?? "") : String(row.firms?.slug ?? ""),
-      post_slug: String(row.slug ?? ""),
-      published_at: row.published_at ?? null,
-    })
-  );
 }

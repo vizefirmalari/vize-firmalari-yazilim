@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "verify:firm-blog-html": "tsx scripts/verify-firm-blog-body-html.ts",
+    "verify:seo-prod": "tsx scripts/seo-production-audit.ts",
     "verify:visa-regions": "tsx scripts/verify-visa-regions-scenarios.ts",
     "backfill:visa-regions": "tsx scripts/backfill-visa-regions.ts"
   },

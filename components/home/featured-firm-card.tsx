@@ -86,7 +86,7 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
               src={firm.logo_url}
               alt={firm.logo_alt_text?.trim() || `${firm.name} logosu`}
               fill
-              sizes="72px"
+              sizes="(max-width: 768px) 72px, 80px"
               className="object-contain object-center p-1.5"
               loading="lazy"
             />
