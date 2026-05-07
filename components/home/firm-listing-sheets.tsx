@@ -17,6 +17,8 @@ type FilterSheetProps = {
   companyTypeOptions: string[];
   mainServiceCategoryOptions: string[];
   specializationTaxonomyOptions?: { slug: string; label: string }[];
+  activeSort: FirmSort;
+  onSortChange: (sort: FirmSort) => void;
   resultCount: number;
   /** Aktif filtre sayısı (başlıkta gösterilir) */
   activeFilterCount?: number;
@@ -34,6 +36,8 @@ export function FirmFilterBottomSheet({
   companyTypeOptions,
   mainServiceCategoryOptions,
   specializationTaxonomyOptions = [],
+  activeSort,
+  onSortChange,
   resultCount,
   activeFilterCount = 0,
   onApply,
@@ -58,7 +62,7 @@ export function FirmFilterBottomSheet({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-end justify-center sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-110 flex items-end justify-center sm:items-center sm:p-4">
       <button
         type="button"
         className="absolute inset-0 bg-[#1A1A1A]/50 backdrop-blur-sm"
@@ -69,7 +73,7 @@ export function FirmFilterBottomSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-[111] flex max-h-[85dvh] w-full max-w-lg flex-col rounded-t-2xl bg-background shadow-2xl ring-1 ring-border sm:rounded-2xl"
+        className="relative z-111 flex max-h-[85dvh] w-full max-w-lg flex-col rounded-t-2xl bg-background shadow-2xl ring-1 ring-border sm:rounded-2xl"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
           <h2 id={titleId} className="text-base font-semibold text-primary">
@@ -99,6 +103,9 @@ export function FirmFilterBottomSheet({
             companyTypeOptions={companyTypeOptions}
             mainServiceCategoryOptions={mainServiceCategoryOptions}
             specializationTaxonomyOptions={specializationTaxonomyOptions}
+            sort={activeSort}
+            onSortChange={onSortChange}
+            sortOptions={LISTING_SORT_OPTIONS}
           />
         </div>
 
@@ -156,7 +163,7 @@ export function FirmSortBottomSheet({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-end justify-center sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-110 flex items-end justify-center sm:items-center sm:p-4">
       <button
         type="button"
         className="absolute inset-0 bg-[#1A1A1A]/50 backdrop-blur-sm"
@@ -167,7 +174,7 @@ export function FirmSortBottomSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-[111] flex max-h-[85dvh] w-full max-w-lg flex-col rounded-t-2xl bg-background shadow-2xl ring-1 ring-border sm:rounded-2xl"
+        className="relative z-111 flex max-h-[85dvh] w-full max-w-lg flex-col rounded-t-2xl bg-background shadow-2xl ring-1 ring-border sm:rounded-2xl"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
           <h2 id={titleId} className="text-base font-semibold text-primary">
@@ -181,6 +188,16 @@ export function FirmSortBottomSheet({
               const selected = activeSort === value;
               return (
                 <li key={value}>
+                  {value === "corp_desc" ? (
+                    <p className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-foreground/45">
+                      Güven & kalite
+                    </p>
+                  ) : null}
+                  {value === "hype_score_desc" ? (
+                    <p className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-foreground/45">
+                      Etkileşim
+                    </p>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => onSelect(value)}

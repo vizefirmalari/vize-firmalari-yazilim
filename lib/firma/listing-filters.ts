@@ -4,7 +4,10 @@ import { effectiveFirmCategoryLabel } from "@/lib/firma/listing-filter-options";
 import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
 import { firmMatchesExploreCategory } from "@/lib/explore/explore-match";
 import { firmMatchesSpecializationFilterTokens } from "@/lib/firma/specialization-match";
-import { firmPassesGoogleListedRatingListingFilter } from "@/lib/firms/google-profile-public";
+import {
+  firmPassesGoogleListedRatingListingFilter,
+  parseFiniteGoogleRating,
+} from "@/lib/firms/google-profile-public";
 
 export function hypeValue(f: FirmRow): number {
   return f.hype_score ?? f.raw_hype_score * 100;
@@ -132,6 +135,8 @@ export type AppliedListingFilters = {
   yearPreset: YearPreset;
   /** Google’da kart için gösterilebilir gerçek puanı olan işletmeler */
   requireGoogleListedRating: boolean;
+  googleMinRating: number | null;
+  googleMinReviewCount: number | null;
 };
 
 /** Vitrin sayımı ve yeni taslaklar için tam varsayılan filtre */
@@ -170,7 +175,21 @@ export function createDefaultAppliedListingFilters(
     yearMax: bounds.year.max,
     yearPreset: null,
     requireGoogleListedRating: false,
+    googleMinRating: null,
+    googleMinReviewCount: null,
   };
+}
+
+function googleRatingNumber(firm: FirmRow): number | null {
+  if (!firmPassesGoogleListedRatingListingFilter(firm)) return null;
+  return parseFiniteGoogleRating(firm.google_profile?.rating);
+}
+
+function googleReviewCountNumber(firm: FirmRow): number | null {
+  if (!firmPassesGoogleListedRatingListingFilter(firm)) return null;
+  const raw = firm.google_profile?.user_rating_count;
+  if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return null;
+  return raw;
 }
 
 function yearFilterIsFull(
@@ -277,6 +296,14 @@ export function applyListingFilters(
     if (f.requireGoogleListedRating && !firmPassesGoogleListedRatingListingFilter(firm)) {
       return false;
     }
+    if (f.googleMinRating !== null) {
+      const rating = googleRatingNumber(firm);
+      if (rating == null || rating < f.googleMinRating) return false;
+    }
+    if (f.googleMinReviewCount !== null) {
+      const reviewCount = googleReviewCountNumber(firm);
+      if (reviewCount == null || reviewCount < f.googleMinReviewCount) return false;
+    }
 
     if (
       firm.corporateness_score < f.corpMin ||
@@ -319,6 +346,30 @@ export function sortFirms(list: FirmRow[], sort: FirmSort): FirmRow[] {
         return hype(a) - hype(b);
       case "hype_score_desc":
         return hype(b) - hype(a);
+      case "google_rating_desc": {
+        const ra = googleRatingNumber(a);
+        const rb = googleRatingNumber(b);
+        if (ra === null && rb === null) return 0;
+        if (ra === null) return 1;
+        if (rb === null) return -1;
+        if (rb !== ra) return rb - ra;
+        const ca = googleReviewCountNumber(a) ?? -1;
+        const cb = googleReviewCountNumber(b) ?? -1;
+        if (cb !== ca) return cb - ca;
+        return 0;
+      }
+      case "google_reviews_desc": {
+        const ca = googleReviewCountNumber(a);
+        const cb = googleReviewCountNumber(b);
+        if (ca === null && cb === null) return 0;
+        if (ca === null) return 1;
+        if (cb === null) return -1;
+        if (cb !== ca) return cb - ca;
+        const ra = googleRatingNumber(a) ?? -1;
+        const rb = googleRatingNumber(b) ?? -1;
+        if (rb !== ra) return rb - ra;
+        return 0;
+      }
       case "corp_desc":
         return b.corporateness_score - a.corporateness_score;
       case "corp_asc":
@@ -368,6 +419,8 @@ export const LISTING_SORT_OPTIONS: {
   { value: "name_asc", label: "Firma adına göre (A-Z)" },
   { value: "hype_desc", label: "Önerilen" },
   { value: "corp_desc", label: "Kurumsallık (yüksek → düşük)" },
+  { value: "google_rating_desc", label: "Google puanı yüksek → düşük" },
+  { value: "google_reviews_desc", label: "Google değerlendirme sayısı yüksek → düşük" },
   { value: "hype_score_desc", label: "Hype (yüksek → düşük)" },
   { value: "founded_year_desc", label: "Kuruluş yılı (yeni → eski)" },
   { value: "founded_year_asc", label: "Kuruluş yılı (eski → yeni)" },

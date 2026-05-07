@@ -12,6 +12,13 @@ export type GooglePlacesBatchSummary = {
   error_samples: string[];
 };
 
+export type GooglePlacesBatchOptions = {
+  /** İşlenecek kayıt üst sınırı (Edge Function destekliyorsa uygulanır). */
+  limit?: number;
+  /** Admin manuel tetiklemesinde son senkrona bakmadan çalıştır. */
+  force?: boolean;
+};
+
 type EdgeEnvelope = Record<string, unknown>;
 
 async function postEdgeFunction(functionName: string, body?: EdgeEnvelope) {
@@ -107,11 +114,21 @@ export async function adminSyncGooglePlaceForFirm(
 }
 
 /** Toplu senk — `sync-google-places-batch` Edge Function */
-export async function adminSyncGooglePlacesBatch(): Promise<
+export async function adminSyncGooglePlacesBatch(
+  options?: GooglePlacesBatchOptions
+): Promise<
   | { ok: true; summary: GooglePlacesBatchSummary }
   | { ok: false; error: string }
 > {
-  const res = await postEdgeFunction("sync-google-places-batch", {});
+  const payload: EdgeEnvelope = {};
+  if (typeof options?.limit === "number" && Number.isFinite(options.limit)) {
+    payload.limit = Math.max(1, Math.floor(options.limit));
+  }
+  if (typeof options?.force === "boolean") {
+    payload.force = options.force;
+  }
+
+  const res = await postEdgeFunction("sync-google-places-batch", payload);
   if (!res.ok) return res;
 
   const d = res.data;

@@ -21,20 +21,22 @@ export function parseFiniteGoogleRating(
   return Number.isFinite(n) ? n : null;
 }
 
-function reviewsJsonHasPublicEntries(raw: unknown): boolean {
-  if (raw == null) return false;
-  if (Array.isArray(raw)) return raw.length > 0;
-  if (typeof raw === "string") {
-    const t = raw.trim();
-    if (!t) return false;
-    try {
-      const p = JSON.parse(t) as unknown;
-      return Array.isArray(p) && p.length > 0;
-    } catch {
-      return false;
-    }
-  }
-  return false;
+function readGoogleReviewText(review: Record<string, unknown>): string {
+  const textObj = review.text as Record<string, unknown> | null | undefined;
+  const originalObj = review.originalText as Record<string, unknown> | null | undefined;
+
+  const a =
+    textObj && typeof textObj === "object" && typeof textObj.text === "string"
+      ? textObj.text.trim()
+      : "";
+  if (a) return a;
+  const b =
+    originalObj &&
+    typeof originalObj === "object" &&
+    typeof originalObj.text === "string"
+      ? originalObj.text.trim()
+      : "";
+  return b;
 }
 
 export function mapFirmGoogleProfileRow(
@@ -51,6 +53,14 @@ export function mapFirmGoogleProfileRow(
   return {
     google_place_id:
       rec.google_place_id != null ? String(rec.google_place_id) : null,
+    google_display_name:
+      rec.google_display_name != null ? String(rec.google_display_name) : null,
+    google_formatted_address:
+      rec.google_formatted_address != null
+        ? String(rec.google_formatted_address)
+        : null,
+    google_maps_uri:
+      rec.google_maps_uri != null ? String(rec.google_maps_uri) : null,
     show_on_card:
       typeof rec.show_on_card === "boolean" ? rec.show_on_card : null,
     show_reviews_on_detail:
@@ -77,20 +87,35 @@ export function firmShouldShowGoogleRatingOnPublicCard(firm: FirmRow): boolean {
   return parseFiniteGoogleRating(p.rating) != null;
 }
 
+/** Detay sayfası sağ kart: Place ID + sayısal puan varsa göster. */
+export function firmShouldShowGoogleSidebarCard(firm: FirmRow): boolean {
+  const p = firm.google_profile;
+  if (!p) return false;
+  if (!hasPublicGooglePlaceId(p.google_place_id)) return false;
+  return parseFiniteGoogleRating(p.rating) != null;
+}
+
 /**
- * Detay sayfası Google Haritalar / yorum bölümü (gelecekteki sekme veya blok).
- * Place ID ve yorum bayrağı + anlamlı senk içerik (yorum listesi veya puan+yorum sayısı).
+ * Detay sayfası ana yorum bölümü:
+ * Place ID + yorum bayrağı + sayısal puan + dolu yorum dizisi zorunlu.
  */
-export function firmShouldShowGoogleMapsDetailSection(firm: FirmRow): boolean {
+export function firmShouldShowGoogleReviewSection(firm: FirmRow): boolean {
   const p = firm.google_profile;
   if (!p) return false;
   if (p.show_reviews_on_detail !== true) return false;
   if (!hasPublicGooglePlaceId(p.google_place_id)) return false;
-  if (reviewsJsonHasPublicEntries(p.reviews_json)) return true;
-  const r = parseFiniteGoogleRating(p.rating);
-  const c = p.user_rating_count;
-  if (r != null && typeof c === "number" && c > 0) return true;
-  return false;
+  if (parseFiniteGoogleRating(p.rating) == null) return false;
+  if (!Array.isArray(p.reviews_json) || p.reviews_json.length === 0) return false;
+
+  return p.reviews_json.some((item) => {
+    if (!item || typeof item !== "object") return false;
+    return readGoogleReviewText(item as Record<string, unknown>).length > 0;
+  });
+}
+
+/** Geriye uyumluluk: detay görünürlüğü yorum bölümü kuralını kullanır. */
+export function firmShouldShowGoogleMapsDetailSection(firm: FirmRow): boolean {
+  return firmShouldShowGoogleReviewSection(firm);
 }
 
 /**

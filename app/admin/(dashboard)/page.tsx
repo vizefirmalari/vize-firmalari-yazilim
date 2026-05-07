@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StatCard } from "@/components/admin/stat-card";
+import { DashboardGooglePlacesSyncCard } from "@/components/admin/dashboard-google-places-sync-card";
 import { getDashboardStats, getRecentActivity } from "@/lib/data/admin-dashboard";
 import { formatActivityLabel } from "@/lib/admin/activity-labels";
 
@@ -64,6 +65,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <DashboardGooglePlacesSyncCard />
         <section className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-[#1A1A1A]/50">
             Son eklenen firmalar

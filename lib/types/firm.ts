@@ -167,6 +167,8 @@ export type FirmSort =
   | "hype_desc"
   | "hype_asc"
   | "hype_score_desc"
+  | "google_rating_desc"
+  | "google_reviews_desc"
   | "corp_desc"
   | "corp_asc"
   | "founded_year_desc"

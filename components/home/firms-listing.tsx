@@ -129,6 +129,8 @@ function buildApplied(
     yearMax: bounds.year.max,
     yearPreset: null,
     requireGoogleListedRating: false,
+    googleMinRating: null,
+    googleMinReviewCount: null,
   };
 }
 
@@ -161,6 +163,8 @@ function serializeAppliedListingState(
     yearMax: f.yearMax,
     yearPreset: f.yearPreset,
     requireGoogleListedRating: f.requireGoogleListedRating,
+    googleMinRating: f.googleMinRating,
+    googleMinReviewCount: f.googleMinReviewCount,
   });
 }
 
@@ -326,6 +330,8 @@ export function FirmsListing({
         yearMax: prev.yearMax,
         yearPreset: prev.yearPreset,
         requireGoogleListedRating: prev.requireGoogleListedRating,
+        googleMinRating: prev.googleMinRating,
+        googleMinReviewCount: prev.googleMinReviewCount,
       };
     });
     setSort(initialSort);
@@ -552,6 +558,8 @@ export function FirmsListing({
     if (l.multilingualSupport) n++;
     if (l.corporateDomain) n++;
     if (appliedFilters.requireGoogleListedRating) n++;
+    if (appliedFilters.googleMinRating !== null) n++;
+    if (appliedFilters.googleMinReviewCount !== null) n++;
     if (appliedFilters.yearPreset !== null) n++;
     if (
       memoCategoryLock?.exploreSlug &&
@@ -648,6 +656,14 @@ export function FirmsListing({
     }));
   };
 
+  const clearGoogleMinRatingChip = () => {
+    setAppliedFiltersWithLock((prev) => ({ ...prev, googleMinRating: null }));
+  };
+
+  const clearGoogleMinReviewCountChip = () => {
+    setAppliedFiltersWithLock((prev) => ({ ...prev, googleMinReviewCount: null }));
+  };
+
   const clearYearPresetChip = () => {
     setAppliedFiltersWithLock((prev) => ({ ...prev, yearPreset: null }));
   };
@@ -729,7 +745,7 @@ export function FirmsListing({
       <div className="container-shell">
         <div className="grid gap-8 pt-1 lg:grid-cols-[minmax(280px,360px)_1fr] lg:items-start lg:gap-10 lg:pt-2">
         <aside
-          className="premium-card hidden w-full lg:sticky lg:top-24 lg:z-[5] lg:flex lg:max-h-[calc(100dvh-7rem)] lg:flex-col lg:overflow-hidden lg:self-start"
+          className="premium-card hidden w-full lg:sticky lg:top-24 lg:z-5 lg:flex lg:max-h-[calc(100dvh-7rem)] lg:flex-col lg:overflow-hidden lg:self-start"
           aria-label="Filtreler"
         >
           <div className="shrink-0 border-b border-border/70 px-5 pt-5 pb-3">
@@ -761,31 +777,10 @@ export function FirmsListing({
               companyTypeOptions={companyTypesSource}
               mainServiceCategoryOptions={mainServiceCategorySource}
               specializationTaxonomyOptions={specializationTaxonomyOptions}
+              sort={sort}
+              onSortChange={setSort}
+              sortOptions={LISTING_SORT_OPTIONS}
             />
-
-            <fieldset className="mt-8 border-t border-border pt-6">
-              <legend className="text-sm font-semibold text-foreground">
-                Sıralama
-              </legend>
-              <div className="mt-3 flex flex-col gap-2.5">
-                {LISTING_SORT_OPTIONS.map(({ value, label }) => (
-                  <label
-                    key={value}
-                    className="flex cursor-pointer items-center gap-2.5 text-sm text-foreground/90"
-                  >
-                    <input
-                      type="radio"
-                      name="listing-sort"
-                      value={value}
-                      checked={sort === value}
-                      onChange={() => setSort(value)}
-                      className="accent-primary"
-                    />
-                    <span>{label}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
           </div>
         </aside>
 
@@ -1041,6 +1036,38 @@ export function FirmsListing({
                 >
                   <span className="max-w-56 truncate">
                     Google&apos;da puanı görünen firmalar
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.googleMinRating !== null ? (
+                <button
+                  type="button"
+                  onClick={clearGoogleMinRatingChip}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-56 truncate">
+                    Google puanı {appliedFilters.googleMinRating.toLocaleString("tr-TR", {
+                      minimumFractionDigits: 1,
+                      maximumFractionDigits: 1,
+                    })}
+                    +
+                  </span>
+                  <span className="text-foreground/45" aria-hidden>
+                    ×
+                  </span>
+                </button>
+              ) : null}
+              {appliedFilters.googleMinReviewCount !== null ? (
+                <button
+                  type="button"
+                  onClick={clearGoogleMinReviewCountChip}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground/85"
+                >
+                  <span className="max-w-56 truncate">
+                    {appliedFilters.googleMinReviewCount.toLocaleString("tr-TR")}+ Google değerlendirmesi
                   </span>
                   <span className="text-foreground/45" aria-hidden>
                     ×
@@ -1355,6 +1382,8 @@ export function FirmsListing({
         companyTypeOptions={companyTypesSource}
         mainServiceCategoryOptions={mainServiceCategorySource}
         specializationTaxonomyOptions={specializationTaxonomyOptions}
+        activeSort={sort}
+        onSortChange={setSort}
         resultCount={previewCount}
         activeFilterCount={draftFilterActiveCount}
         onApply={applyFilterSheet}

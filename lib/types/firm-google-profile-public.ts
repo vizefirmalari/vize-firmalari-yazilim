@@ -1,6 +1,9 @@
 /** Public liste/detay için `firm_google_profiles` özet şeması (anon select). */
 export type FirmGoogleProfilePublic = {
   google_place_id: string | null;
+  google_display_name?: string | null;
+  google_formatted_address?: string | null;
+  google_maps_uri?: string | null;
   show_on_card: boolean | null;
   show_reviews_on_detail: boolean | null;
   rating: number | string | null;

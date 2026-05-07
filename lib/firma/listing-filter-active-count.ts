@@ -38,5 +38,7 @@ export function countActiveListingFilters(
   if (f.yearPreset !== null) n++;
   else if (!yearFilterIsFull(f, bounds)) n++;
   if (f.requireGoogleListedRating) n++;
+  if (f.googleMinRating !== null) n++;
+  if (f.googleMinReviewCount !== null) n++;
   return n;
 }

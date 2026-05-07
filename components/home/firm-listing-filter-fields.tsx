@@ -3,6 +3,7 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import type { AppliedListingFilters } from "@/lib/firma/listing-filters";
 import type { ListingRangeBounds } from "@/lib/firma/listing-filters";
+import type { FirmSort } from "@/lib/types/firm";
 import { normalizeCountryKey } from "@/lib/firma/coverage-catalog";
 import { buildUnifiedCountryFilterList } from "@/lib/firma/filter-country-options";
 import {
@@ -126,6 +127,40 @@ function RangePair({
 function toggleListItem<T extends string>(list: T[], item: T, checked: boolean): T[] {
   if (checked) return list.includes(item) ? list : [...list, item];
   return list.filter((x) => x !== item);
+}
+
+const STAR_PATH =
+  "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z";
+
+function GoogleRatingGlyph({
+  filled,
+  label,
+}: {
+  filled: number;
+  label: string;
+}) {
+  return (
+    <span
+      className="inline-flex items-center gap-px"
+      role="img"
+      aria-label={label}
+    >
+      {Array.from({ length: 5 }).map((_, idx) => (
+        <svg
+          key={`${label}-${idx}`}
+          viewBox="0 0 20 20"
+          className={`h-3.5 w-3.5 shrink-0 ${
+            idx < filled
+              ? "fill-amber-400 text-amber-400"
+              : "fill-slate-300 text-slate-300"
+          }`}
+          aria-hidden
+        >
+          <path fill="currentColor" d={STAR_PATH} />
+        </svg>
+      ))}
+    </span>
+  );
 }
 
 /** Popüler + diğer bölgeler tek `space-y-2` içinde; Dubai–Avustralya arası fazla boşluk oluşmaz */
@@ -660,6 +695,9 @@ type FilterFieldsProps = {
   /** Panel taxonomy — sabit boolean anahtarlarıyla çakışan slug'lar elenir */
   specializationTaxonomyOptions?: { slug: string; label: string }[];
   collapsible?: boolean;
+  sort?: FirmSort;
+  onSortChange?: (sort: FirmSort) => void;
+  sortOptions?: { value: FirmSort; label: string }[];
 };
 
 export function FirmListingFilterFields({
@@ -671,6 +709,9 @@ export function FirmListingFilterFields({
   mainServiceCategoryOptions,
   specializationTaxonomyOptions = [],
   collapsible = false,
+  sort,
+  onSortChange,
+  sortOptions = [],
 }: FilterFieldsProps) {
   const patch = (partial: Partial<AppliedListingFilters>) =>
     onChange({ ...draft, ...partial });
@@ -714,7 +755,7 @@ export function FirmListingFilterFields({
 
   const regionsAndCountriesGroup = (
     <div className="space-y-5">
-      <div className="rounded-lg border border-border/80 bg-primary/[0.03] p-3">
+      <div className="rounded-lg border border-border/80 bg-primary/3 p-3">
         <p className="text-sm font-semibold text-foreground">Bölgeler</p>
         <p className="mt-1 text-xs leading-relaxed text-foreground/55">
           Vize hizmet bölgeleri (firma kapsamına göre; ülke seçimlerinden otomatik
@@ -745,33 +786,7 @@ export function FirmListingFilterFields({
         </div>
       </div>
 
-      <div className="rounded-lg border border-border/80 bg-background p-3">
-        <p className="text-sm font-semibold text-foreground">Ofis Konumu</p>
-        <p className="mt-1 text-xs leading-relaxed text-foreground/55">
-          Firmaların Türkiye&apos;deki fiziksel ofis konumuna göre filtreleyin.
-          Bulunduğunuz şehirde hizmet veren firmaları bularak yüz yüze görüşme
-          imkânı yakalayın.
-        </p>
-        <div className="mt-4">
-          <OfficeLocationFilterBlock draft={draft} patch={patch} />
-        </div>
-      </div>
-
-      <div className="rounded-lg border border-border/80 bg-background p-3">
-        <p className="text-sm font-semibold text-foreground">Firma Türü</p>
-        <p className="mt-1 text-xs leading-relaxed text-foreground/55">
-          Yönetim panelinde tanımlanan firma yapısına göre filtreleyin. Hukuk
-          bürosu, seyahat acentesi, eğitim danışmanlığı veya vize başvuru merkezi
-          gibi firma türlerini seçerek daha isabetli sonuçlara ulaşın.
-        </p>
-        <div className="mt-4">
-          <FirmTypeFilterBlock
-            draft={draft}
-            patch={patch}
-            companyTypeOptions={companyTypeOptionsSafe}
-          />
-        </div>
-      </div>
+      <div>{renderGoogleMapsFilterBlock()}</div>
     </div>
   );
 
@@ -903,9 +918,14 @@ export function FirmListingFilterFields({
     </div>
   );
 
-  const googleMapsFilterBlock = (
-    <div className="space-y-2">
-      <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90">
+  function renderGoogleMapsFilterBlock() {
+    return (
+      <div className="space-y-3 rounded-lg border border-border/80 bg-primary/2 p-3">
+      <div className="flex items-center gap-2">
+        <GoogleRatingGlyph filled={4} label="Google puanı filtreleri" />
+        <p className="text-sm font-semibold text-foreground">Google Haritalar</p>
+      </div>
+      <label className="flex cursor-pointer items-start gap-2 text-sm text-foreground/90">
         <input
           type="checkbox"
           checked={draft.requireGoogleListedRating}
@@ -916,12 +936,87 @@ export function FirmListingFilterFields({
         />
         <span className="leading-snug">Google&apos;da puanı görünen firmalar</span>
       </label>
-      <p className="pl-7 text-xs leading-relaxed text-foreground/50">
-        Yönetim panelinde Place ID tanımlı, senkron ile puanı Liste görünümünde
-        seçilen firmalar dahildir.
+      <p className="pl-7 text-xs leading-relaxed text-foreground/55">
+        Google Haritalar puanı alınmış firmaları filtreleyin. Place ID tanımlı
+        olmayan veya puanı bulunmayan firmalar bu filtrelerde gösterilmez.
       </p>
-    </div>
-  );
+
+      <div className="space-y-2 pt-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
+          Minimum puan
+        </p>
+        {(
+          [
+            [4.5, 4, "4,5 ve üzeri"],
+            [4.0, 4, "4,0 ve üzeri"],
+            [3.5, 3, "3,5 ve üzeri"],
+          ] as const
+        ).map(([value, starCount, label]) => (
+          <label
+            key={value}
+            className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
+          >
+            <input
+              type="radio"
+              name="google-min-rating"
+              checked={draft.googleMinRating === value}
+              onChange={() => patch({ googleMinRating: value })}
+              className="accent-primary"
+            />
+            <span className="flex min-w-0 flex-wrap items-center gap-2 leading-snug">
+              <GoogleRatingGlyph
+                filled={starCount}
+                label={`Google puanı ${value.toLocaleString("tr-TR", {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })} ve üzeri`}
+              />
+              <span>{label}</span>
+            </span>
+          </label>
+        ))}
+        <button
+          type="button"
+          onClick={() => patch({ googleMinRating: null })}
+          className="pl-6 text-left text-xs font-medium text-slate-500 hover:text-slate-700 hover:underline"
+        >
+          Puan filtresini temizle
+        </button>
+      </div>
+
+      <div className="space-y-2 pt-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
+          Minimum değerlendirme
+        </p>
+        {(
+          [
+            [100, "100+ değerlendirme"],
+            [500, "500+ değerlendirme"],
+            [1000, "1000+ değerlendirme"],
+          ] as const
+        ).map(([value, label]) => (
+          <label key={value} className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90">
+            <input
+              type="radio"
+              name="google-min-review-count"
+              checked={draft.googleMinReviewCount === value}
+              onChange={() => patch({ googleMinReviewCount: value })}
+              className="accent-primary"
+            />
+            <span className="leading-snug">{label}</span>
+          </label>
+        ))}
+        <button
+          type="button"
+          onClick={() => patch({ googleMinReviewCount: null })}
+          className="pl-6 text-left text-xs font-medium text-slate-500 hover:text-slate-700 hover:underline"
+        >
+          Değerlendirme filtresini temizle
+        </button>
+      </div>
+      </div>
+    );
+  }
 
   const serviceModeBlock = (
     <div className="space-y-2">
@@ -1077,6 +1172,41 @@ export function FirmListingFilterFields({
     </div>
   );
 
+  const sortBlock = sort && onSortChange && sortOptions.length > 0 ? (
+    <div className="space-y-2">
+      {sortOptions.map(({ value, label }) => (
+        <div key={value}>
+          {value === "corp_desc" ? (
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Güven & kalite
+            </p>
+          ) : null}
+          {value === "hype_score_desc" ? (
+            <p className="mb-1 mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Etkileşim
+            </p>
+          ) : null}
+          {value === "founded_year_desc" ? (
+            <p className="mb-1 mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Kuruluş yılı
+            </p>
+          ) : null}
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90">
+            <input
+              type="radio"
+              name="listing-sort-inline"
+              value={value}
+              checked={sort === value}
+              onChange={() => onSortChange(value)}
+              className="accent-primary"
+            />
+            <span>{label}</span>
+          </label>
+        </div>
+      ))}
+    </div>
+  ) : null;
+
   if (collapsible) {
     return (
       <>
@@ -1097,6 +1227,14 @@ export function FirmListingFilterFields({
             />
           </div>
         </Collapsible>
+        <Collapsible title="Google Haritalar" defaultOpen>
+          {renderGoogleMapsFilterBlock()}
+        </Collapsible>
+        {sortBlock ? (
+          <Collapsible title="Sıralama" defaultOpen>
+            {sortBlock}
+          </Collapsible>
+        ) : null}
         <Collapsible title="Ofis Konumu" defaultOpen>
           <p className="mb-3 text-xs leading-relaxed text-foreground/55">
             Türkiye&apos;de fiziksel ofisi bulunan firmaları şehre göre
@@ -1155,7 +1293,6 @@ export function FirmListingFilterFields({
           </div>
         </Collapsible>
         <Collapsible title="Kurumsallık & yasal yapı">{trustBlock}</Collapsible>
-        <Collapsible title="Google Haritalar">{googleMapsFilterBlock}</Collapsible>
         <Collapsible title="Hizmet biçimi">{serviceModeBlock}</Collapsible>
         <Collapsible title="Dil & profesyonellik">{langBlock}</Collapsible>
         <Collapsible title="Kurumsallık & Hype skoru" defaultOpen>
@@ -1169,6 +1306,41 @@ export function FirmListingFilterFields({
   return (
     <div className="space-y-6">
       <div>{regionsAndCountriesGroup}</div>
+
+      {sortBlock ? (
+        <div>
+          <p className="text-sm font-semibold text-foreground">Sıralama</p>
+          <div className="mt-3">{sortBlock}</div>
+        </div>
+      ) : null}
+
+      <div>
+        <p className="text-sm font-semibold text-foreground">Ofis Konumu</p>
+        <p className="mt-1 text-xs leading-relaxed text-foreground/55">
+          Firmaların Türkiye&apos;deki fiziksel ofis konumuna göre filtreleyin.
+          Bulunduğunuz şehirde hizmet veren firmaları bularak yüz yüze görüşme
+          imkânı yakalayın.
+        </p>
+        <div className="mt-4">
+          <OfficeLocationFilterBlock draft={draft} patch={patch} />
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-semibold text-foreground">Firma Türü</p>
+        <p className="mt-1 text-xs leading-relaxed text-foreground/55">
+          Yönetim panelinde tanımlanan firma yapısına göre filtreleyin. Hukuk
+          bürosu, seyahat acentesi, eğitim danışmanlığı veya vize başvuru merkezi
+          gibi firma türlerini seçerek daha isabetli sonuçlara ulaşın.
+        </p>
+        <div className="mt-4">
+          <FirmTypeFilterBlock
+            draft={draft}
+            patch={patch}
+            companyTypeOptions={companyTypeOptionsSafe}
+          />
+        </div>
+      </div>
 
       <div>
         <p className="text-sm font-semibold text-foreground">Uzmanlık Alanları</p>
@@ -1224,11 +1396,6 @@ export function FirmListingFilterFields({
           Kurumsallık & yasal yapı
         </p>
         <div className="mt-3">{trustBlock}</div>
-      </div>
-
-      <div>
-        <p className="text-sm font-semibold text-foreground">Google Haritalar</p>
-        <div className="mt-3">{googleMapsFilterBlock}</div>
       </div>
 
       <div>

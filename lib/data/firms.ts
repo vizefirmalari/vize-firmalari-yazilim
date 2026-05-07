@@ -116,6 +116,8 @@ function normalizeSort(sort: string | undefined): FirmSort {
     "hype_desc",
     "hype_asc",
     "hype_score_desc",
+    "google_rating_desc",
+    "google_reviews_desc",
     "corp_desc",
     "corp_asc",
     "founded_year_desc",
@@ -157,6 +159,9 @@ async function attachFirmGoogleProfilesPublic(
       [
         "firm_id",
         "google_place_id",
+        "google_display_name",
+        "google_formatted_address",
+        "google_maps_uri",
         "show_on_card",
         "show_reviews_on_detail",
         "rating",

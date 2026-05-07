@@ -29,6 +29,14 @@ import { buildQuickApplyExpertiseLine, buildQuickApplySubtitle } from "@/lib/qui
 import { FirmNameBadges } from "@/components/firms/FirmNameBadges";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { resolveExploreHrefByTerm } from "@/lib/explore/explore-links";
+import {
+  firmShouldShowGoogleReviewSection,
+  firmShouldShowGoogleSidebarCard,
+} from "@/lib/firms/google-profile-public";
+import {
+  FirmGoogleReviewsSection,
+  FirmGoogleSidebarCard,
+} from "@/components/firma/google-maps-detail-sections";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -119,6 +127,8 @@ export default async function FirmaPage({ params }: PageProps) {
     Boolean(firm.visa_fees_note?.trim());
 
   const hasFaq = Array.isArray(firm.faq_json) && firm.faq_json.length > 0;
+  const showGoogleSidebarCard = firmShouldShowGoogleSidebarCard(firm);
+  const showGoogleReviewSection = firmShouldShowGoogleReviewSection(firm);
 
   const hasTeam =
     Boolean(firm.contact_person_name?.trim()) ||
@@ -392,6 +402,12 @@ export default async function FirmaPage({ params }: PageProps) {
                     subServices={subServices}
                     specializationLabels={specializationFlags}
                   />
+                </SectionReveal>
+              ) : null}
+
+              {showGoogleReviewSection ? (
+                <SectionReveal delayMs={72}>
+                  <FirmGoogleReviewsSection firm={firm} />
                 </SectionReveal>
               ) : null}
 
@@ -867,6 +883,12 @@ export default async function FirmaPage({ params }: PageProps) {
                     </div>
                   </div>
                   </div>
+                </SectionReveal>
+              ) : null}
+
+              {showGoogleSidebarCard ? (
+                <SectionReveal delayMs={252}>
+                  <FirmGoogleSidebarCard firm={firm} />
                 </SectionReveal>
               ) : null}
 
