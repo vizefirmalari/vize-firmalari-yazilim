@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
   const path = `/kesfet/${cat.slug}`;
   const title = `${cat.label} İçin Hizmet Veren Firmalar`;
-  const description = `${cat.label} süreçlerinde hizmet veren firmaları inceleyin, karşılaştırın ve size uygun danışmanlık profilini keşfedin.`;
+  const description = `${cat.label} kapsamında uzman firmaları Vize Firmaları'nda kıyaslayın; ülke ve etiket eşleşmesiyle profilleri okuyun, şeffaflığı ölçüp iletişime geçin.`;
   const img = resolveDefaultSiteShareImage();
 
   return {

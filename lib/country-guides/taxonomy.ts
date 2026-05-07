@@ -440,7 +440,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
       entry("gana", "Gana", "gh", "Gana", "Turistik ve çalışma süreçlerine giriş.", "Gana vize rehberi | Vize Firmaları", "Gana vize rehberi."),
       entry("etiyopya", "Etiyopya", "et", "Etiyopya", "e-Visa ve seyahat kurallarına giriş.", "Etiyopya vize rehberi | Vize Firmaları", "Etiyopya vize rehberi."),
       entry("tanzanya", "Tanzanya", "tz", "Tanzanya", "Turistik ve çalışma vizeleri ile Kilimanjaro bölgesi seyahatine giriş.", "Tanzanya vize rehberi | Vize Firmaları", "Tanzanya için vize ve çalışma rehberi girişi."),
-      entry("senegal", "Senegal", "sn", "Senegal", "Turistik ve iş vizeleri ile ECOWAS bölgesi transitine giriş.", "Senegal vize rehberi | Vize Firmaları", "Senegal vize ve çalışma rehberi."),
+      entry(
+        "senegal",
+        "Senegal",
+        "sn",
+        "Senegal",
+        "Turistik ve iş vizeleri ile ECOWAS bölgesi transitine giriş.",
+        "Senegal vize rehberi | Vize Firmaları",
+        "Senegal turistik ve iş vizeleri ile ECOWAS transit süreçlerine rehber girişi; oturum içerikleri genişliyor. Firmaları ülke filtresiyle platformda listeleyin."
+      ),
       entry("uganda", "Uganda", "ug", "Uganda", "Turistik ve çalışma izinlerine giriş.", "Uganda vize rehberi | Vize Firmaları", "Uganda için vize ve çalışma rehberi girişi."),
     ],
   },

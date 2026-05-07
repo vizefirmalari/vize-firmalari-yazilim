@@ -91,7 +91,7 @@ export const PUBLIC_DOCUMENT_PAGES = {
     path: "/yardim-merkezi",
     title: "Yardım Merkezi",
     description:
-      "Vize Firmaları yardım merkezi — platformu kullanma, listeleme ve güvenilir bilgi için rehber.",
+      "Vize Firmaları Yardım Merkezi: firma arama, filtreleme ve profil okuma; kullanım ipuçları. Ayrıntılı adımlar için S.S.S. ve İşlem Rehberi sayfasına gidin.",
     heading: "Yardım Merkezi",
     body: "Platformda firma arama, filtreleme ve profil inceleme adımları hakkında sık sorulan sorular ve kısa rehber içerikleri bu bölümde toplanır. Detaylı işlem adımları için S.S.S. ve İşlem Rehberi sayfasına göz atabilirsiniz.",
     changeFrequency: "weekly",
