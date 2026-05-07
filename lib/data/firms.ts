@@ -13,6 +13,7 @@ import {
   normalizeSpecializationFilterToken,
 } from "@/lib/firma/specialization-match";
 import { attachFirmCustomSpecializations } from "@/lib/data/specialization-taxonomy";
+import { mapFirmGoogleProfileRow } from "@/lib/firms/google-profile-public";
 import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
 import { firmMatchesExploreCategory } from "@/lib/explore/explore-match";
 import { effectiveFirmCategoryLabel } from "@/lib/firma/listing-filter-options";
@@ -138,6 +139,53 @@ function numericHype(r: Record<string, unknown>): number {
   if (typeof h === "string" && /^\d+(\.\d+)?$/.test(h)) return Number(h);
   const legacy = Number(r.raw_hype_score ?? 0);
   return Number.isFinite(legacy) && legacy > 0 ? legacy * 100 : 0;
+}
+
+type PublicSupabaseClient = NonNullable<
+  ReturnType<typeof createSupabasePublicClient>
+>;
+
+async function attachFirmGoogleProfilesPublic(
+  supabase: PublicSupabaseClient,
+  rows: FirmRow[]
+): Promise<FirmRow[]> {
+  if (!rows.length) return rows;
+  const ids = [...new Set(rows.map((r) => r.id))];
+  const { data, error } = await supabase
+    .from("firm_google_profiles")
+    .select(
+      [
+        "firm_id",
+        "google_place_id",
+        "show_on_card",
+        "show_reviews_on_detail",
+        "rating",
+        "user_rating_count",
+        "reviews_json",
+        "last_synced_at",
+      ].join(",")
+    )
+    .in("firm_id", ids);
+
+  if (error) {
+    console.error("[attachFirmGoogleProfilesPublic]", error.message);
+    return rows.map((r) => ({ ...r, google_profile: null }));
+  }
+
+  const byId = new Map<string, Record<string, unknown>>();
+  for (const raw of data ?? []) {
+    if (!raw || typeof raw !== "object" || "error" in raw) continue;
+    const rec = raw as unknown as Record<string, unknown>;
+    const id = String(rec.firm_id ?? "");
+    if (id) byId.set(id, rec);
+  }
+
+  return rows.map((r) => ({
+    ...r,
+    google_profile: byId.has(r.id)
+      ? mapFirmGoogleProfileRow(byId.get(r.id)!)
+      : null,
+  }));
 }
 
 export function normalizeFirmRow(r: Record<string, unknown>): FirmRow {
@@ -577,6 +625,7 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
   });
 
   rows = await attachFirmCustomSpecializations(supabase, rows);
+  rows = await attachFirmGoogleProfilesPublic(supabase, rows);
 
   if (filters.sort === "hype_desc" || filters.sort === "hype_score_desc" || filters.sort === "corp_desc") {
     const s = filters.sort;
@@ -725,7 +774,8 @@ export async function getFirmBySlug(slug: string): Promise<FirmRow | null> {
     console.error("[getFirmBySlug] firm_has_active_panel_member", panelErr.message);
   }
 
-  const [enriched] = await attachFirmCustomSpecializations(supabase, [firm]);
+  let [enriched] = await attachFirmCustomSpecializations(supabase, [firm]);
+  [enriched] = await attachFirmGoogleProfilesPublic(supabase, [enriched]);
   firm = {
     ...enriched,
     subscription_plan,

@@ -6,13 +6,20 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { createFirmFromForm, updateFirmFromForm } from "@/lib/actions/firms";
 import {
+  adminSyncGooglePlaceForFirm,
+  adminSyncGooglePlacesBatch,
+} from "@/lib/actions/google-places-sync-admin";
+import {
   buildFirmFormState,
   computeCorporatenessPreview,
   formStateToPayload,
   type FirmFormState,
 } from "@/lib/admin/firm-form-initial";
 import { CorporatenessScorePanel } from "@/components/admin/corporateness-score-panel";
-import type { FirmAdminPrivateRow } from "@/lib/data/admin-firm-detail";
+import type {
+  FirmAdminPrivateRow,
+  FirmGoogleProfileAdminRow,
+} from "@/lib/data/admin-firm-detail";
 import { slugify } from "@/lib/slug";
 import { firmFormSchema } from "@/lib/validations/firm";
 import { FirmImageUpload } from "@/components/admin/firm-image-upload";
@@ -45,6 +52,19 @@ function FieldHelp({ children }: { children: React.ReactNode }) {
   return (
     <p className="mt-1.5 text-xs leading-relaxed text-[#1A1A1A]/48">{children}</p>
   );
+}
+
+function formatAdminIsoTr(iso: string | null | undefined): string {
+  if (!iso?.trim()) return "—";
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return String(iso);
+  return d.toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function formatGoogleRatingSnapshot(val: unknown): string {
+  if (val === null || val === undefined || val === "") return "—";
+  const n = typeof val === "number" ? val : Number(val);
+  return Number.isFinite(n) ? n.toFixed(1) : String(val);
 }
 
 function Spinner({ className = "h-4 w-4" }: { className?: string }) {
@@ -143,6 +163,9 @@ function tabForValidationPath(path: (string | number)[]): TabId {
     "show_website",
     "show_address",
     "show_working_hours",
+    "google_place_id",
+    "google_maps_show_rating_on_card",
+    "google_maps_show_reviews_on_detail",
   ]);
   const serviceKeys = new Set([
     "country_ids",
@@ -203,6 +226,11 @@ type FirmFormProps = {
   firmId?: string;
   initial?: Record<string, unknown>;
   privateInitial?: FirmAdminPrivateRow | null;
+  /** `firm_google_profiles` — yalnızca düzenleme yüklemede dolu gelir */
+  firmGoogleProfile?: {
+    row: FirmGoogleProfileAdminRow | null;
+    loadError: string | null;
+  };
   countryIds: string[];
   featuredCountryIds?: string[];
   countries: Option[];
@@ -228,6 +256,7 @@ export function FirmForm({
   firmId,
   initial,
   privateInitial,
+  firmGoogleProfile,
   countryIds,
   featuredCountryIds = [],
   countries,
@@ -238,10 +267,17 @@ export function FirmForm({
 }: FirmFormProps) {
   const router = useRouter();
 
-  const defaults = useMemo(
-    () => buildFirmFormState(initial, privateInitial ?? null),
-    [initial, privateInitial]
-  );
+  const defaults = useMemo(() => {
+    const base = buildFirmFormState(initial, privateInitial ?? null);
+    const row = firmGoogleProfile?.row;
+    if (!row) return base;
+    return {
+      ...base,
+      google_place_id: String(row.google_place_id ?? ""),
+      google_maps_show_rating_on_card: Boolean(row.show_on_card),
+      google_maps_show_reviews_on_detail: Boolean(row.show_reviews_on_detail),
+    };
+  }, [initial, privateInitial, firmGoogleProfile]);
 
   /** Veritabanında saklanan skor (liste / firma sayfası bunu kullanır) */
   const savedCorporatenessScore = useMemo(() => {
@@ -252,6 +288,9 @@ export function FirmForm({
 
   const [tab, setTab] = useState<TabId>("identity");
   const [saving, setSaving] = useState(false);
+  const [googlePlaceSyncBusy, setGooglePlaceSyncBusy] = useState<
+    null | "single" | "batch"
+  >(null);
   const [form, setForm] = useState<FirmFormState>(defaults);
   const [selectedCountries, setSelectedCountries] = useState<string[]>(countryIds);
   const [selectedFeatured, setSelectedFeatured] =
@@ -293,7 +332,18 @@ export function FirmForm({
   useEffect(() => {
     /** Yalnız düzenleme: sunucu verisiyle senkron. Yeni oluşturma modunda `picklist` değişince formu sıfırlama (inline ülke/tür vb. eklerken kayıp olmasın). */
     if (mode === "edit") {
-      setForm(buildFirmFormState(initial, privateInitial ?? null));
+      const base = buildFirmFormState(initial, privateInitial ?? null);
+      const row = firmGoogleProfile?.row;
+      setForm(
+        !row
+          ? base
+          : {
+              ...base,
+              google_place_id: String(row.google_place_id ?? ""),
+              google_maps_show_rating_on_card: Boolean(row.show_on_card),
+              google_maps_show_reviews_on_detail: Boolean(row.show_reviews_on_detail),
+            }
+      );
     }
     setSelectedCountries(countryIds);
     setSelectedFeatured(featuredCountryIds);
@@ -306,6 +356,7 @@ export function FirmForm({
     mode,
     initial,
     privateInitial,
+    firmGoogleProfile,
     countryIds,
     featuredCountryIds,
     countries,
@@ -317,6 +368,86 @@ export function FirmForm({
 
   function patch<K extends keyof FirmFormState>(key: K, value: FirmFormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  const dbGooglePlaceId = firmGoogleProfile?.row?.google_place_id?.trim() ?? "";
+
+  async function syncThisFirmGoogleFromEdge() {
+    if (googlePlaceSyncBusy !== null || mode !== "edit" || !firmId) return;
+    if (!dbGooglePlaceId) {
+      toast.error("Önce Google Place ID kaydedilmiş olmalı; ana Kaydet ile kaydedin.");
+      return;
+    }
+    setGooglePlaceSyncBusy("single");
+    try {
+      const res = await adminSyncGooglePlaceForFirm(firmId);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      if (res.outcome === "updated") {
+        toast.success("Google verisi güncellendi.", {
+          description: "Places senkronicasyonu kenar işlevinden tamamlandı.",
+        });
+        router.refresh();
+        return;
+      }
+      if (res.outcome === "skipped") {
+        toast.message("İşlem atlandı.", {
+          description: res.reason
+            ? `Neden: ${res.reason}`
+            : "Firma için profil kaydı veya Place ID uygun değil.",
+        });
+        router.refresh();
+        return;
+      }
+      toast.message("Tamamlandı.", { description: `Durum: ${res.outcome}` });
+      router.refresh();
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Google güncellenirken bir hata oluştu."
+      );
+    } finally {
+      setGooglePlaceSyncBusy(null);
+    }
+  }
+
+  async function syncAllGooglePlacesFromEdge() {
+    if (googlePlaceSyncBusy !== null) return;
+    setGooglePlaceSyncBusy("batch");
+    try {
+      const res = await adminSyncGooglePlacesBatch();
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      const s = res.summary;
+      const descLines = [
+        `Toplam: ${s.total}`,
+        `Güncellenen: ${s.updated}`,
+        `Atlanan: ${s.skipped}`,
+        `Hatalı: ${s.errors}`,
+      ];
+      if (s.error_samples.length > 0) {
+        descLines.push(
+          "",
+          `Örnek (${Math.min(s.error_samples.length, 5)}):`,
+          ...s.error_samples.slice(0, 5)
+        );
+      }
+      toast.success("Toplu Google senkronicasyonu tamamlandı.", {
+        description: descLines.join("\n"),
+      });
+      router.refresh();
+    } catch (e) {
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : "Toplu güncelleme sırasında bir hata oluştu."
+      );
+    } finally {
+      setGooglePlaceSyncBusy(null);
+    }
   }
 
   async function addCountryInline() {
@@ -1209,6 +1340,212 @@ export function FirmForm({
                 className={inputClass}
               />
             </label>
+          </div>
+        </div>
+
+        <div className={subsection}>
+          <p className={groupTitle}>Google Haritalar entegrasyonu</p>
+          <p className="mt-1 text-sm leading-relaxed text-[#1A1A1A]/55">
+            Bu alan firma profilinde Google Haritalar puanı, yorum sayısı ve Google kaynaklı
+            işletme bilgilerini göstermek için kullanılacaktır. Google Place ID girildiğinde
+            veriler API senkronizasyonu ile alınacaktır.
+          </p>
+
+          {!String(form.google_place_id ?? "").trim() &&
+          !String(firmGoogleProfile?.row?.google_place_id ?? "").trim() ? (
+            <p className="mt-3 rounded-lg border border-[#0B3C5D]/10 bg-[#FAFBFC] px-3 py-2 text-sm text-[#0B3C5D]/80">
+              Bu firma için Google Place ID tanımlanmamış.
+            </p>
+          ) : null}
+
+          {firmGoogleProfile?.loadError ? (
+            <div
+              className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2.5 text-sm text-amber-950"
+              role="alert"
+            >
+              <p className="font-semibold">Google profili yüklenemedi</p>
+              <p className="mt-1 text-xs leading-relaxed text-amber-950/85">
+                {firmGoogleProfile.loadError}
+              </p>
+            </div>
+          ) : null}
+
+          <div className="mt-4 space-y-4">
+            <label className={`${labelClass} block`}>
+              Google Place ID
+              <input
+                value={form.google_place_id}
+                onChange={(e) => patch("google_place_id", e.target.value)}
+                className={`${inputClass} font-mono text-xs sm:text-sm`}
+                placeholder="ChIJ…"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <FieldHelp>
+                Boş bırakılabilir. Kayıtta baştaki ve sondaki boşluklar kaldırılır.
+              </FieldHelp>
+            </label>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D]">
+                <input
+                  type="checkbox"
+                  checked={form.google_maps_show_rating_on_card}
+                  onChange={(e) => patch("google_maps_show_rating_on_card", e.target.checked)}
+                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                />
+                Kartta Google puanını göster
+              </label>
+              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D]">
+                <input
+                  type="checkbox"
+                  checked={form.google_maps_show_reviews_on_detail}
+                  onChange={(e) =>
+                    patch("google_maps_show_reviews_on_detail", e.target.checked)
+                  }
+                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                />
+                Detay sayfasında Google yorumlarını göster
+              </label>
+            </div>
+
+            {firmGoogleProfile?.row ? (
+              <div className="rounded-xl border border-[#0B3C5D]/10 bg-white p-4">
+                <p className={groupTitle}>Google’dan gelen özet</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#1A1A1A]/48">
+                  Aşağıdaki alanlar Places senkronizasyonuyla doldurulur; elle düzenlenmez.
+                </p>
+                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <dt className="text-xs font-medium text-[#1A1A1A]/50">İşletme adı</dt>
+                    <dd className="mt-0.5 font-medium text-[#0B3C5D]">
+                      {firmGoogleProfile.row.google_display_name?.trim()
+                        ? firmGoogleProfile.row.google_display_name
+                        : "—"}
+                    </dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-xs font-medium text-[#1A1A1A]/50">Google adresi</dt>
+                    <dd className="mt-0.5 text-[#1A1A1A]/80">
+                      {firmGoogleProfile.row.google_formatted_address?.trim()
+                        ? firmGoogleProfile.row.google_formatted_address
+                        : "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium text-[#1A1A1A]/50">Google puanı</dt>
+                    <dd className="mt-0.5 tabular-nums text-[#1A1A1A]">
+                      {formatGoogleRatingSnapshot(firmGoogleProfile.row.rating)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium text-[#1A1A1A]/50">
+                      Google yorum sayısı
+                    </dt>
+                    <dd className="mt-0.5 tabular-nums text-[#1A1A1A]">
+                      {firmGoogleProfile.row.user_rating_count != null &&
+                      Number.isFinite(firmGoogleProfile.row.user_rating_count)
+                        ? String(firmGoogleProfile.row.user_rating_count)
+                        : "—"}
+                    </dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-xs font-medium text-[#1A1A1A]/50">
+                      Son senkronizasyon
+                    </dt>
+                    <dd className="mt-0.5 text-[#1A1A1A]/80">
+                      {formatAdminIsoTr(firmGoogleProfile.row.last_synced_at)}
+                    </dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-xs font-medium text-[#1A1A1A]/50">
+                      Senkronizasyon durumu
+                    </dt>
+                    <dd className="mt-0.5 font-mono text-xs text-[#1A1A1A]/80">
+                      {firmGoogleProfile.row.sync_status?.trim()
+                        ? firmGoogleProfile.row.sync_status
+                        : "—"}
+                    </dd>
+                  </div>
+                  {firmGoogleProfile.row.sync_error?.trim() ? (
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs font-medium text-amber-950/75">Son hata</dt>
+                      <dd className="mt-1 rounded-lg border border-amber-200/90 bg-amber-50/80 px-2.5 py-2 text-xs leading-relaxed text-amber-950/90">
+                        {firmGoogleProfile.row.sync_error}
+                      </dd>
+                    </div>
+                  ) : null}
+                  {firmGoogleProfile.row.google_maps_uri?.trim() ? (
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs font-medium text-[#1A1A1A]/50">
+                        Google Haritalar bağlantısı
+                      </dt>
+                      <dd className="mt-1 break-all">
+                        <a
+                          href={firmGoogleProfile.row.google_maps_uri}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-[#328CC1] underline-offset-4 hover:underline"
+                        >
+                          Haritada aç
+                        </a>
+                      </dd>
+                    </div>
+                  ) : null}
+                </dl>
+              </div>
+            ) : null}
+
+            <div className="space-y-3">
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+                <button
+                  type="button"
+                  disabled={
+                    googlePlaceSyncBusy !== null ||
+                    saving ||
+                    mode !== "edit" ||
+                    !firmId ||
+                    !dbGooglePlaceId
+                  }
+                  title={
+                    !dbGooglePlaceId && mode === "edit"
+                      ? "Place ID’nin kayıtta olması için önce ana Kaydet kullanın."
+                      : undefined
+                  }
+                  onClick={() => void syncThisFirmGoogleFromEdge()}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#1A1A1A]/15 bg-white px-4 py-2.5 text-sm font-semibold text-[#0B3C5D] shadow-sm transition hover:bg-[#F4F6F8] disabled:cursor-not-allowed disabled:opacity-55"
+                >
+                  {googlePlaceSyncBusy === "single" ? (
+                    <>
+                      <Spinner className="h-4 w-4 text-[#0B3C5D]" />
+                      Güncelleniyor…
+                    </>
+                  ) : (
+                    "Bu firmayı güncelle"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  disabled={googlePlaceSyncBusy !== null || saving}
+                  onClick={() => void syncAllGooglePlacesFromEdge()}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#1A1A1A]/15 bg-white px-4 py-2.5 text-sm font-semibold text-[#0B3C5D] shadow-sm transition hover:bg-[#F4F6F8] disabled:cursor-not-allowed disabled:opacity-55"
+                >
+                  {googlePlaceSyncBusy === "batch" ? (
+                    <>
+                      <Spinner className="h-4 w-4 text-[#0B3C5D]" />
+                      Toplu işlem…
+                    </>
+                  ) : (
+                    "Tüm Google kayıtlarını güncelle"
+                  )}
+                </button>
+              </div>
+              <FieldHelp>
+                Çağrılar Supabase kenar işlevleri sync-google-place ve sync-google-places-batch
+                üzerinden yapılır; Google API anahtarı yalnızca kenar işlevinde kalır ve toplu
+                döngü istemicide çalışmaz.
+              </FieldHelp>
+            </div>
           </div>
         </div>
 

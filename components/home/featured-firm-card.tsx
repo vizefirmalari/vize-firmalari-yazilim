@@ -18,6 +18,10 @@ import { effectiveFirmCategoryLabel } from "@/lib/firma/listing-filter-options";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 import { FirmOfficeCityBadge } from "@/components/firma/firm-office-city-badge";
 import { FirmNameBadges } from "@/components/firms/FirmNameBadges";
+import {
+  firmShouldShowGoogleRatingOnPublicCard,
+  formatGoogleRatingForPublicUi,
+} from "@/lib/firms/google-profile-public";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -145,6 +149,21 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
         <p className="text-[11px] font-semibold text-foreground/60">
           Hype: <span className="tabular-nums text-foreground">{hype}</span>
         </p>
+        {firmShouldShowGoogleRatingOnPublicCard(firm) ? (
+          <p className="text-[11px] font-semibold text-foreground/60">
+            Google puanı:{" "}
+            <span className="tabular-nums text-foreground">
+              {formatGoogleRatingForPublicUi(firm.google_profile?.rating)}
+            </span>
+            {typeof firm.google_profile?.user_rating_count === "number" &&
+            firm.google_profile.user_rating_count > 0 ? (
+              <span className="font-normal text-foreground/50">
+                {" "}
+                ({firm.google_profile.user_rating_count} değerlendirme)
+              </span>
+            ) : null}
+          </p>
+        ) : null}
       </div>
 
       <div className="firm-spec-tags mt-3 flex flex-wrap gap-1.5">

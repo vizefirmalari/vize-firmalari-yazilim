@@ -37,5 +37,6 @@ export function countActiveListingFilters(
   if (f.hypeMin > bounds.hype.min || f.hypeMax < bounds.hype.max) n++;
   if (f.yearPreset !== null) n++;
   else if (!yearFilterIsFull(f, bounds)) n++;
+  if (f.requireGoogleListedRating) n++;
   return n;
 }

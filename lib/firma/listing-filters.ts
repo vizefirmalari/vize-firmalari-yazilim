@@ -4,6 +4,7 @@ import { effectiveFirmCategoryLabel } from "@/lib/firma/listing-filter-options";
 import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
 import { firmMatchesExploreCategory } from "@/lib/explore/explore-match";
 import { firmMatchesSpecializationFilterTokens } from "@/lib/firma/specialization-match";
+import { firmPassesGoogleListedRatingListingFilter } from "@/lib/firms/google-profile-public";
 
 export function hypeValue(f: FirmRow): number {
   return f.hype_score ?? f.raw_hype_score * 100;
@@ -129,6 +130,8 @@ export type AppliedListingFilters = {
   yearMin: number;
   yearMax: number;
   yearPreset: YearPreset;
+  /** Google’da kart için gösterilebilir gerçek puanı olan işletmeler */
+  requireGoogleListedRating: boolean;
 };
 
 /** Vitrin sayımı ve yeni taslaklar için tam varsayılan filtre */
@@ -166,6 +169,7 @@ export function createDefaultAppliedListingFilters(
     yearMin: bounds.year.min,
     yearMax: bounds.year.max,
     yearPreset: null,
+    requireGoogleListedRating: false,
   };
 }
 
@@ -269,6 +273,10 @@ export function applyListingFilters(
     if (!passesTrust(firm, f.trust)) return false;
     if (!passesServiceMode(firm, f.serviceMode)) return false;
     if (!passesLanguagePro(firm, f.languagePro)) return false;
+
+    if (f.requireGoogleListedRating && !firmPassesGoogleListedRatingListingFilter(firm)) {
+      return false;
+    }
 
     if (
       firm.corporateness_score < f.corpMin ||

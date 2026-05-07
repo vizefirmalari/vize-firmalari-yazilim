@@ -271,6 +271,36 @@ async function upsertFirmAdminPrivate(supabase: SupabaseAdmin, firmId: string, v
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Place ID doluysa görünürlük bayraklarıyla upsert; boşsa satır silinir.
+ * API’den gelen puan/yorum/sync alanlarına dokunulmaz (upsert PATCH alanları sınırlı).
+ */
+async function syncFirmGoogleProfileAdmin(
+  supabase: SupabaseAdmin,
+  firmId: string,
+  v: FirmFormInput
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const placeId = String(v.google_place_id ?? "").trim();
+  if (!placeId) {
+    const { error } = await supabase.from("firm_google_profiles").delete().eq("firm_id", firmId);
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  }
+
+  const row = {
+    firm_id: firmId,
+    google_place_id: placeId,
+    show_on_card: Boolean(v.google_maps_show_rating_on_card),
+    show_reviews_on_detail: Boolean(v.google_maps_show_reviews_on_detail),
+  };
+
+  const { error } = await supabase.from("firm_google_profiles").upsert(row, {
+    onConflict: "firm_id",
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
 async function syncFirmDenormalized(supabase: SupabaseAdmin, firmId: string) {
   const { data: fc } = await supabase
     .from("firm_countries")
@@ -395,6 +425,12 @@ export async function createFirmFromForm(
     console.error("[createFirmFromForm] specialization junction:", specSync.error);
   }
 
+  const gpSync = await syncFirmGoogleProfileAdmin(supabase, firmId, v);
+  if (!gpSync.ok) {
+    console.error("[createFirmFromForm] firm_google_profiles:", gpSync.error);
+    return { ok: false, error: gpSync.error };
+  }
+
   const recalc = await recalculateCorporatenessScoreWithClient(supabase, firmId, {
     revalidate: false,
   });
@@ -486,6 +522,11 @@ export async function updateFirmFromForm(
   );
   if (!specSync.ok) {
     console.error("[updateFirmFromForm] specialization junction:", specSync.error);
+  }
+
+  const gpSync = await syncFirmGoogleProfileAdmin(supabase, firmId, v);
+  if (!gpSync.ok) {
+    return { ok: false, error: gpSync.error };
   }
 
   const recalc = await recalculateCorporatenessScoreWithClient(supabase, firmId, {

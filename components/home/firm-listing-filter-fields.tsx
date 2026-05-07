@@ -903,6 +903,26 @@ export function FirmListingFilterFields({
     </div>
   );
 
+  const googleMapsFilterBlock = (
+    <div className="space-y-2">
+      <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90">
+        <input
+          type="checkbox"
+          checked={draft.requireGoogleListedRating}
+          onChange={(e) =>
+            patch({ requireGoogleListedRating: e.target.checked })
+          }
+          className="accent-primary"
+        />
+        <span className="leading-snug">Google&apos;da puanı görünen firmalar</span>
+      </label>
+      <p className="pl-7 text-xs leading-relaxed text-foreground/50">
+        Yönetim panelinde Place ID tanımlı, senkron ile puanı Liste görünümünde
+        seçilen firmalar dahildir.
+      </p>
+    </div>
+  );
+
   const serviceModeBlock = (
     <div className="space-y-2">
       {(
@@ -1135,6 +1155,7 @@ export function FirmListingFilterFields({
           </div>
         </Collapsible>
         <Collapsible title="Kurumsallık & yasal yapı">{trustBlock}</Collapsible>
+        <Collapsible title="Google Haritalar">{googleMapsFilterBlock}</Collapsible>
         <Collapsible title="Hizmet biçimi">{serviceModeBlock}</Collapsible>
         <Collapsible title="Dil & profesyonellik">{langBlock}</Collapsible>
         <Collapsible title="Kurumsallık & Hype skoru" defaultOpen>
@@ -1203,6 +1224,11 @@ export function FirmListingFilterFields({
           Kurumsallık & yasal yapı
         </p>
         <div className="mt-3">{trustBlock}</div>
+      </div>
+
+      <div>
+        <p className="text-sm font-semibold text-foreground">Google Haritalar</p>
+        <div className="mt-3">{googleMapsFilterBlock}</div>
       </div>
 
       <div>

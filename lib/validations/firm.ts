@@ -247,6 +247,15 @@ const firmFormSchemaObject = z.object({
   sub_services: z.array(z.string().max(120)).max(120).default([]),
   custom_service_labels: z.array(z.string().max(80)).max(80).default([]),
   tags: z.array(z.string().max(120)).max(80).default([]),
+
+  /** Harici sync — yalnızca `firm_google_profiles` yazımında kullanılır; `firms` satırına gitmez */
+  google_place_id: z
+    .union([z.string(), z.undefined(), z.null()])
+    .transform((s) => (s == null ? "" : String(s).trim())),
+  /** `firm_google_profiles.show_on_card` — kartta Google puanı */
+  google_maps_show_rating_on_card: z.boolean().optional().default(false),
+  /** `firm_google_profiles.show_reviews_on_detail` */
+  google_maps_show_reviews_on_detail: z.boolean().optional().default(false),
 });
 
 /** Logo superRefine yok — sunucu yeniden hesaplama / toplu işler için */

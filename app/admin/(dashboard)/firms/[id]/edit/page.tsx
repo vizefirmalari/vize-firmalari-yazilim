@@ -62,6 +62,10 @@ export default async function EditFirmPage({ params }: PageProps) {
         firmId={id}
         initial={detail.firm}
         privateInitial={detail.private}
+        firmGoogleProfile={{
+          row: detail.google_profile,
+          loadError: detail.google_profile_load_error,
+        }}
         countryIds={detail.country_ids}
         featuredCountryIds={detail.featured_country_ids}
         countries={countries}

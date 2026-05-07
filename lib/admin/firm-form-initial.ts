@@ -165,6 +165,10 @@ export type FirmFormState = {
   main_services: string[];
   sub_services: string[];
   tags: string[];
+  /** Google Places — `firm_google_profiles` ile eşleşir */
+  google_place_id: string;
+  google_maps_show_rating_on_card: boolean;
+  google_maps_show_reviews_on_detail: boolean;
 };
 
 function numStr(v: unknown): string {
@@ -426,6 +430,16 @@ export function buildFirmFormState(
     tags: Array.isArray(i.tags)
       ? [...(i.tags as string[])].filter((t) => typeof t === "string" && t.length > 0)
       : [],
+    google_place_id: String(
+      (i as { google_place_id?: string | null }).google_place_id ?? ""
+    ),
+    google_maps_show_rating_on_card: Boolean(
+      (i as { google_maps_show_rating_on_card?: boolean }).google_maps_show_rating_on_card
+    ),
+    google_maps_show_reviews_on_detail: Boolean(
+      (i as { google_maps_show_reviews_on_detail?: boolean })
+        .google_maps_show_reviews_on_detail
+    ),
   };
 }
 
@@ -621,6 +635,9 @@ export function formStateToPayload(
     sub_services: form.sub_services,
     custom_service_labels: form.custom_service_labels,
     tags: [...new Set(form.tags.map((t) => t.trim()).filter(Boolean))],
+    google_place_id: form.google_place_id,
+    google_maps_show_rating_on_card: form.google_maps_show_rating_on_card,
+    google_maps_show_reviews_on_detail: form.google_maps_show_reviews_on_detail,
   };
 }
 

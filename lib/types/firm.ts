@@ -1,4 +1,5 @@
 import type { FirmPlanType } from "@/lib/subscriptions/plan-types";
+import type { FirmGoogleProfilePublic } from "@/lib/types/firm-google-profile-public";
 
 export type FirmRow = {
   id: string;
@@ -158,6 +159,8 @@ export type FirmRow = {
   /** batch_firm_plan_types / firm_current_plan_type ile doldurulur. */
   subscription_plan?: FirmPlanType;
   social_buttons_enabled?: boolean | null;
+  /** Places senk özeti — yoksa veya içeriksizse public Google UI gösterilmez */
+  google_profile?: FirmGoogleProfilePublic | null;
 };
 
 export type FirmSort =
