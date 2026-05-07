@@ -26,8 +26,9 @@ import { FirmOfficeCityBadge } from "@/components/firma/firm-office-city-badge";
 import { FirmNameBadges } from "@/components/firms/FirmNameBadges";
 import {
   firmShouldShowGoogleRatingOnPublicCard,
-  formatGoogleRatingForPublicUi,
+  parseFiniteGoogleRating,
 } from "@/lib/firms/google-profile-public";
+import { GooglePublicRatingRow } from "@/components/home/google-public-rating-row";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -136,6 +137,11 @@ export function FirmCard({ firm }: FirmCardProps) {
   const subProcessAndSupport = Array.isArray(firm.sub_services) ? firm.sub_services : [];
   const labelTags = Array.isArray(firm.custom_services) ? firm.custom_services : [];
 
+  const googleListRating =
+    firmShouldShowGoogleRatingOnPublicCard(firm)
+      ? parseFiniteGoogleRating(firm.google_profile?.rating)
+      : null;
+
   // Fallback: older data may only have the merged `services` array.
   const effectiveMainCategories =
     mainCategories.length > 0 ? mainCategories : servicePool;
@@ -227,20 +233,11 @@ export function FirmCard({ firm }: FirmCardProps) {
           Hype Puanı: <span className="tabular-nums text-[#1A1A1A]">{hype}</span>
         </div>
 
-        {firmShouldShowGoogleRatingOnPublicCard(firm) ? (
-          <div className="text-xs font-semibold text-[#1A1A1A]/60">
-            Google puanı:{" "}
-            <span className="tabular-nums text-[#1A1A1A]">
-              {formatGoogleRatingForPublicUi(firm.google_profile?.rating)}
-            </span>
-            {typeof firm.google_profile?.user_rating_count === "number" &&
-            firm.google_profile.user_rating_count > 0 ? (
-              <span className="font-normal text-[#1A1A1A]/52">
-                {" "}
-                ({firm.google_profile.user_rating_count} değerlendirme)
-              </span>
-            ) : null}
-          </div>
+        {googleListRating != null ? (
+          <GooglePublicRatingRow
+            rating={googleListRating}
+            userRatingCount={firm.google_profile?.user_rating_count ?? null}
+          />
         ) : null}
       </div>
 

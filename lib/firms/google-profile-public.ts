@@ -13,7 +13,7 @@ export function hasPublicGooglePlaceId(
   return trimPlaceId(googlePlaceId).length > 0;
 }
 
-function parseFiniteGoogleRating(
+export function parseFiniteGoogleRating(
   rating: number | string | null | undefined
 ): number | null {
   if (rating === null || rating === undefined || rating === "") return null;

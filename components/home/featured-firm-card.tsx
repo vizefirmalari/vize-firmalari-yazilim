@@ -20,8 +20,9 @@ import { FirmOfficeCityBadge } from "@/components/firma/firm-office-city-badge";
 import { FirmNameBadges } from "@/components/firms/FirmNameBadges";
 import {
   firmShouldShowGoogleRatingOnPublicCard,
-  formatGoogleRatingForPublicUi,
+  parseFiniteGoogleRating,
 } from "@/lib/firms/google-profile-public";
+import { GooglePublicRatingRow } from "@/components/home/google-public-rating-row";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -75,6 +76,11 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
 
   const specShown = specLabels.slice(0, 4);
   const specMore = Math.max(0, specLabels.length - specShown.length);
+
+  const googleListRating =
+    firmShouldShowGoogleRatingOnPublicCard(firm)
+      ? parseFiniteGoogleRating(firm.google_profile?.rating)
+      : null;
 
   return (
     <article className="relative flex h-full min-w-[min(100vw-2.5rem,20rem)] max-w-80 shrink-0 flex-col rounded-2xl border border-border bg-background p-4 shadow-[0_8px_30px_rgba(11,60,93,0.08)] sm:min-w-76 sm:max-w-84 sm:p-5">
@@ -149,20 +155,12 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
         <p className="text-[11px] font-semibold text-foreground/60">
           Hype: <span className="tabular-nums text-foreground">{hype}</span>
         </p>
-        {firmShouldShowGoogleRatingOnPublicCard(firm) ? (
-          <p className="text-[11px] font-semibold text-foreground/60">
-            Google puanı:{" "}
-            <span className="tabular-nums text-foreground">
-              {formatGoogleRatingForPublicUi(firm.google_profile?.rating)}
-            </span>
-            {typeof firm.google_profile?.user_rating_count === "number" &&
-            firm.google_profile.user_rating_count > 0 ? (
-              <span className="font-normal text-foreground/50">
-                {" "}
-                ({firm.google_profile.user_rating_count} değerlendirme)
-              </span>
-            ) : null}
-          </p>
+        {googleListRating != null ? (
+          <GooglePublicRatingRow
+            rating={googleListRating}
+            userRatingCount={firm.google_profile?.user_rating_count ?? null}
+            tone="featured"
+          />
         ) : null}
       </div>
 
