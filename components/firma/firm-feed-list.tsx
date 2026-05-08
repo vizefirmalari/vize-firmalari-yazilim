@@ -1,25 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { FeedItem } from "@/lib/data/feed";
 import { FeedCardActions } from "@/components/feed/FeedCardActions";
 import { FeedCardContent } from "@/components/feed/FeedCardContent";
 import { FeedCardHeader } from "@/components/feed/FeedCardHeader";
 import { FeedCardImage } from "@/components/feed/FeedCardImage";
-import { useFeedLikesRealtime } from "@/hooks/use-feed-likes-realtime";
 
 export function FirmFeedList({ items }: { items: FeedItem[] }) {
   const [liveLikeMap, setLiveLikeMap] = useState<Record<string, number>>(
     Object.fromEntries(items.map((x) => [x.id, x.like_count]))
   );
-
-  const postIds = useMemo(() => items.map((x) => x.id), [items]);
-  useFeedLikesRealtime({
-    postIds,
-    onCount: (postId, count) => {
-      setLiveLikeMap((prev) => ({ ...prev, [postId]: count }));
-    },
-  });
 
   return (
     <div className="space-y-4">

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FirmRow } from "@/lib/types/firm";
 import { FirmPrimaryLeftCta } from "@/components/firma/firm-primary-left-cta";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
@@ -23,6 +23,7 @@ import {
   parseFiniteGoogleRating,
 } from "@/lib/firms/google-profile-public";
 import { GooglePublicRatingRow } from "@/components/home/google-public-rating-row";
+import { withSupabaseImageTransform } from "@/lib/images/supabase-transform";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -46,6 +47,7 @@ function initials(name: string): string {
 }
 
 export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
+  const [logoFailed, setLogoFailed] = useState(false);
   const corporate = firm.corporateness_score;
   const hype =
     typeof firm.hype_score === "number" && Number.isFinite(firm.hype_score)
@@ -83,6 +85,15 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
     firmShouldShowGoogleRatingOnPublicCard(firm)
       ? parseFiniteGoogleRating(firm.google_profile?.rating)
       : null;
+  const cardLogoSrc = withSupabaseImageTransform(firm.logo_url, {
+    width: 160,
+    height: 160,
+    quality: 75,
+  });
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [firm.logo_url]);
 
   return (
     <article className="relative flex h-full min-w-[min(100vw-2.5rem,20rem)] max-w-80 shrink-0 flex-col rounded-2xl border border-border bg-background p-4 shadow-[0_8px_30px_rgba(11,60,93,0.08)] sm:min-w-76 sm:max-w-84 sm:p-5">
@@ -96,14 +107,15 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
         className={`flex gap-3 ${officeCity ? "pt-0.5 pr-19 sm:pr-28" : ""}`}
       >
         <div className="relative h-18 w-18 shrink-0 overflow-hidden rounded-xl bg-surface ring-1 ring-primary/8">
-          {firm.logo_url ? (
+          {cardLogoSrc && !logoFailed ? (
             <Image
-              src={firm.logo_url}
+              src={cardLogoSrc}
               alt={firm.logo_alt_text?.trim() || `${firm.name} logosu`}
               fill
               sizes="(max-width: 768px) 72px, 80px"
               className="object-contain object-center p-1.5"
               loading="lazy"
+              onError={() => setLogoFailed(true)}
             />
           ) : (
             <span

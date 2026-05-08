@@ -29,6 +29,7 @@ import {
   parseFiniteGoogleRating,
 } from "@/lib/firms/google-profile-public";
 import { GooglePublicRatingRow } from "@/components/home/google-public-rating-row";
+import { withSupabaseImageTransform } from "@/lib/images/supabase-transform";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -53,6 +54,7 @@ export function FirmCard({ firm }: FirmCardProps) {
   const [countriesModalOpen, setCountriesModalOpen] = useState(false);
   const [servicesModalOpen, setServicesModalOpen] = useState(false);
   const [aboutTextModalOpen, setAboutTextModalOpen] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
 
   const corporate = firm.corporateness_score;
   const hype = typeof firm.hype_score === "number" && Number.isFinite(firm.hype_score) ? firm.hype_score : 0;
@@ -145,6 +147,15 @@ export function FirmCard({ firm }: FirmCardProps) {
   // Fallback: older data may only have the merged `services` array.
   const effectiveMainCategories =
     mainCategories.length > 0 ? mainCategories : servicePool;
+  const cardLogoSrc = withSupabaseImageTransform(firm.logo_url, {
+    width: 192,
+    height: 192,
+    quality: 75,
+  });
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [firm.logo_url]);
 
   return (
     <article className="relative flex h-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-[#0B3C5D]/10 bg-white px-4 py-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)] sm:px-5">
@@ -157,9 +168,9 @@ export function FirmCard({ firm }: FirmCardProps) {
       <div className="flex flex-col items-center text-center">
         <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-3 shadow-[0_2px_14px_rgba(11,60,93,0.08)] sm:rounded-xl sm:p-3.5">
           <div className="relative box-border flex h-[92px] w-[92px] items-center justify-center rounded-xl bg-[#F7F9FB] p-2 ring-1 ring-[#0B3C5D]/8 sm:h-[96px] sm:w-[96px] sm:p-2.5">
-            {firm.logo_url ? (
+            {cardLogoSrc && !logoFailed ? (
               <Image
-                src={firm.logo_url}
+                src={cardLogoSrc}
                 alt={
                   firm.logo_alt_text?.trim() ||
                   `${firm.name} logosu`
@@ -168,6 +179,7 @@ export function FirmCard({ firm }: FirmCardProps) {
                 sizes="(max-width: 639px) 76px, 80px"
                 className="object-contain object-center"
                 loading="lazy"
+                onError={() => setLogoFailed(true)}
               />
             ) : (
               <span

@@ -18,7 +18,7 @@ export function DestinationEditorialImage({
   urls,
   gradientClassName,
   sizes,
-  imageClassName = "object-cover object-center scale-[1.08] blur-[2px] transition duration-500 group-hover:scale-[1.12] group-hover:blur-[1px]",
+  imageClassName = "object-cover object-center scale-[1.03] transition-transform duration-300 group-hover:scale-[1.06]",
 }: Props) {
   const [index, setIndex] = useState(0);
 

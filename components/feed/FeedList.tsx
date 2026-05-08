@@ -6,7 +6,6 @@ import type { FeedItem } from "@/lib/data/feed";
 import { FeedCard } from "@/components/feed/FeedCard";
 import { SponsoredCard } from "@/components/feed/SponsoredCard";
 import { pickWeightedAd } from "@/lib/blog/ads";
-import { useFeedLikesRealtime } from "@/hooks/use-feed-likes-realtime";
 
 type Props = {
   initialItems: FeedItem[];
@@ -37,13 +36,6 @@ export function FeedList({ initialItems, hasMoreInitial, adPool, queryString, ha
   const [hasMore, setHasMore] = useState(hasMoreInitial);
   const [loading, setLoading] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-
-  useFeedLikesRealtime({
-    postIds: items.filter((x) => x.type === "blog").map((x) => x.id),
-    onCount: (postId, count) => {
-      setLiveLikeMap((prev) => ({ ...prev, [postId]: count }));
-    },
-  });
 
   const rows = useMemo(() => {
     const out: Array<{ kind: "feed"; item: FeedItem } | { kind: "ad"; ad: BlogAdRow }> = [];

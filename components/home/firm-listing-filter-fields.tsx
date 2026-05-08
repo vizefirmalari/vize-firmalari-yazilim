@@ -72,6 +72,8 @@ function RangePair({
   maxBound,
   low,
   high,
+  lowAriaLabel,
+  highAriaLabel,
   onLowChange,
   onHighChange,
 }: {
@@ -79,6 +81,8 @@ function RangePair({
   maxBound: number;
   low: number;
   high: number;
+  lowAriaLabel: string;
+  highAriaLabel: string;
   onLowChange: (v: number) => void;
   onHighChange: (v: number) => void;
 }) {
@@ -92,6 +96,7 @@ function RangePair({
           </div>
           <input
             type="range"
+            aria-label={lowAriaLabel}
             min={minBound}
             max={maxBound}
             value={low}
@@ -109,6 +114,7 @@ function RangePair({
           </div>
           <input
             type="range"
+            aria-label={highAriaLabel}
             min={minBound}
             max={maxBound}
             value={high}
@@ -187,7 +193,6 @@ function RegionsListBlock({
       </p>
       <div
         className={`mt-2 max-h-[min(240px,42vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
-        role="listbox"
         aria-label="Bölgeler"
       >
         {POPULAR_VISA_REGION_LABELS.map((label) => (
@@ -394,7 +399,6 @@ function FirmTypeFilterBlock({
       />
       <div
         className={`mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
-        role="listbox"
         aria-label="Firma türleri"
       >
         {listFiltered.length === 0 ? (
@@ -525,7 +529,6 @@ function MainServiceCategoriesFilterBlock({
       />
       <div
         className={`mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
-        role="listbox"
         aria-label="Ana hizmet kategorileri"
       >
         {listFiltered.length === 0 ? (
@@ -1099,6 +1102,8 @@ export function FirmListingFilterFields({
           maxBound={100}
           low={draft.corpMin}
           high={draft.corpMax}
+          lowAriaLabel="Minimum kurumsallik skoru"
+          highAriaLabel="Maksimum kurumsallik skoru"
           onLowChange={(v) => patch({ corpMin: Math.min(v, draft.corpMax) })}
           onHighChange={(v) => patch({ corpMax: Math.max(v, draft.corpMin) })}
         />
@@ -1110,6 +1115,8 @@ export function FirmListingFilterFields({
           maxBound={bounds.hype.max}
           low={draft.hypeMin}
           high={draft.hypeMax}
+          lowAriaLabel="Minimum hype puani"
+          highAriaLabel="Maksimum hype puani"
           onLowChange={(v) => patch({ hypeMin: Math.min(v, draft.hypeMax) })}
           onHighChange={(v) => patch({ hypeMax: Math.max(v, draft.hypeMin) })}
         />
@@ -1156,6 +1163,8 @@ export function FirmListingFilterFields({
         maxBound={bounds.year.max}
         low={draft.yearMin}
         high={draft.yearMax}
+        lowAriaLabel="Minimum kurulus yili"
+        highAriaLabel="Maksimum kurulus yili"
         onLowChange={(v) =>
           patch({
             yearMin: Math.min(v, draft.yearMax),

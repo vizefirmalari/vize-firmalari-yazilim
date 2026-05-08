@@ -30,6 +30,7 @@ import { GooglePublicRatingRow } from "@/components/home/google-public-rating-ro
 import { FirmMessageChatButton } from "@/components/firma/firm-message-chat-button";
 import { FirmNameBadges } from "@/components/firms/FirmNameBadges";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
+import { withSupabaseImageTransform } from "@/lib/images/supabase-transform";
 
 const CORP_INFO =
   "Firmanın platform üzerindeki kurumsal bilgi, belge ve profil bütünlüğüne göre oluşturulan değerlendirme puanıdır.";
@@ -748,6 +749,7 @@ export function FirmContactModal({
   const titleId = useId();
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(open);
+  const [logoFailed, setLogoFailed] = useState(false);
 
   const googleListRating =
     firmShouldShowGoogleRatingOnPublicCard(firm)
@@ -786,10 +788,19 @@ export function FirmContactModal({
     return () => window.clearTimeout(t);
   }, [open]);
 
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [firm.logo_url]);
+
   if (!mounted) return null;
 
   const { direct, web, location, person } = buildContactLines(firm);
   const logoAlt = firm.logo_alt_text?.trim() || `${firm.name} logosu`;
+  const modalLogoSrc = withSupabaseImageTransform(firm.logo_url, {
+    width: 112,
+    height: 112,
+    quality: 75,
+  });
 
   return (
     <div className="fixed inset-0 z-9999">
@@ -821,13 +832,14 @@ export function FirmContactModal({
               </h2>
               <div className="flex gap-3">
                 <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-[#F7F9FB] ring-1 ring-[#0B3C5D]/8">
-                  {firm.logo_url ? (
+                  {modalLogoSrc && !logoFailed ? (
                     <Image
-                      src={firm.logo_url}
+                      src={modalLogoSrc}
                       alt={logoAlt}
                       fill
                       sizes="56px"
                       className="object-contain object-center p-1.5"
+                      onError={() => setLogoFailed(true)}
                     />
                   ) : (
                     <span className="flex h-full w-full items-center justify-center text-sm font-bold text-[#0B3C5D]">

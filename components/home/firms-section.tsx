@@ -1,6 +1,5 @@
 import type { FirmRow } from "@/lib/types/firm";
 import { FirmCard } from "@/components/home/firm-card";
-import { FirmsRealtime } from "@/components/home/firms-realtime";
 
 type FirmsSectionProps = {
   firms: FirmRow[];
@@ -21,7 +20,6 @@ export function FirmsSection({
 
   return (
     <section id="firmalar" className="scroll-mt-28">
-      <FirmsRealtime />
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-[#0B3C5D]">

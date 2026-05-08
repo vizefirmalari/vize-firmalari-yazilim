@@ -24,6 +24,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 const siteUrl = getSiteUrl();
+const isProd = process.env.NODE_ENV === "production";
 
 const defaultShare = resolveDefaultSiteShareImage();
 
@@ -65,33 +66,56 @@ export default function RootLayout({
   return (
     <html lang="tr" className="h-full antialiased">
       <head>
-        <Script id="microsoft-clarity" strategy="lazyOnload">
-          {`(function(c,l,a,r,i,t,y){
-    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-})(window, document, "clarity", "script", "w50me76ko5");`}
-        </Script>
-        <Script id="yandex-metrika" strategy="lazyOnload">
-          {`(function(m,e,t,r,i,k,a){
-    m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-    m[i].l=1*new Date();
-    for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-})(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=108351445', 'ym');
-
-ym(108351445, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});`}
-        </Script>
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-HJ78HJHHMZ"
-          strategy="lazyOnload"
-        />
-        <Script id="google-analytics-gtag" strategy="lazyOnload">
-          {`window.dataLayer = window.dataLayer || [];
+        <link rel="preconnect" href="https://rgkwwjtayaysvvywbibt.supabase.co" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://rgkwwjtayaysvvywbibt.supabase.co" />
+        {isProd ? (
+          <>
+            <Script id="microsoft-clarity" strategy="lazyOnload">
+              {`(function(){
+  var load = function(){
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "w50me76ko5");
+  };
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(load, { timeout: 4000 });
+  } else {
+    window.setTimeout(load, 1800);
+  }
+})();`}
+            </Script>
+            <Script id="yandex-metrika" strategy="lazyOnload">
+              {`(function(){
+  var load = function(){
+    (function(m,e,t,r,i,k,a){
+      m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+      m[i].l=1*new Date();
+      for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+      k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=108351445', 'ym');
+    ym(108351445, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+  };
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(load, { timeout: 4000 });
+  } else {
+    window.setTimeout(load, 1800);
+  }
+})();`}
+            </Script>
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-HJ78HJHHMZ"
+              strategy="lazyOnload"
+            />
+            <Script id="google-analytics-gtag" strategy="lazyOnload">
+              {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', 'G-HJ78HJHHMZ');`}
-        </Script>
+            </Script>
+          </>
+        ) : null}
       </head>
       <body
         className={`${plusJakarta.className} min-h-full flex flex-col bg-[#F7F9FB] text-[#1A1A1A]`}
