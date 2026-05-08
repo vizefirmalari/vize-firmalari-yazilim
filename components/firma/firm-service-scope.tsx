@@ -67,7 +67,7 @@ export function FirmServiceScope({
             {mainServices.map((s) => (
               <span
                 key={s}
-                className="inline-flex min-h-[2.5rem] max-w-full items-center gap-2 rounded-lg bg-[#F7F9FB] px-3 py-2 text-sm font-medium leading-snug text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10"
+                className="inline-flex min-h-10 max-w-full items-center gap-2 rounded-lg bg-[#F7F9FB] px-3 py-2 text-sm font-medium leading-snug text-[#0B3C5D] ring-1 ring-[#0B3C5D]/10"
               >
                 <span
                   className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#328CC1]/10 text-[#0B3C5D]"
@@ -91,7 +91,7 @@ export function FirmServiceScope({
             {specializationLabels.map((s) => (
               <span
                 key={s}
-                className="inline-flex min-h-[2.25rem] max-w-full items-center rounded-lg border border-[#D9A441]/45 bg-gradient-to-b from-[#FFF9ED] to-[#FFF3DC] px-3 py-2 text-xs font-semibold leading-snug tracking-wide text-[#0B3C5D] shadow-[0_1px_0_rgba(217,164,65,0.15)]"
+                className="inline-flex min-h-9 max-w-full items-center rounded-lg border border-[#D9A441]/45 bg-linear-to-b from-[#FFF9ED] to-[#FFF3DC] px-3 py-2 text-xs font-semibold leading-snug tracking-wide text-[#0B3C5D] shadow-[0_1px_0_rgba(217,164,65,0.15)]"
               >
                 <span className="wrap-break-word">{s}</span>
               </span>

@@ -7,7 +7,7 @@ import { hasLegalInformationBadge } from "@/lib/firms/legal-badge";
 
 type Props = {
   firm: FirmRow;
-  size?: "card" | "detail";
+  size?: "card" | "detail" | "modal";
   className?: string;
 };
 
@@ -20,7 +20,8 @@ export function FirmNameBadges({ firm, size = "card", className = "" }: Props) {
 
   if (!verified && !legal) return null;
 
-  const verifiedVariant = size === "detail" ? "hero" : "card";
+  const verifiedVariant =
+    size === "detail" ? "hero" : size === "modal" ? "modal" : "card";
 
   return (
     <span className={`inline-flex shrink-0 items-center gap-2 ${className}`}>

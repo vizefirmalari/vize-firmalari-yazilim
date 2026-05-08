@@ -63,8 +63,8 @@ type Props = {
   isVerified: boolean;
   companyName: string;
   logoUrl: string | null | undefined;
-  /** Kart logosu köşesi veya detay kahraman başlığı */
-  variant?: "card" | "hero";
+  /** Kart logosu köşesi, detay kahraman başlığı veya iletişim popup (kompakt). */
+  variant?: "card" | "hero" | "modal";
   className?: string;
 };
 
@@ -77,12 +77,14 @@ export function VerifiedFirmBadge({
 }: Props) {
   if (!isVerified) return null;
 
-  /** Kart 30px; detay hero 44px (`h-11`) — sarmallı şeffaf */
-  const px = variant === "hero" ? 44 : 30;
+  /** Kart 30px; detay hero 44px (`h-11`); iletişim modalı 24px — sarmallı şeffaf */
+  const px = variant === "hero" ? 44 : variant === "modal" ? 24 : 30;
   const badgeBox =
     variant === "hero"
       ? "h-11 w-11 min-h-11 min-w-11"
-      : "h-[30px] w-[30px] min-h-[30px] min-w-[30px]";
+      : variant === "modal"
+        ? "h-6 w-6 min-h-6 min-w-6"
+        : "h-[30px] w-[30px] min-h-[30px] min-w-[30px]";
   const logoAlt = `${companyName} logosu`;
 
   return (

@@ -28,7 +28,7 @@ export function FirmSubServicesSection({ items }: FirmSubServicesSectionProps) {
           id={regionId}
           className={
             needsToggle && !expanded
-              ? "max-h-[9.5rem] overflow-hidden sm:max-h-[13rem]"
+              ? "max-h-38 overflow-hidden sm:max-h-52"
               : undefined
           }
         >
@@ -47,7 +47,7 @@ export function FirmSubServicesSection({ items }: FirmSubServicesSectionProps) {
 
         {needsToggle && !expanded ? (
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-white to-transparent"
             aria-hidden
           />
         ) : null}

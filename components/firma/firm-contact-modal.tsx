@@ -1,7 +1,24 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, type MouseEvent } from "react";
+import { toast } from "sonner";
+import {
+  MdContentCopy,
+  MdOutlineLanguage,
+  MdOutlinePhone,
+} from "react-icons/md";
+import {
+  SiFacebook,
+  SiGmail,
+  SiGooglemaps,
+  SiInstagram,
+  SiTelegram,
+  SiWhatsapp,
+  SiX,
+  SiYoutube,
+} from "react-icons/si";
+
 import type { FirmRow } from "@/lib/types/firm";
 import { buildWhatsappWaMeUrl, parseWhatsappDigitsForWaMe } from "@/lib/contact/whatsapp-wa-me";
 import { effectiveFirmCategoryLabel } from "@/lib/firma/listing-filter-options";
@@ -11,6 +28,7 @@ import {
 } from "@/lib/firms/google-profile-public";
 import { GooglePublicRatingRow } from "@/components/home/google-public-rating-row";
 import { FirmMessageChatButton } from "@/components/firma/firm-message-chat-button";
+import { FirmNameBadges } from "@/components/firms/FirmNameBadges";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
 
 const CORP_INFO =
@@ -99,134 +117,33 @@ type RowIcon =
   | "linkedin"
   | "youtube"
   | "telegram"
+  | "google_maps"
   | "map"
   | "clock"
   | "user"
-  | "briefcase"
-  | "external";
+  | "briefcase";
 
-function RowGlyph({ name }: { name: RowIcon }) {
-  const cls = "h-[18px] w-[18px] shrink-0 text-[#0B3C5D]/55";
-  switch (name) {
-    case "phone":
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M6.5 3h3l1.5 4.5L8.8 9.2a13 13 0 0 0 5.9 5.9l1.7-2.2L21 14.5V17.5a2 2 0 0 1-2 2A17 17 0 0 1 6.5 5 2 2 0 0 1 6.5 3Z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    case "whatsapp":
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M12 3a9 9 0 0 0-7.65 13.8L3 21l4.35-1.15A9 9 0 1 0 12 3Z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M8.5 9.5c.2 1.1 1 2.3 2.1 3.4 1.1 1.1 2.4 1.9 3.5 2.1.4.1.8-.1 1.1-.4l.6-.6c.3-.3.3-.8 0-1.1l-1.2-1.2c-.25-.25-.65-.25-.9 0l-.5.5c-.2.2-.45.25-.65.15-.4-.2-.9-.55-1.35-1-.45-.45-.8-.95-1-1.35-.1-.2-.05-.45.15-.65l.5-.5c.25-.25.25-.65 0-.9L12.5 6.4c-.3-.3-.8-.3-1.1 0l-.6.6c-.35.35-.45.75-.35 1.15Z"
-            stroke="currentColor"
-            strokeWidth="1.25"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    case "mail":
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M4 6h16v12H4V6Z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          />
-          <path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        </svg>
-      );
-    case "globe":
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-          <path
-            d="M3.5 12h17M12 3.5c2.8 3.2 4.3 6.4 4.3 8.5S14.8 17.3 12 20.5"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-        </svg>
-      );
-    case "instagram":
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M7.5 3h9A4.5 4.5 0 0 1 21 7.5v9A4.5 4.5 0 0 1 16.5 21h-9A4.5 4.5 0 0 1 3 16.5v-9A4.5 4.5 0 0 1 7.5 3Z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-          <path
-            d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-        </svg>
-      );
-    case "facebook":
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M14 8h2V5h-2c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h2.1l.9-3H13V9c0-.6.4-1 1-1Z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    case "twitter":
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M4 4l7.5 9.8L4 20h2.2l6.2-6.3 5 6.3H20l-8-10.4L19.6 4h-2.1l-5.7 5.6L7.3 4H4Z"
-            fill="currentColor"
-          />
-        </svg>
-      );
-    case "linkedin":
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-        </svg>
-      );
-    case "youtube":
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M21.5 7.3c.2.9.2 2.2.2 4.7s0 3.8-.2 4.7c-.2 1-1 1.8-2 2-1.2.2-4 .3-7.5.3s-6.3-.1-7.5-.3c-1-.2-1.8-1-2-2C2.2 15.8 2 14.5 2 12s.1-3.8.2-4.7c.2-1 1-1.8 2-2C5.2 5 8 4.9 11.5 4.9s6.3.1 7.5.3c1 .2 1.8 1 2 2Z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          />
-          <path d="M10.2 9.2v5.6l5.1-2.8-5.1-2.8Z" fill="currentColor" />
-        </svg>
-      );
-    case "telegram":
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M21.5 4.5 3.5 11.2l5.2 1.7L17 8l-6.8 7 5.6 3.3c.5.3 1.1 0 1.2-.6l2.5-13.2Z"
-            stroke="currentColor"
-            strokeWidth="1.35"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
+const ICON_BOX = "h-[18px] w-[18px] shrink-0";
+
+/** LinkedIn — Simple Icons paketinde yok; resmi monochrome mark (currentColor). */
+function LinkedInBrandMark({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
+      />
+    </svg>
+  );
+}
+
+function NeutralGlyph({
+  variant,
+}: {
+  variant: "map" | "clock" | "user" | "briefcase";
+}) {
+  const cls = `${ICON_BOX} text-slate-600`;
+  switch (variant) {
     case "map":
       return (
         <svg className={cls} viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -281,18 +198,51 @@ function RowGlyph({ name }: { name: RowIcon }) {
           />
         </svg>
       );
-    case "external":
+    default:
+      return null;
+  }
+}
+
+function BrandContactIcon({ name }: { name: RowIcon }) {
+  switch (name) {
+    case "phone":
+      return <MdOutlinePhone className={`${ICON_BOX} text-slate-600`} aria-hidden />;
+    case "whatsapp":
+      return <SiWhatsapp className={`${ICON_BOX} text-emerald-500`} aria-hidden />;
+    case "mail":
+      return <SiGmail className={`${ICON_BOX} text-red-500`} aria-hidden />;
+    case "globe":
       return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M14 4h6v6M10 14 20 4M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <MdOutlineLanguage className={`${ICON_BOX} text-slate-600`} aria-hidden />
       );
+    case "instagram":
+      return (
+        <SiInstagram className={`${ICON_BOX} text-pink-600`} aria-hidden />
+      );
+    case "facebook":
+      return <SiFacebook className={`${ICON_BOX} text-[#0866FF]`} aria-hidden />;
+    case "twitter":
+      return <SiX className={`${ICON_BOX} text-neutral-900`} aria-hidden />;
+    case "linkedin":
+      return (
+        <LinkedInBrandMark className={`${ICON_BOX} text-blue-600`} aria-hidden />
+      );
+    case "youtube":
+      return <SiYoutube className={`${ICON_BOX} text-red-600`} aria-hidden />;
+    case "telegram":
+      return <SiTelegram className={`${ICON_BOX} text-sky-500`} aria-hidden />;
+    case "google_maps":
+      return (
+        <SiGooglemaps className={`${ICON_BOX} text-emerald-600`} aria-hidden />
+      );
+    case "map":
+      return <NeutralGlyph variant="map" />;
+    case "clock":
+      return <NeutralGlyph variant="clock" />;
+    case "user":
+      return <NeutralGlyph variant="user" />;
+    case "briefcase":
+      return <NeutralGlyph variant="briefcase" />;
     default:
       return null;
   }
@@ -306,39 +256,129 @@ type ContactLine = {
   href: string | null;
   external?: boolean;
   linkLabel?: string;
+  /** Dolu ise Kopyala gösterilir (konum / saat / yetkili hariç). */
+  copyValue?: string | null;
 };
 
+function copyAriaLabel(contactLabel: string): string {
+  switch (contactLabel) {
+    case "Telefon":
+    case "İkinci telefon":
+      return "Telefon numarasını kopyala";
+    case "WhatsApp":
+    case "İkinci WhatsApp":
+      return "WhatsApp iletişim bilgisini kopyala";
+    case "E-posta":
+    case "Destek e-postası":
+      return "E-posta adresini kopyala";
+    case "Web sitesi":
+      return "Web sitesi adresini kopyala";
+    case "Instagram":
+      return "Instagram bağlantısını kopyala";
+    case "Facebook":
+      return "Facebook bağlantısını kopyala";
+    case "X":
+      return "X bağlantısını kopyala";
+    case "LinkedIn":
+      return "LinkedIn bağlantısını kopyala";
+    case "YouTube":
+      return "YouTube bağlantısını kopyala";
+    case "Telegram":
+      return "Telegram bağlantısını kopyala";
+    case "Google Haritalar":
+      return "Google Haritalar bağlantısını kopyala";
+    default:
+      return `${contactLabel} bilgisini kopyala`;
+  }
+}
+
+function CopyContactButton({
+  text,
+  ariaLabel,
+}: {
+  text: string;
+  ariaLabel: string;
+}) {
+  async function handleCopy(e: MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      if (
+        typeof navigator === "undefined" ||
+        typeof navigator.clipboard?.writeText !== "function"
+      ) {
+        toast.error("Tarayıcı panoya yazmayı desteklemiyor.");
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      toast.success("Kopyalandı");
+    } catch {
+      toast.error("Kopyalanamadı — tarayıcı veya izin ayarlarını kontrol edin.");
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      aria-label={ariaLabel}
+      className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold text-[#1A1A1A]/55 outline-none ring-[#0B3C5D]/25 transition hover:bg-slate-100 hover:text-[#0B3C5D] focus-visible:ring-2"
+    >
+      <MdContentCopy className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+      Kopyala
+    </button>
+  );
+}
+
 function ContactInfoItem({ line }: { line: ContactLine }) {
+  const linkClass =
+    "break-all text-sm font-semibold text-[#328CC1] transition-colors hover:text-[#0B3C5D]";
+
   const content = line.href ? (
     line.external ? (
       <a
         href={line.href}
         target="_blank"
         rel="nofollow noopener noreferrer"
-        className="mt-0.5 break-all text-sm font-semibold text-[#328CC1] underline-offset-2 hover:underline"
+        className={linkClass}
       >
         {line.linkLabel ?? line.value}
       </a>
     ) : (
-      <a
-        href={line.href}
-        className="mt-0.5 break-all text-sm font-semibold text-[#328CC1] underline-offset-2 hover:underline"
-      >
+      <a href={line.href} className={linkClass}>
         {line.value}
       </a>
     )
   ) : (
-    <p className="mt-0.5 text-sm font-medium leading-relaxed text-[#1A1A1A]/82">{line.value}</p>
+    <p className="wrap-break-word text-sm font-medium leading-relaxed text-[#1A1A1A]/85">
+      {line.value}
+    </p>
   );
 
+  const showCopy =
+    typeof line.copyValue === "string" && line.copyValue.trim().length > 0;
+
   return (
-    <div className="flex gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F7F9FB]/60 p-3">
-      <RowGlyph name={line.icon} />
-      <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#1A1A1A]/48">
+    <div className="group flex gap-3 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/50 p-3 transition-colors hover:border-[#0B3C5D]/22">
+      <div
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white ring-1 ring-[#0B3C5D]/8"
+        aria-hidden
+      >
+        <BrandContactIcon name={line.icon} />
+      </div>
+      <div className="flex min-h-11 min-w-0 flex-1 flex-col gap-1">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1A1A1A]/45">
           {line.label}
         </p>
-        {content}
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+          <div className="min-w-0 flex-1">{content}</div>
+          {showCopy ? (
+            <CopyContactButton
+              text={line.copyValue!.trim()}
+              ariaLabel={copyAriaLabel(line.label)}
+            />
+          ) : null}
+        </div>
       </div>
     </div>
   );
@@ -409,6 +449,7 @@ function buildContactLines(firm: FirmRow): {
       value: v,
       href: h,
       external: false,
+      copyValue: v,
     }));
     if (row) direct.push(row);
   }
@@ -422,6 +463,7 @@ function buildContactLines(firm: FirmRow): {
       value: v,
       href: h,
       external: false,
+      copyValue: v,
     }));
     if (row) direct.push(row);
   }
@@ -432,12 +474,15 @@ function buildContactLines(firm: FirmRow): {
     const waMe = buildWhatsappWaMeUrl(v);
     const href =
       waMe ?? (/^https?:\/\//i.test(v) ? safeExternalHref(v) : null);
+    const copyVal =
+      href && href.startsWith("http") ? href : v;
     const row = acc.tryAdd("whatsapp", v, href, () => ({
       icon: "whatsapp" as const,
       label,
       value: v,
       href,
       external: Boolean(href && href.startsWith("http")),
+      copyValue: copyVal,
     }));
     if (row) direct.push(row);
   };
@@ -453,6 +498,7 @@ function buildContactLines(firm: FirmRow): {
       value: v,
       href: `mailto:${v}`,
       external: false,
+      copyValue: v,
     }));
     if (row) direct.push(row);
   }
@@ -465,6 +511,7 @@ function buildContactLines(firm: FirmRow): {
       value: v,
       href: `mailto:${v}`,
       external: false,
+      copyValue: v,
     }));
     if (row) direct.push(row);
   }
@@ -479,6 +526,7 @@ function buildContactLines(firm: FirmRow): {
       value: display,
       href,
       external: true,
+      copyValue: href,
     }));
     if (row) web.push(row);
   }
@@ -493,6 +541,7 @@ function buildContactLines(firm: FirmRow): {
         value: raw,
         href,
         external: true,
+        copyValue: href,
       }));
       if (row) web.push(row);
     }
@@ -508,6 +557,7 @@ function buildContactLines(firm: FirmRow): {
         value: raw,
         href,
         external: true,
+        copyValue: href,
       }));
       if (row) web.push(row);
     }
@@ -523,6 +573,7 @@ function buildContactLines(firm: FirmRow): {
         value: raw,
         href,
         external: true,
+        copyValue: href,
       }));
       if (row) web.push(row);
     }
@@ -538,6 +589,7 @@ function buildContactLines(firm: FirmRow): {
         value: raw,
         href,
         external: true,
+        copyValue: href,
       }));
       if (row) web.push(row);
     }
@@ -553,6 +605,7 @@ function buildContactLines(firm: FirmRow): {
         value: raw,
         href,
         external: true,
+        copyValue: href,
       }));
       if (row) web.push(row);
     }
@@ -568,6 +621,7 @@ function buildContactLines(firm: FirmRow): {
         value: raw,
         href,
         external: true,
+        copyValue: href,
       }));
       if (row) web.push(row);
     }
@@ -629,12 +683,13 @@ function buildContactLines(firm: FirmRow): {
       const href = safeExternalHref(raw);
       if (!href) continue;
       const row = acc.tryAdd("url", raw, href, () => ({
-        icon: "external",
+        icon: "google_maps",
         label: "Google Haritalar",
         value: raw,
         href,
         external: true,
         linkLabel: "Google Haritalar'da görüntüle",
+        copyValue: href,
       }));
       if (row) location.push(row);
     }
@@ -776,7 +831,10 @@ export function FirmContactModal({
                   )}
                 </div>
                 <div className="min-w-0 flex-1 pt-0.5">
-                  <p className="text-lg font-semibold leading-snug text-[#0B3C5D]">{firm.name}</p>
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
+                    <p className="min-w-0 text-lg font-semibold leading-snug text-[#0B3C5D]">{firm.name}</p>
+                    <FirmNameBadges firm={firm} size="modal" className="shrink-0" />
+                  </div>
                   {subtitle ? (
                     <p className="mt-1 text-xs font-medium leading-snug text-[#1A1A1A]/58">
                       {subtitle}

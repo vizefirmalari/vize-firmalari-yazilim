@@ -10,7 +10,7 @@ import {
 type Props = {
   companyName: string;
   logoUrl: string | null | undefined;
-  variant?: "card" | "hero";
+  variant?: "card" | "hero" | "modal";
   className?: string;
 };
 
@@ -23,10 +23,14 @@ export function LegalInformationFirmBadge({
   const badgeBox =
     variant === "hero"
       ? "h-11 w-11 min-h-11 min-w-11"
-      : "h-[30px] w-[30px] min-h-[30px] min-w-[30px]";
+      : variant === "modal"
+        ? "h-6 w-6 min-h-6 min-w-6"
+        : "h-[30px] w-[30px] min-h-[30px] min-w-[30px]";
   const logoAlt = `${companyName} logosu`;
   const imgClass =
-    variant === "hero" ? "h-10 w-10 object-contain object-center" : "h-6 w-6 object-contain object-center";
+    variant === "hero"
+      ? "h-10 w-10 object-contain object-center"
+      : "h-6 w-6 object-contain object-center";
   const imgPx = variant === "hero" ? 40 : 24;
 
   return (
