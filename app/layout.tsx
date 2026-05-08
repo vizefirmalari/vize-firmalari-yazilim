@@ -104,15 +104,24 @@ export default function RootLayout({
   }
 })();`}
             </Script>
-            <Script
-              src="https://www.googletagmanager.com/gtag/js?id=G-HJ78HJHHMZ"
-              strategy="lazyOnload"
-            />
             <Script id="google-analytics-gtag" strategy="lazyOnload">
-              {`window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-HJ78HJHHMZ');`}
+              {`(function(){
+  var load = function(){
+    var s = document.createElement("script");
+    s.async = true;
+    s.src = "https://www.googletagmanager.com/gtag/js?id=G-HJ78HJHHMZ";
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-HJ78HJHHMZ');
+  };
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(load, { timeout: 4500 });
+  } else {
+    window.setTimeout(load, 2200);
+  }
+})();`}
             </Script>
           </>
         ) : null}

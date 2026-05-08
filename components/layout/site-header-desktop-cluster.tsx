@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { GlobalSearchBar } from "@/components/layout/global-search-bar";
@@ -6,6 +7,7 @@ import { HeaderMarketingServicesMenu } from "@/components/layout/header-marketin
 import { SiteAuthNav } from "@/components/layout/site-auth-nav";
 import { SiteHeaderDesktopFeedLink } from "@/components/layout/site-header-desktop-feed-link";
 import { SITE_HEADER_LOGO_URL } from "@/lib/constants";
+import { withSupabaseImageTransform } from "@/lib/images/supabase-transform";
 
 type Props = {
   searchValue: string;
@@ -21,6 +23,12 @@ export function SiteHeaderDesktopCluster({
   hiddenParams,
   navUser,
 }: Props) {
+  const headerLogoSrc = withSupabaseImageTransform(SITE_HEADER_LOGO_URL, {
+    width: 96,
+    height: 96,
+    quality: 72,
+  });
+
   return (
     <div className="hidden min-h-0 flex-col md:flex">
       <div className={`${headerShellClass} flex flex-col gap-0 pb-1 pt-2 sm:pt-2.5`}>
@@ -30,12 +38,11 @@ export function SiteHeaderDesktopCluster({
             aria-label="Vize Firmaları — Ana sayfa"
             className="group flex min-w-0 shrink-0 items-center gap-2 sm:gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface lg:gap-3.5"
           >
-            <img
-              src={SITE_HEADER_LOGO_URL}
+            <Image
+              src={headerLogoSrc ?? SITE_HEADER_LOGO_URL}
               alt=""
               width={48}
               height={48}
-              decoding="async"
               aria-hidden
               className="h-10 w-10 shrink-0 object-contain transition-transform duration-200 ease-out group-hover:scale-[1.03] sm:h-11 sm:w-11"
             />

@@ -316,6 +316,7 @@ function FirmTypeFilterBlock({
   companyTypeOptions: string[];
 }) {
   const [q, setQ] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const deferredQ = useDeferredValue(q);
 
   const sortedTypes = useMemo(
@@ -336,6 +337,8 @@ function FirmTypeFilterBlock({
       normalizeOfficeCityKey(name).includes(needle)
     );
   }, [sortedTypes, deferredQ]);
+  const hasQuery = deferredQ.trim().length > 0;
+  const visibleTypes = hasQuery || showAll ? listFiltered : listFiltered.slice(0, 18);
 
   if (sortedTypes.length === 0) {
     return (
@@ -401,10 +404,10 @@ function FirmTypeFilterBlock({
         className={`mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
         aria-label="Firma türleri"
       >
-        {listFiltered.length === 0 ? (
+        {visibleTypes.length === 0 ? (
           <p className="py-2 text-xs text-foreground/55">Eşleşen tür yok.</p>
         ) : null}
-        {listFiltered.map((label) => (
+        {visibleTypes.map((label) => (
           <label
             key={label}
             className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
@@ -426,6 +429,15 @@ function FirmTypeFilterBlock({
             <span className="min-w-0 wrap-break-word leading-snug">{label}</span>
           </label>
         ))}
+        {!hasQuery && !showAll && listFiltered.length > visibleTypes.length ? (
+          <button
+            type="button"
+            onClick={() => setShowAll(true)}
+            className="mt-2 ml-6 text-left text-xs font-medium text-foreground/65 hover:text-foreground/85 hover:underline"
+          >
+            Tum turleri goster ({listFiltered.length})
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -441,6 +453,7 @@ function MainServiceCategoriesFilterBlock({
   mainServiceCategoryOptions: string[];
 }) {
   const [q, setQ] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const deferredQ = useDeferredValue(q);
 
   const sortedLabels = useMemo(
@@ -461,6 +474,8 @@ function MainServiceCategoriesFilterBlock({
       normalizeOfficeCityKey(name).includes(needle)
     );
   }, [sortedLabels, deferredQ]);
+  const hasQuery = deferredQ.trim().length > 0;
+  const visibleCategories = hasQuery || showAll ? listFiltered : listFiltered.slice(0, 18);
 
   if (sortedLabels.length === 0) {
     return (
@@ -531,10 +546,10 @@ function MainServiceCategoriesFilterBlock({
         className={`mt-2 max-h-[min(320px,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] ${FILTER_INNER_SCROLL_LG_FLUSH}`}
         aria-label="Ana hizmet kategorileri"
       >
-        {listFiltered.length === 0 ? (
+        {visibleCategories.length === 0 ? (
           <p className="py-2 text-xs text-foreground/55">Eşleşen kategori yok.</p>
         ) : null}
-        {listFiltered.map((label) => (
+        {visibleCategories.map((label) => (
           <label
             key={label}
             className="flex cursor-pointer items-center gap-2 text-sm text-foreground/90"
@@ -556,6 +571,15 @@ function MainServiceCategoriesFilterBlock({
             <span className="min-w-0 wrap-break-word leading-snug">{label}</span>
           </label>
         ))}
+        {!hasQuery && !showAll && listFiltered.length > visibleCategories.length ? (
+          <button
+            type="button"
+            onClick={() => setShowAll(true)}
+            className="mt-2 ml-6 text-left text-xs font-medium text-foreground/65 hover:text-foreground/85 hover:underline"
+          >
+            Tum kategorileri goster ({listFiltered.length})
+          </button>
+        ) : null}
       </div>
     </div>
   );

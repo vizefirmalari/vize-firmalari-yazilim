@@ -9,14 +9,14 @@ type Tone = "card" | "featured";
 function toneClasses(tone: Tone): { line: string; value: string; count: string } {
   return tone === "featured"
     ? {
-        line: "text-foreground/60",
+        line: "text-foreground/65",
         value: "text-foreground",
-        count: "text-foreground/50",
+        count: "text-foreground/70",
       }
     : {
-        line: "text-[#1A1A1A]/60",
+        line: "text-[#1A1A1A]/65",
         value: "text-[#1A1A1A]",
-        count: "text-[#1A1A1A]/52",
+        count: "text-[#1A1A1A]/70",
       };
 }
 

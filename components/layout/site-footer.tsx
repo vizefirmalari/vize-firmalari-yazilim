@@ -1,5 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { SITE_HEADER_LOGO_URL } from "@/lib/constants";
+import { withSupabaseImageTransform } from "@/lib/images/supabase-transform";
 import { PLATFORM_WHATSAPP_PHONE, PLATFORM_WHATSAPP_URL } from "@/lib/constants/contact";
 import { siteLogoAltText } from "@/lib/seo/defaults";
 
@@ -105,6 +107,11 @@ function ChevronDownGlyph({ className }: { className?: string }) {
 export function SiteFooter() {
   const year = new Date().getFullYear();
   const logoAlt = siteLogoAltText();
+  const footerLogoSrc = withSupabaseImageTransform(SITE_HEADER_LOGO_URL, {
+    width: 104,
+    height: 104,
+    quality: 72,
+  });
 
   const ctaCard = (
     <div className="rounded-2xl border border-primary/12 bg-white p-4 shadow-[0_6px_24px_rgba(11,60,93,0.07)] max-lg:border-l-[3px] max-lg:border-l-accent/85 sm:p-6 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:p-8 lg:shadow-[0_8px_30px_rgba(11,60,93,0.06)]">
@@ -250,13 +257,12 @@ export function SiteFooter() {
             <div className="rounded-2xl border border-primary/10 bg-white p-4 shadow-[0_2px_12px_rgba(11,60,93,0.05)] lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
               <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:gap-3 lg:gap-3">
                 { }
-                <img
-                  src={SITE_HEADER_LOGO_URL}
+                <Image
+                  src={footerLogoSrc ?? SITE_HEADER_LOGO_URL}
                   alt={logoAlt}
                   width={52}
                   height={52}
                   className="h-12 w-12 shrink-0 object-contain sm:h-[52px] sm:w-[52px] lg:h-12 lg:w-12"
-                  decoding="async"
                 />
                 <div className="min-w-0 text-left sm:text-left">
                   <p className="text-lg font-semibold tracking-tight text-primary">

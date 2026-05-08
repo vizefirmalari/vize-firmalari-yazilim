@@ -114,7 +114,7 @@ export function DesktopHeadlineSlider({ posts }: Props) {
                   e.stopPropagation();
                   prev();
                 }}
-                className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-lg font-semibold leading-none text-[#374151] shadow-md transition hover:bg-[#f9fafb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]"
+                className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-lg font-semibold leading-none text-[#374151] shadow-md transition-colors hover:bg-[#f9fafb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]"
                 aria-label="Önceki slayt"
               >
                 ‹
@@ -126,7 +126,7 @@ export function DesktopHeadlineSlider({ posts }: Props) {
                   e.stopPropagation();
                   next();
                 }}
-                className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-lg font-semibold leading-none text-[#374151] shadow-md transition hover:bg-[#f9fafb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]"
+                className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-lg font-semibold leading-none text-[#374151] shadow-md transition-colors hover:bg-[#f9fafb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]"
                 aria-label="Sonraki slayt"
               >
                 ›
@@ -137,7 +137,7 @@ export function DesktopHeadlineSlider({ posts }: Props) {
 
         {/* Metin + progress tek blok */}
         <div className="space-y-1.5 border-t border-[#e5e7eb] px-4 pb-3 pt-2">
-          <div className="flex flex-wrap items-center gap-x-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#6b7280]">
+          <div className="flex flex-wrap items-center gap-x-2 text-[11px] font-semibold uppercase tracking-widest text-[#6b7280]">
             <span>{tag}</span>
             <span className="text-[#d1d5db]">·</span>
             <FeedCardRelativeTime iso={post.created_at} />

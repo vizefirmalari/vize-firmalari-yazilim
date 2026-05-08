@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { createPortal } from "react-dom";
 import { useEffect, useId, useMemo, useState } from "react";
 
 import { GlobalSearchBar } from "@/components/layout/global-search-bar";
 import { HeaderMarketingMobileCategoryGrid } from "@/components/layout/header-marketing-category-strip";
 import { SITE_HEADER_LOGO_URL } from "@/lib/constants";
+import { withSupabaseImageTransform } from "@/lib/images/supabase-transform";
 import { listServiceCategoryNavItems } from "@/lib/seo/service-category-landings";
 
 const serviceCatCardClass =
@@ -34,6 +36,11 @@ export function SiteHeaderMobileDrawer({
     if (!q) return serviceCategories;
     return serviceCategories.filter((i) => i.label.toLowerCase().includes(q));
   }, [serviceCategories, q]);
+  const headerLogoSrc = withSupabaseImageTransform(SITE_HEADER_LOGO_URL, {
+    width: 88,
+    height: 88,
+    quality: 72,
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -102,13 +109,12 @@ export function SiteHeaderMobileDrawer({
               onClick={close}
             >
               { }
-              <img
-                src={SITE_HEADER_LOGO_URL}
+              <Image
+                src={headerLogoSrc ?? SITE_HEADER_LOGO_URL}
                 alt=""
                 width={44}
                 height={44}
                 className="h-11 w-11 shrink-0 object-contain"
-                decoding="async"
               />
               <div className="min-w-0 pt-0.5">
                 <p className="text-base font-bold tracking-tight text-primary">Vize Firmaları</p>
