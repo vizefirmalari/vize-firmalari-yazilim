@@ -10,6 +10,7 @@ import { buildFirmPageMetadata } from "@/lib/seo/firma-metadata";
 import { buildFirmSchemaGraph } from "@/lib/seo/firma-schema";
 import { FirmPrimaryLeftCta } from "@/components/firma/firm-primary-left-cta";
 import { FirmServiceScope } from "@/components/firma/firm-service-scope";
+import { FirmSubServicesSection } from "@/components/firma/firm-sub-services-section";
 import { SectionReveal } from "@/components/home/section-reveal";
 import { resolveFirmCoverageDisplay } from "@/lib/firma/resolve-firm-coverage";
 import { FirmFeedList } from "@/components/firma/firm-feed-list";
@@ -389,25 +390,29 @@ export default async function FirmaPage({ params }: PageProps) {
                 </SectionReveal>
               ) : null}
 
+              {showGoogleReviewSection ? (
+                <SectionReveal delayMs={45}>
+                  <FirmGoogleReviewsSection firm={firm} />
+                </SectionReveal>
+              ) : null}
+
               {(hasCountries ||
                 hasRegions ||
                 hasServices ||
-                hasSpecialization ||
-                hasSubServices) ? (
+                hasSpecialization) ? (
                 <SectionReveal delayMs={60}>
                   <FirmServiceScope
                     regions={regions}
                     countries={countries}
                     mainServices={serviceItems}
-                    subServices={subServices}
                     specializationLabels={specializationFlags}
                   />
                 </SectionReveal>
               ) : null}
 
-              {showGoogleReviewSection ? (
+              {hasSubServices ? (
                 <SectionReveal delayMs={72}>
-                  <FirmGoogleReviewsSection firm={firm} />
+                  <FirmSubServicesSection items={subServices} />
                 </SectionReveal>
               ) : null}
 

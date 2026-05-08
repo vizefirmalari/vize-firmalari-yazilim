@@ -1,19 +1,12 @@
-"use client";
-
-import { useId, useState } from "react";
 import {
   CountryChip,
   RegionChip,
 } from "@/components/firma/coverage-chips";
 
-/** Çok uzun alt hizmet listelerinde ilk görünür satır sayısı; gerçek kalemler her zaman metin olarak gösterilir. */
-const SUB_SERVICES_COLLAPSED_COUNT = 12;
-
 type FirmServiceScopeProps = {
   regions: string[];
   countries: string[];
   mainServices: string[];
-  subServices: string[];
   specializationLabels: string[];
 };
 
@@ -21,27 +14,12 @@ export function FirmServiceScope({
   regions,
   countries,
   mainServices,
-  subServices,
   specializationLabels,
 }: FirmServiceScopeProps) {
-  const idBase = useId();
-  const subListId = `${idBase}-sub-services`;
-
   const hasCountries = countries.length > 0;
   const hasRegions = regions.length > 0;
   const hasMain = mainServices.length > 0;
   const hasSpec = specializationLabels.length > 0;
-  const hasSub = subServices.length > 0;
-  const hasSummaryAboveSub =
-    hasRegions || hasCountries || hasMain || hasSpec;
-
-  /** Detay sayfasında önce tam liste; çok uzunsa kullanıcı daraltabilir. */
-  const [subExpanded, setSubExpanded] = useState(true);
-  const subNeedsToggle = subServices.length > SUB_SERVICES_COLLAPSED_COUNT;
-  const visibleSubServices =
-    subNeedsToggle && !subExpanded
-      ? subServices.slice(0, SUB_SERVICES_COLLAPSED_COUNT)
-      : subServices;
 
   return (
     <section className="rounded-xl border border-[#0B3C5D]/10 bg-white p-5 shadow-sm sm:p-6">
@@ -119,60 +97,6 @@ export function FirmServiceScope({
               </span>
             ))}
           </div>
-        </div>
-      ) : null}
-
-      {hasSub ? (
-        <div
-          className={
-            hasSummaryAboveSub
-              ? "mt-8 border-t border-[#0B3C5D]/8 pt-7"
-              : "mt-7"
-          }
-        >
-          <h3 className="text-sm font-semibold text-[#0B3C5D]">
-            Alt hizmetler
-          </h3>
-          <p className="mt-1.5 text-xs leading-relaxed text-[#1A1A1A]/60">
-            Süreç ve destek kapsamındaki tüm kalemler aşağıda listelenir.
-          </p>
-          <ul
-            id={subListId}
-            className="mt-4 space-y-2"
-            aria-label="Alt hizmet kalemleri"
-          >
-            {visibleSubServices.map((s) => (
-              <li
-                key={s}
-                className="flex gap-3 rounded-lg border border-[#0B3C5D]/8 bg-[#FAFBFC] px-3 py-3 text-sm text-[#1A1A1A]/85 sm:py-2.5"
-              >
-                <span
-                  className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#328CC1]/10 text-[#0B3C5D]"
-                  aria-hidden
-                >
-                  <ServiceIcon />
-                </span>
-                <span className="min-w-0 flex-1 leading-snug wrap-break-word">
-                  {s}
-                </span>
-              </li>
-            ))}
-          </ul>
-          {subNeedsToggle ? (
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={() => setSubExpanded((v) => !v)}
-                className="rounded-xl border border-[#0B3C5D]/12 bg-[#F7F9FB] px-4 py-3 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F0F4F8]"
-                aria-expanded={subExpanded}
-                aria-controls={subListId}
-              >
-                {subExpanded
-                  ? "Daha az göster"
-                  : "Tüm hizmet kalemlerini göster"}
-              </button>
-            </div>
-          ) : null}
         </div>
       ) : null}
     </section>
