@@ -23,17 +23,32 @@ export function ScoreInfoButton({ text, label }: ScoreInfoButtonProps) {
     return () => document.removeEventListener("click", onDoc);
   }, [open, id]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
   return (
-    <span className="relative inline-flex align-middle" id={id}>
+    <span
+      className="relative inline-flex align-middle"
+      id={id}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       <button
         type="button"
-        className="ml-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[#0B3C5D]/18 text-[10px] font-bold leading-none text-[#0B3C5D]/55 transition hover:border-[#328CC1]/40 hover:bg-[#328CC1]/8 hover:text-[#0B3C5D]"
+        className="ml-0.5 inline-flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full border border-[#0B3C5D]/18 text-[10px] font-bold leading-none text-[#0B3C5D]/55 outline-none ring-[#328CC1]/25 transition hover:border-[#328CC1]/40 hover:bg-[#328CC1]/8 hover:text-[#0B3C5D] focus-visible:ring-2"
         aria-expanded={open}
         aria-label={label}
         onClick={(e) => {
           e.stopPropagation();
           setOpen((v) => !v);
         }}
+        onFocus={() => setOpen(true)}
       >
         i
       </button>

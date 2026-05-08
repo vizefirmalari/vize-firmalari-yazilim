@@ -1,31 +1,8 @@
 import { GoogleRatingStars } from "@/components/home/google-rating-stars";
+import { ScoreInfoButton } from "@/components/home/score-info-button";
 
-const INFO_COPY = "Google Haritalar üzerinden alınan değerlendirme puanıdır.";
-
-function GoogleRatingInfoIcon() {
-  return (
-    <span
-      className="inline-flex shrink-0 text-slate-400"
-      title={INFO_COPY}
-      role="img"
-      aria-label={INFO_COPY}
-    >
-      <svg
-        viewBox="0 0 24 24"
-        className="h-3.5 w-3.5"
-        aria-hidden
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 16v-4M12 8h.01" />
-      </svg>
-    </span>
-  );
-}
+const INFO_COPY =
+  "Bu puan, Google Haritalar uzerinden alinan kullanici degerlendirme puanidir. Degerlendirme sayisi Google verisine gore gosterilir.";
 
 type Tone = "card" | "featured";
 
@@ -87,7 +64,7 @@ export function GooglePublicRatingRow({
           ({countLabel} değerlendirme)
         </span>
       ) : null}
-      <GoogleRatingInfoIcon />
+      <ScoreInfoButton text={INFO_COPY} label="Google puani hakkinda bilgi" />
     </div>
   );
 }
