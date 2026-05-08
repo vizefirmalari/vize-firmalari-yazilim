@@ -63,6 +63,10 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
     "Bu firma hakkında metin yakında eklenecek.";
 
   const firmType = effectiveFirmCategoryLabel(firm);
+  const officeCity =
+    firm.online_consultancy_badge === true
+      ? "Online Danışmanlık"
+      : (firm.city?.trim() ?? "");
   const specLabels = useMemo(() => {
     const r = firm as unknown as Record<string, unknown>;
     return SPECIALIZATION_OPTIONS.filter(({ key }) => Boolean(r[key])).map(
@@ -81,14 +85,16 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
       : null;
 
   return (
-    <article className="flex h-full min-w-[min(100vw-2.5rem,20rem)] max-w-80 shrink-0 flex-col rounded-2xl border border-border bg-background p-4 shadow-[0_8px_30px_rgba(11,60,93,0.08)] sm:min-w-76 sm:max-w-84 sm:p-5">
-      <div className="mb-1.5 flex min-h-7 justify-end">
+    <article className="relative flex h-full min-w-[min(100vw-2.5rem,20rem)] max-w-80 shrink-0 flex-col rounded-2xl border border-border bg-background p-4 shadow-[0_8px_30px_rgba(11,60,93,0.08)] sm:min-w-76 sm:max-w-84 sm:p-5">
+      <div className="pointer-events-none absolute right-3 top-3 z-10 flex justify-end sm:right-4 sm:top-4">
         <FirmOfficeCityBadge
           city={firm.city}
           onlineConsultancy={firm.online_consultancy_badge}
         />
       </div>
-      <div className="flex gap-3">
+      <div
+        className={`flex gap-3 ${officeCity ? "pt-0.5 pr-19 sm:pr-28" : ""}`}
+      >
         <div className="relative h-18 w-18 shrink-0 overflow-hidden rounded-xl bg-surface ring-1 ring-primary/8">
           {firm.logo_url ? (
             <Image
