@@ -256,6 +256,7 @@ type ContactLine = {
   href: string | null;
   external?: boolean;
   linkLabel?: string;
+  copyable?: boolean;
   /** Dolu ise Kopyala gösterilir (konum / saat / yetkili hariç). */
   copyValue?: string | null;
 };
@@ -356,7 +357,9 @@ function ContactInfoItem({ line }: { line: ContactLine }) {
   );
 
   const showCopy =
-    typeof line.copyValue === "string" && line.copyValue.trim().length > 0;
+    line.copyable !== false &&
+    typeof line.copyValue === "string" &&
+    line.copyValue.trim().length > 0;
 
   return (
     <div className="group flex gap-3 rounded-xl border border-[#0B3C5D]/10 bg-[#F7F9FB]/50 p-3 transition-colors hover:border-[#0B3C5D]/22">
@@ -678,22 +681,22 @@ function buildContactLines(firm: FirmRow): {
   }
 
   if (showAddr) {
-    const mapsFromProfile = firm.google_profile?.google_maps_uri?.trim() ?? "";
     const mapsUrl = firm.maps_url?.trim() ?? "";
-    const mapCandidates = [...new Set([mapsUrl, mapsFromProfile].filter(Boolean))];
-    for (const raw of mapCandidates) {
-      const href = safeExternalHref(raw);
-      if (!href) continue;
-      const row = acc.tryAdd("url", raw, href, () => ({
-        icon: "google_maps",
-        label: "Google Haritalar",
-        value: raw,
-        href,
-        external: true,
-        linkLabel: "Google Haritalar'da görüntüle",
-        copyValue: href,
-      }));
-      if (row) location.push(row);
+    if (mapsUrl) {
+      const href = safeExternalHref(mapsUrl);
+      if (href) {
+        const row = acc.tryAdd("url", mapsUrl, href, () => ({
+          icon: "google_maps",
+          label: "Google Haritalar",
+          value: mapsUrl,
+          href,
+          external: true,
+          linkLabel: "Google Haritalar'da görüntüle",
+          copyable: false,
+          copyValue: null,
+        }));
+        if (row) location.push(row);
+      }
     }
   }
 

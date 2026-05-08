@@ -147,8 +147,8 @@ export function FirmCard({ firm }: FirmCardProps) {
     mainCategories.length > 0 ? mainCategories : servicePool;
 
   return (
-    <article className="relative flex h-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-[#0B3C5D]/10 bg-white px-4 py-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)] sm:px-5">
-      <div className="pointer-events-none absolute right-3 top-3 z-10 flex justify-end sm:right-4 sm:top-4">
+    <article className="flex h-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-[#0B3C5D]/10 bg-white px-4 py-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)] sm:px-5">
+      <div className="mb-1.5 flex min-h-7 justify-end">
         <FirmOfficeCityBadge
           city={firm.city}
           onlineConsultancy={firm.online_consultancy_badge}
