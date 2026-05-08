@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 
-import { ContactModal } from "@/components/home/contact-modal";
+import { FirmContactModal } from "@/components/firma/firm-contact-modal";
 import type { FirmRow } from "@/lib/types/firm";
-import { FirmMessageChatButton } from "@/components/firma/firm-message-chat-button";
 
-/** Sol secondary CTA — FirmMessageChatButton ile aynı ölçü / hizalama */
+/** Sol secondary CTA — Danışman Ata ile aynı yükseklik / grid hizası */
 const outlineCtaClass =
   "inline-flex w-full min-h-11 min-w-0 shrink flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-[#0B3C5D]/15 bg-white px-2 py-2.5 text-xs font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B3C5D]/35 disabled:pointer-events-none disabled:opacity-50 sm:gap-2 sm:px-3 sm:text-sm";
 
@@ -37,12 +36,8 @@ type Props = {
 export function FirmPrimaryLeftCta({ firm }: Props) {
   const [contactOpen, setContactOpen] = useState(false);
 
-  const showMessaging =
+  const messagingActive =
     firm.messaging_enabled === true && firm.has_active_panel_member === true;
-
-  if (showMessaging) {
-    return <FirmMessageChatButton firmId={firm.id} />;
-  }
 
   return (
     <>
@@ -54,7 +49,12 @@ export function FirmPrimaryLeftCta({ firm }: Props) {
         <ContactCardIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
         İletişim
       </button>
-      <ContactModal firm={firm} open={contactOpen} onClose={() => setContactOpen(false)} />
+      <FirmContactModal
+        firm={firm}
+        open={contactOpen}
+        onClose={() => setContactOpen(false)}
+        messagingActive={messagingActive}
+      />
     </>
   );
 }
