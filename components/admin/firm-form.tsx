@@ -116,6 +116,7 @@ function tabForValidationPath(path: (string | number)[]): TabId {
     "telegram",
     "address",
     "city",
+    "online_consultancy_badge",
     "district",
     "hq_country",
     "maps_url",
@@ -951,7 +952,7 @@ export function FirmForm({
               ) : null}
               <FieldHelp>
                 Önizleme tarayıcıda hesaplanır. Kayıtta skor sunucuda yeniden hesaplanır ve{" "}
-                <code className="rounded bg-black/[0.06] px-1 font-mono text-[11px]">
+                <code className="rounded bg-black/6 px-1 font-mono text-[11px]">
                   corporateness_score
                 </code>{" "}
                 sütununa yazılır; liste ve firma sayfası bu değeri kullanır.
@@ -1277,6 +1278,21 @@ export function FirmForm({
                 onChange={(e) => patch("city", e.target.value)}
                 className={inputClass}
               />
+            </label>
+            <label className={`${labelClass} sm:col-span-2 flex items-start gap-2`}>
+              <input
+                type="checkbox"
+                checked={form.online_consultancy_badge}
+                onChange={(e) => patch("online_consultancy_badge", e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+              />
+              <span>
+                Online Danışmanlık
+                <FieldHelp>
+                  Bu seçenek aktifse firma kartında şehir etiketi yerine &quot;Online
+                  Danışmanlık&quot; etiketi gösterilir.
+                </FieldHelp>
+              </span>
             </label>
             <label className={labelClass}>
               İlçe / semt

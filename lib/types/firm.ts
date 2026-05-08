@@ -61,6 +61,8 @@ export type FirmRow = {
 
   // Identity / location
   city?: string | null;
+  /** true ise kartın sağ üst konum etiketi "Online Danışmanlık" görünür. */
+  online_consultancy_badge?: boolean | null;
   district?: string | null;
   hq_country?: string | null;
   founded_year?: number | null;

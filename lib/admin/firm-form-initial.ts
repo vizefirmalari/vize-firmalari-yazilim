@@ -46,6 +46,7 @@ export type FirmFormState = {
   telegram: string;
   address: string;
   city: string;
+  online_consultancy_badge: boolean;
   district: string;
   hq_country: string;
   postal_code: string;
@@ -304,6 +305,7 @@ export function buildFirmFormState(
     telegram: String(i.telegram ?? ""),
     address: String(i.address ?? ""),
     city: String(i.city ?? ""),
+    online_consultancy_badge: Boolean((i as { online_consultancy_badge?: boolean }).online_consultancy_badge),
     district: String(i.district ?? ""),
     hq_country: String(i.hq_country ?? ""),
     postal_code: String((i as { postal_code?: string }).postal_code ?? ""),
@@ -485,6 +487,7 @@ export function formStateToPayload(
     telegram: form.telegram || null,
     address: form.address || null,
     city: form.city || null,
+    online_consultancy_badge: form.online_consultancy_badge,
     district: form.district || null,
     hq_country: form.hq_country || null,
     postal_code: form.postal_code || null,

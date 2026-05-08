@@ -149,7 +149,10 @@ export function FirmCard({ firm }: FirmCardProps) {
   return (
     <article className="relative flex h-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-[#0B3C5D]/10 bg-white px-4 py-5 shadow-[0_8px_30px_rgba(11,60,93,0.06)] transition hover:shadow-[0_12px_40px_rgba(11,60,93,0.1)] sm:px-5">
       <div className="pointer-events-none absolute right-3 top-3 z-10 flex justify-end sm:right-4 sm:top-4">
-        <FirmOfficeCityBadge city={firm.city} />
+        <FirmOfficeCityBadge
+          city={firm.city}
+          onlineConsultancy={firm.online_consultancy_badge}
+        />
       </div>
       <div className="flex flex-col items-center text-center">
         <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white p-3 shadow-[0_2px_14px_rgba(11,60,93,0.08)] sm:rounded-xl sm:p-3.5">

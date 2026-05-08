@@ -102,6 +102,7 @@ const firmFormSchemaObject = z.object({
   telegram: z.string().max(120).optional().nullable(),
   address: z.string().max(500).optional().nullable(),
   city: z.string().max(120).optional().nullable(),
+  online_consultancy_badge: z.boolean(),
   district: z.string().max(120).optional().nullable(),
   hq_country: z.string().max(120).optional().nullable(),
   postal_code: z.string().max(32).optional().nullable(),

@@ -117,6 +117,7 @@ function firmRowPayload(
     telegram: v.telegram || null,
     address: v.address || null,
     city: v.city || null,
+    online_consultancy_badge: v.online_consultancy_badge,
     district: v.district || null,
     hq_country: v.hq_country || null,
     postal_code: emptyToNull(v.postal_code ?? undefined),

@@ -63,7 +63,10 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
     "Bu firma hakkında metin yakında eklenecek.";
 
   const firmType = effectiveFirmCategoryLabel(firm);
-  const officeCity = firm.city?.trim() ?? "";
+  const officeCity =
+    firm.online_consultancy_badge === true
+      ? "Online Danışmanlık"
+      : (firm.city?.trim() ?? "");
 
   const specLabels = useMemo(() => {
     const r = firm as unknown as Record<string, unknown>;
@@ -85,7 +88,10 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
   return (
     <article className="relative flex h-full min-w-[min(100vw-2.5rem,20rem)] max-w-80 shrink-0 flex-col rounded-2xl border border-border bg-background p-4 shadow-[0_8px_30px_rgba(11,60,93,0.08)] sm:min-w-76 sm:max-w-84 sm:p-5">
       <div className="pointer-events-none absolute right-3 top-3 z-10 flex justify-end sm:right-4 sm:top-4">
-        <FirmOfficeCityBadge city={firm.city} />
+        <FirmOfficeCityBadge
+          city={firm.city}
+          onlineConsultancy={firm.online_consultancy_badge}
+        />
       </div>
       <div
         className={`flex gap-3 ${officeCity ? "pt-0.5 pr-19 sm:pr-28" : ""}`}
@@ -111,7 +117,7 @@ export function FeaturedFirmCard({ firm }: { firm: FirmRow }) {
         </div>
         <div className="min-w-0 flex-1">
           <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5">
-            <h3 className="min-w-0 break-words text-base font-bold leading-snug text-primary">
+            <h3 className="min-w-0 wrap-break-word text-base font-bold leading-snug text-primary">
               {firm.name}
             </h3>
             <FirmNameBadges firm={firm} size="card" className="shrink-0" />
