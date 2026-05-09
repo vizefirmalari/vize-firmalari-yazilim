@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useId, useState, type MouseEvent } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import {
   MdContentCopy,
@@ -802,23 +803,23 @@ export function FirmContactModal({
     quality: 75,
   });
 
-  return (
-    <div className="fixed inset-0 z-9999">
+  return createPortal(
+    <>
       <button
         type="button"
-        className={`absolute inset-0 bg-[#1A1A1A]/45 transition-opacity duration-200 ${
+        className={`fixed inset-0 z-100 bg-[#1A1A1A]/45 transition-opacity duration-200 ${
           visible ? "opacity-100" : "opacity-0"
         }`}
         aria-label="Kapat"
         onClick={onClose}
       />
 
-      <div className="relative flex h-full w-full items-end justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:items-center sm:p-4">
+      <div className="pointer-events-none fixed inset-0 z-110 flex items-end justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:items-center">
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className={`flex max-h-[min(92vh,calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.5rem))] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 sm:max-w-xl ${
+          className={`pointer-events-auto flex max-h-[calc(100vh-32px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#0B3C5D]/10 bg-white shadow-[0_8px_30px_rgba(11,60,93,0.16)] transition-all duration-200 sm:max-w-xl ${
             visible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
           }`}
         >
@@ -914,6 +915,7 @@ export function FirmContactModal({
           ) : null}
         </div>
       </div>
-    </div>
+    </>,
+    document.body
   );
 }
