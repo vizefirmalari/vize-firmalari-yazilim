@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FirmRow } from "@/lib/types/firm";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
@@ -13,7 +14,7 @@ export type SpecializationTaxonomyRow = {
 };
 
 /** Ana sayfa / liste filtreleri — yalnızca aktif kayıtlar */
-export async function getPublicSpecializationTaxonomy(): Promise<
+async function getPublicSpecializationTaxonomyRaw(): Promise<
   Pick<SpecializationTaxonomyRow, "slug" | "label" | "sort_order">[]
 > {
   if (!isSupabaseConfigured()) return [];
@@ -33,6 +34,12 @@ export async function getPublicSpecializationTaxonomy(): Promise<
   }
   return (data ?? []) as Pick<SpecializationTaxonomyRow, "slug" | "label" | "sort_order">[];
 }
+
+export const getPublicSpecializationTaxonomy = unstable_cache(
+  getPublicSpecializationTaxonomyRaw,
+  ["public-specialization-taxonomy"],
+  { revalidate: 900 }
+);
 
 export async function attachFirmCustomSpecializations(
   supabase: SupabaseClient,

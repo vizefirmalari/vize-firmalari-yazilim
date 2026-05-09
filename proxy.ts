@@ -7,11 +7,6 @@ import {
 } from "@/lib/seo/indexnow";
 import { resolveLegacySlugRedirectPath } from "@/lib/seo/legacy-slug-redirects";
 
-function withNoStore(res: NextResponse) {
-  res.headers.set("Cache-Control", "no-store, must-revalidate");
-  return res;
-}
-
 /** Firma paneli — arama motorlarına URL düşmesin (meta ile birlikte HTTP başlığı). */
 function withPrivateNoIndex(res: NextResponse) {
   res.headers.set("Cache-Control", "no-store, must-revalidate");
@@ -19,8 +14,16 @@ function withPrivateNoIndex(res: NextResponse) {
   return res;
 }
 
+function needsSession(pathname: string): boolean {
+  return (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/panel") ||
+    pathname.startsWith("/abonelik-sec")
+  );
+}
+
 /**
- * Tüm sayfalarda Supabase oturumunu yeniler; çerezler request/response ile senkron kalır.
+ * Auth gerektiren alanlarda Supabase oturumunu yeniler; public rotalar cachelenebilir kalır.
  * /admin/* için ek olarak admin rolü kontrolü.
  */
 export async function proxy(request: NextRequest) {
@@ -48,6 +51,10 @@ export async function proxy(request: NextRequest) {
 
   let response = NextResponse.next({ request });
 
+  if (!needsSession(pathname)) {
+    return response;
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -57,7 +64,7 @@ export async function proxy(request: NextRequest) {
         new URL("/admin/login?error=config", request.url)
       );
     }
-    return withNoStore(response);
+    return withPrivateNoIndex(response);
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
@@ -109,7 +116,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!pathname.startsWith("/admin")) {
-    return withNoStore(response);
+    return withPrivateNoIndex(response);
   }
 
   if (pathname.startsWith("/admin/login")) {

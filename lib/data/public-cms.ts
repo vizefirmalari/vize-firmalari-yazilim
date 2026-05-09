@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/env";
 
@@ -14,7 +15,7 @@ export type HomepageSettingsRow = {
   featured_firm_ids: string[];
 };
 
-export async function getHomepageSettings(): Promise<HomepageSettingsRow | null> {
+async function getHomepageSettingsRaw(): Promise<HomepageSettingsRow | null> {
   if (!isSupabaseConfigured()) return null;
   const supabase = createSupabasePublicClient();
   if (!supabase) return null;
@@ -36,6 +37,12 @@ export async function getHomepageSettings(): Promise<HomepageSettingsRow | null>
   };
 }
 
+export const getHomepageSettings = unstable_cache(
+  getHomepageSettingsRaw,
+  ["homepage-settings-public"],
+  { revalidate: 300 }
+);
+
 export type ContactPopupPublic = {
   phone: string | null;
   whatsapp: string | null;
@@ -49,7 +56,7 @@ export type ContactPopupPublic = {
   show_website: boolean;
 };
 
-export async function getContactPopupSettings(): Promise<ContactPopupPublic | null> {
+async function getContactPopupSettingsRaw(): Promise<ContactPopupPublic | null> {
   if (!isSupabaseConfigured()) return null;
   const supabase = createSupabasePublicClient();
   if (!supabase) return null;
@@ -76,6 +83,12 @@ export async function getContactPopupSettings(): Promise<ContactPopupPublic | nu
   };
 }
 
+export const getContactPopupSettings = unstable_cache(
+  getContactPopupSettingsRaw,
+  ["contact-popup-settings-public"],
+  { revalidate: 300 }
+);
+
 export type FilterCountryRow = {
   id: string;
   name: string;
@@ -92,7 +105,7 @@ export type FilterServiceRow = {
   sort_order: number;
 };
 
-export async function getPublicFilterCountries(): Promise<FilterCountryRow[]> {
+async function getPublicFilterCountriesRaw(): Promise<FilterCountryRow[]> {
   if (!isSupabaseConfigured()) return [];
   const supabase = createSupabasePublicClient();
   if (!supabase) return [];
@@ -106,7 +119,13 @@ export async function getPublicFilterCountries(): Promise<FilterCountryRow[]> {
   return (data ?? []) as FilterCountryRow[];
 }
 
-export async function getPublicFilterServiceTypes(): Promise<FilterServiceRow[]> {
+export const getPublicFilterCountries = unstable_cache(
+  getPublicFilterCountriesRaw,
+  ["public-filter-countries"],
+  { revalidate: 900 }
+);
+
+async function getPublicFilterServiceTypesRaw(): Promise<FilterServiceRow[]> {
   if (!isSupabaseConfigured()) return [];
   const supabase = createSupabasePublicClient();
   if (!supabase) return [];
@@ -119,6 +138,12 @@ export async function getPublicFilterServiceTypes(): Promise<FilterServiceRow[]>
 
   return (data ?? []) as FilterServiceRow[];
 }
+
+export const getPublicFilterServiceTypes = unstable_cache(
+  getPublicFilterServiceTypesRaw,
+  ["public-filter-service-types"],
+  { revalidate: 900 }
+);
 
 export type FilterCompanyTypeRow = {
   id: string;
@@ -134,7 +159,7 @@ export type FilterMainServiceCategoryRow = {
   sort_order: number;
 };
 
-export async function getPublicFilterMainServiceCategories(): Promise<
+async function getPublicFilterMainServiceCategoriesRaw(): Promise<
   FilterMainServiceCategoryRow[]
 > {
   if (!isSupabaseConfigured()) return [];
@@ -150,7 +175,13 @@ export async function getPublicFilterMainServiceCategories(): Promise<
   return (data ?? []) as FilterMainServiceCategoryRow[];
 }
 
-export async function getPublicFilterCompanyTypes(): Promise<
+export const getPublicFilterMainServiceCategories = unstable_cache(
+  getPublicFilterMainServiceCategoriesRaw,
+  ["public-filter-main-service-categories"],
+  { revalidate: 900 }
+);
+
+async function getPublicFilterCompanyTypesRaw(): Promise<
   FilterCompanyTypeRow[]
 > {
   if (!isSupabaseConfigured()) return [];
@@ -165,3 +196,9 @@ export async function getPublicFilterCompanyTypes(): Promise<
 
   return (data ?? []) as FilterCompanyTypeRow[];
 }
+
+export const getPublicFilterCompanyTypes = unstable_cache(
+  getPublicFilterCompanyTypesRaw,
+  ["public-filter-company-types"],
+  { revalidate: 900 }
+);
