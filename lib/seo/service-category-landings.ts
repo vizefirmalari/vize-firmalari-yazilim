@@ -189,6 +189,7 @@ export function mergeServiceCategoryLandingFilters(
 ): FirmFilters {
   const fromUrl = parseFirmFilters(sp);
   return {
+    ...fromUrl,
     q: fromUrl.q,
     countries: fromUrl.countries,
     visaTypes: fromUrl.visaTypes,

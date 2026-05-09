@@ -22,6 +22,15 @@ export async function getFirmsForCountryGuide(countryLabel: string): Promise<Fir
     mainServices: [],
     firmTypes: [],
     exploreFocusSlug: null,
+    requireGoogleListedRating: false,
+    requireTaxCertificate: false,
+    requirePhysicalOffice: false,
+    requireOfficeVerified: false,
+    requireOnlineConsulting: false,
+    requireActivePanel: false,
+    corpMin: null,
+    googleMinRating: null,
+    googleMinReviewCount: null,
     sort: "corp_desc",
   };
   const rows = await getFirms(filters);

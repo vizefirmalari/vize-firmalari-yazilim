@@ -55,6 +55,14 @@ type Props = {
   initialCities?: string[];
   initialFirmTypes?: string[];
   initialMainServices?: string[];
+  initialRequireGoogleListedRating?: boolean;
+  initialRequireTaxCertificate?: boolean;
+  initialRequirePhysicalOffice?: boolean;
+  initialRequireOfficeVerified?: boolean;
+  initialRequireOnlineConsulting?: boolean;
+  initialCorpMin?: number | null;
+  initialGoogleMinRating?: number | null;
+  initialGoogleMinReviewCount?: number | null;
   initialExploreFocusSlug?: string | null;
   initialSort?: FirmSort;
   query?: string;
@@ -67,6 +75,8 @@ type Props = {
   featuredSubtitle?: string;
   /** Ana sayfa: vitrin (keşif) alanı — sağ sütunda, filtre ile hizalı */
   children?: ReactNode;
+  /** Sonuç listesinin altında SSR destekli ek bağlam (örn. ilgili bloglar). */
+  afterResults?: ReactNode;
   /**
    * Liste URL senkronu için taban path. Ana sayfa `/`, SEO vitrinleri `/abd-vizesi` vb.
    * Verilmezse yalnızca ana sayfada `router.replace` ile query güncellenir.
@@ -86,7 +96,17 @@ function buildApplied(
   firmTypes: string[] = [],
   expertise: string[] = [],
   mainServiceLabels: string[] = [],
-  exploreFocusSlug: string | null = null
+  exploreFocusSlug: string | null = null,
+  initial?: {
+    requireGoogleListedRating?: boolean;
+    requireTaxCertificate?: boolean;
+    requirePhysicalOffice?: boolean;
+    requireOfficeVerified?: boolean;
+    requireOnlineConsulting?: boolean;
+    corpMin?: number | null;
+    googleMinRating?: number | null;
+    googleMinReviewCount?: number | null;
+  }
 ): AppliedListingFilters {
   const normalizedVisaTypes = visaTypes
     .map((v) => normalizeSpecializationFilterToken(v))
@@ -106,13 +126,13 @@ function buildApplied(
     mainServiceLabels: [...mainServiceLabels],
     exploreFocusSlug,
     trust: {
-      requireTaxCertificate: false,
+      requireTaxCertificate: initial?.requireTaxCertificate === true,
       requireLicense: false,
-      requirePhysicalOffice: false,
-      requireOfficeVerified: false,
+      requirePhysicalOffice: initial?.requirePhysicalOffice === true,
+      requireOfficeVerified: initial?.requireOfficeVerified === true,
     },
     serviceMode: {
-      onlineConsulting: false,
+      onlineConsulting: initial?.requireOnlineConsulting === true,
       officeFaceToFace: false,
       remoteSupport: false,
       weekendSupport: false,
@@ -121,16 +141,16 @@ function buildApplied(
       multilingualSupport: false,
       corporateDomain: false,
     },
-    corpMin: bounds.corp.min,
+    corpMin: initial?.corpMin ?? bounds.corp.min,
     corpMax: bounds.corp.max,
     hypeMin: bounds.hype.min,
     hypeMax: bounds.hype.max,
     yearMin: bounds.year.min,
     yearMax: bounds.year.max,
     yearPreset: null,
-    requireGoogleListedRating: false,
-    googleMinRating: null,
-    googleMinReviewCount: null,
+    requireGoogleListedRating: initial?.requireGoogleListedRating === true,
+    googleMinRating: initial?.googleMinRating ?? null,
+    googleMinReviewCount: initial?.googleMinReviewCount ?? null,
   };
 }
 
@@ -176,6 +196,14 @@ export function FirmsListing({
   initialCities = [],
   initialFirmTypes = [],
   initialMainServices = [],
+  initialRequireGoogleListedRating = false,
+  initialRequireTaxCertificate = false,
+  initialRequirePhysicalOffice = false,
+  initialRequireOfficeVerified = false,
+  initialRequireOnlineConsulting = false,
+  initialCorpMin = null,
+  initialGoogleMinRating = null,
+  initialGoogleMinReviewCount = null,
   initialExploreFocusSlug = null,
   initialSort = "name_asc",
   query = "",
@@ -186,6 +214,7 @@ export function FirmsListing({
   featuredSubtitle =
     "Filtreleyin, karşılaştırın ve size uygun firmayı bulun.",
   children,
+  afterResults,
   listingPath,
   listingCategoryLock = null,
   specializationTaxonomyOptions = [],
@@ -236,6 +265,29 @@ export function FirmsListing({
     return m;
   }, [specializationTaxonomyOptions]);
 
+  const initialTrustSeed = useMemo(
+    () => ({
+      requireGoogleListedRating: initialRequireGoogleListedRating,
+      requireTaxCertificate: initialRequireTaxCertificate,
+      requirePhysicalOffice: initialRequirePhysicalOffice,
+      requireOfficeVerified: initialRequireOfficeVerified,
+      requireOnlineConsulting: initialRequireOnlineConsulting,
+      corpMin: initialCorpMin,
+      googleMinRating: initialGoogleMinRating,
+      googleMinReviewCount: initialGoogleMinReviewCount,
+    }),
+    [
+      initialRequireGoogleListedRating,
+      initialRequireTaxCertificate,
+      initialRequirePhysicalOffice,
+      initialRequireOfficeVerified,
+      initialRequireOnlineConsulting,
+      initialCorpMin,
+      initialGoogleMinRating,
+      initialGoogleMinReviewCount,
+    ]
+  );
+
   const [appliedFilters, setAppliedFiltersBase] = useState<AppliedListingFilters>(
     () =>
       buildApplied(
@@ -246,7 +298,8 @@ export function FirmsListing({
         initialFirmTypes,
         initialExpertise,
         initialMainServices,
-        initialExploreFocusSlug
+        initialExploreFocusSlug,
+        initialTrustSeed
       )
   );
   const [sort, setSort] = useState<FirmSort>(initialSort);
@@ -263,7 +316,8 @@ export function FirmsListing({
         initialFirmTypes,
         initialExpertise,
         initialMainServices,
-        initialExploreFocusSlug
+        initialExploreFocusSlug,
+        initialTrustSeed
       )
   );
 
@@ -287,6 +341,14 @@ export function FirmsListing({
         initialFirmTypes.join(","),
         initialMainServices.join(","),
         initialExploreFocusSlug ?? "",
+        initialRequireGoogleListedRating ? "g" : "",
+        initialRequireTaxCertificate ? "t" : "",
+        initialRequirePhysicalOffice ? "o" : "",
+        initialRequireOfficeVerified ? "ov" : "",
+        initialRequireOnlineConsulting ? "on" : "",
+        initialCorpMin ?? "",
+        initialGoogleMinRating ?? "",
+        initialGoogleMinReviewCount ?? "",
         initialSort,
       ].join("|"),
     [
@@ -297,6 +359,14 @@ export function FirmsListing({
       initialFirmTypes,
       initialMainServices,
       initialExploreFocusSlug,
+      initialRequireGoogleListedRating,
+      initialRequireTaxCertificate,
+      initialRequirePhysicalOffice,
+      initialRequireOfficeVerified,
+      initialRequireOnlineConsulting,
+      initialCorpMin,
+      initialGoogleMinRating,
+      initialGoogleMinReviewCount,
       initialSort,
     ]
   );
@@ -311,7 +381,8 @@ export function FirmsListing({
         initialFirmTypes,
         initialExpertise,
         initialMainServices,
-        initialExploreFocusSlug
+        initialExploreFocusSlug,
+        initialTrustSeed
       );
       return {
         ...base,
@@ -319,19 +390,19 @@ export function FirmsListing({
           ...base.coverage,
           visaRegionLabels: prev.coverage.visaRegionLabels,
         },
-        trust: prev.trust,
-        serviceMode: prev.serviceMode,
+        trust: base.trust,
+        serviceMode: base.serviceMode,
         languagePro: prev.languagePro,
-        corpMin: prev.corpMin,
+        corpMin: base.corpMin,
         corpMax: prev.corpMax,
         hypeMin: prev.hypeMin,
         hypeMax: prev.hypeMax,
         yearMin: prev.yearMin,
         yearMax: prev.yearMax,
         yearPreset: prev.yearPreset,
-        requireGoogleListedRating: prev.requireGoogleListedRating,
-        googleMinRating: prev.googleMinRating,
-        googleMinReviewCount: prev.googleMinReviewCount,
+        requireGoogleListedRating: base.requireGoogleListedRating,
+        googleMinRating: base.googleMinRating,
+        googleMinReviewCount: base.googleMinReviewCount,
       };
     });
     setSort(initialSort);
@@ -1367,6 +1438,7 @@ export function FirmsListing({
               )}
             </div>
           ) : null}
+          {afterResults ? <div className="mt-8">{afterResults}</div> : null}
           </div>
         </div>
       </div>

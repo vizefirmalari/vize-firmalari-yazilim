@@ -24,6 +24,19 @@ export function hiddenParamsFromFirmFilters(filters: FirmFilters): Record<string
   if (filters.exploreFocusSlug) {
     hiddenParams.hedef = filters.exploreFocusSlug;
   }
+  if (filters.requireGoogleListedRating) hiddenParams.google = "1";
+  if (filters.requireTaxCertificate) hiddenParams.tax = "1";
+  if (filters.requirePhysicalOffice) hiddenParams.office = "1";
+  if (filters.requireOfficeVerified) hiddenParams.officeVerified = "1";
+  if (filters.requireOnlineConsulting) hiddenParams.online = "1";
+  if (filters.requireActivePanel) hiddenParams.active = "1";
+  if (filters.corpMin !== null) hiddenParams.corpMin = String(filters.corpMin);
+  if (filters.googleMinRating !== null) {
+    hiddenParams.googleMin = String(filters.googleMinRating);
+  }
+  if (filters.googleMinReviewCount !== null) {
+    hiddenParams.googleReviewsMin = String(filters.googleMinReviewCount);
+  }
   if (filters.sort !== "name_asc") {
     hiddenParams.sort = filters.sort;
   }

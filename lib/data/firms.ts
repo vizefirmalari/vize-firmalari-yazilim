@@ -231,6 +231,25 @@ function parseList(param: string | string[] | undefined): string[] {
     .filter(Boolean);
 }
 
+function parseBoolParam(value: string | string[] | undefined): boolean {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (raw == null) return false;
+  const normalized = String(raw).trim().toLocaleLowerCase("tr");
+  return normalized === "1" || normalized === "true" || normalized === "evet";
+}
+
+function parseNumberParam(
+  value: string | string[] | undefined,
+  min: number,
+  max: number
+): number | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (raw == null || raw === "") return null;
+  const n = Number(String(raw).replace(",", "."));
+  if (!Number.isFinite(n)) return null;
+  return Math.min(max, Math.max(min, n));
+}
+
 function firmMatchesQuery(r: FirmRow, rawQuery: string): boolean {
   const needle = rawQuery.trim().toLocaleLowerCase("tr");
   if (!needle) return true;
@@ -440,6 +459,15 @@ export function parseFirmFilters(searchParams: {
     mainServices: parseList(searchParams.mainServices),
     firmTypes: parseList(searchParams.firmTypes),
     exploreFocusSlug,
+    requireGoogleListedRating: parseBoolParam(searchParams.google),
+    requireTaxCertificate: parseBoolParam(searchParams.tax),
+    requirePhysicalOffice: parseBoolParam(searchParams.office),
+    requireOfficeVerified: parseBoolParam(searchParams.officeVerified),
+    requireOnlineConsulting: parseBoolParam(searchParams.online),
+    requireActivePanel: parseBoolParam(searchParams.active),
+    corpMin: parseNumberParam(searchParams.corpMin, 0, 100),
+    googleMinRating: parseNumberParam(searchParams.googleMin, 0, 5),
+    googleMinReviewCount: parseNumberParam(searchParams.googleReviewsMin, 1, 1000000),
     sort,
   };
 }
@@ -482,6 +510,37 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
     if (cat) {
       out = out.filter((r) => firmMatchesExploreCategory(r, cat));
     }
+  }
+
+  if (f.requireGoogleListedRating) {
+    out = out.filter((r) => Boolean(r.google_profile?.show_on_card));
+  }
+
+  if (f.requireTaxCertificate) {
+    out = out.filter((r) => r.has_tax_certificate === true);
+  }
+
+  if (f.requirePhysicalOffice) {
+    out = out.filter((r) => r.has_physical_office === true);
+  }
+
+  if (f.requireOfficeVerified) {
+    out = out.filter((r) => r.office_address_verified === true);
+  }
+
+  if (f.requireOnlineConsulting) {
+    out = out.filter((r) => {
+      const web = r.website?.trim();
+      return Boolean(web && r.website_quality_level !== "none");
+    });
+  }
+
+  if (f.requireActivePanel) {
+    out = out.filter((r) => r.has_active_panel_member === true);
+  }
+
+  if (f.corpMin !== null) {
+    out = out.filter((r) => r.corporateness_score >= f.corpMin!);
   }
 
   out.sort((a, b) => {
@@ -668,6 +727,62 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
     }
   }
 
+  if (filters.requireGoogleListedRating) {
+    rows = rows.filter((r) => {
+      const rating = Number(r.google_profile?.rating);
+      return Boolean(
+        r.google_profile?.show_on_card &&
+          Number.isFinite(rating) &&
+          rating > 0
+      );
+    });
+  }
+
+  if (filters.googleMinRating !== null) {
+    rows = rows.filter((r) => {
+      const rating = Number(r.google_profile?.rating);
+      return Number.isFinite(rating) && rating >= filters.googleMinRating!;
+    });
+  }
+
+  if (filters.googleMinReviewCount !== null) {
+    rows = rows.filter((r) => {
+      const count = r.google_profile?.user_rating_count;
+      return (
+        typeof count === "number" &&
+        Number.isFinite(count) &&
+        count >= filters.googleMinReviewCount!
+      );
+    });
+  }
+
+  if (filters.requireTaxCertificate) {
+    rows = rows.filter((r) => r.has_tax_certificate === true);
+  }
+
+  if (filters.requirePhysicalOffice) {
+    rows = rows.filter((r) => r.has_physical_office === true);
+  }
+
+  if (filters.requireOfficeVerified) {
+    rows = rows.filter((r) => r.office_address_verified === true);
+  }
+
+  if (filters.requireOnlineConsulting) {
+    rows = rows.filter((r) => {
+      const web = r.website?.trim();
+      return Boolean(web && r.website_quality_level !== "none");
+    });
+  }
+
+  if (filters.requireActivePanel) {
+    rows = rows.filter((r) => r.has_active_panel_member === true);
+  }
+
+  if (filters.corpMin !== null) {
+    rows = rows.filter((r) => r.corporateness_score >= filters.corpMin!);
+  }
+
   if (filters.q) {
     rows = rows.filter((r) => firmMatchesQuery(r, filters.q));
   }
@@ -702,6 +817,15 @@ const ARAMA_BASE_FILTERS: FirmFilters = {
   mainServices: [],
   firmTypes: [],
   exploreFocusSlug: null,
+  requireGoogleListedRating: false,
+  requireTaxCertificate: false,
+  requirePhysicalOffice: false,
+  requireOfficeVerified: false,
+  requireOnlineConsulting: false,
+  requireActivePanel: false,
+  corpMin: null,
+  googleMinRating: null,
+  googleMinReviewCount: null,
   sort: "hype_desc",
 };
 

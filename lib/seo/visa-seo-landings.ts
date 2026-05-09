@@ -439,6 +439,7 @@ export function mergeVisaLandingServerFilters(
     : fromUrl.visaTypes;
 
   return {
+    ...fromUrl,
     q: fromUrl.q,
     countries: fromUrl.countries,
     visaTypes,

@@ -199,5 +199,14 @@ export type FirmFilters = {
   firmTypes: string[];
   /** Keşfet kategorisi ile aynı eşleşme motoru (`hedef` URL parametresi, slug) */
   exploreFocusSlug: string | null;
+  requireGoogleListedRating: boolean;
+  requireTaxCertificate: boolean;
+  requirePhysicalOffice: boolean;
+  requireOfficeVerified: boolean;
+  requireOnlineConsulting: boolean;
+  requireActivePanel: boolean;
+  corpMin: number | null;
+  googleMinRating: number | null;
+  googleMinReviewCount: number | null;
   sort: FirmSort;
 };

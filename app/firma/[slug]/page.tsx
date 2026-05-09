@@ -214,6 +214,15 @@ export default async function FirmaPage({ params }: PageProps) {
     mainServices: [],
     firmTypes: [],
     exploreFocusSlug: null,
+    requireGoogleListedRating: false,
+    requireTaxCertificate: false,
+    requirePhysicalOffice: false,
+    requireOfficeVerified: false,
+    requireOnlineConsulting: false,
+    requireActivePanel: false,
+    corpMin: null,
+    googleMinRating: null,
+    googleMinReviewCount: null,
     sort: "corp_desc",
   };
   const [firmFeedItems, allFirms] = await Promise.all([

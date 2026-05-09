@@ -10,6 +10,15 @@ const CONTROLLED_KEYS = [
   "firmTypes",
   "mainServices",
   "hedef",
+  "google",
+  "tax",
+  "office",
+  "officeVerified",
+  "online",
+  "active",
+  "corpMin",
+  "googleMin",
+  "googleReviewsMin",
   "sort",
 ] as const;
 
@@ -63,6 +72,19 @@ export function applyHomeListingParamsToSearchParams(
 
   if (input.applied.exploreFocusSlug) {
     next.set("hedef", input.applied.exploreFocusSlug);
+  }
+
+  if (input.applied.requireGoogleListedRating) next.set("google", "1");
+  if (input.applied.trust.requireTaxCertificate) next.set("tax", "1");
+  if (input.applied.trust.requirePhysicalOffice) next.set("office", "1");
+  if (input.applied.trust.requireOfficeVerified) next.set("officeVerified", "1");
+  if (input.applied.serviceMode.onlineConsulting) next.set("online", "1");
+  if (input.applied.corpMin > 0) next.set("corpMin", String(input.applied.corpMin));
+  if (input.applied.googleMinRating !== null) {
+    next.set("googleMin", String(input.applied.googleMinRating));
+  }
+  if (input.applied.googleMinReviewCount !== null) {
+    next.set("googleReviewsMin", String(input.applied.googleMinReviewCount));
   }
 
   if (input.sort !== "name_asc") {

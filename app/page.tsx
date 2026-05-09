@@ -2,8 +2,15 @@ import type { Metadata } from "next";
 import { FirmsListing } from "@/components/home/firms-listing";
 import { HeroSection } from "@/components/home/hero-section";
 import { HomepageDiscoveryLayer } from "@/components/home/homepage-discovery-layer";
+import {
+  SmartVisaDiscoveryEngine,
+  type SmartDiscoveryInitialState,
+} from "@/components/home/smart-visa-discovery-engine";
+import { SmartDiscoveryRelatedBlogs } from "@/components/home/smart-discovery-related-blogs";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
+import { getFeedItemsPage } from "@/lib/data/feed";
 import { getFirms, parseFirmFilters } from "@/lib/data/firms";
 import {
   mergeCompanyTypeFilterOptions,
@@ -26,6 +33,36 @@ import { resolveDefaultSiteShareImage } from "@/lib/seo/og-images";
 type HomePageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
+
+function lookupVisaLabel(tokens: string[], taxonomy: { slug: string; label: string }[]): string {
+  const first = tokens[0];
+  if (!first) return "";
+  const builtIn = SPECIALIZATION_OPTIONS.find((option) => option.key === first);
+  if (builtIn) return builtIn.label;
+  return taxonomy.find((row) => row.slug === first)?.label ?? first;
+}
+
+function buildDiscoveryResultCopy(input: {
+  country: string;
+  visaLabel: string;
+  serviceLabel: string;
+}): { title: string; subtitle: string; blogTitle: string; blogSearch: string } {
+  const subject = [input.country, input.visaLabel || input.serviceLabel]
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .join(" ");
+  const title = subject
+    ? `${subject} Danışmanlık Firmaları`
+    : "Size Uygun Vize Danışmanlık Firmaları";
+  return {
+    title,
+    subtitle: subject
+      ? `${subject} süreçlerinde hizmet veren, Google puanı, kurumsallık skoru, hizmet kapsamı ve güven sinyallerine göre filtrelenmiş firmaları inceleyin.`
+      : "İhtiyacınıza göre filtrelenmiş firmaları kurumsallık, Google puanı ve hizmet kapsamı sinyalleriyle karşılaştırın.",
+    blogTitle: subject ? `${subject} için ilgili blog yazıları` : "İlgili vize rehberleri",
+    blogSearch: subject,
+  };
+}
 
 export async function generateMetadata({
   searchParams,
@@ -79,7 +116,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     filters.cities.length === 0 &&
     filters.firmTypes.length === 0 &&
     filters.mainServices.length === 0 &&
-    !filters.exploreFocusSlug;
+    !filters.exploreFocusSlug &&
+    !filters.requireGoogleListedRating &&
+    !filters.requireTaxCertificate &&
+    !filters.requirePhysicalOffice &&
+    !filters.requireOfficeVerified &&
+    !filters.requireOnlineConsulting &&
+    !filters.requireActivePanel &&
+    filters.corpMin === null &&
+    filters.googleMinRating === null &&
+    filters.googleMinReviewCount === null;
 
   const listingFirms = await getFirms(filters);
   const discoveryFirms = listingMatchesDiscoveryPool
@@ -100,6 +146,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     .filter(Boolean);
 
   const hiddenParams = hiddenParamsFromFirmFilters(filters);
+  const activeDiscoveryQuery = !listingMatchesDiscoveryPool;
 
   const countryListForListing = mergeCountryFilterOptionsFromFirms(
     dbCountries,
@@ -114,6 +161,62 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       dbMainServiceCategories,
       listingFirms
     );
+  const countryListForDiscovery = mergeCountryFilterOptionsFromFirms(
+    dbCountries,
+    discoveryFirms
+  );
+  const companyTypeListForDiscovery = mergeCompanyTypeFilterOptions(
+    companyTypeNamesOrdered,
+    discoveryFirms
+  );
+  const mainServiceCategoryListForDiscovery =
+    mergeMainServiceCategoryFilterOptionsFromRows(
+      dbMainServiceCategories,
+      discoveryFirms
+    );
+  const visaTypeOptionsForDiscovery = [
+    ...SPECIALIZATION_OPTIONS.map((option) => ({
+      value: option.key,
+      label: option.label,
+    })),
+    ...specializationTaxonomy.map((row) => ({
+      value: row.slug,
+      label: row.label,
+    })),
+  ];
+  const discoveryInitialState: SmartDiscoveryInitialState = {
+    countries: filters.countries,
+    visaTypes: filters.visaTypes,
+    mainServices: filters.mainServices,
+    trust: {
+      google: filters.requireGoogleListedRating,
+      tax: filters.requireTaxCertificate,
+      office: filters.requirePhysicalOffice,
+      officeVerified: filters.requireOfficeVerified,
+      online: filters.requireOnlineConsulting,
+      corpHigh: (filters.corpMin ?? 0) >= 80,
+      active: filters.requireActivePanel,
+    },
+  };
+  const primaryCountry = filters.countries[0] ?? "";
+  const primaryVisaLabel = lookupVisaLabel(filters.visaTypes, specializationTaxonomy);
+  const primaryServiceLabel = filters.mainServices[0] ?? "";
+  const discoveryCopy = buildDiscoveryResultCopy({
+    country: primaryCountry,
+    visaLabel: primaryVisaLabel,
+    serviceLabel: primaryServiceLabel,
+  });
+  const relatedBlogItems =
+    activeDiscoveryQuery && discoveryCopy.blogSearch
+      ? (
+          await getFeedItemsPage(0, 6, {
+            type: "blog",
+            country: primaryCountry || undefined,
+            visaType: primaryVisaLabel || primaryServiceLabel || undefined,
+            search: discoveryCopy.blogSearch,
+          })
+        ).items
+      : [];
 
   return (
     <>
@@ -123,6 +226,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         subtitle={cms?.hero_subtitle}
         ctaText={cms?.hero_cta_text}
         ctaHref={cms?.hero_cta_link ?? "#firmalar"}
+      />
+      <SmartVisaDiscoveryEngine
+        countryOptions={countryListForDiscovery}
+        companyTypeOptions={companyTypeListForDiscovery}
+        mainServiceOptions={mainServiceCategoryListForDiscovery}
+        visaTypeOptions={visaTypeOptionsForDiscovery}
+        initialState={discoveryInitialState}
       />
       {cms?.announcement_text?.trim() ? (
         <div className="border-b border-[#D9A441]/30 bg-[#D9A441]/15 px-4 py-2 text-center text-sm font-medium text-[#1A1A1A]">
@@ -144,6 +254,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           initialCities={filters.cities}
           initialFirmTypes={filters.firmTypes}
           initialMainServices={filters.mainServices}
+          initialRequireGoogleListedRating={filters.requireGoogleListedRating}
+          initialRequireTaxCertificate={filters.requireTaxCertificate}
+          initialRequirePhysicalOffice={filters.requirePhysicalOffice}
+          initialRequireOfficeVerified={filters.requireOfficeVerified}
+          initialRequireOnlineConsulting={filters.requireOnlineConsulting}
+          initialCorpMin={filters.corpMin}
+          initialGoogleMinRating={filters.googleMinRating}
+          initialGoogleMinReviewCount={filters.googleMinReviewCount}
           initialExploreFocusSlug={filters.exploreFocusSlug}
           initialSort={filters.sort}
           query={filters.q}
@@ -152,7 +270,18 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           mainServiceCategoryList={mainServiceCategoryListForListing}
           specializationTaxonomyOptions={specializationTaxonomy}
           featuredTitle={
-            cms?.featured_section_title?.trim() || undefined
+            activeDiscoveryQuery
+              ? discoveryCopy.title
+              : cms?.featured_section_title?.trim() || undefined
+          }
+          featuredSubtitle={activeDiscoveryQuery ? discoveryCopy.subtitle : undefined}
+          afterResults={
+            activeDiscoveryQuery ? (
+              <SmartDiscoveryRelatedBlogs
+                items={relatedBlogItems}
+                title={discoveryCopy.blogTitle}
+              />
+            ) : null
           }
         >
           <HomepageDiscoveryLayer
