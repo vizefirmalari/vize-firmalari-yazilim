@@ -47,18 +47,21 @@ function buildDiscoveryResultCopy(input: {
   visaLabel: string;
   serviceLabel: string;
 }): { title: string; subtitle: string; blogTitle: string; blogSearch: string } {
-  const subject = [input.country, input.visaLabel || input.serviceLabel]
+  const selectedService = input.visaLabel || input.serviceLabel;
+  const subject = [input.country, selectedService]
     .map((item) => item.trim())
     .filter(Boolean)
     .join(" ");
-  const title = subject
-    ? `${subject} Danışmanlık Firmaları`
-    : "Size Uygun Vize Danışmanlık Firmaları";
+  const title = subject ? `${subject} Firmaları` : "Size Uygun Firmalar";
+  const goldenVisaSubtitle =
+    input.country.trim() && /golden/i.test(selectedService)
+      ? `${input.country.trim()} için Golden Visa ve yatırım yoluyla oturum süreçlerinde hizmet veren firmaları inceleyin.`
+      : "";
   return {
     title,
-    subtitle: subject
-      ? `${subject} süreçlerinde hizmet veren, Google puanı, kurumsallık skoru, hizmet kapsamı ve güven sinyallerine göre filtrelenmiş firmaları inceleyin.`
-      : "İhtiyacınıza göre filtrelenmiş firmaları kurumsallık, Google puanı ve hizmet kapsamı sinyalleriyle karşılaştırın.",
+    subtitle: goldenVisaSubtitle || (subject
+      ? `${subject} süreçlerinde hizmet veren firmaları inceleyin.`
+      : "Seçtiğiniz filtrelere uygun firmaları inceleyin."),
     blogTitle: subject ? `${subject} için ilgili blog yazıları` : "İlgili vize rehberleri",
     blogSearch: subject,
   };
@@ -165,15 +168,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     dbCountries,
     discoveryFirms
   );
-  const companyTypeListForDiscovery = mergeCompanyTypeFilterOptions(
-    companyTypeNamesOrdered,
-    discoveryFirms
-  );
-  const mainServiceCategoryListForDiscovery =
-    mergeMainServiceCategoryFilterOptionsFromRows(
-      dbMainServiceCategories,
-      discoveryFirms
-    );
   const visaTypeOptionsForDiscovery = [
     ...SPECIALIZATION_OPTIONS.map((option) => ({
       value: option.key,
@@ -212,7 +206,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           await getFeedItemsPage(0, 6, {
             type: "blog",
             country: primaryCountry || undefined,
-            visaType: primaryVisaLabel || primaryServiceLabel || undefined,
+            visaType: primaryVisaLabel || undefined,
             search: discoveryCopy.blogSearch,
           })
         ).items
@@ -229,8 +223,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       />
       <SmartVisaDiscoveryEngine
         countryOptions={countryListForDiscovery}
-        companyTypeOptions={companyTypeListForDiscovery}
-        mainServiceOptions={mainServiceCategoryListForDiscovery}
         visaTypeOptions={visaTypeOptionsForDiscovery}
         initialState={discoveryInitialState}
       />

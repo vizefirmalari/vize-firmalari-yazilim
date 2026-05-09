@@ -394,12 +394,12 @@ export function FirmsListing({
         serviceMode: base.serviceMode,
         languagePro: prev.languagePro,
         corpMin: base.corpMin,
-        corpMax: prev.corpMax,
-        hypeMin: prev.hypeMin,
-        hypeMax: prev.hypeMax,
-        yearMin: prev.yearMin,
-        yearMax: prev.yearMax,
-        yearPreset: prev.yearPreset,
+        corpMax: base.corpMax,
+        hypeMin: base.hypeMin,
+        hypeMax: base.hypeMax,
+        yearMin: base.yearMin,
+        yearMax: base.yearMax,
+        yearPreset: base.yearPreset,
         requireGoogleListedRating: base.requireGoogleListedRating,
         googleMinRating: base.googleMinRating,
         googleMinReviewCount: base.googleMinReviewCount,
@@ -417,6 +417,7 @@ export function FirmsListing({
 
   const prevListingScrollKeyForResultsRef = useRef<string | null>(null);
   const prevUrlKeyForResultsScrollRef = useRef<string | null>(null);
+  const lastUrlKeySeenForListingUrlSyncRef = useRef(urlKey);
 
   /**
    * Masaüstü: sol filtre/sıralama sonrası kullanıcı sonuç alanını görmüyorsa `#firmalar`’a
@@ -468,6 +469,10 @@ export function FirmsListing({
   /** Ana sayfa / SEO vitrin: URL ile `countries`, `cities`, `visaTypes` vb. senkron (yenilemede korunur). */
   useEffect(() => {
     if (!shouldSyncListingUrl) return;
+    if (lastUrlKeySeenForListingUrlSyncRef.current !== urlKey) {
+      lastUrlKeySeenForListingUrlSyncRef.current = urlKey;
+      return;
+    }
     const base = new URLSearchParams(searchParams.toString());
     const next = applyHomeListingParamsToSearchParams(base, {
       q: query,

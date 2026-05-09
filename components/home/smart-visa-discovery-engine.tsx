@@ -9,11 +9,18 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { useRouter, useSearchParams } from "next/navigation";
 import {
   flagUrlForIso,
   getCountryFlagCodeFromName,
 } from "@/lib/firma/country-flag";
+import {
+  allIntentItems,
+  displayIntentLabel,
+  findIntentItemByLabel,
+  intentClusterByKey,
+  SERVICE_INTENT_CLUSTERS,
+  type IntentMatchItem,
+} from "@/lib/quick-apply/service-intent-map";
 import { slugify } from "@/lib/slug";
 
 export type SmartDiscoveryVisaOption = {
@@ -58,24 +65,11 @@ type FloatingPosition = {
   width: number;
 };
 
-const CONTROLLED_KEYS = [
-  "intent",
-  "country",
-  "countries",
-  "visaTypes",
-  "firmTypes",
-  "mainServices",
-  "google",
-  "tax",
-  "office",
-  "officeVerified",
-  "online",
-  "active",
-  "corpMin",
-  "sort",
-] as const;
+type DiscoverySubTypeOption = SmartDiscoveryVisaOption & {
+  filterType: IntentMatchItem["type"];
+};
 
-const INTENTS: IntentOption[] = [
+export const LEGACY_INTENTS: IntentOption[] = [
   {
     id: "visa-services",
     slug: "vize-hizmetleri",
@@ -353,6 +347,19 @@ const INTENTS: IntentOption[] = [
   },
 ];
 
+const INTENTS: IntentOption[] = SERVICE_INTENT_CLUSTERS.map((cluster) => ({
+  id: cluster.key,
+  slug: cluster.key,
+  icon: cluster.icon,
+  label: cluster.title,
+  description: cluster.shortDescription,
+  subTypeTitle: cluster.secondStepLabel,
+  subTypeLabels: allIntentItems(cluster).map((item) => item.label),
+  mainServiceNeedles: [],
+  firmTypeNeedles: [],
+  recommendedCountryNeedles: cluster.recommendedCountries,
+}));
+
 function normalize(value: string): string {
   return value
     .trim()
@@ -381,15 +388,13 @@ function intentFromInitialVisaType(visaType: string): string {
     usa_visa_expert: "visa-services",
     tourist_visa_support: "visa-services",
     family_reunion_support: "migration-residence",
-    student_visa_support: "education-abroad",
-    work_visa_support: "career-work",
+    student_visa_support: "study-abroad",
+    work_visa_support: "international-career",
     business_visa_support: "company-investment",
     appeal_support: "legal-official",
   };
   if (builtInIntentMap[visaType]) return builtInIntentMap[visaType];
 
-  const hit = INTENTS.find((intent) => intent.defaultVisaType === visaType);
-  if (hit) return hit.id;
   const optionLabel = visaType.replace(/-/g, " ");
   const labelHit = INTENTS.find((intent) =>
     intent.subTypeLabels.some((label) => optionMatchesNeedles(label, [optionLabel]))
@@ -425,19 +430,26 @@ function FlagMark({ countryName, className = "h-5 w-7" }: { countryName: string;
 }
 
 function buildSubTypeOptions(
-  labels: string[],
+  items: IntentMatchItem[],
   options: SmartDiscoveryVisaOption[]
-): SmartDiscoveryVisaOption[] {
-  const byValue = new Map<string, SmartDiscoveryVisaOption>();
+): DiscoverySubTypeOption[] {
+  const byValue = new Map<string, DiscoverySubTypeOption>();
   const exactOptions = new Map<string, SmartDiscoveryVisaOption>();
   for (const option of options) {
     const key = normalize(option.label);
     if (!exactOptions.has(key)) exactOptions.set(key, option);
   }
 
-  for (const label of labels) {
-    const exact = exactOptions.get(normalize(label));
-    const option = exact ?? { value: slugify(label), label };
+  for (const item of items) {
+    const label = displayIntentLabel(item.label);
+    const exact = item.type === "expertise" ? exactOptions.get(normalize(label)) : null;
+    const option: DiscoverySubTypeOption = exact
+      ? { ...exact, label, filterType: item.type }
+      : {
+          value: item.type === "expertise" ? slugify(label) : label,
+          label,
+          filterType: item.type,
+        };
     if (!byValue.has(option.value)) byValue.set(option.value, option);
   }
 
@@ -502,34 +514,33 @@ function FloatingLayer({
 
 export function SmartVisaDiscoveryEngine({
   countryOptions,
-  companyTypeOptions,
-  mainServiceOptions,
   visaTypeOptions,
   initialState,
 }: {
   countryOptions: string[];
-  companyTypeOptions?: string[];
-  mainServiceOptions: string[];
   visaTypeOptions: SmartDiscoveryVisaOption[];
   initialState?: SmartDiscoveryInitialState;
 }) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const intentButtonRef = useRef<HTMLButtonElement | null>(null);
   const subTypeButtonRef = useRef<HTMLButtonElement | null>(null);
   const countryButtonRef = useRef<HTMLButtonElement | null>(null);
-  const initialVisaType = initialState?.visaTypes[0] ?? "";
-  const [intentId, setIntentId] = useState<string>(intentFromInitialVisaType(initialVisaType));
-  const [selectedVisaType, setSelectedVisaType] = useState(initialVisaType);
+  const initialServiceType = initialState?.visaTypes[0] ?? initialState?.mainServices[0] ?? "";
+  const [intentId, setIntentId] = useState<string>(intentFromInitialVisaType(initialServiceType));
+  const [selectedServiceType, setSelectedServiceType] = useState(initialServiceType);
   const [country, setCountry] = useState(initialState?.countries[0] ?? "");
   const [countryQuery, setCountryQuery] = useState(initialState?.countries[0] ?? "");
   const [intentOpen, setIntentOpen] = useState(false);
   const [subTypeOpen, setSubTypeOpen] = useState(false);
   const [countryOpen, setCountryOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
 
   const selectedIntent = INTENTS.find((item) => item.id === intentId) ?? INTENTS[0];
+  const selectedIntentCluster =
+    intentClusterByKey(selectedIntent.id) ?? SERVICE_INTENT_CLUSTERS[0];
+  const selectedIntentItems = useMemo(
+    () => allIntentItems(selectedIntentCluster),
+    [selectedIntentCluster]
+  );
 
   const orderedCountries = useMemo(() => {
     const source = selectedIntent.recommendedCountryNeedles;
@@ -549,31 +560,15 @@ export function SmartVisaDiscoveryEngine({
   }, [countryQuery, orderedCountries]);
 
   const subTypeOptions = useMemo(() => {
-    return buildSubTypeOptions(selectedIntent.subTypeLabels, visaTypeOptions);
-  }, [selectedIntent.subTypeLabels, visaTypeOptions]);
+    return buildSubTypeOptions(selectedIntentItems, visaTypeOptions);
+  }, [selectedIntentItems, visaTypeOptions]);
 
   const showSubType = subTypeOptions.length > 0;
   const selectedSubTypeLabel =
-    subTypeOptions.find((option) => option.value === selectedVisaType)?.label ??
-    (selectedIntent.defaultVisaType
-      ? visaTypeOptions.find((option) => option.value === selectedIntent.defaultVisaType)?.label
-      : "") ??
+    subTypeOptions.find((option) => option.value === selectedServiceType)?.label ??
     "";
   const subTypeTitle = selectedIntent.subTypeTitle;
-
-  const matchingMainServices = useMemo(() => {
-    if (!selectedIntent) return [];
-    return mainServiceOptions
-      .filter((label) => optionMatchesNeedles(label, selectedIntent.mainServiceNeedles))
-      .slice(0, 4);
-  }, [mainServiceOptions, selectedIntent]);
-
-  const matchingFirmTypes = useMemo(() => {
-    if (!selectedIntent || !companyTypeOptions?.length) return [];
-    return companyTypeOptions
-      .filter((label) => optionMatchesNeedles(label, selectedIntent.firmTypeNeedles))
-      .slice(0, 3);
-  }, [companyTypeOptions, selectedIntent]);
+  const subTypePlaceholder = selectedIntentCluster.secondStepPlaceholder;
 
   useEffect(() => {
     const next = country.trim();
@@ -601,7 +596,7 @@ export function SmartVisaDiscoveryEngine({
   const chooseIntent = (nextIntentId: string) => {
     const nextIntent = INTENTS.find((item) => item.id === nextIntentId) ?? INTENTS[0];
     setIntentId(nextIntent.id);
-    setSelectedVisaType(nextIntent.defaultVisaType ?? "");
+    setSelectedServiceType("");
     setCountry("");
     setCountryQuery("");
     setIntentOpen(false);
@@ -616,24 +611,26 @@ export function SmartVisaDiscoveryEngine({
     setCountryOpen(false);
   };
 
-  const submit = () => {
-    setSubmitting(true);
-    const next = new URLSearchParams(searchParams.toString());
-    for (const key of CONTROLLED_KEYS) next.delete(key);
+  const resultHref = useMemo(() => {
+    const next = new URLSearchParams();
 
     const resolvedCountry = country.trim() || countryQuery.trim();
     if (resolvedCountry) next.set("countries", resolvedCountry);
 
-    const resolvedVisaType = selectedVisaType || selectedIntent.defaultVisaType || "";
-    if (resolvedVisaType && subTypeOptions.some((item) => item.value === resolvedVisaType)) {
-      next.set("visaTypes", resolvedVisaType);
+    const selectedOption = subTypeOptions.find((item) => item.value === selectedServiceType);
+    if (selectedOption) {
+      const target = findIntentItemByLabel(selectedOption.label);
+      const filterType = target?.item.type ?? selectedOption.filterType;
+      if (filterType === "expertise") {
+        next.set("visaTypes", selectedOption.value);
+      } else {
+        next.set("mainServices", selectedOption.label);
+      }
     }
-    if (matchingFirmTypes.length) next.set("firmTypes", matchingFirmTypes.join(","));
-    if (matchingMainServices.length) next.set("mainServices", matchingMainServices.join(","));
-    next.set("sort", "hype_desc");
 
-    router.push(`/?${next.toString()}#firmalar`);
-  };
+    const qs = next.toString();
+    return qs ? `/eslesme?${qs}` : "/eslesme";
+  }, [country, countryQuery, selectedServiceType, subTypeOptions]);
 
   return (
     <section className="container-shell -mt-5 pb-7 lg:-mt-7 lg:pb-9" aria-labelledby="smart-discovery-title">
@@ -682,7 +679,7 @@ export function SmartVisaDiscoveryEngine({
                     {subTypeTitle}
                   </span>
                   <p className="mt-0.5 text-xs font-medium text-foreground/45">
-                    Mevcut uzmanlık filtrelerinden seçin.
+                    İhtiyacınıza en yakın alt hizmeti seçin.
                   </p>
                 </div>
                 <button
@@ -702,10 +699,10 @@ export function SmartVisaDiscoveryEngine({
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-base font-bold text-primary">
-                      {selectedSubTypeLabel || `${subTypeTitle} seçin`}
+                      {selectedSubTypeLabel || subTypePlaceholder}
                     </span>
                     <span className="mt-0.5 block truncate text-xs font-medium text-foreground/50">
-                      Seçim mevcut firma filtrelerine aktarılır
+                      Seçim mevcut filtre sistemine aktarılır
                     </span>
                   </span>
                 </button>
@@ -741,23 +738,20 @@ export function SmartVisaDiscoveryEngine({
                     {country || "Ülke seçin"}
                   </span>
                   <span className="mt-0.5 block truncate text-xs font-medium text-foreground/50">
-                    {selectedIntent.label} için önerilen hedefler
+                    {selectedIntentCluster.countryPlaceholder}
                   </span>
                 </span>
               </button>
             </div>
 
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={submit}
-              className="inline-flex h-15 shrink-0 items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-primary via-secondary to-primary bg-size-[200%_100%] px-6 text-sm font-bold text-white shadow-sm transition hover:bg-position-[100%_0] hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/30 disabled:cursor-wait disabled:opacity-70 lg:min-w-58"
+            <a
+              href={resultHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-15 shrink-0 items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-primary via-secondary to-primary bg-size-[200%_100%] px-6 text-sm font-bold text-white shadow-sm transition hover:bg-position-[100%_0] hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/30 lg:min-w-58"
             >
-              {submitting ? (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" aria-hidden />
-              ) : null}
-              {submitting ? "Eşleştiriliyor" : "Bana Uygun Firmaları Bul"}
-            </button>
+              Bana Uygun Firmaları Bul
+            </a>
           </div>
 
         </div>
@@ -840,7 +834,7 @@ export function SmartVisaDiscoveryEngine({
             style={{ top: position.top, left: position.left, width: position.width }}
           >
             {subTypeOptions.map((option) => {
-              const active = option.value === selectedVisaType;
+              const active = option.value === selectedServiceType;
               return (
                 <button
                   key={option.value}
@@ -848,7 +842,7 @@ export function SmartVisaDiscoveryEngine({
                   role="option"
                   aria-selected={active}
                   onClick={() => {
-                    setSelectedVisaType(option.value);
+                    setSelectedServiceType(option.value);
                     setSubTypeOpen(false);
                     setCountryOpen(true);
                   }}
@@ -864,7 +858,7 @@ export function SmartVisaDiscoveryEngine({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-bold">{option.label}</span>
                     <span className="mt-0.5 block truncate text-xs text-foreground/52">
-                      Mevcut uzmanlık filtresi
+                      {option.filterType === "expertise" ? "Uzmanlık filtresi" : "Hizmet filtresi"}
                     </span>
                   </span>
                   {active ? (
@@ -905,7 +899,7 @@ export function SmartVisaDiscoveryEngine({
             </div>
             {selectedIntent.recommendedCountryNeedles?.length && !countryQuery.trim() ? (
               <p className="px-3 pt-3 text-[11px] font-bold uppercase tracking-[0.12em] text-foreground/38">
-                Öne çıkan ülkeler ve diğer uygun ülkeler
+                Önerilen hedefler ve diğer ülkeler
               </p>
             ) : null}
             <div role="listbox" className="mt-2 max-h-[min(22rem,calc(100vh-8rem))] overflow-y-auto">
