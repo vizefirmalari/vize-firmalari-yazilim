@@ -871,6 +871,7 @@ export function FirmContactModal({
                       <GooglePublicRatingRow
                         rating={googleListRating}
                         userRatingCount={firm.google_profile?.user_rating_count ?? null}
+                        googleMapsUrl={firm.google_profile?.google_maps_uri ?? null}
                       />
                     </div>
                   ) : null}

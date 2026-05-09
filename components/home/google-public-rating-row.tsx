@@ -2,7 +2,9 @@ import { GoogleRatingStars } from "@/components/home/google-rating-stars";
 import { ScoreInfoButton } from "@/components/home/score-info-button";
 
 const INFO_COPY =
-  "Bu puan, Google Haritalar uzerinden alinan kullanici degerlendirme puanidir. Degerlendirme sayisi Google verisine gore gosterilir.";
+  "Bu puan, firmanın Google Haritalar üzerindeki gerçek kullanıcı değerlendirmelerinin ortalamasını gösterir.";
+const INFO_FOOTNOTE =
+  "Google verileri senkronizasyon sistemi ile alınmaktadır.";
 
 type Tone = "card" | "featured";
 
@@ -23,6 +25,7 @@ function toneClasses(tone: Tone): { line: string; value: string; count: string }
 export type GooglePublicRatingRowProps = {
   rating: number;
   userRatingCount?: number | null;
+  googleMapsUrl?: string | null;
   tone?: Tone;
   /** Örn. kart yoğunluğuna göre yazı boyutu */
   className?: string;
@@ -34,6 +37,7 @@ export type GooglePublicRatingRowProps = {
 export function GooglePublicRatingRow({
   rating,
   userRatingCount,
+  googleMapsUrl,
   tone = "card",
   className,
 }: GooglePublicRatingRowProps) {
@@ -64,7 +68,14 @@ export function GooglePublicRatingRow({
           ({countLabel} değerlendirme)
         </span>
       ) : null}
-      <ScoreInfoButton text={INFO_COPY} label="Google puani hakkinda bilgi" />
+      <ScoreInfoButton
+        title="Google Haritalar Puanı Nedir?"
+        text={INFO_COPY}
+        footnote={INFO_FOOTNOTE}
+        href={googleMapsUrl}
+        linkLabel="Google Haritalar’da görüntüle"
+        label="Google puanı hakkında bilgi"
+      />
     </div>
   );
 }
