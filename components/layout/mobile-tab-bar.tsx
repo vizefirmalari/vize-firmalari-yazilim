@@ -10,26 +10,54 @@ const HIDE_PREFIXES = ["/admin", "/panel", "/auth"];
 const HIDE_PATHS = ["/giris", "/kayit", "/sifre-unuttum", "/sifre-yenile"];
 const FEED_BADGE_REFRESH_MS = 60_000;
 
+/**
+ * Akıllı Asistan rotası — ortadaki sparkle butonu buraya yönlendirir.
+ * Tek kaynak: değiştirilirse hem nav hem aktiflik kontrolü güncellenmeli.
+ */
+const AI_ASSISTANT_ROUTE = "/ai" as const;
+
+function isAiAssistantPath(pathname: string): boolean {
+  return pathname === AI_ASSISTANT_ROUTE || pathname.startsWith(`${AI_ASSISTANT_ROUTE}/`);
+}
+
 type TabItem = {
   href: string;
+  /** Erişilebilirlik için her zaman dolu; ekranda gösterim `showLabel` ile kontrol edilir. */
   label: string;
   icon: string;
   isCenter?: boolean;
+  /** false → ikon altında metin gizli (ortadaki sparkle butonu için). */
+  showLabel?: boolean;
   match: (pathname: string) => boolean;
 };
 
 const TABS: TabItem[] = [
-  { href: "/", label: "Vize Firmaları", icon: "⌂", match: (p) => p === "/" },
-  { href: "/kesfet", label: "Keşfet", icon: "◫", match: (p) => p.startsWith("/kesfet") },
+  { href: "/", label: "Ana Sayfa", icon: "⌂", showLabel: true, match: (p) => p === "/" },
+  /**
+   * "Keşfet" sekmesi: label korunur, içerik olarak mevcut Akış sayfası (/akis) gösterilir.
+   * /kesfet rotası hâlâ erişilebilir; oraya düşen kullanıcı için de Keşfet aktif kalsın.
+   */
   {
     href: PUBLIC_FEED_ROUTE,
-    label: "Akış",
+    label: "Keşfet",
+    icon: "◫",
+    showLabel: true,
+    match: (p) => isPublicFeedPath(p) || p.startsWith("/kesfet"),
+  },
+  /**
+   * Ortadaki büyük sparkle butonu: Akıllı Asistan ekranı (/ai).
+   * Görünür label yok; aria-label erişilebilirlik için doludur.
+   */
+  {
+    href: AI_ASSISTANT_ROUTE,
+    label: "Akıllı Asistan",
     icon: "✦",
     isCenter: true,
-    match: (p) => isPublicFeedPath(p),
+    showLabel: false,
+    match: isAiAssistantPath,
   },
-  { href: "/mesajlar", label: "Mesajlar", icon: "✉", match: (p) => p.startsWith("/mesajlar") },
-  { href: "/hesabim", label: "Profil", icon: "◉", match: (p) => p.startsWith("/hesabim") },
+  { href: "/mesajlar", label: "Mesajlar", icon: "✉", showLabel: true, match: (p) => p.startsWith("/mesajlar") },
+  { href: "/hesabim", label: "Profil", icon: "◉", showLabel: true, match: (p) => p.startsWith("/hesabim") },
 ];
 
 function MobileTabBarInner() {
@@ -107,12 +135,14 @@ function MobileTabBarInner() {
                   }`}
                 >
                   <span aria-hidden>{tab.icon}</span>
-                  {hasNewFlow ? (
-                    <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-[#ef4444] ring-2 ring-white" />
-                  ) : null}
                 </Link>
               );
             }
+
+            /**
+             * "Keşfet" artık /akis içeriğini açıyor; yeni-akış kırmızı noktası bu sekmeye taşındı.
+             */
+            const showFeedBadge = hasNewFlow && isPublicFeedPath(tab.href);
 
             const tabAria =
               tab.href === "/" ? `${tab.label} — alt gezinme çubuğu` : `${tab.label} sekmesi`;
@@ -122,14 +152,19 @@ function MobileTabBarInner() {
                 key={tab.href}
                 href={tab.href}
                 aria-label={tabAria}
-                className={`inline-flex min-w-14 touch-manipulation flex-col items-center justify-center gap-0.5 px-1 text-xs ${
+                className={`relative inline-flex min-w-14 touch-manipulation flex-col items-center justify-center gap-0.5 px-1 text-xs ${
                   active ? "text-[#0B3C5D]" : "text-[#9ca3af]"
                 }`}
               >
                 <span className="text-base" aria-hidden>
                   {tab.icon}
                 </span>
-                <span className="leading-none">{tab.label}</span>
+                {tab.showLabel === false ? null : (
+                  <span className="leading-none">{tab.label}</span>
+                )}
+                {showFeedBadge ? (
+                  <span className="absolute right-1.5 top-1 h-2 w-2 rounded-full bg-[#ef4444] ring-2 ring-white" />
+                ) : null}
               </Link>
             );
           })}
