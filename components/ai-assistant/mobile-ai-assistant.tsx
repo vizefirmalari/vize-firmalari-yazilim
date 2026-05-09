@@ -64,25 +64,47 @@ type ChatMessage = {
   created_at: string;
 };
 
+const OPTIMISTIC_ID_PREFIX = "optimistic-user:";
+
 /**
- * Mesaj listesini id bazlı birleştirir; ardından kullanıcı mesajlarında
- * aynı `request_id` + aynı içerik için yalnızca ilk kaydı bırakır.
+ * Mesaj listesini sıralayıp tekilleştirir.
  *
- * Böylece DB'de veya ağda oluşan çift insert / çift poll satırı (farklı uuid)
- * tek baloncuk olarak görünür.
+ * Üç katmanlı eleme:
+ *  1. Aynı `id` iki kez geldiyse son sürüm kalır (Map).
+ *  2. Optimistic kullanıcı mesajı (UI tarafından eklenmiş) için: aynı içeriğe sahip
+ *     gerçek (DB id'li) bir user mesajı varsa, optimistic olanı düşür.
+ *  3. Gerçek user mesajları arasında aynı `request_id + içerik` kombinasyonu için
+ *     yalnızca ilk satır kalır (DB veya ağda oluşan çift insert güvenliği).
  */
 function dedupeMessages(existing: ChatMessage[], next: ChatMessage[]): ChatMessage[] {
   const byId = new Map<string, ChatMessage>();
   for (const m of existing) byId.set(m.id, m);
   for (const m of next) byId.set(m.id, m);
-  const merged = Array.from(byId.values()).sort((a, b) =>
+  let merged = Array.from(byId.values()).sort((a, b) =>
     a.created_at.localeCompare(b.created_at)
   );
+
+  const realUserContents = new Set<string>();
+  for (const m of merged) {
+    if (m.role === "user" && !m.id.startsWith(OPTIMISTIC_ID_PREFIX)) {
+      realUserContents.add(m.content.trim());
+    }
+  }
+  if (realUserContents.size > 0) {
+    merged = merged.filter(
+      (m) =>
+        !(
+          m.role === "user" &&
+          m.id.startsWith(OPTIMISTIC_ID_PREFIX) &&
+          realUserContents.has(m.content.trim())
+        )
+    );
+  }
 
   const seenUserDupKey = new Set<string>();
   const out: ChatMessage[] = [];
   for (const m of merged) {
-    if (m.role === "user") {
+    if (m.role === "user" && !m.id.startsWith(OPTIMISTIC_ID_PREFIX)) {
       const key = `${m.request_id ?? ""}\u0000${m.content.trim()}`;
       if (seenUserDupKey.has(key)) continue;
       seenUserDupKey.add(key);
@@ -125,19 +147,32 @@ export function MobileAiAssistant() {
     messages.length > 0 || submitting || activeRequestId !== null;
 
   /**
-   * Sayfa kendi doğal scroll'unu kullanıyor (SiteHeader sticky üstte, input fixed altta).
-   * Yeni mesaj / faz değişince pencereyi en alta kaydır — chat tarzı UX.
+   * Chat-style scroll: her state güncellemesinde sayfayı sona atmak yerine, yeni bir
+   * araştırma başladığında SON user mesajını sticky header'ın hemen altına getir.
+   * Sources/firms sonradan geldikçe kullanıcının okuma odağı bozulmaz.
+   *
+   * Tetikleyici sadece `activeRequestId`: aynı request içinde gelen tüm güncellemeler
+   * (loading faz, kaynaklar, firmalar) scroll'a dokunmaz — kullanıcı doğal olarak
+   * aşağı kaydırır.
    */
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!activeRequestId) return;
     const id = window.requestAnimationFrame(() => {
-      window.scrollTo({
-        top: document.documentElement.scrollHeight,
-        behavior: "smooth",
-      });
+      const el = document.querySelector<HTMLElement>(
+        "[data-ai-last-user-message='true']"
+      );
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: "smooth",
+        });
+      }
     });
     return () => window.cancelAnimationFrame(id);
-  }, [messages.length, loadingPhase, sources.length, firmMatches.length]);
+  }, [activeRequestId]);
 
   const stopPolling = useCallback(() => {
     if (pollTimerRef.current) {
@@ -252,14 +287,22 @@ export function MobileAiAssistant() {
       setErrorMsg(null);
       setSubmitting(true);
       setDraft("");
+
       /**
-       * Optimistic UI bilinçli olarak kullanılmıyor:
-       *  - Strict Mode + HMR + hızlı polling kombinasyonu altında optimistic + DB
-       *    mesajı arasındaki id replace race'i çift baloncuk üretiyordu.
-       *  - Tek doğruluk kaynağı `ai_assistant_messages`. /start tamamlanır tamamlanmaz
-       *    ilk poll fetch ediliyor; localhost'ta toplam gecikme tipik olarak <100ms.
-       *  - Yükleme/durum geri bildirimi `loadingPhase` pill'i ile zaten anında geliyor.
+       * Optimistic kullanıcı mesajı: ekrana ANINDA çıksın (mesaj yokmuş gibi görünmesin).
+       * Stabil id ön eki (`OPTIMISTIC_ID_PREFIX`) `dedupeMessages` tarafından gerçek DB
+       * satırı geldiğinde içerik bazlı silinir → flicker / çift baloncuk olmaz.
        */
+      const optimisticId = `${OPTIMISTIC_ID_PREFIX}${now}`;
+      const optimistic: ChatMessage = {
+        id: optimisticId,
+        role: "user",
+        content: prompt,
+        status: "completed",
+        request_id: null,
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => dedupeMessages(prev, [optimistic]));
 
       try {
         const res = await fetch("/api/ai-assistant/start", {
@@ -290,6 +333,8 @@ export function MobileAiAssistant() {
           "Mesaj gönderilemedi. Lütfen birkaç saniye sonra tekrar deneyin."
         );
         setDraft(prompt);
+        /** Optimistic baloncuğu hata sonrasında listeden kaldır — kafa karıştırmasın. */
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
         /** Hata durumunda aynı prompt'u tekrar deneyebilmesi için duplicate guard'ı sıfırla. */
         lastSubmitRef.current = null;
       } finally {
@@ -330,6 +375,18 @@ export function MobileAiAssistant() {
   const renderedMessages = useMemo(() => messages, [messages]);
 
   /**
+   * Scroll hedefi: render hattındaki en son `user` mesajının id'si.
+   * Yeni araştırma başladığında (`activeRequestId` değişiminde) bu mesaj
+   * sticky header'ın altına taşınır.
+   */
+  const lastUserMessageId = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i]!.role === "user") return messages[i]!.id;
+    }
+    return null;
+  }, [messages]);
+
+  /**
    * Kaynaklar / firma eşleşmeleri her zaman EN SON request'in sonuçlarını taşır
    * (poll setSources/setFirmMatches ile state'i replace ediyor). Worker assistant
    * mesajına request_id koymasa bile UI tutarsız kalmasın diye doğrudan state
@@ -361,7 +418,11 @@ export function MobileAiAssistant() {
         ) : (
           <div className="flex w-full flex-col gap-4">
             {renderedMessages.map((m) => (
-              <ChatBubble key={m.id} message={m} />
+              <ChatBubble
+                key={m.id}
+                message={m}
+                isLastUser={m.id === lastUserMessageId}
+              />
             ))}
 
             {loadingPhase ? (
@@ -488,10 +549,23 @@ function WelcomeHero({ onPick }: { onPick: (text: string) => void }) {
   );
 }
 
-function ChatBubble({ message }: { message: ChatMessage }) {
+function ChatBubble({
+  message,
+  isLastUser = false,
+}: {
+  message: ChatMessage;
+  isLastUser?: boolean;
+}) {
   if (message.role === "user") {
+    /**
+     * `data-ai-last-user-message` ve `scroll-mt-*`: yeni araştırma başlayınca son
+     * user mesajı sticky header'ın hemen altına oturur (mobilde 64px header).
+     */
     return (
-      <div className="flex justify-end">
+      <div
+        className="flex justify-end scroll-mt-[80px] sm:scroll-mt-[96px]"
+        data-ai-last-user-message={isLastUser ? "true" : undefined}
+      >
         <div className="max-w-[82%] rounded-2xl rounded-br-md bg-primary px-3.5 py-2.5 text-sm leading-relaxed text-white shadow-[0_2px_10px_rgba(11,60,93,0.14)]">
           {message.content}
         </div>
