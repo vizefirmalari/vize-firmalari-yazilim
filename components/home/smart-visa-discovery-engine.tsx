@@ -69,6 +69,105 @@ type DiscoverySubTypeOption = SmartDiscoveryVisaOption & {
   filterType: IntentMatchItem["type"];
 };
 
+const SCHENGEN_COUNTRY_SUGGESTIONS = [
+  "Almanya",
+  "Avusturya",
+  "Belçika",
+  "Çekya",
+  "Danimarka",
+  "Estonya",
+  "Finlandiya",
+  "Fransa",
+  "Hırvatistan",
+  "Hollanda",
+  "İspanya",
+  "İsveç",
+  "İsviçre",
+  "İtalya",
+  "İzlanda",
+  "Letonya",
+  "Lihtenştayn",
+  "Litvanya",
+  "Lüksemburg",
+  "Macaristan",
+  "Malta",
+  "Norveç",
+  "Polonya",
+  "Portekiz",
+  "Slovakya",
+  "Slovenya",
+  "Yunanistan",
+] as const;
+
+const ERASMUS_COUNTRY_SUGGESTIONS = [
+  "Almanya",
+  "Avusturya",
+  "Belçika",
+  "Bulgaristan",
+  "Çekya",
+  "Danimarka",
+  "Estonya",
+  "Finlandiya",
+  "Fransa",
+  "Hırvatistan",
+  "Hollanda",
+  "İrlanda",
+  "İspanya",
+  "İsveç",
+  "İtalya",
+  "İzlanda",
+  "Letonya",
+  "Lihtenştayn",
+  "Litvanya",
+  "Lüksemburg",
+  "Macaristan",
+  "Malta",
+  "Norveç",
+  "Polonya",
+  "Portekiz",
+  "Romanya",
+  "Slovakya",
+  "Slovenya",
+  "Yunanistan",
+  "Kuzey Makedonya",
+  "Sırbistan",
+] as const;
+
+const GOLDEN_VISA_COUNTRY_SUGGESTIONS = [
+  "Amerika Birleşik Devletleri",
+  "Antigua ve Barbuda",
+  "Avustralya",
+  "Birleşik Arap Emirlikleri",
+  "Dominika",
+  "Grenada",
+  "İspanya",
+  "İtalya",
+  "Kanada",
+  "Karadağ",
+  "Kosta Rika",
+  "Kıbrıs",
+  "Letonya",
+  "Macaristan",
+  "Malta",
+  "Mauritius",
+  "Monako",
+  "Panama",
+  "Portekiz",
+  "Saint Kitts ve Nevis",
+  "Saint Lucia",
+  "Tayland",
+  "Yeni Zelanda",
+  "Yunanistan",
+] as const;
+
+const SINGLE_COUNTRY_BY_SUBTYPE: Record<string, readonly string[]> = {
+  "ABD Vizesi": ["Amerika Birleşik Devletleri"],
+  "Kanada Vizesi": ["Kanada"],
+  "İngiltere Vizesi": ["Birleşik Krallık"],
+  "Dubai Vizesi": ["Dubai"],
+  "Almanya Eğitim Danışmanlığı": ["Almanya"],
+};
+
 export const LEGACY_INTENTS: IntentOption[] = [
   {
     id: "visa-services",
@@ -382,6 +481,25 @@ function optionMatchesNeedles(label: string, needles: string[]): boolean {
   });
 }
 
+function subtypeCountrySuggestions(
+  selectedSubTypeLabel: string,
+  intentId: string
+): readonly string[] | undefined {
+  for (const [label, countries] of Object.entries(SINGLE_COUNTRY_BY_SUBTYPE)) {
+    if (optionMatchesNeedles(selectedSubTypeLabel, [label])) return countries;
+  }
+  if (optionMatchesNeedles(selectedSubTypeLabel, ["Schengen Vizesi"])) {
+    return SCHENGEN_COUNTRY_SUGGESTIONS;
+  }
+  if (optionMatchesNeedles(selectedSubTypeLabel, ["Erasmus Vizesi"])) {
+    return ERASMUS_COUNTRY_SUGGESTIONS;
+  }
+  if (intentId === "citizenship-golden-visa") {
+    return GOLDEN_VISA_COUNTRY_SUGGESTIONS;
+  }
+  return undefined;
+}
+
 function intentFromInitialVisaType(visaType: string): string {
   const builtInIntentMap: Record<string, string> = {
     schengen_expert: "visa-services",
@@ -542,23 +660,6 @@ export function SmartVisaDiscoveryEngine({
     [selectedIntentCluster]
   );
 
-  const orderedCountries = useMemo(() => {
-    const source = selectedIntent.recommendedCountryNeedles;
-    if (!source?.length) return countryOptions;
-    const recommended = countryOptions.filter((countryName) =>
-      source.some((needle) => optionMatchesNeedles(countryName, [needle]))
-    );
-    const recommendedSet = new Set(recommended);
-    const rest = countryOptions.filter((countryName) => !recommendedSet.has(countryName));
-    return [...recommended, ...rest];
-  }, [countryOptions, selectedIntent.recommendedCountryNeedles]);
-
-  const visibleCountries = useMemo(() => {
-    const q = normalize(countryQuery);
-    if (!q) return orderedCountries;
-    return orderedCountries.filter((item) => normalize(item).includes(q));
-  }, [countryQuery, orderedCountries]);
-
   const subTypeOptions = useMemo(() => {
     return buildSubTypeOptions(selectedIntentItems, visaTypeOptions);
   }, [selectedIntentItems, visaTypeOptions]);
@@ -569,6 +670,30 @@ export function SmartVisaDiscoveryEngine({
     "";
   const subTypeTitle = selectedIntent.subTypeTitle;
   const subTypePlaceholder = selectedIntentCluster.secondStepPlaceholder;
+  const strictSubtypeCountrySuggestions = subtypeCountrySuggestions(
+    selectedSubTypeLabel,
+    selectedIntent.id
+  );
+  const countrySuggestionSource =
+    strictSubtypeCountrySuggestions ?? selectedIntent.recommendedCountryNeedles;
+
+  const orderedCountries = useMemo(() => {
+    const source = countrySuggestionSource;
+    if (!source?.length) return countryOptions;
+    if (strictSubtypeCountrySuggestions) return [...source];
+    const recommended = source.map((needle) => {
+      return countryOptions.find((countryName) => optionMatchesNeedles(countryName, [needle])) ?? needle;
+    });
+    const recommendedSet = new Set(recommended);
+    const rest = countryOptions.filter((countryName) => !recommendedSet.has(countryName));
+    return [...recommended, ...rest];
+  }, [countryOptions, countrySuggestionSource, strictSubtypeCountrySuggestions]);
+
+  const visibleCountries = useMemo(() => {
+    const q = normalize(countryQuery);
+    if (!q) return orderedCountries;
+    return orderedCountries.filter((item) => normalize(item).includes(q));
+  }, [countryQuery, orderedCountries]);
 
   useEffect(() => {
     const next = country.trim();
