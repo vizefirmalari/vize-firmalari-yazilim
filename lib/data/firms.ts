@@ -12,6 +12,7 @@ import {
   firmMatchesSpecializationFilterTokens,
   normalizeSpecializationFilterToken,
 } from "@/lib/firma/specialization-match";
+import { firmMatchesCoverageSelection } from "@/lib/firma/listing-coverage-match";
 import { attachFirmCustomSpecializations } from "@/lib/data/specialization-taxonomy";
 import { mapFirmGoogleProfileRow } from "@/lib/firms/google-profile-public";
 import { getExploreCategoryBySlug } from "@/lib/explore/explore-categories";
@@ -147,7 +148,7 @@ type PublicSupabaseClient = NonNullable<
   ReturnType<typeof createSupabasePublicClient>
 >;
 
-async function attachFirmGoogleProfilesPublic(
+export async function attachFirmGoogleProfilesPublic(
   supabase: PublicSupabaseClient,
   rows: FirmRow[]
 ): Promise<FirmRow[]> {
@@ -214,7 +215,7 @@ export function normalizeFirmRow(r: Record<string, unknown>): FirmRow {
   };
 }
 
-function parseFirmPlanRaw(raw: unknown): FirmPlanType {
+export function parseFirmPlanRaw(raw: unknown): FirmPlanType {
   if (raw === "pro" || raw === "business") return raw;
   if (raw === "starter") return "pro";
   if (raw === "growth" || raw === "enterprise") return "business";
@@ -451,6 +452,7 @@ export function parseFirmFilters(searchParams: {
   return {
     q,
     countries: parseList(searchParams.countries),
+    regions: parseList(searchParams.regions),
     visaTypes,
     expertise: parseList(searchParams.expertise)
       .map((s) => normalizeSpecializationFilterToken(s))
@@ -482,6 +484,15 @@ function applyFilters(rows: FirmRow[], f: FirmFilters): FirmRow[] {
   if (f.countries.length > 0) {
     out = out.filter((r) =>
       f.countries.some((c) => r.countries.includes(c))
+    );
+  }
+
+  if (f.regions.length > 0) {
+    out = out.filter((r) =>
+      firmMatchesCoverageSelection(r, {
+        visaRegionLabels: f.regions,
+        countries: [],
+      })
     );
   }
 
@@ -691,6 +702,15 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
   rows = await attachFirmCustomSpecializations(supabase, rows);
   rows = await attachFirmGoogleProfilesPublic(supabase, rows);
 
+  if (filters.regions.length > 0) {
+    rows = rows.filter((r) =>
+      firmMatchesCoverageSelection(r, {
+        visaRegionLabels: filters.regions,
+        countries: [],
+      })
+    );
+  }
+
   if (filters.sort === "hype_desc" || filters.sort === "hype_score_desc" || filters.sort === "corp_desc") {
     const s = filters.sort;
     rows.sort((a, b) => compareFirmRowsWithPlanVisibility(a, b, s));
@@ -811,6 +831,7 @@ export async function getFirms(filters: FirmFilters): Promise<FirmRow[]> {
 const ARAMA_BASE_FILTERS: FirmFilters = {
   q: "",
   countries: [],
+  regions: [],
   visaTypes: [],
   expertise: [],
   cities: [],

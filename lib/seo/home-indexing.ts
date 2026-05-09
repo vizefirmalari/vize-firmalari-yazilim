@@ -16,6 +16,7 @@ export function homePageShouldNoindex(sp: {
   const f = parseFirmFilters(sp);
   if (f.q.trim().length > 0) return true;
   if (f.countries.length > 0) return true;
+  if (f.regions.length > 0) return true;
   if (f.visaTypes.length > 0) return true;
   if (f.expertise.length > 0) return true;
   if (f.cities.length > 0) return true;

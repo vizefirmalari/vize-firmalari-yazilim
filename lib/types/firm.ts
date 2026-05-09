@@ -182,6 +182,11 @@ export type FirmSort =
 export type FirmFilters = {
   q: string;
   countries: string[];
+  /**
+   * Vize bölgesi etiketleri (örn. Schengen Bölgesi); `visa_regions` ile eşleşir.
+   * URL: `regions` (virgülle ayrılmış).
+   */
+  regions: string[];
   visaTypes: string[];
   /**
    * Uzmanlık bayrakları (admin ile aynı anahtarlar); `expertise` URL parametresi.

@@ -208,6 +208,7 @@ export default async function FirmaPage({ params }: PageProps) {
   const allFirmsFilters: FirmFilters = {
     q: "",
     countries: [],
+    regions: [],
     visaTypes: [],
     expertise: [],
     cities: [],

@@ -37,6 +37,8 @@ export type AiAssistantRequestDTO = {
   error: string | null;
   created_at: string;
   completed_at: string | null;
+  /** Worker / model tarafından doldurulan yapılandırılmış filtre (ülke, bölge, vize türü vb.) */
+  filters: Record<string, unknown>;
 };
 
 export type AiAssistantSourceKind =

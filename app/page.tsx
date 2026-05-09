@@ -114,6 +114,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const listingMatchesDiscoveryPool =
     !filters.q.trim() &&
     filters.countries.length === 0 &&
+    filters.regions.length === 0 &&
     filters.visaTypes.length === 0 &&
     filters.expertise.length === 0 &&
     filters.cities.length === 0 &&
@@ -241,6 +242,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <FirmsListing
           initialFirms={listingFirms}
           initialCountries={filters.countries}
+          initialVisaRegionLabels={filters.regions}
           initialVisaTypes={filters.visaTypes}
           initialExpertise={filters.expertise}
           initialCities={filters.cities}

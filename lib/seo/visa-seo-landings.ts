@@ -442,6 +442,7 @@ export function mergeVisaLandingServerFilters(
     ...fromUrl,
     q: fromUrl.q,
     countries: fromUrl.countries,
+    regions: fromUrl.regions,
     visaTypes,
     expertise: fromUrl.expertise,
     cities: fromUrl.cities,

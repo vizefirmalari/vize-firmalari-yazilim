@@ -49,6 +49,8 @@ import {
 type Props = {
   initialFirms: FirmRow[];
   initialCountries?: string[];
+  /** URL `regions` — vize bölgesi etiketleri (örn. Schengen Bölgesi) */
+  initialVisaRegionLabels?: string[];
   initialVisaTypes?: string[];
   /** Admin uzmanlık bayrakları; URL `expertise` */
   initialExpertise?: string[];
@@ -106,6 +108,8 @@ function buildApplied(
     corpMin?: number | null;
     googleMinRating?: number | null;
     googleMinReviewCount?: number | null;
+    /** URL `regions` ile gelen bölge etiketleri */
+    visaRegionLabels?: string[];
   }
 ): AppliedListingFilters {
   const normalizedVisaTypes = visaTypes
@@ -116,7 +120,7 @@ function buildApplied(
     .filter((x): x is string => Boolean(x));
   return {
     coverage: {
-      visaRegionLabels: [],
+      visaRegionLabels: [...(initial?.visaRegionLabels ?? []).map((s) => s.trim()).filter(Boolean)],
       countries: [...countries],
     },
     visaTypes: [...new Set(normalizedVisaTypes)],
@@ -191,6 +195,7 @@ function serializeAppliedListingState(
 export function FirmsListing({
   initialFirms,
   initialCountries = [],
+  initialVisaRegionLabels = [],
   initialVisaTypes = [],
   initialExpertise = [],
   initialCities = [],
@@ -275,6 +280,7 @@ export function FirmsListing({
       corpMin: initialCorpMin,
       googleMinRating: initialGoogleMinRating,
       googleMinReviewCount: initialGoogleMinReviewCount,
+      visaRegionLabels: initialVisaRegionLabels,
     }),
     [
       initialRequireGoogleListedRating,
@@ -285,6 +291,7 @@ export function FirmsListing({
       initialCorpMin,
       initialGoogleMinRating,
       initialGoogleMinReviewCount,
+      initialVisaRegionLabels,
     ]
   );
 
@@ -335,6 +342,7 @@ export function FirmsListing({
     () =>
       [
         initialCountries.join(","),
+        initialVisaRegionLabels.join(","),
         initialVisaTypes.join(","),
         initialExpertise.join(","),
         initialCities.join(","),
@@ -353,6 +361,7 @@ export function FirmsListing({
       ].join("|"),
     [
       initialCountries,
+      initialVisaRegionLabels,
       initialVisaTypes,
       initialExpertise,
       initialCities,
@@ -386,10 +395,7 @@ export function FirmsListing({
       );
       return {
         ...base,
-        coverage: {
-          ...base.coverage,
-          visaRegionLabels: prev.coverage.visaRegionLabels,
-        },
+        coverage: base.coverage,
         trust: base.trust,
         serviceMode: base.serviceMode,
         languagePro: prev.languagePro,

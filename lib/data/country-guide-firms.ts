@@ -16,6 +16,7 @@ export async function getFirmsForCountryGuide(countryLabel: string): Promise<Fir
   const filters: FirmFilters = {
     q: "",
     countries: [countryLabel],
+    regions: [],
     visaTypes: [],
     expertise: [],
     cities: [],

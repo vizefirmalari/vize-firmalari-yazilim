@@ -17,13 +17,32 @@ export const dynamic = "force-dynamic";
 /** Tek poll çağrısında dönecek üst sınırlar — ağır oturumlarda payload'u sabit tutar. */
 const MAX_MESSAGES = 60;
 const MAX_SOURCES = 16;
-const MAX_FIRM_MATCHES = 24;
+const MAX_FIRM_MATCHES = 150;
 
 function jsonError(status: number, error: string) {
   return NextResponse.json<AiAssistantErrorResponse>(
     { ok: false, error },
     { status }
   );
+}
+
+function coerceRequestDto(r: Record<string, unknown>): AiAssistantRequestDTO {
+  const rawF = r.filters;
+  const filters =
+    rawF && typeof rawF === "object" && !Array.isArray(rawF)
+      ? (rawF as Record<string, unknown>)
+      : {};
+  return {
+    id: String(r.id ?? ""),
+    session_id: String(r.session_id ?? ""),
+    status: r.status as AiAssistantRequestDTO["status"],
+    prompt: String(r.prompt ?? ""),
+    intent: typeof r.intent === "string" ? r.intent : null,
+    error: typeof r.error === "string" ? r.error : null,
+    created_at: String(r.created_at ?? ""),
+    completed_at: typeof r.completed_at === "string" ? r.completed_at : null,
+    filters,
+  };
 }
 
 /**
@@ -107,7 +126,7 @@ export async function GET(req: Request) {
     const { data: r, error: rErr } = await supabase
       .from("ai_assistant_requests")
       .select(
-        "id, session_id, status, prompt, intent, error, created_at, completed_at"
+        "id, session_id, status, prompt, intent, error, created_at, completed_at, filters"
       )
       .eq("id", requestId)
       .eq("session_id", sessionId)
@@ -115,13 +134,13 @@ export async function GET(req: Request) {
     if (rErr) {
       console.error("[ai-assistant/poll] request", rErr.message);
     } else if (r) {
-      request = r as AiAssistantRequestDTO;
+      request = coerceRequestDto(r as Record<string, unknown>);
     }
   } else {
     const { data: r, error: rErr } = await supabase
       .from("ai_assistant_requests")
       .select(
-        "id, session_id, status, prompt, intent, error, created_at, completed_at"
+        "id, session_id, status, prompt, intent, error, created_at, completed_at, filters"
       )
       .eq("session_id", sessionId)
       .order("created_at", { ascending: false })
@@ -130,7 +149,7 @@ export async function GET(req: Request) {
     if (rErr) {
       console.error("[ai-assistant/poll] request latest", rErr.message);
     } else if (r) {
-      request = r as AiAssistantRequestDTO;
+      request = coerceRequestDto(r as Record<string, unknown>);
     }
   }
 

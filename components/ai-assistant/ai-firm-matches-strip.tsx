@@ -1,40 +1,42 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { FirmCard } from "@/components/home/firm-card";
+import { HomepageHorizontalScroller } from "@/components/home/homepage-horizontal-scroller";
+import { buildHomeFirmsListingHrefFromAiRequestFilters } from "@/lib/ai-assistant/listing-href-from-filters";
 import type { FirmRow } from "@/lib/types/firm";
 import type { AiAssistantFirmMatchDTO } from "@/lib/ai-assistant/types";
 
 type Props = {
   matches: AiAssistantFirmMatchDTO[];
+  requestFilters: Record<string, unknown> | null;
 };
 
+const EMPTY_COPY =
+  "Bu araştırma için şu anda sistemde uygun firma eşleşmesi bulunamadı.";
+
+const listingCtaClassName =
+  "inline-flex items-center justify-center rounded-full border border-primary/20 bg-white px-4 py-2.5 text-sm font-medium text-primary shadow-sm transition hover:border-primary/35 hover:bg-[#F7F9FB]";
+
 /**
- * Yatay kaydırılabilir AI firma eşleşme şeridi.
- *
- * Kurallar:
- *  - Mevcut FirmCard component'ini olduğu gibi kullanır (kart tasarımı bozulmaz).
- *  - Firma adları AI tarafından üretilmez; firm_id'ler `/api/ai-assistant/firms`
- *    üzerinden gerçek firma kayıtlarına çözülür.
- *  - Eşleşme yoksa sade boş durum mesajı.
+ * AI eşleşme firma şeridi — ana sayfa vitrin şeridi ile aynı kart genişliği ve
+ * `HomepageHorizontalScroller` davranışı; sıralama ve ilk 20 limiti sunucuda
+ * (`/api/ai-assistant/firms` + `getFirmsForAiMatchStrip`).
  */
-export function AiFirmMatchesStrip({ matches }: Props) {
-  const firmIds = useMemo(
-    () =>
-      matches
-        .map((m) => m.firm_id)
-        .filter((x): x is string => typeof x === "string" && x.length > 0),
-    [matches]
+export function AiFirmMatchesStrip({ matches, requestFilters }: Props) {
+  const listingHref = useMemo(
+    () => buildHomeFirmsListingHrefFromAiRequestFilters(requestFilters),
+    [requestFilters]
   );
 
   const [firms, setFirms] = useState<FirmRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  /** firm_ids değişince tek POST ile tüm kartları çek; boşsa sıfırla. */
   useEffect(() => {
     let cancelled = false;
-    if (firmIds.length === 0) {
+    if (matches.length === 0) {
       setFirms([]);
       return;
     }
@@ -43,7 +45,7 @@ export function AiFirmMatchesStrip({ matches }: Props) {
     fetch("/api/ai-assistant/firms", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ firm_ids: firmIds }),
+      body: JSON.stringify({ matches }),
     })
       .then((r) => r.json())
       .then((payload: { ok?: boolean; firms?: FirmRow[] }) => {
@@ -64,46 +66,93 @@ export function AiFirmMatchesStrip({ matches }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [firmIds]);
+  }, [matches]);
 
   if (matches.length === 0) {
     return (
-      <div className="mt-3 rounded-lg border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-3 text-xs text-[#6b7280]">
-        Bu araştırma için şu anda sistemde uygun firma eşleşmesi bulunamadı.
+      <div className="mt-4 rounded-lg border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-4">
+        <p className="text-xs leading-relaxed text-[#6b7280]">{EMPTY_COPY}</p>
+        <div className="mt-3">
+          <Link href="/#firmalar" className={listingCtaClassName}>
+            Tüm firmaları incele
+          </Link>
+        </div>
       </div>
     );
   }
 
   if (loading && firms.length === 0) {
     return (
-      <div className="mt-3 flex gap-3 overflow-x-auto px-0.5 pb-1">
-        {Array.from({ length: 2 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-[280px] w-[280px] shrink-0 animate-pulse rounded-xl border border-[#0B3C5D]/8 bg-[#F7F9FB]"
-            aria-hidden
-          />
-        ))}
+      <div className="mt-4">
+        <h3 className="text-[15px] font-semibold tracking-tight text-[#0f172a]">
+          Önerilen Firmalar
+        </h3>
+        <p className="mt-1 text-xs leading-relaxed text-[#64748b]">
+          Kurumsallık skoruna göre sıralanan ilgili firmalar.
+        </p>
+        <div className="mt-3 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:thin]">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-[300px] w-[min(22.5rem,calc(100vw-2.25rem))] shrink-0 animate-pulse rounded-xl border border-[#0B3C5D]/8 bg-[#F7F9FB] sm:w-90"
+              aria-hidden
+            />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (firms.length === 0) return null;
+  if (firms.length === 0) {
+    return (
+      <div className="mt-4">
+        <h3 className="text-[15px] font-semibold tracking-tight text-[#0f172a]">
+          Önerilen Firmalar
+        </h3>
+        <p className="mt-1 text-xs leading-relaxed text-[#64748b]">
+          Kurumsallık skoruna göre sıralanan ilgili firmalar.
+        </p>
+        <div className="mt-3 rounded-lg border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-3">
+          <p className="text-xs leading-relaxed text-[#6b7280]">{EMPTY_COPY}</p>
+        </div>
+        <div className="mt-3">
+          <Link href="/#firmalar" className={listingCtaClassName}>
+            Tüm firmaları incele
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="-mx-1 mt-3">
-      <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-[#6b7280]">
-        Önerilen firmalar
+    <div className="mt-4">
+      <h3 className="text-[15px] font-semibold tracking-tight text-[#0f172a]">
+        Önerilen Firmalar
+      </h3>
+      <p className="mt-1 text-xs leading-relaxed text-[#64748b]">
+        Kurumsallık skoruna göre sıralanan ilgili firmalar.
+      </p>
+
+      <div className="mt-3">
+        <HomepageHorizontalScroller
+          gapClass="gap-3 md:gap-4"
+          scrollAreaPbClass="pb-0"
+        >
+          {firms.map((firm) => (
+            <div
+              key={firm.id}
+              className="h-full w-[min(22.5rem,calc(100vw-2.25rem))] shrink-0 snap-start sm:w-90"
+            >
+              <FirmCard firm={firm} />
+            </div>
+          ))}
+        </HomepageHorizontalScroller>
       </div>
-      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2">
-        {firms.map((firm) => (
-          <div
-            key={firm.id}
-            className="w-[296px] shrink-0 snap-start sm:w-[320px]"
-          >
-            <FirmCard firm={firm} />
-          </div>
-        ))}
+
+      <div className="mt-4">
+        <Link href={listingHref} className={listingCtaClassName}>
+          Tüm firmaları göster
+        </Link>
       </div>
     </div>
   );

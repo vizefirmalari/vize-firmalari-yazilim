@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 
 import { AiFirmMatchesStrip } from "@/components/ai-assistant/ai-firm-matches-strip";
+import { AiMessageContent } from "@/components/ai-assistant/ai-message-content";
 import { AiSourcesList } from "@/components/ai-assistant/ai-sources-list";
 import type {
   AiAssistantFirmMatchDTO,
@@ -63,13 +64,32 @@ type ChatMessage = {
   created_at: string;
 };
 
+/**
+ * Mesaj listesini id bazlı birleştirir; ardından kullanıcı mesajlarında
+ * aynı `request_id` + aynı içerik için yalnızca ilk kaydı bırakır.
+ *
+ * Böylece DB'de veya ağda oluşan çift insert / çift poll satırı (farklı uuid)
+ * tek baloncuk olarak görünür.
+ */
 function dedupeMessages(existing: ChatMessage[], next: ChatMessage[]): ChatMessage[] {
   const byId = new Map<string, ChatMessage>();
   for (const m of existing) byId.set(m.id, m);
   for (const m of next) byId.set(m.id, m);
-  return Array.from(byId.values()).sort((a, b) =>
+  const merged = Array.from(byId.values()).sort((a, b) =>
     a.created_at.localeCompare(b.created_at)
   );
+
+  const seenUserDupKey = new Set<string>();
+  const out: ChatMessage[] = [];
+  for (const m of merged) {
+    if (m.role === "user") {
+      const key = `${m.request_id ?? ""}\u0000${m.content.trim()}`;
+      if (seenUserDupKey.has(key)) continue;
+      seenUserDupKey.add(key);
+    }
+    out.push(m);
+  }
+  return out;
 }
 
 export function MobileAiAssistant() {
@@ -87,8 +107,22 @@ export function MobileAiAssistant() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const requestStartedAtRef = useRef<number | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /** React state batching'i beklemeyen senkron kilit — Enter çift basımını ilk frame'de yakalar. */
+  const submittingRef = useRef(false);
+  /** Aynı prompt 2 sn içinde tekrar gönderilirse insert ikilenmesin. */
+  const lastSubmitRef = useRef<{ prompt: string; at: number } | null>(null);
+  /**
+   * Enter ile gönderimde bazı tarayıcılarda `keydown` + `submit` ikisi tetiklenebiliyor;
+   * kısa süre içinde ikinci submit'i form tarafında yut.
+   */
+  const enterSubmitGuardRef = useRef(false);
 
-  const hasStarted = messages.length > 0 || submitting;
+  /**
+   * Welcome ekranı; submit anından — ilk DB mesajı gelene kadarki kısa boşlukta —
+   * ekrana geri dönüp flicker etmesin diye `activeRequestId`'i de dikkate alıyor.
+   */
+  const hasStarted =
+    messages.length > 0 || submitting || activeRequestId !== null;
 
   /**
    * Sayfa kendi doğal scroll'unu kullanıyor (SiteHeader sticky üstte, input fixed altta).
@@ -203,22 +237,29 @@ export function MobileAiAssistant() {
   const submitPrompt = useCallback(
     async (rawPrompt: string) => {
       const prompt = rawPrompt.trim();
-      if (prompt.length < 2 || submitting) return;
+      if (prompt.length < 2) return;
+      /** Senkron kilit: state güncellemesini beklemeden ikinci submit'i kes. */
+      if (submittingRef.current) return;
+
+      const now = Date.now();
+      const last = lastSubmitRef.current;
+      if (last && last.prompt === prompt && now - last.at < 2000) {
+        return;
+      }
+      submittingRef.current = true;
+      lastSubmitRef.current = { prompt, at: now };
 
       setErrorMsg(null);
       setSubmitting(true);
-
-      const optimisticId = `optimistic-${Date.now()}`;
-      const optimistic: ChatMessage = {
-        id: optimisticId,
-        role: "user",
-        content: prompt,
-        status: "completed",
-        request_id: null,
-        created_at: new Date().toISOString(),
-      };
-      setMessages((prev) => dedupeMessages(prev, [optimistic]));
       setDraft("");
+      /**
+       * Optimistic UI bilinçli olarak kullanılmıyor:
+       *  - Strict Mode + HMR + hızlı polling kombinasyonu altında optimistic + DB
+       *    mesajı arasındaki id replace race'i çift baloncuk üretiyordu.
+       *  - Tek doğruluk kaynağı `ai_assistant_messages`. /start tamamlanır tamamlanmaz
+       *    ilk poll fetch ediliyor; localhost'ta toplam gecikme tipik olarak <100ms.
+       *  - Yükleme/durum geri bildirimi `loadingPhase` pill'i ile zaten anında geliyor.
+       */
 
       try {
         const res = await fetch("/api/ai-assistant/start", {
@@ -242,36 +283,27 @@ export function MobileAiAssistant() {
 
         setSessionId(payload.session_id);
         setActiveRequestId(payload.request_id);
-        /** Optimistic mesajı gerçek ID ile değiştir (poll sırada kaybolmasın). */
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === optimisticId
-              ? {
-                  ...m,
-                  id: payload.user_message_id,
-                  request_id: payload.request_id,
-                }
-              : m
-          )
-        );
         startPolling(payload.session_id, payload.request_id);
       } catch (err) {
         console.error("[mobile-ai-assistant] submit failed", err);
         setErrorMsg(
           "Mesaj gönderilemedi. Lütfen birkaç saniye sonra tekrar deneyin."
         );
-        setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
         setDraft(prompt);
+        /** Hata durumunda aynı prompt'u tekrar deneyebilmesi için duplicate guard'ı sıfırla. */
+        lastSubmitRef.current = null;
       } finally {
+        submittingRef.current = false;
         setSubmitting(false);
       }
     },
-    [sessionId, startPolling, submitting]
+    [sessionId, startPolling]
   );
 
   const onSubmit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      if (enterSubmitGuardRef.current) return;
       void submitPrompt(draft);
     },
     [draft, submitPrompt]
@@ -279,37 +311,34 @@ export function MobileAiAssistant() {
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        void submitPrompt(draft);
+      if (e.key !== "Enter" || e.shiftKey) return;
+      const ne = e.nativeEvent;
+      if (ne && "isComposing" in ne && (ne as { isComposing?: boolean }).isComposing) {
+        return;
       }
+      e.preventDefault();
+      e.stopPropagation();
+      enterSubmitGuardRef.current = true;
+      void submitPrompt(draft);
+      window.setTimeout(() => {
+        enterSubmitGuardRef.current = false;
+      }, 400);
     },
     [draft, submitPrompt]
   );
 
   const renderedMessages = useMemo(() => messages, [messages]);
 
-  /** İlgili request_id için kaynaklar/firma eşleşmeleri yalnız son AI yanıtı altında. */
-  const lastAssistantMessage = useMemo(() => {
-    for (let i = renderedMessages.length - 1; i >= 0; i -= 1) {
-      const m = renderedMessages[i]!;
-      if (m.role === "assistant") return m;
-    }
-    return null;
-  }, [renderedMessages]);
-
-  const showSourcesBlock = Boolean(
-    lastAssistantMessage &&
-      activeRequestId &&
-      lastAssistantMessage.request_id === activeRequestId &&
-      sources.length > 0
-  );
+  /**
+   * Kaynaklar / firma eşleşmeleri her zaman EN SON request'in sonuçlarını taşır
+   * (poll setSources/setFirmMatches ile state'i replace ediyor). Worker assistant
+   * mesajına request_id koymasa bile UI tutarsız kalmasın diye doğrudan state
+   * üzerinden gösteriyoruz; render hattı son mesajların altına basıyor.
+   */
+  const showSourcesBlock = sources.length > 0;
 
   const showFirmMatchesBlock = Boolean(
-    lastAssistantMessage &&
-      activeRequestId &&
-      lastAssistantMessage.request_id === activeRequestId &&
-      (request?.status === "completed" || firmMatches.length > 0)
+    request?.status === "completed" || firmMatches.length > 0
   );
 
   return (
@@ -336,11 +365,14 @@ export function MobileAiAssistant() {
             ))}
 
             {loadingPhase ? (
-              <div className="self-start rounded-2xl border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-2 text-xs text-[#6b7280]">
-                <span className="inline-flex items-center gap-2">
-                  <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#0B3C5D]" />
-                  {loadingPhase}
-                </span>
+              <div className="flex flex-col items-start gap-1">
+                <div className="inline-flex max-w-[88%] items-center gap-2 rounded-2xl border border-[#0B3C5D]/15 bg-white px-3.5 py-2.5 text-sm font-medium text-[#0B3C5D] shadow-[0_1px_2px_rgba(11,60,93,0.06)]">
+                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-[#0B3C5D]" />
+                  <span>{loadingPhase}</span>
+                </div>
+                <div className="ml-1 text-[11px] text-[#64748b]">
+                  Resmi kaynaklar ve ilgili firmalar kontrol ediliyor.
+                </div>
               </div>
             ) : null}
 
@@ -350,11 +382,14 @@ export function MobileAiAssistant() {
               </div>
             ) : null}
 
-            {lastAssistantMessage && (showSourcesBlock || showFirmMatchesBlock) ? (
-              <div className="-mt-1 flex flex-col gap-2">
+            {showSourcesBlock || showFirmMatchesBlock ? (
+              <div className="flex flex-col">
                 {showSourcesBlock ? <AiSourcesList sources={sources} /> : null}
                 {showFirmMatchesBlock ? (
-                  <AiFirmMatchesStrip matches={firmMatches} />
+                  <AiFirmMatchesStrip
+                    matches={firmMatches}
+                    requestFilters={request?.filters ?? null}
+                  />
                 ) : null}
               </div>
             ) : null}
@@ -476,8 +511,8 @@ function ChatBubble({ message }: { message: ChatMessage }) {
 
   return (
     <div className="flex justify-start">
-      <div className="w-full max-w-[88%] whitespace-pre-wrap rounded-2xl rounded-bl-md border border-[#0B3C5D]/10 bg-white px-3.5 py-2.5 text-[14px] leading-relaxed text-[#111827] shadow-[0_2px_14px_rgba(11,60,93,0.06)]">
-        {message.content}
+      <div className="w-full max-w-[94%] rounded-2xl rounded-bl-md border border-[#0B3C5D]/10 bg-white px-4 py-4 text-[14px] leading-relaxed text-[#111827] shadow-[0_2px_14px_rgba(11,60,93,0.06)] sm:max-w-[88%]">
+        <AiMessageContent content={message.content} />
       </div>
     </div>
   );

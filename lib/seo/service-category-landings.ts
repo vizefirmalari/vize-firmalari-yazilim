@@ -192,6 +192,7 @@ export function mergeServiceCategoryLandingFilters(
     ...fromUrl,
     q: fromUrl.q,
     countries: fromUrl.countries,
+    regions: fromUrl.regions,
     visaTypes: fromUrl.visaTypes,
     expertise: fromUrl.expertise,
     cities: fromUrl.cities,

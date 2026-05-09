@@ -4,6 +4,7 @@ import type { FirmSort } from "@/lib/types/firm";
 const CONTROLLED_KEYS = [
   "q",
   "countries",
+  "regions",
   "visaTypes",
   "expertise",
   "cities",
@@ -48,6 +49,10 @@ export function applyHomeListingParamsToSearchParams(
 
   if (input.applied.coverage.countries.length) {
     next.set("countries", toCsv(input.applied.coverage.countries));
+  }
+
+  if (input.applied.coverage.visaRegionLabels.length) {
+    next.set("regions", toCsv(input.applied.coverage.visaRegionLabels));
   }
 
   if (input.applied.visaTypes.length) {

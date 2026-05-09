@@ -6,6 +6,9 @@ export function hiddenParamsFromFirmFilters(filters: FirmFilters): Record<string
   if (filters.countries.length) {
     hiddenParams.countries = filters.countries.join(",");
   }
+  if (filters.regions.length) {
+    hiddenParams.regions = filters.regions.join(",");
+  }
   if (filters.visaTypes.length) {
     hiddenParams.visaTypes = filters.visaTypes.join(",");
   }
