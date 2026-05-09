@@ -23,7 +23,7 @@ function withPrivateNoIndex(res: NextResponse) {
  * Tüm sayfalarda Supabase oturumunu yeniler; çerezler request/response ile senkron kalır.
  * /admin/* için ek olarak admin rolü kontrolü.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const legacyRedirectPath = resolveLegacySlugRedirectPath(pathname);
   if (legacyRedirectPath) {
@@ -99,7 +99,7 @@ export async function middleware(request: NextRequest) {
   ) {
     const h = request.headers.get("host");
     console.log(
-      "[middleware]",
+      "[proxy]",
       pathname,
       "host=",
       h,
