@@ -88,7 +88,7 @@ export function AiFirmMatchesStrip({ matches, requestFilters }: Props) {
           Önerilen Firmalar
         </h3>
         <p className="mt-1 text-xs leading-relaxed text-[#64748b]">
-          Kurumsallık skoruna göre sıralanan ilgili firmalar.
+          Konuya uygunluk ve kurumsallık skoruna göre sıralanan firmalar.
         </p>
         <div className="mt-3 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:thin]">
           {Array.from({ length: 2 }).map((_, i) => (
@@ -110,7 +110,7 @@ export function AiFirmMatchesStrip({ matches, requestFilters }: Props) {
           Önerilen Firmalar
         </h3>
         <p className="mt-1 text-xs leading-relaxed text-[#64748b]">
-          Kurumsallık skoruna göre sıralanan ilgili firmalar.
+          Konuya uygunluk ve kurumsallık skoruna göre sıralanan firmalar.
         </p>
         <div className="mt-3 rounded-lg border border-[#0B3C5D]/10 bg-[#F7F9FB] px-3 py-3">
           <p className="text-xs leading-relaxed text-[#6b7280]">{EMPTY_COPY}</p>
@@ -130,7 +130,7 @@ export function AiFirmMatchesStrip({ matches, requestFilters }: Props) {
         Önerilen Firmalar
       </h3>
       <p className="mt-1 text-xs leading-relaxed text-[#64748b]">
-        Kurumsallık skoruna göre sıralanan ilgili firmalar.
+        Konuya uygunluk ve kurumsallık skoruna göre sıralanan firmalar.
       </p>
 
       <div className="mt-3">

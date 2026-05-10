@@ -130,25 +130,35 @@ function rankNum(m: AiAssistantFirmMatchDTO): number {
   return Number.isFinite(n) ? n : 999_999;
 }
 
+/**
+ * UI sıralaması — Edge Function tarafında konuya uygunluk + kurumsallık + hype +
+ * isim sıralaması zaten yapıldığı için ASIL düzen `rank asc` ile gelir.
+ *
+ *   1) ai_assistant_firm_matches.rank asc  (edge function konu uygunluk sırası)
+ *   2) firms.corporateness_score desc      (fallback)
+ *   3) corporate_score / trust_score desc  (fallback)
+ *   4) match_score desc                    (son fallback)
+ */
 function compareAiMatchPairs(
   a: { firm: FirmRow; match: AiAssistantFirmMatchDTO },
   b: { firm: FirmRow; match: AiAssistantFirmMatchDTO }
 ): number {
-  let d = b.firm.corporateness_score - a.firm.corporateness_score;
+  let d = rankNum(a.match) - rankNum(b.match);
+  if (d !== 0) return d;
+  d = b.firm.corporateness_score - a.firm.corporateness_score;
   if (d !== 0) return d;
   d = secondaryCorpScore(b.firm) - secondaryCorpScore(a.firm);
   if (d !== 0) return d;
-  d = matchScoreNum(b.match) - matchScoreNum(a.match);
-  if (d !== 0) return d;
-  return rankNum(a.match) - rankNum(b.match);
+  return matchScoreNum(b.match) - matchScoreNum(a.match);
 }
 
 /**
  * `ai_assistant_firm_matches` satırlarına göre kart şeridinde gösterilecek
  * yayındaki firmaları döner (en fazla `limit`, varsayılan 20).
  *
- * Sıra: corporateness_score desc → corporate_score/trust_score desc →
- * match_score desc → rank asc.
+ * Sıra: rank asc (edge function konuya uygunluk sırası) →
+ *       corporateness_score desc → corporate_score/trust_score desc →
+ *       match_score desc.
  *
  * Görünürlük: `firmIsVisibleInAramaSearchResults` (published + show_in_search +
  * firm_page_enabled + show_on_card) — AI yalnızca eşleşme ID'si üretir; liste

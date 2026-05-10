@@ -43,6 +43,15 @@ export type IntentCluster = {
   relatedServices: IntentMatchItem[];
   relatedOperations: IntentMatchItem[];
   relatedTags: IntentQuickTag[];
+  /**
+   * AI eşleşme katmanı için ZORUNLU sinyaller. Cluster bu listeden EN AZ BİR
+   * tokeni firma alanlarında (services, main_services, sub_services, tags,
+   * firm_category, custom_specializations) gördüğünde firma eşleşmeye dahil
+   * edilir. Boş bırakılırsa cluster "yumuşak" olarak değerlendirilir.
+   */
+  strictSignals?: string[];
+  /** Cluster için ek/yumuşak sinyaller (skoru artırır ama tek başına yeterli sayılmaz). */
+  softSignals?: string[];
 };
 
 function item(label: string, type: IntentFilterType, aliases?: string[]): IntentMatchItem {
@@ -60,6 +69,29 @@ export const DISPLAY_LABEL_NORMALIZATION: Record<string, string> = {
   "uzun donemli d tipi vizeler": "Uzun Dönemli / D Tipi Vizeler",
   "evrak danismanlik": "Evrak / Danışmanlık",
 };
+
+/**
+ * `normalizeServiceDisplayLabel` — kart / chip / liste etiketlerinde tutarlı görünüm
+ * sağlar. Veritabanında veriyi DEĞİŞTİRMEZ; yalnızca UI ve eşleşme tarafında uygular.
+ *
+ * Düzeltmeler:
+ *  - "iş Kurma Danışmanlığı" → "İş Kurma Danışmanlığı"
+ *  - "Yatırım Danışmanlığ" / "Yatırım DanışmanlığI" → "Yatırım Danışmanlığı"
+ *  - "Uzun dönemli / D tipi vizeler" → "Uzun Dönemli / D Tipi Vizeler"
+ *  - Bilinen formlar `DISPLAY_LABEL_NORMALIZATION` üzerinden eşlenir.
+ *
+ * Bilinmeyen değerler için sadece trim + içsel boşluk normalizasyonu uygulanır.
+ */
+export function normalizeServiceDisplayLabel(value: string): string {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim().replace(/\s+/g, " ");
+  if (!trimmed) return "";
+  const key = normalizeIntentText(trimmed);
+  if (DISPLAY_LABEL_NORMALIZATION[key]) {
+    return DISPLAY_LABEL_NORMALIZATION[key];
+  }
+  return trimmed;
+}
 
 export function normalizeIntentText(value: string): string {
   return value
@@ -159,6 +191,15 @@ export const SERVICE_INTENT_CLUSTERS: IntentCluster[] = [
       tag("Nitelikli İşçi", "Nitelikli İşçi Göçü", "migration-residence"),
       tag("Çalışma İzni", "Çalışma İzni", "migration-residence"),
     ],
+    strictSignals: [
+      "oturum",
+      "ikamet",
+      "göç",
+      "çalışma izni",
+      "aile birleşimi",
+      "uzun dönemli",
+      "d tipi vize",
+    ],
   },
   {
     key: "citizenship-golden-visa",
@@ -194,6 +235,22 @@ export const SERVICE_INTENT_CLUSTERS: IntentCluster[] = [
       tag("Vatandaşlık", "Vatandaşlık", "citizenship-golden-visa"),
       tag("Şirket Kurulumu", "Şirket Kurulumu", "citizenship-golden-visa"),
     ],
+    strictSignals: [
+      "golden visa",
+      "yunanistan golden visa",
+      "yatırım yoluyla oturum",
+      "yatırım yoluyla vatandaşlık",
+      "vatandaşlık",
+      "gayrimenkul",
+      "yatırım göçü",
+      "soy bağı",
+    ],
+    softSignals: [
+      "şirket kurulumu",
+      "emlak",
+      "yatırım danışmanlığı",
+      "yatırım",
+    ],
   },
   {
     key: "study-abroad",
@@ -225,6 +282,14 @@ export const SERVICE_INTENT_CLUSTERS: IntentCluster[] = [
       tag("Almanya Eğitimi", "Almanya Eğitim Danışmanlığı", "study-abroad"),
       tag("Dil Okulu", "Dil Sınav Merkezi", "study-abroad"),
       tag("Kanada Vizesi", "Kanada Vizesi", "visa-services"),
+    ],
+    strictSignals: [
+      "öğrenci",
+      "eğitim",
+      "erasmus",
+      "dil okulu",
+      "dil sertifikasyon",
+      "okul kabul",
     ],
   },
   {
@@ -262,6 +327,18 @@ export const SERVICE_INTENT_CLUSTERS: IntentCluster[] = [
       tag("Freelancer", "Freelancer Vizesi", "international-career"),
       tag("Startup", "Startup Vizesi", "international-career"),
     ],
+    strictSignals: [
+      "çalışma vizesi",
+      "çalışma izni",
+      "işçi",
+      "freelancer",
+      "startup",
+      "girişimci",
+      "sağlık çalışanı",
+      "tır şoförü",
+      "iş yerleştirme",
+      "kariyer",
+    ],
   },
   {
     key: "company-investment",
@@ -293,6 +370,17 @@ export const SERVICE_INTENT_CLUSTERS: IntentCluster[] = [
       tag("Yatırım Danışmanlığı", "Yatırım Danışmanlığı", "company-investment"),
       tag("Startup", "Startup Vizesi", "company-investment"),
       tag("Girişimci", "Girişimci Vizesi", "company-investment"),
+    ],
+    strictSignals: [
+      "şirket kurulumu",
+      "şirket kur",
+      "iş kurma",
+      "yatırım",
+      "startup",
+      "girişimci",
+      "ticari",
+      "yatırım danışmanlığı",
+      "iş geliştirme",
     ],
   },
   {
@@ -328,6 +416,16 @@ export const SERVICE_INTENT_CLUSTERS: IntentCluster[] = [
       tag("Hukuki Danışmanlık", "Hukuki Danışmanlık", "legal-official"),
       tag("Tercüme", "Tercüme", "legal-official"),
       tag("Denklik", "Mesleki Denklik", "legal-official"),
+    ],
+    strictSignals: [
+      "red",
+      "itiraz",
+      "hukuki",
+      "avukat",
+      "denklik",
+      "göçmenlik hukuku",
+      "tercüme",
+      "yeminli tercüman",
     ],
   },
   {
@@ -365,6 +463,16 @@ export const SERVICE_INTENT_CLUSTERS: IntentCluster[] = [
       tag("Uçak Bileti", "Uçak Bileti", "tourism-travel"),
       tag("Transfer", "Transfer Hizmetleri", "tourism-travel"),
     ],
+    strictSignals: [
+      "turistik",
+      "tur",
+      "tatil",
+      "uçak bileti",
+      "otel",
+      "konaklama",
+      "seyahat",
+      "transfer",
+    ],
   },
   {
     key: "consular-operations",
@@ -399,6 +507,15 @@ export const SERVICE_INTENT_CLUSTERS: IntentCluster[] = [
       tag("Dosya Hizmeti", "Dosya Hizmeti", "consular-operations"),
       tag("Konsolosluk Yazıları", "Konsolosluk Yazıları", "consular-operations"),
       tag("Pasaport", "Pasaport", "consular-operations"),
+    ],
+    strictSignals: [
+      "randevu",
+      "evrak",
+      "dosya",
+      "konsolosluk",
+      "pasaport",
+      "başvuru takibi",
+      "ön onay",
     ],
   },
 ];

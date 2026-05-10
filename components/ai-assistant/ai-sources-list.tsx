@@ -6,6 +6,12 @@ type Props = {
   sources: AiAssistantSourceDTO[];
 };
 
+/**
+ * UI tarafında gösterilecek max kaynak sayısı. Edge Function 8 kaynağa kadar
+ * iletebilir; mobil okunabilirlik için 6 ile sınırlıyoruz.
+ */
+const MAX_VISIBLE_SOURCES = 6;
+
 function safeDomain(src: AiAssistantSourceDTO): string {
   if (src.domain && src.domain.trim().length > 0) return src.domain.trim();
   try {
@@ -40,12 +46,15 @@ function ExternalLinkIcon() {
  *
  * Kurallar:
  *  - Sahte kaynak üretmez; sadece `ai_assistant_sources` tablosundan gelir.
- *  - Liste boşsa hiç render edilmez.
- *  - "Resmi kaynak" rozeti is_official=true için; renkler design system primary tonu.
+ *  - Liste boşsa hiç render edilmez (placeholder/yer tutucu yok).
+ *  - "Resmi kaynak" rozeti is_official=true için soft emerald — güven sinyali.
+ *    (Yalnızca trust göstergesi; primary tonu CTA hiyerarşisini bozmaz.)
  *  - Linkler yeni sekmede ve `noopener noreferrer` ile açılır.
+ *  - En fazla `MAX_VISIBLE_SOURCES` (6) kaynak gösterilir.
  */
 export function AiSourcesList({ sources }: Props) {
   if (!sources || sources.length === 0) return null;
+  const visible = sources.slice(0, MAX_VISIBLE_SOURCES);
 
   return (
     <div className="mt-4 rounded-2xl border border-[#0B3C5D]/12 bg-white p-3 shadow-[0_1px_2px_rgba(11,60,93,0.04)]">
@@ -58,7 +67,7 @@ export function AiSourcesList({ sources }: Props) {
         </p>
       </div>
       <ul className="mt-3 flex flex-col gap-2">
-        {sources.map((src) => {
+        {visible.map((src) => {
           const domain = safeDomain(src);
           const titleText =
             src.title && src.title.trim().length > 0 ? src.title.trim() : domain;
@@ -77,7 +86,8 @@ export function AiSourcesList({ sources }: Props) {
                   </span>
                   <div className="flex shrink-0 items-center gap-1.5">
                     {src.is_official ? (
-                      <span className="rounded-full bg-[#0B3C5D]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#0B3C5D]">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                        <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
                         Resmi kaynak
                       </span>
                     ) : null}

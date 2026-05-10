@@ -1,25 +1,20 @@
 /**
- * Akıllı Asistan — `createGroundedAnswer` user prompt'u.
+ * Akıllı Asistan — `createGroundedAnswer` system + user prompt referansı.
  *
- * Mevcut Edge Function (`ai-assistant-worker/index.ts`) bu modülden import eder:
- *
- * ```ts
- * import { buildGroundedAnswerUserPrompt } from "./grounded-prompt.ts";
- * const userPrompt = buildGroundedAnswerUserPrompt(userQuery, sources);
- * ```
+ * Bu modül Edge Function'a otomatik import EDİLMEZ; `ai-assistant-worker/index.ts`
+ * `createGroundedAnswer` içinde aynı prompt yapısı INLINE tutulur (tek dosya
+ * deploy kolaylığı). Bu dosya tutarlılık ve geliştirici referansı içindir; cevap
+ * formatını / sistem talimatını değiştirmek isteyen yalnızca bu dosyaya da
+ * paralel güncelleme yapsa yeter.
  *
  * Tasarım kararları:
- *  - Cevap düz paragraf değil; sabit markdown başlıklarıyla bölünür → mobilde kart
- *    içinde okunaklı, UI tarafı `## Heading` görür ve belirgin başlık olarak render eder.
+ *  - Cevap düz paragraf değil; sabit Markdown iskeletiyle bölünür → mobil kart
+ *    içinde belirgin başlıklar, kısa paragraf/listeler.
  *  - Firma adı yasak → firma kartları `ai_assistant_firm_matches` üzerinden gelir.
- *  - URL / kaynak linki AI tarafından metne yazılmaz → kaynaklar `ai_assistant_sources`
- *    tablosundan ayrı kart olarak gösterilir.
- *  - Hukuki kesinlik / vize garantisi dili yasak; resmi bilgi değişebilir uyarısı zorunlu.
- *  - Çıktı 180-260 kelime aralığında — mobil kart için ideal yoğunluk.
- *
- * Dosya `supabase/functions/ai-assistant-worker/` altında; Next.js build'i
- * `tsconfig.json` -> `exclude` ile bu klasörü atladığı için Deno import yolu
- * (".ts" uzantısı) sorun çıkarmaz.
+ *  - URL / kaynak linki AI tarafından metne yazılmaz → kaynaklar
+ *    `ai_assistant_sources` tablosundan ayrı kart olarak gösterilir.
+ *  - Hukuki kesinlik / garanti dili yasak; resmi bilgi değişebilir uyarısı zorunlu.
+ *  - 220-340 kelime aralığı — mobil için ideal yoğunluk.
  */
 
 export type GroundedSourceLite = {
@@ -30,14 +25,15 @@ export type GroundedSourceLite = {
 };
 
 export const GROUNDED_ANSWER_SYSTEM_PROMPT = [
-  "Sen vizefirmalari.com için Türkçe yanıt veren bir araştırma asistanısın.",
-  "Sadece sağlanan kaynaklara ve genel olarak teyit edilebilir, herkesçe bilinen kamu",
-  "bilgisine dayan. Belirsiz olduğun konuda iddia üretme.",
-  "Asla firma adı, marka adı veya site URL'si yazma.",
-  "Asla kaynak linki / URL yazma — kaynaklar arayüzde ayrı bölümde gösteriliyor.",
+  "Sen VizeFirmalari.com için Türkçe yanıt veren güvenilir bir araştırma asistanısın.",
+  "Resmi/güvenilir kaynaklara dayalı genel bilgi üretirsin; bilmediğin yerde iddia uydurmazsın.",
+  "Cevap, kullanıcının güven duymasını sağlayacak şekilde yapılandırılmış olmalı.",
+  "Bilgi verici ama satış dili gibi olmamalı. Gerektiğinde kısa kontrol listeleri kullan.",
+  "Belirsiz konularda \"bilgiler değişebilir, resmi kaynaklardan kontrol edilmelidir\" uyarısını kısa ve sakin bir dille yap.",
+  "Asla firma adı, marka adı veya site URL'si yazma — firma kartları arayüzde ayrı gösterilir.",
+  "Asla kaynak linki / URL yazma — kaynaklar arayüzde ayrı kart olarak gösterilir.",
   "Hukuki kesinlik dili kullanma; vize/oturum/işlem sonucu için garanti verme.",
-  "Resmi mevzuatın ve konsolosluk kurallarının değişebileceğini kullanıcıya hatırlat.",
-  "Cevabın yapısı her zaman aşağıda istenen markdown başlıklarıyla bölünür.",
+  "Cevap her zaman aşağıda istenen Markdown başlık yapısıyla bölünür.",
 ].join(" ");
 
 function summarizeSourcesForPrompt(
@@ -59,10 +55,15 @@ function summarizeSourcesForPrompt(
 
 /**
  * Modelin görmesi gereken talimat + kullanıcı sorusu + kaynak özeti.
+ *
+ * Önemli: `index.ts` içindeki INLINE versiyon ile aynı yapıyı korur. Tek
+ * fark: bu sürüm `sources` özetini de bağlam olarak iletir (model bağlamı
+ * kalibre etsin diye); inline sürüm sources görmeden çalışır çünkü web_search
+ * tool'u modeli zaten besler.
  */
 export function buildGroundedAnswerUserPrompt(
   userQuery: string,
-  sources: ReadonlyArray<GroundedSourceLite>
+  sources: ReadonlyArray<GroundedSourceLite> = []
 ): string {
   const safeQuery = (userQuery ?? "").toString().trim().slice(0, 500);
   const sourceList = summarizeSourcesForPrompt(sources);
@@ -70,27 +71,48 @@ export function buildGroundedAnswerUserPrompt(
   return [
     `Kullanıcının sorusu: ${safeQuery || "(boş)"}`,
     "",
-    "Aşağıdaki kaynaklar arama sonucu olarak sağlanmıştır (yalnızca bağlamı kalibre",
-    "etmek için; bu metinde URL veya kaynak adı geçmesin):",
+    "Aşağıdaki kaynaklar arama sonucu olarak sağlanmıştır (yalnızca bağlamı",
+    "kalibre etmek için; bu metinde URL veya kaynak adı geçmesin):",
     sourceList,
     "",
-    "Aşağıdaki kurallara TAMAMEN uy:",
+    "Cevabın AŞAĞIDAKİ Markdown formatında olmalı (başlıkları aynen kullan,",
+    "sırayı değiştirme):",
+    "",
+    "# [Konuya özel kısa başlık]",
+    "",
+    "## 🧭 Kısa Bilgi",
+    "2-3 net cümlelik kısa açıklama.",
+    "",
+    "## 📌 Başvuru Süreci",
+    "- Sürecin genel akışı",
+    "- Başvurunun hangi kurum / kanal mantığıyla ilerlediği",
+    "- Ülkeye veya başvuru türüne göre değişebileceği",
+    "",
+    "## 📄 Gerekli Belgeler",
+    "- Genel belge kategorileri",
+    "- \"Genellikle\" ifadesini kullan",
+    "- Kesin liste gibi davranma",
+    "",
+    "## ⚠️ Dikkat Edilmesi Gerekenler",
+    "- Vize / oturum / izin sonucu için garanti yoktur",
+    "- Resmi mevzuat ve konsolosluk koşulları değişebilir; başvurudan önce ilgili",
+    "  konsolosluk veya resmi otorite sayfası kontrol edilmelidir",
+    "- Konuya özel kısa bir uyarı",
+    "",
+    "## ✅ Ne Yapabilirsiniz?",
+    "- Kullanıcıya bir sonraki mantıklı adımı söyle",
+    "- Örn: \"Aşağıdaki firmalar arasından bu alanda hizmet verenleri inceleyebilirsiniz.\"",
+    "- Firma adı veya marka adı yazma",
+    "",
+    "KESİN KURALLAR:",
     "- Türkçe ve sade yaz.",
-    "- 180-260 kelime aralığında ol.",
-    "- Yalnızca aşağıdaki dört markdown başlığını bu sırayla kullan; başka başlık ekleme:",
-    "  ## Kısa Bilgi",
-    "  ## Başvuru Süreci",
-    "  ## Gerekli Belgeler",
-    "  ## Dikkat Edilmesi Gerekenler",
-    "- Her başlık altında 2-4 cümlelik kısa paragraf veya 2-4 maddelik kısa liste kullan.",
-    "- Liste kullanırken `- ` (tire + boşluk) ile başla.",
-    "- Firma adı, marka adı yazma; tavsiye edilen firmalar arayüzde ayrı listelenir.",
-    "- URL, link veya kaynak adı yazma; kaynaklar arayüzde ayrı kart olarak gösterilir.",
-    "- ‘kesinlikle’, ‘garanti’ gibi kesinlik bildiren ifadelerden kaçın.",
-    "- ## Dikkat Edilmesi Gerekenler bölümünde mutlaka şunu içeren bir uyarı yer alsın:",
-    "  resmi mevzuat ve konsolosluk koşulları değişebilir; başvurudan önce ilgili",
-    "  konsolosluk veya resmi otorite sayfası kontrol edilmelidir.",
-    "- Vize / oturum / izin sonucu için garanti vermediğini güvenli bir dille belirt.",
-    "- Gereksiz uzun giriş yapma; doğrudan ## Kısa Bilgi başlığı ile başla.",
+    "- 220-340 kelime aralığında ol.",
+    "- Mobilde okunabilir kısa paragraflar kullan.",
+    "- Her başlığın altında en fazla 3-4 madde olsun.",
+    "- Liste için `- ` (tire + boşluk) kullan.",
+    "- Firma adı / marka adı / URL / kaynak linki yazma.",
+    "- \"kesinlikle\", \"garanti\", \"kesin\" gibi kesinlik bildiren ifadelerden kaçın;",
+    "  \"genellikle\", \"çoğu durumda\" gibi tedbirli dil kullan.",
+    "- Doğrudan # başlığı ile başla; gereksiz uzun giriş yapma.",
   ].join("\n");
 }
