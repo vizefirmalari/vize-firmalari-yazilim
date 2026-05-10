@@ -252,7 +252,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "İsveç Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
         "Platsbanken ve Arbetsförmedlingen ile iş arama, LAS ve kolektif sözleşmeler, personnummer, vergi ve 1177 sağlık hattı özetleriyle EURES kaynaklı rehber; güncel mevzuatı Skatteverket, Migrationsverket ve arbetsformedlingen.se üzerinden doğrulayın."
       ),
-      entry("isvicre", "İsviçre", "ch", "İsviçre", "Schengen üyesi; ulusal çalışma izinleri ile birlikte değerlendirme.", "İsviçre vize rehberi | Vize Firmaları", "İsviçre Schengen ve çalışma izni girişi."),
+      entry(
+        "isvicre",
+        "İsviçre",
+        "ch",
+        "İsviçre",
+        "L/B/C permit, kota ve kanton bazlı göçe giriş.",
+        "İsviçre Vize ve Oturum Rehberi 2026 | Schengen, Permit ve Zürih",
+        "İsviçre’de Schengen C vizesi, çalışma izinleri, kotolar ve yüksek yaşam maliyeti; SEM ve kanton mercileriyle güncel doğrulama. Platformda İsviçre için hizmet veren firmaları keşfedin."
+      ),
       entry(
         "italya",
         "İtalya",
@@ -280,7 +288,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "Letonya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
         "NVA ve EURES ile iş arama, lisanslı işe yerleştirme, yazılı iş sözleşmesi ve ücret ödeme sıklığı, PMLP ikamet kaydı, kira hukuku ve yaşam maliyeti, asgari ücret ve VID vergi özetleri, VDI iş hukuku ve VMNVD sağlık sistemi özetleriyle EURES kaynaklı rehber; güncel bilgileri pmlp.gov.lv ve vid.gov.lv üzerinden doğrulayın."
       ),
-      entry("liechtenstein", "Liechtenstein", "li", "Liechtenstein", "İsviçre ile bağlantılı Schengen başvurularına giriş.", "Liechtenstein vize rehberi | Vize Firmaları", "Liechtenstein Schengen giriş rehberi."),
+      entry(
+        "liechtenstein",
+        "Liechtenstein",
+        "li",
+        "Liechtenstein",
+        "EEA, sıkı kota ve İsviçre entegrasyonuyla göçe giriş.",
+        "Liechtenstein Vize ve Oturum Rehberi 2026 | Schengen, EEA ve Vaduz",
+        "Liechtenstein’da Schengen kısa süreli giriş, kotası yüksek çalışma ve residence permit, cross-border commuter düzeni; Migration Office ve resmî duyurularla güncel doğrulama. Panelde ülke olarak Liechtenstein seçili firmalar bu sayfada listelenir."
+      ),
       entry(
         "litvanya",
         "Litvanya",
@@ -317,7 +333,15 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "Malta Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
         "Jobsplus ve EURES Malta ile iş arama, staj ve MCAST/ITS çıraklığı, Identity Malta ikamet kartı, kira–satın alma, asgari ücret ve vergi özetleriyle EURES kaynaklı rehber; Schengen ve oturum için resmî bilgileri doğrulayın."
       ),
-      entry("norvec", "Norveç", "no", "Norveç", "Schengen üyesi; çalışma izni süreçlerine giriş.", "Norveç vize rehberi | Vize Firmaları", "Norveç Schengen ve çalışma rehberi."),
+      entry(
+        "norvec",
+        "Norveç",
+        "no",
+        "Norveç",
+        "EEA/EØS, UDI skilled worker, NAV iş piyasası ve yüksek yaşam maliyeti özetine giriş.",
+        "Norveç Vize ve Oturum Rehberi 2026 | Schengen, Skilled Worker ve UDI",
+        "UDI residence permit ve Work in Norway (NAV) ile iş arama, Finn hybel konut bandı, Norveççe–İngilizce dil gerçeği, deneme süresi ve toplu sözleşme kültürü, vergi ve yıllık izin özeti; Schengen C vizesi ve 90/180 kalış çerçevesi. Güncel şartları udi.no ve Skatteetaten kaynaklarından doğrulayın."
+      ),
       entry(
         "polonya",
         "Polonya",
@@ -327,10 +351,42 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "Polonya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
         "ePraca ve EURES ile iş arama, KRAZ kayıtlı istihdam büroları, İş Kanunu ve uzaktan çalışma, PESEL ve voyvoda ikamet kaydı, asgari ücret ve ZUS, NFZ sağlık güvencesi özetleriyle EURES kaynaklı rehber; güncel bilgileri gov.pl ve praca.gov.pl üzerinden doğrulayın."
       ),
-      entry("portekiz", "Portekiz", "pt", "Portekiz", "Schengen ve Golden Visa süreçlerine giriş.", "Portekiz vize rehberi | Vize Firmaları", "Portekiz turistik ve oturum rehberi."),
-      entry("romanya", "Romanya", "ro", "Romanya", "Güncel Schengen üyeliği ile başvuru mantığına giriş.", "Romanya vize rehberi | Vize Firmaları", "Romanya Schengen ve çalışma rehberi."),
-      entry("slovakya", "Slovakya", "sk", "Slovakya", "Schengen ve çalışma süreçlerine giriş.", "Slovakya vize rehberi | Vize Firmaları", "Slovakya Schengen rehberi."),
-      entry("slovenya", "Slovenya", "si", "Slovenya", "Schengen ve çalışma iznine giriş.", "Slovenya vize rehberi | Vize Firmaları", "Slovenya vize rehberi."),
+      entry(
+        "portekiz",
+        "Portekiz",
+        "pt",
+        "Portekiz",
+        "Golden Visa, D8 dijital göçebe, çalışma izni ve AB ikameti özetine giriş.",
+        "Portekiz Vize ve Oturum Rehberi 2026 | Schengen, Golden Visa ve D8",
+        "Lizbon–Porto iş piyasası, IEFP ve startup ekosistemi, Golden Visa ve konut modeli değişiklikleri, D8 dijital göçebe, NIF ve residence permit, NHR sonrası vergi düzenlemeleri ve kira bandı özeti. Güncel yatırım kategorilerini AIMA ve ePortugal üzerinden doğrulayın."
+      ),
+      entry(
+        "romanya",
+        "Romanya",
+        "ro",
+        "Romanya",
+        "Schengen entegrasyonu, work permit ve düşük yaşam maliyeti özetine giriş.",
+        "Romanya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
+        "Bükreş–Cluj IT ve outsourcing iş piyasası, eJobs ve BestJobs kanalları, work authorization ve residence permit akışı, Bükreş stüdyo kira bandı, görece düşük gelir vergisi ve 40 saat çalışma özeti. Schengen giriş kuralları ve göç mevzuatını Romanian Immigration Inspectorate ve MAE üzerinden doğrulayın."
+      ),
+      entry(
+        "slovakya",
+        "Slovakya",
+        "sk",
+        "Slovakya",
+        "Schengen, Blue Card ve otomotiv / üretim istihdam özetine giriş.",
+        "Slovakya Vize ve Oturum Rehberi 2026 | Schengen, Blue Card ve İkamet",
+        "Bratislava–Košice iş merkezleri, Profesia ve Kariera ile iş arama, work authorization ve temporary residence, AB Blue Card maaş eşikleri, Schengen 90/180 kuralı ve düşük yaşam maliyeti özeti. Güncel şartları Slovak Ministry of Interior ve Employment Services üzerinden doğrulayın."
+      ),
+      entry(
+        "slovenya",
+        "Slovenya",
+        "si",
+        "Slovenya",
+        "Single permit, Blue Card ve Schengen özetine giriş.",
+        "Slovenya Vize ve Oturum Rehberi 2026 | Schengen, Single Permit ve İkamet",
+        "Ljubljana–Koper lojistik ve IT iş piyasası, Employment Service ve Mojedelo ile iş arama, single residence and work permit, D tipi ulusal vize, AB Blue Card ve Ljubljana kira bandı özeti. Güncel şartları Entry and Residence Slovenia ve konsolosluk duyurularından doğrulayın."
+      ),
       entry(
         "yunanistan",
         "Yunanistan",
