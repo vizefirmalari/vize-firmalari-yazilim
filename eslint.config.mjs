@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Supabase Edge Functions (Deno runtime). Bu dosyalar Next.js TS dünyasında
+    // değil; `tsconfig.json` exclude'unda. Deno-spesifik importlar ve OpenAI
+    // Responses API'nin dinamik payload'ları için bilinçli `any` kullanımı var.
+    "supabase/functions/**",
   ]),
   {
     /** Next 16 + React Compiler eklentisi: çok agresif; geçerli kalıpları (props senkronu, ref callback, SSR tarihi) yanlış pozitif işaretliyor. */

@@ -1,4 +1,14 @@
 // supabase/functions/ai-assistant-worker/index.ts
+//
+// Bu dosya bir Supabase Edge Function (Deno runtime) kaynak kodudur.
+// `tsconfig.json` exclude'una göre Next.js TS / build hattının dışındadır;
+// `eslint.config.mjs` `supabase/functions/**` ignore'una alınmıştır.
+//
+// Aşağıdaki `// @ts-nocheck` direktifi yalnızca IDE TS server'ının açık dosya
+// üzerinde çalıştırdığı inline kontrolleri susturmak içindir — Deno HTTP /
+// `npm:` protokol importları ve global `Deno` ad alanı Next TS contextinde
+// tanımlı değildir. Deno tarafında derleme hatasız çalışır.
+// @ts-nocheck
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -439,10 +449,17 @@ async function createGroundedAnswer(
 }> {
   const systemPrompt = [
     "Sen VizeFirmalari.com için Türkçe yanıt veren güvenilir bir araştırma asistanısın.",
-    "Resmi/güvenilir kaynaklara dayalı genel bilgi üretirsin; bilmediğin yerde iddia uydurmazsın.",
+    "ÖNEMLİ: Cevap üretmeden önce mutlaka web_search aracını kullan ve resmi kaynaklardan en güncel bilgileri topla.",
+    "Kaynak önceliği (yüksekten düşüğe):",
+    "  1) Hedef ülkenin resmi devlet siteleri (.gov, .gov.tr, .gouv.fr, .gov.uk, .gc.ca, europa.eu)",
+    "  2) Konsolosluk / büyükelçilik siteleri",
+    "  3) Resmi başvuru merkezleri (vfsglobal.com, idata.com.tr, tlscontact.com, ustraveldocs.com)",
+    "  4) Tanınmış göç / vize otoriteleri ve bakanlık duyuruları",
+    "  5) Ancak son çare olarak kurumsal haber siteleri.",
+    "Forum, sosyal medya, blog sözlüğü gibi kaynaklara güvenme.",
+    "Bilmediğin / belirsiz konuda iddia uydurma; \"bilgiler değişebilir, resmi kaynaklardan kontrol edilmelidir\" uyarısını kısa ve sakin bir dille yap.",
     "Cevap, kullanıcının güven duymasını sağlayacak şekilde yapılandırılmış olmalı.",
     "Bilgi verici ama satış dili gibi olmamalı. Gerektiğinde kısa kontrol listeleri kullan.",
-    "Belirsiz konularda \"bilgiler değişebilir, resmi kaynaklardan kontrol edilmelidir\" uyarısını kısa ve sakin bir dille yap.",
     "Asla firma adı, marka adı veya site URL'si yazma — firma kartları arayüzde ayrı gösterilir.",
     "Asla kaynak linki / URL yazma — kaynaklar arayüzde ayrı kart olarak gösterilir.",
     "Hukuki kesinlik dili kullanma; vize/oturum/işlem sonucu için garanti verme.",
@@ -492,6 +509,21 @@ Bağlam (gizli, yanıtta görünmesin):
 - Niyet: ${input.intent}
 - Sistemde eşleşen firma sayısı: ${input.firm_count}`;
 
+  /**
+   * OpenAI Responses API — Web Search aracı (yeni `web_search` controller).
+   *
+   *  - search_context_size: "high"  → cevabın resmi kaynak yoğunluğu yüksek
+   *  - filters.blocked_domains      → forum / sosyal medya / sözlük türü düşük
+   *                                   güvenilirlikteki domain'ler bloklanır;
+   *                                   resmi devlet / konsolosluk / başvuru
+   *                                   merkezleri whitelist gerektirmeden öne çıkar
+   *  - user_location: TR            → Türkiye'den başvuru bağlamı
+   *  - include: web_search_call.action.sources → cevap üretirken modelin gezdiği
+   *                                              tam URL listesini döndürür
+   *                                              (extractSources tarafından okunur)
+   *  - tool_choice: "auto"          → model gerek görüyorsa atlamayabilir; ama
+   *                                   sistem prompt "mutlaka web_search kullan" diyor
+   */
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -500,7 +532,34 @@ Bağlam (gizli, yanıtta görünmesin):
     },
     body: JSON.stringify({
       model: OPENAI_MODEL,
-      tools: [{ type: "web_search" }],
+      tools: [
+        {
+          type: "web_search",
+          search_context_size: "high",
+          filters: {
+            blocked_domains: [
+              "reddit.com",
+              "quora.com",
+              "wikipedia.org",
+              "eksisozluk.com",
+              "instagram.com",
+              "facebook.com",
+              "x.com",
+              "twitter.com",
+              "tiktok.com",
+              "pinterest.com",
+              "blogspot.com",
+              "wordpress.com",
+            ],
+          },
+          user_location: {
+            type: "approximate",
+            country: "TR",
+          },
+        },
+      ],
+      tool_choice: "auto",
+      include: ["web_search_call.action.sources"],
       input: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -640,13 +699,18 @@ function extractSources(data: any): Array<{
 
   for (const item of data?.output ?? []) {
     // 1) Web search call sonuçları (eski + yeni şemalar)
+    //    Yeni `web_search` aracı: include=["web_search_call.action.sources"]
+    //    isteği ile `action.sources[]` (kapsamlı liste) ve `action.results[]`
+    //    (kısa liste) ayrı yollarda gelebilir; ikisini de tarıyoruz.
     if (item?.type === "web_search_call") {
       visitArray(item?.results);
       visitArray(item?.action?.results);
+      visitArray(item?.action?.sources);
       visitArray(item?.search_results);
+      visitArray(item?.sources);
     }
 
-    // 2) message içindeki annotation'lar
+    // 2) message içindeki annotation'lar — inline citation listesi
     for (const content of item?.content ?? []) {
       for (const annotation of content?.annotations ?? []) {
         const t = annotation?.type;
@@ -665,6 +729,7 @@ function extractSources(data: any): Array<{
   visitArray(data?.url_citations);
   visitArray(data?.citations);
   visitArray(data?.web_search_results);
+  visitArray(data?.sources);
 
   // En fazla 8 kaynak ham veri olarak iletilir; UI tarafı 6 ile sınırlar.
   return [...urls.values()].slice(0, 8);

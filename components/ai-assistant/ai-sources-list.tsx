@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import type { AiAssistantSourceDTO } from "@/lib/ai-assistant/types";
 
 type Props = {
@@ -22,11 +24,21 @@ function safeDomain(src: AiAssistantSourceDTO): string {
   }
 }
 
+/**
+ * Domain'e göre Google S2 favicon URL üretir. Yüklenemezse `<img onError>`
+ * tarafında fallback'a düşülür. CDN tabanlı, herkesçe erişilebilir.
+ */
+function faviconUrl(domain: string): string {
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(
+    domain
+  )}&sz=64`;
+}
+
 function ExternalLinkIcon() {
   return (
     <svg
       viewBox="0 0 16 16"
-      className="h-3.5 w-3.5 text-[#64748b] transition group-hover:text-[#0B3C5D]"
+      className="h-3.5 w-3.5 text-[#94a3b8] transition group-hover:text-[#0B3C5D]"
       fill="none"
       aria-hidden
     >
@@ -38,6 +50,37 @@ function ExternalLinkIcon() {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+/**
+ * Domain için favicon. Hata durumunda primary tonda dairesel placeholder gösterir.
+ * Boyut: 20px (mobilde dengeli; padding ile 28px kart slotu içinde oturur).
+ */
+function SourceFavicon({ domain }: { domain: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed || !domain) {
+    return (
+      <span
+        aria-hidden
+        className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#0B3C5D]/10 text-[10px] font-bold text-[#0B3C5D]"
+      >
+        {domain ? domain.charAt(0).toUpperCase() : "·"}
+      </span>
+    );
+  }
+  return (
+    // Static external CDN; <img> bilinçli (Next/Image gerek yok, edge yükü olmasın)
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={faviconUrl(domain)}
+      alt=""
+      width={20}
+      height={20}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="h-5 w-5 shrink-0 rounded"
+    />
   );
 }
 
@@ -78,24 +121,29 @@ export function AiSourcesList({ sources }: Props) {
                 href={src.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group block rounded-xl border border-[#0B3C5D]/8 bg-white px-3 py-2 transition hover:border-[#0B3C5D]/22 hover:bg-[#F7F9FB]"
+                className="group flex items-start gap-2.5 rounded-xl border border-[#0B3C5D]/8 bg-white px-3 py-2.5 transition hover:-translate-y-px hover:border-[#0B3C5D]/22 hover:bg-[#F7F9FB] hover:shadow-[0_3px_10px_rgba(11,60,93,0.06)]"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="line-clamp-1 text-sm font-medium text-[#0f172a]">
-                    {titleText}
-                  </span>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    {src.is_official ? (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                        <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        Resmi kaynak
-                      </span>
-                    ) : null}
-                    <ExternalLinkIcon />
+                <span className="mt-0.5">
+                  <SourceFavicon domain={domain} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="line-clamp-1 text-[14px] font-medium text-[#0f172a]">
+                      {titleText}
+                    </span>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {src.is_official ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                          <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          Resmi
+                        </span>
+                      ) : null}
+                      <ExternalLinkIcon />
+                    </div>
                   </div>
-                </div>
-                <div className="mt-1 line-clamp-1 text-xs text-[#64748b]">
-                  {domain}
+                  <div className="mt-0.5 line-clamp-1 text-[12px] text-[#64748b]">
+                    {domain}
+                  </div>
                 </div>
               </a>
             </li>
