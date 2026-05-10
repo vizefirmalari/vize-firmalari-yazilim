@@ -657,31 +657,153 @@ Bağlam (gizli, yanıtta görünmesin):
   }
 
   const data = await response.json();
-  const answer = extractResponseText(data);
-  const sources = extractSources(data);
-  const debug = buildSourcesDebugSnapshot(data, sources.length);
+  const rawAnswer = extractResponseText(data);
+  const sourcesFromApi = extractSources(data);
 
-  // Edge Function logs üzerinden takip için bir özet bas. Hiç kaynak çıkmadıysa
-  // burada görmek (output_types, web_search_call_count, annotation_count, vs.)
-  // OpenAI yanıt şemasının hangi yola düştüğünü hızlıca anlamayı sağlar.
+  /**
+   * Inline citation temizliği:
+   * Bazı modeller (özellikle gpt-4.1-mini), web_search çıktılarını metnin içine
+   * `[domain.tld](https://…?utm_source=openai)` markdown link olarak gömüyor.
+   * Bunlar mobilde sayfadan taşıyor, tıklanabilir değil ve zaten altta
+   * `AiSourcesList` kart bloğunda gösteriliyor.
+   *
+   * Burada:
+   *  1) Cevap metninden inline link'leri silip URL'leri yakalıyoruz,
+   *  2) Yakalanan URL'leri mevcut `sources` listesine merge ediyoruz —
+   *     bu sayede `extractSources` yanıt şemasından kaynak alamamış olsa bile
+   *     UI tarafı boş kalmaz.
+   */
+  const { cleaned, urls: inlineUrls } = stripInlineCitationsFromAnswer(rawAnswer);
+  const sources = mergeInlineUrlsIntoSources(sourcesFromApi, inlineUrls);
+  const debug = buildSourcesDebugSnapshot(data, sources.length);
+  // Worker debug snapshot'ına inline kaynak sayısı da eklenir.
+  (debug as JsonRecord).inline_url_count = inlineUrls.length;
+
   if (sources.length === 0) {
     console.warn(
       "[ai-assistant-worker] web_search returned no sources",
-      JSON.stringify(debug)
+      JSON.stringify(debug),
     );
   } else {
     console.log(
-      `[ai-assistant-worker] web_search sources=${sources.length}`,
-      JSON.stringify(debug)
+      `[ai-assistant-worker] web_search sources=${sources.length} (api=${sourcesFromApi.length}, inline=${inlineUrls.length})`,
+      JSON.stringify(debug),
     );
   }
 
   return {
-    answer: answer || fallbackAnswer(input.prompt, input.firm_count),
+    answer: cleaned || fallbackAnswer(input.prompt, input.firm_count),
     sources,
     usage: data.usage,
     debug,
   };
+}
+
+/**
+ * AI cevabındaki inline markdown link'leri ve çıplak URL'leri temizler;
+ * yakalanan URL'leri ayrıca döndürür. UI tarafındaki `stripInlineCitations`
+ * ile aynı kuralları uygular — DB'ye temiz veri yazılır, UI ekstra temizliğe
+ * gerek duymaz.
+ */
+function stripInlineCitationsFromAnswer(text: string): {
+  cleaned: string;
+  urls: string[];
+} {
+  if (!text) return { cleaned: "", urls: [] };
+  const urls: string[] = [];
+  let s = text;
+
+  s = s.replace(
+    /\s*\(\s*\[[^\]]+\]\(\s*(https?:\/\/[^\s)]+)\s*\)\s*\)/g,
+    (_m, url) => {
+      urls.push(url);
+      return "";
+    },
+  );
+  s = s.replace(/\s*\(\s*(https?:\/\/[^\s)]+)\s*\)/g, (_m, url) => {
+    urls.push(url);
+    return "";
+  });
+  s = s.replace(
+    /\[([^\]]+)\]\(\s*(https?:\/\/[^\s)]+)\s*\)/g,
+    (_m, t, url) => {
+      urls.push(url);
+      return t;
+    },
+  );
+  s = s.replace(/\s+(https?:\/\/[^\s)]+)/g, (_m, url) => {
+    urls.push(url);
+    return "";
+  });
+
+  s = s.replace(/[ \t]{2,}/g, " ");
+  s = s.replace(/[ \t]+([.,;:!?])/g, "$1");
+  s = s.replace(/\(\s*\)/g, "");
+  s = s.split("\n").map((l) => l.replace(/[ \t]+$/g, "")).join("\n");
+  s = s.replace(/\n{3,}/g, "\n\n");
+
+  return { cleaned: s.trim(), urls };
+}
+
+/**
+ * Inline citations'tan toplanan URL'leri mevcut sources listesiyle birleştirir.
+ * `extractSources` post-filter mantığını (blacklist + sınıflandırma + rank
+ * yeniden numaralandırma) burada da küçük bir versiyonla uygular.
+ */
+function mergeInlineUrlsIntoSources(
+  existing: Array<{
+    url: string;
+    domain: string | null;
+    title: string | null;
+    snippet: string | null;
+    source_kind: string;
+    is_official: boolean;
+    rank: number;
+  }>,
+  inlineUrls: string[],
+): Array<{
+  url: string;
+  domain: string | null;
+  title: string | null;
+  snippet: string | null;
+  source_kind: string;
+  is_official: boolean;
+  rank: number;
+}> {
+  if (inlineUrls.length === 0) return existing;
+
+  const seen = new Set(existing.map((s) => s.url.replace(/[#].*$/, "").replace(/\/$/, "")));
+  const merged = [...existing];
+
+  for (const raw of inlineUrls) {
+    let url = raw;
+    try {
+      url = new URL(url).toString();
+    } catch {
+      continue;
+    }
+    const key = url.replace(/[#].*$/, "").replace(/\/$/, "");
+    if (seen.has(key)) continue;
+
+    const domain = getDomain(url);
+    if (isUntrustedDomain(domain)) continue;
+    const isOfficial = isOfficialDomain(domain);
+
+    seen.add(key);
+    merged.push({
+      url,
+      domain,
+      title: null,
+      snippet: null,
+      source_kind: classifySource(domain, isOfficial),
+      is_official: isOfficial,
+      rank: 0,
+    });
+  }
+
+  return merged
+    .slice(0, 8)
+    .map((s, i) => ({ ...s, rank: i + 1 }));
 }
 
 /**

@@ -10,6 +10,44 @@ type Block =
   | { kind: "ul"; items: string[] }
   | { kind: "ol"; items: string[] };
 
+/**
+ * AI cevabı bazen `web_search` çıktılarını metnin içine inline markdown link
+ * olarak gömüyor (örn. " ([esteri.it](https://www.esteri.it/…?utm_source=openai))").
+ * Bu citation'lar:
+ *  - mobilde uzun URL ile yan tarafa taşıyor,
+ *  - tıklanabilir değil (markdown link rendering yok),
+ *  - zaten ayrı `AiSourcesList` kartında resmi kaynak olarak gösteriliyor.
+ *
+ * Bu yüzden render öncesi metinden temizleniyorlar. Sıralama önemli; en spesifik
+ * patternden başlanır:
+ *  1) " ([text](url))"  → tamamen silinir (etrafındaki parantez dahil)
+ *  2) " (url)"          → tamamen silinir
+ *  3) "[text](url)"     → sadece url silinir, açıklayıcı text korunur
+ *  4) " https://…"      → çıplak URL silinir
+ *
+ * Sonrasında çift boşluk, "boşluk + nokta", boş parantez gibi tortular düzeltilir.
+ */
+function stripInlineCitations(text: string): string {
+  if (!text || !text.includes("(") && !text.includes("[")) return text;
+  let s = text;
+
+  s = s.replace(/\s*\(\s*\[[^\]]+\]\(\s*https?:\/\/[^\s)]+\s*\)\s*\)/g, "");
+  s = s.replace(/\s*\(\s*https?:\/\/[^\s)]+\s*\)/g, "");
+  s = s.replace(/\[([^\]]+)\]\(\s*https?:\/\/[^\s)]+\s*\)/g, "$1");
+  s = s.replace(/\s+https?:\/\/[^\s)]+/g, "");
+
+  s = s.replace(/[ \t]{2,}/g, " ");
+  s = s.replace(/[ \t]+([.,;:!?])/g, "$1");
+  s = s.replace(/\(\s*\)/g, "");
+  s = s
+    .split("\n")
+    .map((l) => l.replace(/[ \t]+$/g, ""))
+    .join("\n");
+  s = s.replace(/\n{3,}/g, "\n\n");
+
+  return s.trim();
+}
+
 type Section = {
   /** H2 başlığı; null ise pre-H2 (intro) bloklarıdır */
   heading: { text: string; emoji: string | null } | null;
@@ -288,8 +326,8 @@ function SectionCard({
   const bodyId = `ai-section-body-${index}`;
 
   return (
-    <div className="ai-section mt-4 first:mt-3">
-      <h3 className="mb-1.5 flex items-center gap-2 border-l-2 border-[#0B3C5D]/35 pl-2.5 text-base font-bold leading-snug tracking-tight text-slate-900">
+    <div className="ai-section mt-6 first:mt-4">
+      <h3 className="mb-2 flex items-center gap-2 border-l-2 border-[#0B3C5D]/35 pl-2.5 text-base font-bold leading-snug tracking-tight text-slate-900">
         {emoji ? (
           <span aria-hidden className="text-base leading-none">
             {emoji}
@@ -303,7 +341,7 @@ function SectionCard({
         className={
           open
             ? "ai-section-body"
-            : "ai-section-body relative max-h-[3.6rem] overflow-hidden mask-[linear-gradient(to_bottom,black_55%,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,black_55%,transparent)]"
+            : "ai-section-body relative max-h-28 overflow-hidden mask-[linear-gradient(to_bottom,black_70%,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,black_70%,transparent)]"
         }
       >
         {section.body.map((b, j) => renderBlock(b, j))}
@@ -314,7 +352,7 @@ function SectionCard({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls={bodyId}
-        className="mt-1.5 inline-flex items-center gap-1 text-[12.5px] font-semibold text-[#0B3C5D] transition hover:text-[#072a44]"
+        className="mt-2 inline-flex items-center gap-1 text-[12.5px] font-semibold text-[#0B3C5D] transition hover:text-[#072a44]"
       >
         <span>{open ? "Daha az göster" : "Devamını oku"}</span>
         <svg
@@ -357,7 +395,10 @@ function SectionCard({
  * Renkler design system primary tonunu (#0B3C5D) korur.
  */
 export function AiMessageContent({ content }: Props) {
-  const blocks = useMemo(() => parseBlocks(content), [content]);
+  const blocks = useMemo(
+    () => parseBlocks(stripInlineCitations(content)),
+    [content],
+  );
   const sections = useMemo(() => groupSections(blocks), [blocks]);
 
   if (sections.length === 0) return null;
