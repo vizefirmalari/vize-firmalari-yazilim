@@ -106,7 +106,7 @@ export function AiSourcesList({ sources }: Props) {
           Kaynaklar
         </h3>
         <p className="mt-1 text-xs leading-relaxed text-[#64748b]">
-          OpenAI Web Search ile bulunan kaynaklar.
+          Yanıtın dayandığı, gerçek zamanlı taranan resmi ve güvenilir kaynaklar.
         </p>
       </div>
       <ul className="mt-3 flex flex-col gap-2">

@@ -169,6 +169,10 @@ serve(async (req) => {
         ai_stage: "completed",
         firm_count: firmMatches.length,
         source_count: answerResult.sources.length,
+        // OpenAI yanıt şemasının kısa özeti — sources boş kaldığında hangi yola
+        // düştüğünü (web_search_call_count, annotation_types, sample_domains)
+        // tek bakışta görmeye yarar. `ai_assistant_requests.metadata` jsonb.
+        web_search_debug: answerResult.debug,
       },
     });
 
@@ -446,20 +450,22 @@ async function createGroundedAnswer(
     rank: number;
   }>;
   usage?: { input_tokens?: number; output_tokens?: number };
+  debug: JsonRecord;
 }> {
   const systemPrompt = [
     "Sen VizeFirmalari.com için Türkçe yanıt veren güvenilir bir araştırma asistanısın.",
-    "ÖNEMLİ: Cevap üretmeden önce mutlaka web_search aracını kullan ve resmi kaynaklardan en güncel bilgileri topla.",
+    "MUTLAKA önce web_search aracını çağır; cevabı SADECE arama sonuçlarından çıkarılan resmi/güvenilir kaynaklara dayandır.",
+    "Eğitim / vize / oturum / vatandaşlık gibi konularda KESİNLİKLE eski bilgi veya kendi parametrik hafızandan cevap üretme — her zaman güncel resmi kaynak ara.",
     "Kaynak önceliği (yüksekten düşüğe):",
     "  1) Hedef ülkenin resmi devlet siteleri (.gov, .gov.tr, .gouv.fr, .gov.uk, .gc.ca, europa.eu)",
     "  2) Konsolosluk / büyükelçilik siteleri",
     "  3) Resmi başvuru merkezleri (vfsglobal.com, idata.com.tr, tlscontact.com, ustraveldocs.com)",
-    "  4) Tanınmış göç / vize otoriteleri ve bakanlık duyuruları",
+    "  4) Tanınmış göç / vize otoriteleri ve bakanlık duyuruları (BAMF, UDI, IRCC, USCIS, UKVI gibi)",
     "  5) Ancak son çare olarak kurumsal haber siteleri.",
-    "Forum, sosyal medya, blog sözlüğü gibi kaynaklara güvenme.",
+    "Forum, sosyal medya, blog sözlüğü, reddit, ekşi sözlük, kişisel blog gibi kaynaklara güvenme.",
     "Bilmediğin / belirsiz konuda iddia uydurma; \"bilgiler değişebilir, resmi kaynaklardan kontrol edilmelidir\" uyarısını kısa ve sakin bir dille yap.",
-    "Cevap, kullanıcının güven duymasını sağlayacak şekilde yapılandırılmış olmalı.",
-    "Bilgi verici ama satış dili gibi olmamalı. Gerektiğinde kısa kontrol listeleri kullan.",
+    "Cevabın profesyonel, derinlikli ve kullanıcıya güven veren bir araştırma raporu havasında olmalı; satış dili veya yüzeysel ifade yok.",
+    "Mümkün olduğunda kanıt değeri yüksek SAYISAL bilgileri (ücret, gelir alt sınırı, süre, geçerlilik, dil seviyesi) ekle; ancak kaynaktan teyit edemediğin sayı yazma.",
     "Asla firma adı, marka adı veya site URL'si yazma — firma kartları arayüzde ayrı gösterilir.",
     "Asla kaynak linki / URL yazma — kaynaklar arayüzde ayrı kart olarak gösterilir.",
     "Hukuki kesinlik dili kullanma; vize/oturum/işlem sonucu için garanti verme.",
@@ -468,42 +474,49 @@ async function createGroundedAnswer(
 
   const userPrompt = `Kullanıcının sorusu: ${input.prompt}
 
-Cevabın AŞAĞIDAKİ Markdown formatında olmalı (başlıkları aynen kullan, sırayı değiştirme):
+YAPMAN GEREKENLER (sırayla):
+1) ÖNCE web_search aracını çağır. Hedef ülkenin RESMİ kaynaklarından (.gov, .gov.tr, .gouv.fr, .gov.uk, .gc.ca, europa.eu, BAMF, UDI, IRCC, USCIS, UKVI, konsolosluk siteleri, vfsglobal/idata/tlscontact) güncel bilgileri topla.
+2) En az 2-3 farklı resmi kaynak gez; tek bir kaynağa bağımlı kalma.
+3) SONRA topladığın bilgilerle aşağıdaki Markdown formatında profesyonel bir araştırma kartı yaz.
+
+Cevap formatı (başlıkları aynen kullan, sırayı değiştirme):
 
 # [Konuya özel kısa başlık]
 
 ## 🧭 Kısa Bilgi
-2-3 net cümlelik kısa açıklama.
+3-4 cümlelik özet. Konunun kim için olduğunu, hangi kategoride yer aldığını ve genel çerçevesini anlat. Mümkünse vize sınıfı / kategori adını (örn. "Schengen C tipi", "D tipi ulusal vize", "Çalışma vizesi - Mavi Kart") belirt.
 
 ## 📌 Başvuru Süreci
-- Sürecin genel akışı
-- Başvurunun hangi kurum / kanal mantığıyla ilerlediği
-- Ülkeye veya başvuru türüne göre değişebileceği
+- Sürecin temel adımları (3-5 madde)
+- Hangi resmi kurum / başvuru merkezi üzerinden ilerlediği (kurum adı yaz, URL yazma)
+- Tahmini işlem süresi (gün / hafta) — sayısal bilgiyi resmi kaynaktan teyit ettiğinde yaz
+- Randevu, biyometri, mülakat gibi temel aşamalar varsa belirt
 
 ## 📄 Gerekli Belgeler
-- Genel belge kategorileri
-- "Genellikle" ifadesini kullan
-- Kesin liste gibi davranma
+- Genel belge kategorileri (3-5 madde)
+- Konuya özel ek belgeler (iş sözleşmesi, kabul mektubu, mali kanıt, sigorta, dil sertifikası vb.)
+- Resmi liste değişkenliği için "genellikle" / "başvuru türüne göre" ifadelerini kullan
 
 ## ⚠️ Dikkat Edilmesi Gerekenler
-- Vize / oturum / izin sonucu için garanti yoktur
+- Vize / oturum / izin sonucu için GARANTİ yoktur
+- Vize ücreti, gelir alt sınırı, dil seviyesi (örn. A2, B1), sigorta limiti gibi sayısal kritik koşullar (yalnızca resmi kaynakta gördüklerini)
 - Resmi mevzuat ve konsolosluk koşulları değişebilir; başvurudan önce ilgili konsolosluk veya resmi otorite sayfası kontrol edilmelidir
-- Konuya özel kısa bir uyarı
 
 ## ✅ Ne Yapabilirsiniz?
-- Kullanıcıya bir sonraki mantıklı adımı söyle
-- Örn: "Aşağıdaki firmalar arasından bu alanda hizmet verenleri inceleyebilirsiniz."
+- Bir sonraki mantıklı adım (resmi başvuru sayfasını kontrol etme, randevu açılış takibi, belge ön hazırlığı gibi)
+- "Aşağıdaki firmalar arasından bu alanda hizmet verenleri inceleyebilirsiniz." benzeri bir kapanış cümlesi
 - Firma adı veya marka adı yazma
 
 KESİN KURALLAR:
-- Türkçe ve sade yaz.
-- 220-340 kelime aralığında ol.
-- Mobilde okunabilir kısa paragraflar kullan.
-- Her başlığın altında en fazla 3-4 madde olsun.
+- Türkçe ve profesyonel yaz. Cümleler net, açıklayıcı, kısa olsun.
+- 280-400 kelime aralığında ol — yüzeysel olma, ama yoruluncaya kadar uzatma.
+- Mobilde okunabilir kısa paragraflar ve madde işaretleri kullan.
+- Her başlık altında 3-5 madde; tek başına paragraf gerekiyorsa 2-3 cümleyi geçme.
 - Liste için \`- \` (tire + boşluk) kullan.
-- Firma adı / marka adı / URL / kaynak linki yazma.
-- "kesinlikle", "garanti", "kesin" gibi kesinlik bildiren ifadelerden kaçın; "genellikle", "çoğu durumda" gibi tedbirli dil kullan.
+- Firma adı / marka adı / URL / kaynak linki YAZMA.
+- "kesinlikle", "garanti", "şüphesiz", "mutlaka olur" gibi kesinlik bildiren ifadelerden kaçın; "genellikle", "çoğu durumda", "resmi kaynaklara göre" gibi tedbirli dil kullan.
 - Doğrudan # başlığı ile başla; gereksiz uzun giriş yapma.
+- Sayısal bilgi YAZARKEN sadece web_search ile teyit ettiğin değerleri kullan; kanıtlanamayan rakam yazma.
 
 Bağlam (gizli, yanıtta görünmesin):
 - Niyet: ${input.intent}
@@ -558,10 +571,21 @@ Bağlam (gizli, yanıtta görünmesin):
     };
   }
 
+  /**
+   * `tool_choice: { type: "web_search" }` → modeli web aramasına ZORLAR.
+   *
+   * Aksi halde gpt-4.1-mini gibi modeller "auto" modunda çoğu zaman aramayı
+   * atlayıp kendi parametrik hafızasından cevaplar; sonuçta ai_assistant_sources
+   * tablosu boş kalır ve UI'da kaynak kartları görünmez. Bu satır cevap kalitesini
+   * ve "gerçek zamanlı resmi kaynak" güvencesini garanti eder.
+   *
+   * OpenAI dokümantasyonu: "Use tool_choice: 'required' or a specific web search
+   * tool choice when search must run."
+   */
   const requestBody: JsonRecord = {
     model: OPENAI_MODEL,
     tools: [webSearchTool],
-    tool_choice: "auto",
+    tool_choice: { type: "web_search" },
     input: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
@@ -588,11 +612,111 @@ Bağlam (gizli, yanıtta görünmesin):
   const data = await response.json();
   const answer = extractResponseText(data);
   const sources = extractSources(data);
+  const debug = buildSourcesDebugSnapshot(data, sources.length);
+
+  // Edge Function logs üzerinden takip için bir özet bas. Hiç kaynak çıkmadıysa
+  // burada görmek (output_types, web_search_call_count, annotation_count, vs.)
+  // OpenAI yanıt şemasının hangi yola düştüğünü hızlıca anlamayı sağlar.
+  if (sources.length === 0) {
+    console.warn(
+      "[ai-assistant-worker] web_search returned no sources",
+      JSON.stringify(debug)
+    );
+  } else {
+    console.log(
+      `[ai-assistant-worker] web_search sources=${sources.length}`,
+      JSON.stringify(debug)
+    );
+  }
 
   return {
     answer: answer || fallbackAnswer(input.prompt, input.firm_count),
     sources,
     usage: data.usage,
+    debug,
+  };
+}
+
+/**
+ * OpenAI Responses API yanıt şemasının kısa bir özetini çıkarır. Edge Function
+ * log'una ve `ai_assistant_requests.metadata.web_search_debug` alanına yazılır
+ * (tabloda zaten `metadata jsonb` var). Hiç kaynak çıkmadığı senaryolarda
+ * "model arama yaptı mı?", "annotation üretildi mi?" gibi soruları cevaplar.
+ */
+function buildSourcesDebugSnapshot(
+  data: unknown,
+  resolvedSourceCount: number
+): JsonRecord {
+  const d = (data ?? {}) as JsonRecord;
+  const outputArr = Array.isArray((d as JsonRecord).output)
+    ? ((d as JsonRecord).output as unknown[])
+    : [];
+
+  const outputTypes: string[] = [];
+  let webSearchCallCount = 0;
+  let webSearchResultCount = 0;
+  let messageCount = 0;
+  let annotationCount = 0;
+  const annotationTypes = new Set<string>();
+  const sampleDomains = new Set<string>();
+
+  for (const raw of outputArr) {
+    const item = (raw ?? {}) as JsonRecord;
+    const t = typeof item.type === "string" ? item.type : "";
+    if (t) outputTypes.push(t);
+
+    if (t === "web_search_call") {
+      webSearchCallCount += 1;
+      const results = Array.isArray(item.results) ? item.results : [];
+      const action = (item.action ?? {}) as JsonRecord;
+      const actionResults = Array.isArray(action.results) ? action.results : [];
+      const actionSources = Array.isArray(action.sources) ? action.sources : [];
+      webSearchResultCount += results.length + actionResults.length + actionSources.length;
+      for (const candidate of [...results, ...actionResults, ...actionSources]) {
+        const url = (candidate as JsonRecord)?.url;
+        if (typeof url === "string") {
+          try {
+            sampleDomains.add(new URL(url).hostname.replace(/^www\./, ""));
+          } catch {
+            /** non-URL ignore */
+          }
+        }
+      }
+    }
+
+    if (t === "message") {
+      messageCount += 1;
+      const content = Array.isArray(item.content) ? item.content : [];
+      for (const c of content) {
+        const annotations = Array.isArray((c as JsonRecord)?.annotations)
+          ? ((c as JsonRecord).annotations as unknown[])
+          : [];
+        for (const a of annotations) {
+          annotationCount += 1;
+          const at = (a as JsonRecord)?.type;
+          if (typeof at === "string") annotationTypes.add(at);
+          const url = (a as JsonRecord)?.url;
+          if (typeof url === "string") {
+            try {
+              sampleDomains.add(new URL(url).hostname.replace(/^www\./, ""));
+            } catch {
+              /** non-URL ignore */
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    resolved_source_count: resolvedSourceCount,
+    output_types: outputTypes,
+    web_search_call_count: webSearchCallCount,
+    web_search_result_count: webSearchResultCount,
+    message_count: messageCount,
+    annotation_count: annotationCount,
+    annotation_types: [...annotationTypes],
+    sample_domains: [...sampleDomains].slice(0, 12),
   };
 }
 
@@ -725,16 +849,32 @@ function extractSources(data: any): Array<{
     }
 
     // 2) message içindeki annotation'lar — inline citation listesi
+    //    OpenAI Responses API farklı modellerde farklı annotation type adları
+    //    kullanabiliyor (`url_citation`, `url`, `citation`, `web_url`,
+    //    `web_search_result`, `web_citation`, `link`...). Type bazlı whitelist
+    //    yerine "URL benzeri bir alanı varsa kabul et" davranışı daha sağlam.
     for (const content of item?.content ?? []) {
       for (const annotation of content?.annotations ?? []) {
-        const t = annotation?.type;
-        if (t === "url_citation" || t === "url" || t === "citation") {
-          addUrl({
-            url: annotation?.url ?? annotation?.uri ?? annotation?.href,
-            title: annotation?.title ?? annotation?.text,
-            snippet: annotation?.snippet ?? null,
-          });
-        }
+        const candidateUrl =
+          annotation?.url ??
+          annotation?.uri ??
+          annotation?.href ??
+          annotation?.link ??
+          annotation?.source?.url;
+        if (typeof candidateUrl !== "string") continue;
+        addUrl({
+          url: candidateUrl,
+          title:
+            annotation?.title ??
+            annotation?.text ??
+            annotation?.source?.title ??
+            null,
+          snippet:
+            annotation?.snippet ??
+            annotation?.quote ??
+            annotation?.source?.snippet ??
+            null,
+        });
       }
     }
   }
@@ -744,6 +884,7 @@ function extractSources(data: any): Array<{
   visitArray(data?.citations);
   visitArray(data?.web_search_results);
   visitArray(data?.sources);
+  visitArray(data?.tool_results);
 
   // En fazla 8 kaynak ham veri olarak iletilir; UI tarafı 6 ile sınırlar.
   return [...urls.values()].slice(0, 8);
