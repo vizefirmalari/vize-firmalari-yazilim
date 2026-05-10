@@ -602,13 +602,25 @@ Bağlam (gizli, yanıtta görünmesin):
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
+    /**
+     * `include: ["web_search_call.action.sources"]`
+     *
+     * Bu parametre OpenAI'a "web_search çağrısının ham sources listesini de
+     * yanıta koy" der. Modelin annotation/url_citation üretmesine bağımlı
+     * kalmadan kaynakları ele geçirebiliriz; çünkü gpt-4.1-mini gibi bazı
+     * modeller web_search çağrısını gerçekten yapsa bile annotation emit
+     * etmeyebiliyor (sadece düz metin döndürüyor). Bu include sayesinde
+     * worker, `output[*].type === "web_search_call"` item'ının
+     * `action.sources[]` listesinden URL'leri okuyabilir.
+     *
+     * Eğer model bu parametreyi desteklemezse (eski Responses-uyumsuz model
+     * varyasyonları) OpenAI 400 döndürür → aşağıda otomatik olarak include'suz
+     * yeniden denenir.
+     */
+    include: ["web_search_call.action.sources"],
   };
 
-  if (isGpt5Family) {
-    requestBody.include = ["web_search_call.action.sources"];
-  }
-
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  let response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${openaiKey}`,
@@ -616,6 +628,29 @@ Bağlam (gizli, yanıtta görünmesin):
     },
     body: JSON.stringify(requestBody),
   });
+
+  // Model `include` parametresini desteklemiyorsa retry yap (sources erişim
+  // yine de annotation üzerinden mümkün olabilir; cevap kaybolmasın).
+  if (!response.ok && response.status === 400) {
+    const errText = await response.text();
+    if (/include|web_search_call\.action\.sources/i.test(errText)) {
+      console.warn(
+        "[ai-assistant-worker] include param rejected, retrying without it",
+        errText.slice(0, 200),
+      );
+      delete requestBody.include;
+      response = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${openaiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+    } else {
+      throw new Error(`OpenAI answer failed: ${errText}`);
+    }
+  }
 
   if (!response.ok) {
     throw new Error(`OpenAI answer failed: ${await response.text()}`);
