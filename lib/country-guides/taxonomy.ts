@@ -85,45 +85,45 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "Kanada",
         "ca",
         "Kanada",
-        "Express Entry, çalışma izni ve kalıcı oturum süreçlerine genel bakış.",
-        "Kanada vize ve oturum rehberi | Vize Firmaları",
-        "Kanada için vize koşulları, çalışma, oturum ve vatandaşlık rehber girişi; platform üzerinden ülkeye hizmet veren firmaları keşfedin."
+        "Express Entry, TRV, çalışma izni ve PR (kalıcı oturum) ile yapılandırılmış yoğun bir göç sistemine giriş.",
+        "Kanada Vize ve Oturum Rehberi 2026 | Express Entry, TRV ve Çalışma İzni",
+        "Kanada TRV, çalışma izni, Express Entry, PNP ve kalıcı oturum süreçleri; güncel şartları IRCC ile doğrulayın. Platformda Kanada’ya hizmet veren firmaları keşfedin."
       ),
       entry(
         "meksika",
         "Meksika",
         "mx",
         "Meksika",
-        "Turistik ve geçici çalışma vizeleri ile sınır bölgesi başvurularına giriş.",
-        "Meksika vize rehberi | Vize Firmaları",
-        "Meksika için vize ve oturum süreçlerine ülke bazlı rehber girişi; ileride detaylı içerik ve firma listeleriyle genişletilebilir."
+        "INM süreçleri, turistik giriş, geçici / kalıcı oturum ve çalışma yetkisine giriş.",
+        "Meksika Vize ve Oturum Rehberi 2026 | INM, TR ve Çalışma İzni",
+        "Meksika turistik vize, FMM, geçici oturum, kalıcı oturum ve INM çalışma süreçleri; güncel ücret ve tutarları resmî kaynakla doğrulayın. Platformda Meksika’ya hizmet veren firmaları keşfedin."
       ),
       entry(
         "panama",
         "Panama",
         "pa",
         "Panama",
-        "Kanal bölgesi çalışma ve yatırımcı vizeleri ile turistik giriş kurallarına giriş.",
-        "Panama vize rehberi | Vize Firmaları",
-        "Panama için vize, oturum ve çalışma süreçlerine rehber girişi."
+        "Qualified Investor, Friendly Nations, SEM ve kanal bölgesi çalışma izinlerine giriş.",
+        "Panama Vize ve Oturum Rehberi 2026 | Yatırımcı, Friendly Nations ve PR",
+        "Panama turistik giriş, çalışma izni, yatırımcı ve kalıcı oturum süreçleri; güncel eşikleri SNM ve resmî duyurularla doğrulayın. Platformda Panama’ya hizmet veren firmaları keşfedin."
       ),
       entry(
         "kostarika",
         "Kosta Rika",
         "cr",
         "Kostarika",
-        "Turistik ve uzun süreli oturum seçeneklerine giriş.",
-        "Kosta Rika vize rehberi | Vize Firmaları",
-        "Kosta Rika için turistik vize ve oturum rehberi girişi."
+        "Digital Nomad, Pensionado/Rentista ve Inversionista residency yollarına giriş.",
+        "Kosta Rika Vize ve Oturum Rehberi 2026 | Digital Nomad ve Residency",
+        "Kosta Rika turistik giriş, çalışma izni, dijital göçebe ve yatırımcı oturum süreçleri; güncel şartları migracion.go.cr ile doğrulayın. Platformda Kosta Rika’ya hizmet veren firmaları keşfedin."
       ),
       entry(
         "dominik-cumhuriyeti",
         "Dominik Cumhuriyeti",
         "do",
         "Dominik Cumhuriyeti",
-        "Turistik ve aile birleşimi vizeleri ile oturum yollarına giriş.",
-        "Dominik Cumhuriyeti vize rehberi | Vize Firmaları",
-        "Dominik Cumhuriyeti için vize ve çalışma rehberi girişi."
+        "Yatırımcı ve aile birleşimi residency, Pensionado ve turistik girişe giriş.",
+        "Dominik Cumhuriyeti Vize ve Oturum Rehberi 2026 | Residency ve E-Ticket",
+        "Dominik Cumhuriyeti çalışma izni, yatırımcı oturum ve aile birleşimi süreçleri; E-Ticket ve güncel şartları migracion.gob.do ile doğrulayın. Platformda Dominik Cumhuriyeti’ne hizmet veren firmaları keşfedin."
       ),
     ],
   },
@@ -189,8 +189,24 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "Danimarka Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve İkamet",
         "Jobcenter ve jobnet.dk, Workindenmark ile İngilizce iş arama, SIRI AB oturum belgesi ve CPR, toplu sözleşme modeli ve NemKonto bordro, isteğe bağlı A‑kasse, skat.dk vergi ve yüksek yaşam maliyeti ile sarı kart sağlık sistemi özetleriyle EURES kaynaklı rehber; güncel bilgileri lifeindenmark.borger.dk ve nyidanmark.dk üzerinden doğrulayın."
       ),
-      entry("estonya", "Estonya", "ee", "Estonya", "Dijital oturum ve Schengen başvurularına giriş.", "Estonya vize rehberi | Vize Firmaları", "Estonya Schengen ve çalışma rehberi."),
-      entry("finlandiya", "Finlandiya", "fi", "Finlandiya", "Turistik ve çalışma vizeleri ile oturuma giriş.", "Finlandiya vize rehberi | Vize Firmaları", "Finlandiya Schengen başvuruları."),
+      entry(
+        "estonya",
+        "Estonya",
+        "ee",
+        "Estonya",
+        "E-devlet, Tallinn iş piyasası ve geçici oturuma giriş.",
+        "Estonya İş ve Yaşam Rehberi 2026 | Schengen, Oturum ve Blue Card",
+        "Estonya’da iş arama, residence permit, dijital göçebe ve startup yolları, vergi (emta.ee) ve sağlık (tervisekassa.ee) başlıklarında özet; güncel şartları politsei.ee ve Work in Estonia üzerinden doğrulayın."
+      ),
+      entry(
+        "finlandiya",
+        "Finlandiya",
+        "fi",
+        "Finlandiya",
+        "Migri oturum izni, Specialist ve startup yollarına giriş.",
+        "Finlandiya Vize ve Oturum Rehberi 2026 | Schengen, Çalışma ve Helsinki",
+        "Finlandiya’da Schengen C vizesi, çalışma residence permit, Blue Card, Kela ve vergi (vero.fi) başlıklarında özet; maaş eşikleri ve startup şartları migri.fi ile güncel teyit edilmelidir."
+      ),
       entry(
         "fransa",
         "Fransa",

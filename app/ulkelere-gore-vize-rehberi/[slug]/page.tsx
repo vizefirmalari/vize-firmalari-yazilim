@@ -16,6 +16,11 @@ import { SITE_BRAND_NAME, stripTrailingBrandPipeFromTitleSegment } from "@/lib/s
 import { resolveDefaultSiteShareImage } from "@/lib/seo/og-images";
 import { flagUrlForIso } from "@/lib/firma/country-flag";
 import { AmerikaCountryGuideView } from "@/components/country-guides/amerika-country-guide-view";
+import { KanadaCountryGuideView } from "@/components/country-guides/kanada-country-guide-view";
+import { MeksikaCountryGuideView } from "@/components/country-guides/meksika-country-guide-view";
+import { PanamaCountryGuideView } from "@/components/country-guides/panama-country-guide-view";
+import { KostarikaCountryGuideView } from "@/components/country-guides/kostarika-country-guide-view";
+import { DominikCumhuriyetiCountryGuideView } from "@/components/country-guides/dominik-cumhuriyeti-country-guide-view";
 import { AlmanyaCountryGuideView } from "@/components/country-guides/almanya-country-guide-view";
 import { YunanistanCountryGuideView } from "@/components/country-guides/yunanistan-country-guide-view";
 import { ItalyaCountryGuideView } from "@/components/country-guides/italya-country-guide-view";
@@ -27,6 +32,8 @@ import { IsvecCountryGuideView } from "@/components/country-guides/isvec-country
 import { PolonyaCountryGuideView } from "@/components/country-guides/polonya-country-guide-view";
 import { LetonyaCountryGuideView } from "@/components/country-guides/letonya-country-guide-view";
 import { DanimarkaCountryGuideView } from "@/components/country-guides/danimarka-country-guide-view";
+import { EstonyaCountryGuideView } from "@/components/country-guides/estonya-country-guide-view";
+import { FinlandiyaCountryGuideView } from "@/components/country-guides/finlandiya-country-guide-view";
 import { FransaCountryGuideView } from "@/components/country-guides/fransa-country-guide-view";
 import { HirvatistanCountryGuideView } from "@/components/country-guides/hirvatistan-country-guide-view";
 import { AvusturyaCountryGuideView } from "@/components/country-guides/avusturya-country-guide-view";
@@ -39,6 +46,11 @@ import { LitvanyaCountryGuideView } from "@/components/country-guides/litvanya-c
 import { LuksemburgCountryGuideView } from "@/components/country-guides/luksemburg-country-guide-view";
 import { getFirmsForCountryGuide } from "@/lib/data/country-guide-firms";
 import { AMERIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/amerika-guide-sections";
+import { KANADA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/kanada-guide-sections";
+import { MEKSIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/meksika-guide-sections";
+import { PANAMA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/panama-guide-sections";
+import { KOSTARIKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/kostarika-guide-sections";
+import { DOMINIK_CUMHURIYETI_SEO_KEYWORD_TAGS } from "@/lib/country-guides/dominik-cumhuriyeti-guide-sections";
 import { ALMANYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/almanya-guide-sections";
 import { YUNANISTAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/yunanistan-guide-sections";
 import { ITALYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/italya-guide-sections";
@@ -50,6 +62,8 @@ import { ISVEC_SEO_KEYWORD_TAGS } from "@/lib/country-guides/isvec-guide-section
 import { POLONYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/polonya-guide-sections";
 import { LETONYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/letonya-guide-sections";
 import { DANIMARKA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/danimarka-guide-sections";
+import { ESTONYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/estonya-guide-sections";
+import { FINLANDIYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/finlandiya-guide-sections";
 import { FRANSA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/fransa-guide-sections";
 import { HIRVATISTAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/hirvatistan-guide-sections";
 import { AVUSTURYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/avusturya-guide-sections";
@@ -64,6 +78,11 @@ import { LUKSEMBURG_SEO_KEYWORD_TAGS } from "@/lib/country-guides/luksemburg-gui
 type PageProps = { params: Promise<{ slug: string }> };
 
 const AMERIKA_SLUG = "amerika";
+const KANADA_SLUG = "kanada";
+const MEKSIKA_SLUG = "meksika";
+const PANAMA_SLUG = "panama";
+const KOSTARIKA_SLUG = "kostarika";
+const DOMINIK_CUMHURIYETI_SLUG = "dominik-cumhuriyeti";
 const ALMANYA_SLUG = "almanya";
 const YUNANISTAN_SLUG = "yunanistan";
 const ITALYA_SLUG = "italya";
@@ -75,6 +94,8 @@ const ISVEC_SLUG = "isvec";
 const POLONYA_SLUG = "polonya";
 const LETONYA_SLUG = "letonya";
 const DANIMARKA_SLUG = "danimarka";
+const ESTONYA_SLUG = "estonya";
+const FINLANDIYA_SLUG = "finlandiya";
 const FRANSA_SLUG = "fransa";
 const HIRVATISTAN_SLUG = "hirvatistan";
 const AVUSTURYA_SLUG = "avusturya";
@@ -106,12 +127,39 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
           url: absoluteUrl("/country-guides/amerika/new-york-liberty-manhattan.png"),
           alt: "Özgürlük Anıtı ve Manhattan silüeti — Amerika vize ve oturum rehberi",
         }
-      : slug === ALMANYA_SLUG
+      : slug === KANADA_SLUG
         ? {
-            url: absoluteUrl("/country-guides/almanya/reichstag-berlin.png"),
-            alt: "Berlin Reichstag — Almanya vize ve oturum rehberi",
+            url: absoluteUrl("/country-guides/kanada/ottawa-parliament-library-golden-hour.png"),
+            alt: "Ottawa Kanada Parlamentosu — Kanada vize ve oturum rehberi",
           }
-        : slug === YUNANISTAN_SLUG
+        : slug === MEKSIKA_SLUG
+          ? {
+              url: absoluteUrl("/country-guides/meksika/cdmx-zocalo-cathedral-flag.png"),
+              alt: "Meksiko Zócalo ve Metropolitan Katedral — Meksika vize ve oturum rehberi",
+            }
+          : slug === PANAMA_SLUG
+            ? {
+                url: absoluteUrl("/country-guides/panama/panama-bay-waterfront-aerial.png"),
+                alt: "Panama City kıyı şeridi ve koy — Panama vize ve oturum rehberi",
+              }
+            : slug === KOSTARIKA_SLUG
+              ? {
+                  url: absoluteUrl("/country-guides/kostarika/turquoise-bay-coastline.png"),
+                  alt: "Kosta Rika turkuaz koy ve kıyı doğası — Kosta Rika vize ve oturum rehberi",
+                }
+              : slug === DOMINIK_CUMHURIYETI_SLUG
+                ? {
+                    url: absoluteUrl(
+                      "/country-guides/dominik-cumhuriyeti/tropical-beach-palapas-aerial.png"
+                    ),
+                    alt: "Dominik Cumhuriyeti Karayip plajı ve palapalar — Dominik Cumhuriyeti vize ve oturum rehberi",
+                  }
+                : slug === ALMANYA_SLUG
+                  ? {
+                      url: absoluteUrl("/country-guides/almanya/reichstag-berlin.png"),
+                      alt: "Berlin Reichstag — Almanya vize ve oturum rehberi",
+                    }
+                  : slug === YUNANISTAN_SLUG
           ? {
               url: absoluteUrl("/country-guides/yunanistan/parthenon-athens.png"),
               alt: "Atina Akropolü Parthenon — Yunanistan vize ve oturum rehberi",
@@ -229,11 +277,30 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                                                     ),
                                                     alt: "Lüksemburg Grund vadisi ve gece aydınlatması — Lüksemburg vize ve oturum rehberi",
                                                   }
-                                                : resolveDefaultSiteShareImage();
+                                                : slug === ESTONYA_SLUG
+                                                  ? {
+                                                      url: absoluteUrl(
+                                                        "/country-guides/estonya/tallinn-old-town-aerial-toompea.png"
+                                                      ),
+                                                      alt: "Tallinn eski şehir kuşbakışı ve Baltık — Estonya iş ve yaşam rehberi",
+                                                    }
+                                                  : slug === FINLANDIYA_SLUG
+                                                    ? {
+                                                        url: absoluteUrl(
+                                                          "/country-guides/finlandiya/helsinki-cathedral-senate-square-aerial.png"
+                                                        ),
+                                                        alt: "Helsinki Katedrali ve Senato Meydanı — Finlandiya vize ve oturum rehberi",
+                                                      }
+                                                    : resolveDefaultSiteShareImage();
   return {
     title: stripTrailingBrandPipeFromTitleSegment(entry.seoTitle),
     description: entry.metaDescription,
     ...(slug === AMERIKA_SLUG ? { keywords: AMERIKA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === KANADA_SLUG ? { keywords: KANADA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === MEKSIKA_SLUG ? { keywords: MEKSIKA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === PANAMA_SLUG ? { keywords: PANAMA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === KOSTARIKA_SLUG ? { keywords: KOSTARIKA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === DOMINIK_CUMHURIYETI_SLUG ? { keywords: DOMINIK_CUMHURIYETI_SEO_KEYWORD_TAGS } : {}),
     ...(slug === ALMANYA_SLUG ? { keywords: ALMANYA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === YUNANISTAN_SLUG ? { keywords: YUNANISTAN_SEO_KEYWORD_TAGS } : {}),
     ...(slug === ITALYA_SLUG ? { keywords: ITALYA_SEO_KEYWORD_TAGS } : {}),
@@ -245,6 +312,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ...(slug === POLONYA_SLUG ? { keywords: POLONYA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === LETONYA_SLUG ? { keywords: LETONYA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === DANIMARKA_SLUG ? { keywords: DANIMARKA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === ESTONYA_SLUG ? { keywords: ESTONYA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === FINLANDIYA_SLUG ? { keywords: FINLANDIYA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === FRANSA_SLUG ? { keywords: FRANSA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === HIRVATISTAN_SLUG ? { keywords: HIRVATISTAN_SEO_KEYWORD_TAGS } : {}),
     ...(slug === AVUSTURYA_SLUG ? { keywords: AVUSTURYA_SEO_KEYWORD_TAGS } : {}),
@@ -285,6 +354,11 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const firmsHref = countryGuideFirmsListingHref(entry.firmCatalogCountryLabel);
   const path = `${COUNTRY_GUIDE_CATALOG_BASE_PATH}/${slug}`;
   const isAmerika = slug === AMERIKA_SLUG;
+  const isKanada = slug === KANADA_SLUG;
+  const isMeksika = slug === MEKSIKA_SLUG;
+  const isPanama = slug === PANAMA_SLUG;
+  const isKostarika = slug === KOSTARIKA_SLUG;
+  const isDominikCumhuriyeti = slug === DOMINIK_CUMHURIYETI_SLUG;
   const isAlmanya = slug === ALMANYA_SLUG;
   const isYunanistan = slug === YUNANISTAN_SLUG;
   const isItalya = slug === ITALYA_SLUG;
@@ -296,6 +370,8 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const isPolonya = slug === POLONYA_SLUG;
   const isLetonya = slug === LETONYA_SLUG;
   const isDanimarka = slug === DANIMARKA_SLUG;
+  const isEstonya = slug === ESTONYA_SLUG;
+  const isFinlandiya = slug === FINLANDIYA_SLUG;
   const isFransa = slug === FRANSA_SLUG;
   const isHirvatistan = slug === HIRVATISTAN_SLUG;
   const isAvusturya = slug === AVUSTURYA_SLUG;
@@ -307,6 +383,13 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const isLitvanya = slug === LITVANYA_SLUG;
   const isLuksemburg = slug === LUKSEMBURG_SLUG;
   const amerikaFirms = isAmerika
+    ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
+    : [];
+  const kanadaFirms = isKanada ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const meksikaFirms = isMeksika ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const panamaFirms = isPanama ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const kostarikaFirms = isKostarika ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const dominikCumhuriyetiFirms = isDominikCumhuriyeti
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
     : [];
   const almanyaFirms = isAlmanya
@@ -324,6 +407,8 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const polonyaFirms = isPolonya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const letonyaFirms = isLetonya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const danimarkaFirms = isDanimarka ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const estonyaFirms = isEstonya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const finlandiyaFirms = isFinlandiya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const fransaFirms = isFransa ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const hirvatistanFirms = isHirvatistan
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
@@ -365,6 +450,16 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
 
           {isAmerika ? (
             <AmerikaCountryGuideView entry={entry} region={region} firms={amerikaFirms} />
+          ) : isKanada ? (
+            <KanadaCountryGuideView entry={entry} region={region} firms={kanadaFirms} />
+          ) : isMeksika ? (
+            <MeksikaCountryGuideView entry={entry} region={region} firms={meksikaFirms} />
+          ) : isPanama ? (
+            <PanamaCountryGuideView entry={entry} region={region} firms={panamaFirms} />
+          ) : isKostarika ? (
+            <KostarikaCountryGuideView entry={entry} region={region} firms={kostarikaFirms} />
+          ) : isDominikCumhuriyeti ? (
+            <DominikCumhuriyetiCountryGuideView entry={entry} region={region} firms={dominikCumhuriyetiFirms} />
           ) : isAlmanya ? (
             <AlmanyaCountryGuideView entry={entry} region={region} firms={almanyaFirms} />
           ) : isYunanistan ? (
@@ -387,6 +482,10 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
             <LetonyaCountryGuideView entry={entry} region={region} firms={letonyaFirms} />
           ) : isDanimarka ? (
             <DanimarkaCountryGuideView entry={entry} region={region} firms={danimarkaFirms} />
+          ) : isEstonya ? (
+            <EstonyaCountryGuideView entry={entry} region={region} firms={estonyaFirms} />
+          ) : isFinlandiya ? (
+            <FinlandiyaCountryGuideView entry={entry} region={region} firms={finlandiyaFirms} />
           ) : isFransa ? (
             <FransaCountryGuideView entry={entry} region={region} firms={fransaFirms} />
           ) : isHirvatistan ? (

@@ -10,7 +10,7 @@ import { COUNTRY_GUIDE_TOPIC_LABELS } from "@/lib/country-guides/topics";
 import { flagUrlForIso } from "@/lib/firma/country-flag";
 import type { FirmRow } from "@/lib/types/firm";
 import type { CountryGuideSlide, GuideSectionBlock } from "@/lib/country-guides/guide-content-types";
-import { FeaturedFirmCard } from "@/components/home/featured-firm-card";
+import { FirmCard } from "@/components/home/firm-card";
 import { HomepageHorizontalScroller } from "@/components/home/homepage-horizontal-scroller";
 import { CountryGuideImageCarousel } from "@/components/country-guides/country-guide-image-carousel";
 import { CountryGuideSections } from "@/components/country-guides/country-guide-sections";
@@ -160,10 +160,16 @@ export function CountryGuidePremiumView({
           </p>
         ) : (
           <div className="mt-6">
-            <HomepageHorizontalScroller gapClass="gap-4 md:gap-5">
+            <HomepageHorizontalScroller
+              gapClass="gap-4 md:gap-5"
+              scrollAreaPbClass="pb-0"
+            >
               {firms.map((firm) => (
-                <div key={firm.id} className="shrink-0 snap-start">
-                  <FeaturedFirmCard firm={firm} />
+                <div
+                  key={firm.id}
+                  className="h-full w-[min(22.5rem,calc(100vw-2.25rem))] shrink-0 snap-start sm:w-90"
+                >
+                  <FirmCard firm={firm} />
                 </div>
               ))}
             </HomepageHorizontalScroller>
