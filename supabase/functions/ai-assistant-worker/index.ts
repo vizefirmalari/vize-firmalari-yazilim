@@ -510,61 +510,75 @@ Bağlam (gizli, yanıtta görünmesin):
 - Sistemde eşleşen firma sayısı: ${input.firm_count}`;
 
   /**
-   * OpenAI Responses API — Web Search aracı (yeni `web_search` controller).
+   * OpenAI Responses API — Web Search aracı (model'e göre koşullu).
    *
-   *  - search_context_size: "high"  → cevabın resmi kaynak yoğunluğu yüksek
-   *  - filters.blocked_domains      → forum / sosyal medya / sözlük türü düşük
-   *                                   güvenilirlikteki domain'ler bloklanır;
-   *                                   resmi devlet / konsolosluk / başvuru
-   *                                   merkezleri whitelist gerektirmeden öne çıkar
-   *  - user_location: TR            → Türkiye'den başvuru bağlamı
-   *  - include: web_search_call.action.sources → cevap üretirken modelin gezdiği
-   *                                              tam URL listesini döndürür
-   *                                              (extractSources tarafından okunur)
-   *  - tool_choice: "auto"          → model gerek görüyorsa atlamayabilir; ama
-   *                                   sistem prompt "mutlaka web_search kullan" diyor
+   * Tüm modellerde GÜVENLE çalışan parametreler:
+   *  - type: "web_search"
+   *  - search_context_size: "high"   (cevabın resmi kaynak yoğunluğu yüksek)
+   *  - user_location: TR             (Türkiye'den başvuru bağlamı)
+   *
+   * SADECE gpt-5.x ailesinde desteklenen yeni denetimler:
+   *  - filters.blocked_domains       (forum / sosyal medya / sözlük blokla)
+   *  - include: web_search_call.action.sources  (modelin gezdiği TAM URL listesi)
+   *
+   * Bilinen kısıtlama: gpt-4.1-mini gibi eski modellerde `filters` /
+   * `include=web_search_call.action.sources` parametreleri 400 döndürür.
+   * `isGpt5Family` flag'i bu özellikleri yalnızca uygun modelde açar.
+   *
+   * tool_choice: "auto" — model gerek görmezse aramayı atlayabilir; sistem
+   *                       prompt "mutlaka web_search kullan" diyerek yönlendirir.
    */
+  const isGpt5Family = /^gpt-5/i.test(OPENAI_MODEL);
+
+  const webSearchTool: JsonRecord = {
+    type: "web_search",
+    search_context_size: "high",
+    user_location: {
+      type: "approximate",
+      country: "TR",
+    },
+  };
+
+  if (isGpt5Family) {
+    webSearchTool.filters = {
+      blocked_domains: [
+        "reddit.com",
+        "quora.com",
+        "wikipedia.org",
+        "eksisozluk.com",
+        "instagram.com",
+        "facebook.com",
+        "x.com",
+        "twitter.com",
+        "tiktok.com",
+        "pinterest.com",
+        "blogspot.com",
+        "wordpress.com",
+      ],
+    };
+  }
+
+  const requestBody: JsonRecord = {
+    model: OPENAI_MODEL,
+    tools: [webSearchTool],
+    tool_choice: "auto",
+    input: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+  };
+
+  if (isGpt5Family) {
+    requestBody.include = ["web_search_call.action.sources"];
+  }
+
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${openaiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: OPENAI_MODEL,
-      tools: [
-        {
-          type: "web_search",
-          search_context_size: "high",
-          filters: {
-            blocked_domains: [
-              "reddit.com",
-              "quora.com",
-              "wikipedia.org",
-              "eksisozluk.com",
-              "instagram.com",
-              "facebook.com",
-              "x.com",
-              "twitter.com",
-              "tiktok.com",
-              "pinterest.com",
-              "blogspot.com",
-              "wordpress.com",
-            ],
-          },
-          user_location: {
-            type: "approximate",
-            country: "TR",
-          },
-        },
-      ],
-      tool_choice: "auto",
-      include: ["web_search_call.action.sources"],
-      input: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
