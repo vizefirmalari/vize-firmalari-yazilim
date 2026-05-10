@@ -453,31 +453,43 @@ async function createGroundedAnswer(
   debug: JsonRecord;
 }> {
   const systemPrompt = [
-    "Sen VizeFirmalari.com için Türkçe yanıt veren güvenilir bir araştırma asistanısın.",
-    "MUTLAKA önce web_search aracını çağır; cevabı SADECE arama sonuçlarından çıkarılan resmi/güvenilir kaynaklara dayandır.",
-    "Eğitim / vize / oturum / vatandaşlık gibi konularda KESİNLİKLE eski bilgi veya kendi parametrik hafızandan cevap üretme — her zaman güncel resmi kaynak ara.",
-    "Kaynak önceliği (yüksekten düşüğe):",
-    "  1) Hedef ülkenin resmi devlet siteleri (.gov, .gov.tr, .gouv.fr, .gov.uk, .gc.ca, europa.eu)",
-    "  2) Konsolosluk / büyükelçilik siteleri",
-    "  3) Resmi başvuru merkezleri (vfsglobal.com, idata.com.tr, tlscontact.com, ustraveldocs.com)",
-    "  4) Tanınmış göç / vize otoriteleri ve bakanlık duyuruları (BAMF, UDI, IRCC, USCIS, UKVI gibi)",
-    "  5) Ancak son çare olarak kurumsal haber siteleri.",
-    "Forum, sosyal medya, blog sözlüğü, reddit, ekşi sözlük, kişisel blog gibi kaynaklara güvenme.",
-    "Bilmediğin / belirsiz konuda iddia uydurma; \"bilgiler değişebilir, resmi kaynaklardan kontrol edilmelidir\" uyarısını kısa ve sakin bir dille yap.",
+    "Sen VizeFirmalari.com için TÜRKÇE yanıt veren güvenilir bir araştırma asistanısın.",
+    "DİL KURALI (ZORUNLU): Cevabın TAMAMI Türkçe olacak. Web search'ten dönen kaynaklar İngilizce, Almanca, Fransızca, İspanyolca veya başka herhangi bir dilde olsa bile bilgileri Türkçeye çevirip yazarsın. Kurum adlarını orijinal yazımıyla bırakabilirsin (ör. 'Auswärtiges Amt', 'BAMF', 'Home Office'), ama açıklayıcı tüm metin Türkçedir.",
+    "MUTLAKA önce web_search aracını çağır ve cevabı YALNIZCA aşağıdaki RESMİ / YASAL kaynak ailelerinden topladığın güncel verilere dayandır.",
+    "Eğitim / vize / oturum / vatandaşlık / iş izni gibi konularda KESİNLİKLE eski bilgi veya kendi parametrik hafızandan cevap üretme.",
+    "İZİN VERİLEN KAYNAK AİLELERİ (yalnızca bunlardan veri topla):",
+    "  • Hedef ülkenin resmi devlet portalları: .gov / .gov.tr / .gov.uk / .gouv.fr / .bund.de / .gc.ca / .gob.es / .gv.at / .admin.ch / .europa.eu / vb.",
+    "  • Bakanlıklar ve göç otoriteleri: Auswärtiges Amt, BAMF, UDI, Migrationsverket, IRCC, USCIS, UKVI / Home Office, US Department of State, Goç İdaresi Başkanlığı, T.C. Dışişleri Bakanlığı vb.",
+    "  • Resmi konsolosluk ve büyükelçilik siteleri (embassy / consulate / büyükelçilik / konsolosluk içeren resmi alan adları).",
+    "  • Resmi yetkilendirilmiş başvuru / vize merkezleri: VFS Global, iDATA, TLScontact, USTravelDocs, BLS International, Capago, VisaMetric.",
+    "  • AB / BM kurumları: europa.eu, schengenvisainfo.europa.eu, etiasvisa.com, un.org, unhcr.org, iom.int.",
+    "  • Resmi sınav / dil otoriteleri (yalnızca dil/eğitim soruları için): IELTS (ielts.org), TOEFL (ets.org), Goethe-Institut, TestDaF, TÖMER vb.",
+    "YASAK KAYNAKLAR (asla kullanma):",
+    "  • Forum, sözlük, blog, kişisel site (reddit, quora, ekşi sözlük, uludağ sözlük, medium, blogspot, wordpress, vb.)",
+    "  • Sosyal medya (facebook, instagram, twitter/x, tiktok, youtube)",
+    "  • Wikipedia, wikitravel, tripadvisor, vize/seyahat forumları",
+    "  • Vize danışmanlık firmalarının pazarlama içerikli blog sayfaları",
+    "Eğer izin verilen kaynak ailelerinde yeterli veri bulamazsan; uydurma yapma, eksik bıraktığın bölümde \"resmi kaynaklarda doğrulanması önerilir\" şeklinde sakin bir uyarı kullan.",
     "Cevabın profesyonel, derinlikli ve kullanıcıya güven veren bir araştırma raporu havasında olmalı; satış dili veya yüzeysel ifade yok.",
     "Mümkün olduğunda kanıt değeri yüksek SAYISAL bilgileri (ücret, gelir alt sınırı, süre, geçerlilik, dil seviyesi) ekle; ancak kaynaktan teyit edemediğin sayı yazma.",
     "Asla firma adı, marka adı veya site URL'si yazma — firma kartları arayüzde ayrı gösterilir.",
     "Asla kaynak linki / URL yazma — kaynaklar arayüzde ayrı kart olarak gösterilir.",
-    "Hukuki kesinlik dili kullanma; vize/oturum/işlem sonucu için garanti verme.",
+    "Hukuki kesinlik dili kullanma; vize / oturum / işlem sonucu için garanti verme.",
     "Cevap her zaman aşağıda istenen Markdown başlık yapısıyla bölünür.",
   ].join(" ");
 
   const userPrompt = `Kullanıcının sorusu: ${input.prompt}
 
 YAPMAN GEREKENLER (sırayla):
-1) ÖNCE web_search aracını çağır. Hedef ülkenin RESMİ kaynaklarından (.gov, .gov.tr, .gouv.fr, .gov.uk, .gc.ca, europa.eu, BAMF, UDI, IRCC, USCIS, UKVI, konsolosluk siteleri, vfsglobal/idata/tlscontact) güncel bilgileri topla.
-2) En az 2-3 farklı resmi kaynak gez; tek bir kaynağa bağımlı kalma.
-3) SONRA topladığın bilgilerle aşağıdaki Markdown formatında profesyonel bir araştırma kartı yaz.
+1) ÖNCE web_search aracını çağır. Aramanı YALNIZCA aşağıdaki resmi / yasal kaynak ailelerinden topla:
+   • Hedef ülkenin RESMİ devlet portalları (.gov, .gov.tr, .gov.uk, .gouv.fr, .bund.de, .gc.ca, .gob.es, .gv.at, .admin.ch, .europa.eu, vb.)
+   • Konsolosluk / büyükelçilik resmi siteleri
+   • Bakanlıklar ve göç otoriteleri (Auswärtiges Amt, BAMF, UDI, Migrationsverket, IRCC, USCIS, UKVI / Home Office, US State Department, T.C. Dışişleri / Göç İdaresi, vb.)
+   • Resmi yetkilendirilmiş başvuru merkezleri (VFS Global, iDATA, TLScontact, USTravelDocs, BLS, Capago, VisaMetric)
+   • AB / BM kurumları (europa.eu, schengenvisainfo.europa.eu, etiasvisa.com, unhcr.org, iom.int)
+2) Forum, blog, sözlük, sosyal medya, Wikipedia, TripAdvisor ve danışmanlık firma blogu kaynaklarına ASLA girme.
+3) Yukarıdaki ailelerden EN AZ 2-3 farklı kaynak gez; tek bir kaynağa bağımlı kalma.
+4) SONRA topladığın bilgilerle aşağıdaki Markdown formatında profesyonel bir araştırma kartı yaz. Resmi kaynakta teyit edemediğin bilgiyi yazma; eksik bıraktığın yerde "resmi kaynaklarda doğrulanması önerilir" şeklinde sakin bir uyarı kullan.
 
 Cevap formatı (başlıkları aynen kullan, sırayı değiştirme):
 
@@ -886,8 +898,47 @@ function extractSources(data: any): Array<{
   visitArray(data?.sources);
   visitArray(data?.tool_results);
 
+  // ────────────────────────────────────────────────────────────────────────
+  //  POST-FILTER: Resmi / yasal kaynak şartı
+  //  ────────────────────────────────────────────────────────────────────────
+  //  Kullanıcı kuralı: Vize / oturum / vatandaşlık gibi konularda yanıt yalnız
+  //  bakanlık, konsolosluk, resmi devlet portalı, AB / BM organları ve resmi
+  //  başvuru merkezlerinden üretilmeli. Forum, blog, sözlük, sosyal medya ve
+  //  kişisel kaynaklar hiçbir koşulda gösterilmemeli.
+  //
+  //  Strateji (kaynak boş kalmasın diye 3 kademe):
+  //    1) Blacklist domain'leri (forum/blog/sosyal medya) tamamen elenir.
+  //    2) Önce gerçek resmi (government/embassy/academic) kaynaklar alınır.
+  //    3) Hâlâ ≥3 kaynağa ulaşılamadıysa "official_org" (VFS, iDATA,
+  //       TLScontact gibi resmi başvuru merkezleri) eklenerek 8'e tamamlanır.
+  //    4) Yine boş kalırsa kalan güvenilir kaynaklara izin verilir; ama
+  //       blacklist asla atlatılmaz.
+  // ────────────────────────────────────────────────────────────────────────
+  const all = [...urls.values()];
+  const allowed = all.filter((s) => !isUntrustedDomain(s.domain));
+
+  const officialFirst = allowed.filter((s) => s.is_official);
+  const applicationCenters = allowed.filter(
+    (s) => !s.is_official && s.source_kind === "application_center",
+  );
+  const remainder = allowed.filter(
+    (s) => !s.is_official && s.source_kind !== "application_center",
+  );
+
+  let curated: Source[] = [];
+  if (officialFirst.length >= 3) {
+    curated = officialFirst.slice(0, 8);
+  } else {
+    curated = [...officialFirst, ...applicationCenters];
+    if (curated.length < 3) curated = [...curated, ...remainder];
+    curated = curated.slice(0, 8);
+  }
+
+  // Rank'leri filter sonrası 1'den itibaren yeniden numaralandır (UI sıralı görünsün).
+  curated = curated.map((s, idx) => ({ ...s, rank: idx + 1 }));
+
   // En fazla 8 kaynak ham veri olarak iletilir; UI tarafı 6 ile sınırlar.
-  return [...urls.values()].slice(0, 8);
+  return curated;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -1632,36 +1683,110 @@ function getDomain(url: string): string | null {
   }
 }
 
+/**
+ * Bir domain'in "resmi devlet / kurumsal otorite" olup olmadığını söyler.
+ * Liste; dünya çapında bilinen gov TLD'leri, AB / Schengen / BM kurumları ve
+ * önde gelen göç otoritelerinin (BAMF, UDI, IRCC, USCIS, UKVI, gov.tr ailesi)
+ * domain'lerini kapsayacak şekilde geniş tutulmuştur.
+ *
+ * Burada VFS/iDATA/TLScontact gibi başvuru merkezleri "official" sayılmaz —
+ * `isOfficialApplicationCenter` ile ayrı bir tier'da değerlendirilirler.
+ */
 function isOfficialDomain(domain: string | null): boolean {
   if (!domain) return false;
+  const d = domain.toLowerCase();
 
+  // 1) Generic government / academic TLD pattern'leri (suffix-aware).
+  const govSuffixes = [
+    // ABD, Türkiye ve klasik gov uzantıları
+    ".gov", ".gov.tr", ".gov.uk", ".gov.au", ".gov.in", ".gov.sg", ".gov.za",
+    ".gov.br", ".gov.mx", ".gov.ar", ".gov.it", ".gov.pl", ".gov.ie",
+    ".gov.gr", ".gov.cn", ".gov.hk", ".gov.tw", ".gov.my", ".gov.ph",
+    ".gov.kr", ".gov.eg", ".gov.sa", ".gov.qa", ".gov.kw", ".gov.bh",
+    ".gov.om", ".gov.az", ".gov.ge", ".gov.al", ".gov.ba", ".gov.mk",
+    ".gov.rs", ".gov.me", ".gov.si", ".gov.hr", ".gov.lt", ".gov.lv",
+    ".gov.ee", ".gov.ru", ".gov.ua", ".gov.by", ".gov.kz", ".gov.uz",
+    // Avrupa ve diğer ulusal varyantlar
+    ".gouv.fr", ".gob.es", ".gob.mx", ".gob.ar", ".gob.cl",
+    ".bund.de", ".admin.ch", ".gv.at", ".belgium.be", ".overheid.nl",
+    ".regeringen.se", ".regeringen.dk", ".regjeringen.no", ".valtioneuvosto.fi",
+    ".gc.ca", ".canada.ca", ".alberta.ca", ".ontario.ca",
+    // AB / uluslararası kurumlar
+    ".europa.eu", ".consilium.europa.eu", ".schengenvisainfo.europa.eu",
+    ".un.org", ".unhcr.org", ".iom.int", ".who.int", ".oecd.org",
+    ".coe.int", ".nato.int", ".worldbank.org",
+    // Akademik (resmi üniversite / araştırma)
+    ".edu", ".ac.uk", ".ac.jp", ".ac.kr", ".edu.au", ".edu.sg",
+    ".edu.tr", ".ac.tr",
+  ];
+  if (govSuffixes.some((suffix) => d.endsWith(suffix) || d.includes(suffix + "/"))) {
+    return true;
+  }
+
+  // 2) Konsolosluk / büyükelçilik / dışişleri benzeri net resmi domain anahtarları.
+  const officialKeywords = [
+    "embassy", "consulate", "konsolos", "buyukelcilik", "buyukelci",
+    "mfa.", "auswaertiges-amt", "auswartiges-amt",
+    "bamf.de", "udi.no", "migrationsverket.se", "ircc", "uscis", "ukvi",
+    "homeoffice.gov.uk", "dhs.gov", "state.gov", "schengenvisainfo",
+    "etiasvisa.com",
+  ];
+  if (officialKeywords.some((kw) => d.includes(kw))) return true;
+
+  return false;
+}
+
+/**
+ * Resmi otoriteler tarafından yetkilendirilmiş başvuru / vize merkezleri.
+ * Devlet sayfası kadar otoriter olmasalar da "yasal kaynak" sayılırlar.
+ */
+function isOfficialApplicationCenter(domain: string | null): boolean {
+  if (!domain) return false;
+  const d = domain.toLowerCase();
   return [
-    ".gov",
-    ".gov.tr",
-    ".gouv",
-    ".gc.ca",
-    ".gov.uk",
-    ".europa.eu",
-    "vfsglobal.com",
+    "vfsglobal.com", "vfsglobal.",
     "idata.com.tr",
     "tlscontact.com",
     "ustraveldocs.com",
-  ].some((pattern) => domain.includes(pattern));
+    "blsinternational.com", "blsspainvisa", "blsindia",
+    "capago.eu",
+    "visametric.com",
+    "gerryvisa.com",
+    "almaviva-visa", "almavivavisaservices",
+  ].some((pattern) => d.includes(pattern));
+}
+
+/**
+ * AI cevabında ASLA kullanılmaması gereken "kişisel görüş / forum / blog /
+ * sözlük" türü kaynaklar. Worker bunları post-process aşamasında atar; bu
+ * sayede gpt-4.1-mini gibi `filters.blocked_domains` parametresini
+ * desteklemeyen modellerde de güvenli sınırı koruyabiliriz.
+ */
+function isUntrustedDomain(domain: string | null): boolean {
+  if (!domain) return false;
+  const d = domain.toLowerCase();
+  return [
+    "reddit.com", "quora.com", "wikipedia.org", "wikitravel.org",
+    "tripadvisor.", "ekşisözlük", "eksisozluk.com", "uludagsozluk.com",
+    "medium.com", "blogspot.", "wordpress.com", "wix.com", "tumblr.com",
+    "facebook.com", "instagram.com", "twitter.com", "x.com", "tiktok.com",
+    "youtube.com", "youtu.be",
+    "donanimhaber.com/forum", "shiftdelete.net/forum",
+    "yandex.", "baidu.",
+  ].some((pattern) => d.includes(pattern));
 }
 
 function classifySource(domain: string | null, isOfficial: boolean): string {
   if (!domain) return "web";
+  const d = domain.toLowerCase();
 
-  if (isOfficial && domain.includes("embassy")) return "embassy";
+  if (isOfficial && (d.includes("embassy") || d.includes("consulate") || d.includes("konsolos"))) {
+    return "embassy";
+  }
+  if (isOfficial && (d.includes(".edu") || d.includes(".ac."))) return "academic";
   if (isOfficial) return "government";
 
-  if (
-    domain.includes("vfsglobal") ||
-    domain.includes("idata") ||
-    domain.includes("tlscontact")
-  ) {
-    return "official_org";
-  }
+  if (isOfficialApplicationCenter(d)) return "application_center";
 
   return "web";
 }
