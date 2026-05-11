@@ -487,13 +487,69 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "Bosna-Hersek Vize ve Oturum Rehberi 2026 | Work Permit, Saraybosna ve TRP",
         "Schengen dışı ulusal göç, C/D vize, Employment Agency work permit ve 2026 kota (7.427 toplam); temporary residence, adres kaydı ve permanent residence yolu. Saraybosna kira bandı ve MojPosao iş arama özeti. Service for Foreigners’ Affairs, MFA ve eVisa duyurularından doğrulayın."
       ),
-      entry("karadag", "Karadağ", "me", "Karadağ", "Turistik ve yatırım temelli oturuma giriş.", "Karadağ vize rehberi | Vize Firmaları", "Karadağ vize ve oturum rehberi."),
-      entry("kuzey-makedonya", "Kuzey Makedonya", "mk", "Kuzey Makedonya", "Ulusal vize süreçlerine giriş.", "Kuzey Makedonya vize rehberi | Vize Firmaları", "Kuzey Makedonya vize rehberi."),
-      entry("sirbistan", "Sırbistan", "rs", "Sırbistan", "Batı Balkan vizeleri, çalışma izni ve oturum süreçlerine giriş.", "Sırbistan vize rehberi | Vize Firmaları", "Sırbistan için vize, çalışma ve oturum rehberi girişi."),
-      entry("andorra", "Andorra", "ad", "Andorra", "Fransa ve İspanya üzerinden erişim kurallarına giriş.", "Andorra vize rehberi | Vize Firmaları", "Andorra için Schengen transit ve giriş mantığı."),
-      entry("monako", "Monako", "mc", "Monako", "Fransa Schengen alanı ile ilişkili giriş kurallarına giriş.", "Monako vize rehberi | Vize Firmaları", "Monako giriş ve vize mantığı."),
-      entry("san-marino", "San Marino", "sm", "San Marino", "İtalya üzerinden erişim kurallarına giriş.", "San Marino vize rehberi | Vize Firmaları", "San Marino için pratik giriş bilgisi."),
-      entry("vatikan", "Vatikan", "va", "Vatikan", "İtalya ve Roma üzerinden ziyaret kurallarına giriş.", "Vatikan ziyaret rehberi | Vize Firmaları", "Vatikan Şehir Devleti için erişim ve ziyaret başlıkları."),
+      entry(
+        "karadag",
+        "Karadağ",
+        "me",
+        "Karadağ",
+        "Digital Nomad, company director ve Privremeni boravak ile yatırım temelli oturuma giriş.",
+        "Karadağ Vize ve Oturum Rehberi 2026 | Digital Nomad, Podgorica ve Kotor",
+        "Schengen dışı ulusal göç, Privremeni boravak, Digital Nomad Residence (2+2 yıl), şirket müdürü residence, work authorization ve gayrimenkul destekli başvurular; eski yatırımcı vatandaşlık programının kapanması. Podgorica ve Budva kira bandı, Türkiye vatandaşları vizesiz rejim değişiklikleri uyarısı. Government of Montenegro – Visas ve Ministry of Interior duyurularından doğrulayın."
+      ),
+      entry(
+        "kuzey-makedonya",
+        "Kuzey Makedonya",
+        "mk",
+        "Kuzey Makedonya",
+        "C/D vize, D tipi zorunluluğu, oturum, çalışma izni kotası, AVRM, asgari ücret ve diaspora vatandaşlık hattına giriş.",
+        "Kuzey Makedonya Vize ve Oturum Rehberi 2026 | Üsküp, Ohri ve Çalışma İzni",
+        "Schengen dışı ulusal göç: C ve D tipi vize, kırk sekiz saat adres kaydı, geçici ve kalıcı oturum, AB/EEA ve Schengen ikametli üçüncü ülke girişleri, Vatandaşlık Kanunu (diaspora ve yatırım hatları), AVRM çalışma izni kotası ve asgari ücret; FZO sağlık ve ilköğretim entegrasyonu. Ohri kira sezonsallığı ve Üsküp yaşam maliyeti özeti. MFA, MVR, AVRM ve Ekonomi ve Çalışma Bakanlığı duyurularından doğrulayın."
+      ),
+      entry(
+        "sirbistan",
+        "Sırbistan",
+        "rs",
+        "Sırbistan",
+        "Single Permit, D tipi vize, DOO şirket ve gayrimenkul temelli geçici oturuma giriş.",
+        "Sırbistan Vize ve Oturum Rehberi 2026 | Single Permit, Belgrad ve Welcome to Serbia",
+        "Batı Balkan ulusal göç: kısa süreli vizesiz giriş (Türkiye için 90/180), D tipi vize, 2024 sonrası Single Permit ile çalışma ve geçici oturum birleşik belge, Welcome to Serbia portalı; DOO şirket ve konut temelli oturum, Belgrad–Novi Sad yaşam özeti. MFA, portal ve T.C. Dışişleri seyahat uyarılarından doğrulayın."
+      ),
+      entry(
+        "andorra",
+        "Andorra",
+        "ad",
+        "Andorra",
+        "Active / passive residence, Schengen transit, 183 gün kuralı ve yatırım eşiklerine giriş.",
+        "Andorra Vize ve Oturum Rehberi 2026 | Active Residence, Passive ve Schengen Transit",
+        "Pireneler prensliği: kara girişi ve Schengen transit, active residence (çalışma / şirket, yılda 183+ gün), passive residence (yılda 90+ gün, yatırım ve AFA depozito özetleri), 2026 kota sıkılaşması, dijital profesyonel modeller, konut krizi ve vatandaşlık kısıtları. Govern d’Andorra ve resmî göç bilgilerinden doğrulayın."
+      ),
+      entry(
+        "monako",
+        "Monako",
+        "mc",
+        "Monako",
+        "Carte de Séjour, Fransa Schengen girişi, çalışma izni ve banka–konut şartlarına giriş.",
+        "Monako Vize ve Oturum Rehberi 2026 | Carte de Séjour, France-Visas ve Monte Carlo",
+        "Fransa ile bağlantılı Schengen girişi, Carte de Séjour, çalışma ve şirket sahibi oturumu, finansal yeterlilik ve Monako bankası mevduat özetleri, konut zorunluluğu, vergi çerçevesi ve dar iş piyasası. Mon Service Public Monaco ve France-Visas duyurularından doğrulayın."
+      ),
+      entry(
+        "san-marino",
+        "San Marino",
+        "sm",
+        "San Marino",
+        "İtalya Schengen girişi, turistik kalış, çalışma izni, şirket ve yatırımcı oturumu, konut ve vatandaşlık hattına giriş.",
+        "San Marino Vize ve Oturum Rehberi 2026 | İtalya Schengen, Rimini ve Residence",
+        "Mikro devlet: AB ve resmî Schengen üyesi değil; İtalya ile açık sınır pratiği ve kara yolu erişimi (Bologna, Rimini). Türk vatandaşları için fiilen İtalya Schengen; kısa kalış, çalışma izni, şirket sahibi ve yatırımcı oturumu, konut sıkıntısı, fiili ikamet ve vergi şeffaflığı. 2025–2026 sıkılaşma özetleri. Resmî portallar ve Italy Visa bilgilerinden doğrulayın."
+      ),
+      entry(
+        "vatikan",
+        "Vatikan",
+        "va",
+        "Vatikan",
+        "Roma ve İtalya Schengen girişi, turistik ziyaret, görev temelli residence, Swiss Guard ve vatandaşlık özetine giriş.",
+        "Vatikan Vize ve Oturum Rehberi 2026 | Roma, Schengen ve Holy See",
+        "Enklav devlet: AB ve resmî Schengen üyesi değil; fiilen İtalya ve Schengen erişimi. Türk ziyaretçiler için İtalya Schengen; müze ve bazilika ziyareti, görev dışı kitlesel oturum ve yatırımcı programı yokluğu, vatandaşlığın görev temelli özel rejimi, Swiss Guard ve Roma'da ikamet pratiği. Decreto Flussi ve Schengen kontrolleri dolaylı etkiler. Resmî Vatikan portalları ve İtalya vize bilgilerinden doğrulayın."
+      ),
     ],
   },
   {

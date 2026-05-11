@@ -49,6 +49,13 @@ import { BelarusCountryGuideView } from "@/components/country-guides/belarus-cou
 import { MoldovaCountryGuideView } from "@/components/country-guides/moldova-country-guide-view";
 import { ArnavutlukCountryGuideView } from "@/components/country-guides/arnavutluk-country-guide-view";
 import { BosnaHersekCountryGuideView } from "@/components/country-guides/bosna-hersek-country-guide-view";
+import { KaradagCountryGuideView } from "@/components/country-guides/karadag-country-guide-view";
+import { KuzeyMakedonyaCountryGuideView } from "@/components/country-guides/kuzey-makedonya-country-guide-view";
+import { SirbistanCountryGuideView } from "@/components/country-guides/sirbistan-country-guide-view";
+import { AndorraCountryGuideView } from "@/components/country-guides/andorra-country-guide-view";
+import { MonakoCountryGuideView } from "@/components/country-guides/monako-country-guide-view";
+import { SanMarinoCountryGuideView } from "@/components/country-guides/san-marino-country-guide-view";
+import { VatikanCountryGuideView } from "@/components/country-guides/vatikan-country-guide-view";
 import { FransaCountryGuideView } from "@/components/country-guides/fransa-country-guide-view";
 import { HirvatistanCountryGuideView } from "@/components/country-guides/hirvatistan-country-guide-view";
 import { AvusturyaCountryGuideView } from "@/components/country-guides/avusturya-country-guide-view";
@@ -94,6 +101,13 @@ import { BELARUS_SEO_KEYWORD_TAGS } from "@/lib/country-guides/belarus-guide-sec
 import { MOLDOVA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/moldova-guide-sections";
 import { ARNAVUTLUK_SEO_KEYWORD_TAGS } from "@/lib/country-guides/arnavutluk-guide-sections";
 import { BOSNA_HERSEK_SEO_KEYWORD_TAGS } from "@/lib/country-guides/bosna-hersek-guide-sections";
+import { KARADAG_SEO_KEYWORD_TAGS } from "@/lib/country-guides/karadag-guide-sections";
+import { KUZEY_MAKEDONYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/kuzey-makedonya-guide-sections";
+import { SIRBISTAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/sirbistan-guide-sections";
+import { ANDORRA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/andorra-guide-sections";
+import { MONAKO_SEO_KEYWORD_TAGS } from "@/lib/country-guides/monako-guide-sections";
+import { SAN_MARINO_SEO_KEYWORD_TAGS } from "@/lib/country-guides/san-marino-guide-sections";
+import { VATIKAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/vatikan-guide-sections";
 import { FRANSA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/fransa-guide-sections";
 import { HIRVATISTAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/hirvatistan-guide-sections";
 import { AVUSTURYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/avusturya-guide-sections";
@@ -141,6 +155,13 @@ const BELARUS_SLUG = "belarus";
 const MOLDOVA_SLUG = "moldova";
 const ARNAVUTLUK_SLUG = "arnavutluk";
 const BOSNA_HERSEK_SLUG = "bosna-hersek";
+const KARADAG_SLUG = "karadag";
+const KUZEY_MAKEDONYA_SLUG = "kuzey-makedonya";
+const SIRBISTAN_SLUG = "sirbistan";
+const ANDORRA_SLUG = "andorra";
+const MONAKO_SLUG = "monako";
+const SAN_MARINO_SLUG = "san-marino";
+const VATIKAN_SLUG = "vatikan";
 const FRANSA_SLUG = "fransa";
 const HIRVATISTAN_SLUG = "hirvatistan";
 const AVUSTURYA_SLUG = "avusturya";
@@ -441,7 +462,56 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                                                                                       ),
                                                                                       alt: "Mostar Eski Köprü ve Neretva — Bosna-Hersek vize ve oturum rehberi",
                                                                                     }
-                                                                                  : resolveDefaultSiteShareImage();
+                                                                                  : slug === KARADAG_SLUG
+                                                                                    ? {
+                                                                                        url: absoluteUrl(
+                                                                                          "/country-guides/karadag/kotor-bay-montenegro-flag-fortress-panorama.png"
+                                                                                        ),
+                                                                                        alt: "Kotor Körfezi ve Karadağ bayrağı — Karadağ vize ve oturum rehberi",
+                                                                                      }
+                                                                                    : slug === KUZEY_MAKEDONYA_SLUG
+                                                                                      ? {
+                                                                                          url: absoluteUrl(
+                                                                                            "/country-guides/kuzey-makedonya/skopje-stone-bridge-vardar.png"
+                                                                                          ),
+                                                                                          alt: "Üsküp taş köprü ve Vardar — Kuzey Makedonya vize ve oturum rehberi",
+                                                                                        }
+                                                                                      : slug === SIRBISTAN_SLUG
+                                                                                        ? {
+                                                                                            url: absoluteUrl(
+                                                                                              "/country-guides/sirbistan/belgrade-sava-old-town-panorama.png"
+                                                                                            ),
+                                                                                            alt: "Belgrad Sava kıyısı ve şehir silüeti — Sırbistan vize ve oturum rehberi",
+                                                                                          }
+                                                                                        : slug === ANDORRA_SLUG
+                                                                                          ? {
+                                                                                              url: absoluteUrl(
+                                                                                                "/country-guides/andorra/andorra-la-vella-valley-twilight.png"
+                                                                                              ),
+                                                                                              alt: "Andorra la Vella vadisi ve akşam ışıkları — Andorra vize ve oturum rehberi",
+                                                                                            }
+                                                                                          : slug === MONAKO_SLUG
+                                                                                            ? {
+                                                                                                url: absoluteUrl(
+                                                                                                  "/country-guides/monako/monaco-mediterranean-sunset-panorama.png"
+                                                                                                ),
+                                                                                                alt: "Monako ve Akdeniz kıyısı, gün batımı — Monako vize ve oturum rehberi",
+                                                                                              }
+                                                                                            : slug === SAN_MARINO_SLUG
+                                                                                              ? {
+                                                                                                  url: absoluteUrl(
+                                                                                                    "/country-guides/san-marino/san-marino-guaita-tower-mount-titano.png"
+                                                                                                  ),
+                                                                                                  alt: "Monte Titano Guaita kulesi ve surlar — San Marino vize ve oturum rehberi",
+                                                                                                }
+                                                                                              : slug === VATIKAN_SLUG
+                                                                                                ? {
+                                                                                                    url: absoluteUrl(
+                                                                                                      "/country-guides/vatikan/vatican-st-peters-basilica-dome-cityscape.png"
+                                                                                                    ),
+                                                                                                    alt: "Aziz Petrus Bazilikası kubbesi ve Roma çatıları — Vatikan vize ve oturum rehberi",
+                                                                                                  }
+                                                                                                : resolveDefaultSiteShareImage();
   return {
     title: stripTrailingBrandPipeFromTitleSegment(entry.seoTitle),
     description: entry.metaDescription,
@@ -479,6 +549,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ...(slug === MOLDOVA_SLUG ? { keywords: MOLDOVA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === ARNAVUTLUK_SLUG ? { keywords: ARNAVUTLUK_SEO_KEYWORD_TAGS } : {}),
     ...(slug === BOSNA_HERSEK_SLUG ? { keywords: BOSNA_HERSEK_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === KARADAG_SLUG ? { keywords: KARADAG_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === KUZEY_MAKEDONYA_SLUG ? { keywords: KUZEY_MAKEDONYA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === SIRBISTAN_SLUG ? { keywords: SIRBISTAN_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === ANDORRA_SLUG ? { keywords: ANDORRA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === MONAKO_SLUG ? { keywords: MONAKO_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === SAN_MARINO_SLUG ? { keywords: SAN_MARINO_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === VATIKAN_SLUG ? { keywords: VATIKAN_SEO_KEYWORD_TAGS } : {}),
     ...(slug === FRANSA_SLUG ? { keywords: FRANSA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === HIRVATISTAN_SLUG ? { keywords: HIRVATISTAN_SEO_KEYWORD_TAGS } : {}),
     ...(slug === AVUSTURYA_SLUG ? { keywords: AVUSTURYA_SEO_KEYWORD_TAGS } : {}),
@@ -552,6 +629,13 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const isMoldova = slug === MOLDOVA_SLUG;
   const isArnavutluk = slug === ARNAVUTLUK_SLUG;
   const isBosnaHersek = slug === BOSNA_HERSEK_SLUG;
+  const isKaradag = slug === KARADAG_SLUG;
+  const isKuzeyMakedonya = slug === KUZEY_MAKEDONYA_SLUG;
+  const isSirbistan = slug === SIRBISTAN_SLUG;
+  const isAndorra = slug === ANDORRA_SLUG;
+  const isMonako = slug === MONAKO_SLUG;
+  const isSanMarino = slug === SAN_MARINO_SLUG;
+  const isVatikan = slug === VATIKAN_SLUG;
   const isFransa = slug === FRANSA_SLUG;
   const isHirvatistan = slug === HIRVATISTAN_SLUG;
   const isAvusturya = slug === AVUSTURYA_SLUG;
@@ -606,6 +690,15 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const moldovaFirms = isMoldova ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const arnavutlukFirms = isArnavutluk ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const bosnaHersekFirms = isBosnaHersek ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const karadagFirms = isKaradag ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const kuzeyMakedonyaFirms = isKuzeyMakedonya
+    ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
+    : [];
+  const sirbistanFirms = isSirbistan ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const andorraFirms = isAndorra ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const monakoFirms = isMonako ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const sanMarinoFirms = isSanMarino ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const vatikanFirms = isVatikan ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const fransaFirms = isFransa ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const hirvatistanFirms = isHirvatistan
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
@@ -713,6 +806,20 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
             <ArnavutlukCountryGuideView entry={entry} region={region} firms={arnavutlukFirms} />
           ) : isBosnaHersek ? (
             <BosnaHersekCountryGuideView entry={entry} region={region} firms={bosnaHersekFirms} />
+          ) : isKaradag ? (
+            <KaradagCountryGuideView entry={entry} region={region} firms={karadagFirms} />
+          ) : isKuzeyMakedonya ? (
+            <KuzeyMakedonyaCountryGuideView entry={entry} region={region} firms={kuzeyMakedonyaFirms} />
+          ) : isSirbistan ? (
+            <SirbistanCountryGuideView entry={entry} region={region} firms={sirbistanFirms} />
+          ) : isAndorra ? (
+            <AndorraCountryGuideView entry={entry} region={region} firms={andorraFirms} />
+          ) : isMonako ? (
+            <MonakoCountryGuideView entry={entry} region={region} firms={monakoFirms} />
+          ) : isSanMarino ? (
+            <SanMarinoCountryGuideView entry={entry} region={region} firms={sanMarinoFirms} />
+          ) : isVatikan ? (
+            <VatikanCountryGuideView entry={entry} region={region} firms={vatikanFirms} />
           ) : isFransa ? (
             <FransaCountryGuideView entry={entry} region={region} firms={fransaFirms} />
           ) : isHirvatistan ? (
