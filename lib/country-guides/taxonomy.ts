@@ -406,8 +406,24 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
     seoIntro:
       "İrlanda ve Kıbrıs (Rum Kesimi) Schengen üyesi değildir; Birleşik Krallık ve Batı Balkan ülkeleri için ayrı vize ve oturum mantığı geçerlidir.",
     countries: [
-      entry("ingiltere", "Birleşik Krallık (İngiltere)", "gb", "İngiltere", "Ziyaret, çalışma ve öğrenci vizeleri ile Skilled Worker süreçlerine giriş.", "İngiltere vize rehberi | Vize Firmaları", "İngiltere için vize koşulları, çalışma ve oturum rehberi girişi."),
-      entry("irlanda", "İrlanda", "ie", "İrlanda", "Schengen dışı; çalışma ve oturum süreçlerine giriş.", "İrlanda vize rehberi | Vize Firmaları", "İrlanda için çalışma vizesi ve oturum rehberi."),
+      entry(
+        "ingiltere",
+        "Birleşik Krallık (İngiltere)",
+        "gb",
+        "İngiltere",
+        "Skilled Worker, Standard Visitor ve ETA özetine giriş.",
+        "Birleşik Krallık (İngiltere) Vize ve Oturum Rehberi 2026 | Skilled Worker, ILR, ETA",
+        "Brexit sonrası puan bazlı göç, sponsor ve CoS, Skilled Worker maaş eşikleri, Standard Visitor, Graduate Visa, ILR tartışmaları ve Londra kira bandı özeti. Ücret ve şartları UKVI ve NHS kaynaklarından doğrulayın."
+      ),
+      entry(
+        "irlanda",
+        "İrlanda",
+        "ie",
+        "İrlanda",
+        "Critical Skills, Stamp sistemi ve Schengen dışı AB vize özetine giriş.",
+        "İrlanda Vize ve Oturum Rehberi 2026 | Critical Skills, Stamp 4 ve Dublin",
+        "AB üyesi Schengen dışı ulusal vize, CSEP ve General Employment Permit maaş eşikleri, Stamp 1–4, reckonable residence ve Dublin kira bandı özeti. Şartları Irish Immigration Service ve employment permit duyurularından doğrulayın."
+      ),
       entry(
         "kibris",
         "Kıbrıs (Rum Kesimi)",
@@ -417,12 +433,60 @@ export const COUNTRY_GUIDE_REGIONS: CountryGuideRegion[] = [
         "Kıbrıs Vize ve Oturum Rehberi 2026 | AB, Çalışma ve İkamet",
         "Kıbrıs Cumhuriyeti’nde iş arama, başvuru, staj, çıraklık, konut, ikamet, çalışma koşulları, asgari ücret, GHS ve vergi başlıklarında EURES kaynaklı özet rehber; Schengen dışı giriş ve oturum için resmî bilgileri doğrulayın."
       ),
-      entry("ukrayna", "Ukrayna", "ua", "Ukrayna", "Geçici koruma ve ulusal vizelere giriş.", "Ukrayna vize rehberi | Vize Firmaları", "Ukrayna için vize ve oturum başlıkları."),
-      entry("rusya", "Rusya", "ru", "Rusya", "Turistik, ticari ve çalışma vizeleri ile oturum süreçlerine giriş.", "Rusya vize rehberi | Vize Firmaları", "Rusya için vize koşulları, çalışma ve oturum rehberi girişi."),
-      entry("belarus", "Belarus", "by", "Belarus", "Ulusal vize ve sınır politikalarına giriş.", "Belarus vize rehberi | Vize Firmaları", "Belarus için vize süreçleri."),
-      entry("moldova", "Moldova", "md", "Moldova", "Avrupa kökenli ulusal vize süreçlerine giriş.", "Moldova vize rehberi | Vize Firmaları", "Moldova vize rehberi."),
-      entry("arnavutluk", "Arnavutluk", "al", "Arnavutluk", "Turistik ve çalışma vizelerine giriş.", "Arnavutluk vize rehberi | Vize Firmaları", "Arnavutluk için vize rehberi."),
-      entry("bosna-hersek", "Bosna-Hersek", "ba", "Bosna-Hersek", "Turistik ve çalışma süreçlerine giriş.", "Bosna-Hersek vize rehberi | Vize Firmaları", "Bosna-Hersek vize rehberi."),
+      entry(
+        "ukrayna",
+        "Ukrayna",
+        "ua",
+        "Ukrayna",
+        "TRP, work permit ve ulusal C/D vize özetine giriş.",
+        "Ukrayna Vize ve Oturum Rehberi 2026 | TRP, Work Permit ve Kiev",
+        "Schengen dışı ulusal göç, temporary residence permit, işveren work permit, D vize, savaş dönemi uzatma ve sıkılaşan kontroller; Kyiv kira bandı ve güvenlik uyarıları özeti. State Migration Service ve MFA duyurularından doğrulayın."
+      ),
+      entry(
+        "rusya",
+        "Rusya",
+        "ru",
+        "Rusya",
+        "RVP, VNZh, work permit ve e-Visa özetine giriş.",
+        "Rusya Vize ve Oturum Rehberi 2026 | RVP, Work Permit ve Moskova",
+        "Ulusal vize ve göç, TRP (RVP), kalıcı ikamet (VNZh), work permit ve migration registration; skilled visa duyuruları ve Moskova kira bandı özeti. MFA, e-Visa portalı ve içişleri duyurularından doğrulayın."
+      ),
+      entry(
+        "belarus",
+        "Belarus",
+        "by",
+        "Belarus",
+        "Schengen dışı ulusal vize, e-Visa, special work permit ve temporary residence özetine giriş.",
+        "Belarus Vize ve Oturum Rehberi 2026 | Work Permit, Minsk ve Rusya–Belarus Ortak Vize",
+        "Schengen dışı ulusal göç, special work permit ve sponsor işveren, temporary residence (sojourn permit), migration registration ve 2025–2026 Rusya–Belarus ortak vize sistemi; Minsk kira bandı ve Rabota Belarus iş arama özeti. MFA, e-Visa portalı ve Citizenship and Migration Department duyurularından doğrulayın."
+      ),
+      entry(
+        "moldova",
+        "Moldova",
+        "md",
+        "Moldova",
+        "AB adaylığı, residence card ve work permit ile ulusal vize süreçlerine giriş.",
+        "Moldova Vize ve Oturum Rehberi 2026 | Residence Card, Work Permit ve Chișinău",
+        "Schengen dışı ulusal göç, D tipi vize, residence card ve temporary residence, National Employment Agency work permit, dijital göçebe residence ve 2026 göç yasalarında sıkılaşan gelir–konut kanıtı; Chișinău kira bandı ve Rabota Moldova iş arama özeti. MFA, eVisa Moldova ve General Inspectorate for Migration duyurularından doğrulayın."
+      ),
+      entry(
+        "arnavutluk",
+        "Arnavutluk",
+        "al",
+        "Arnavutluk",
+        "e-Visa, D tipi vize, Unique Permit ve dijital göçebe residence özetine giriş.",
+        "Arnavutluk Vize ve Oturum Rehberi 2026 | Unique Permit, e-Visa ve Tiran",
+        "Schengen dışı ulusal göç, e-Visa, D tipi vize ve residence permit; dijital göçebe Unique Permit, Schengen/ABD/İngiltere izniyle koşullu vizesiz giriş ve work authorization özeti. Tiran kira bandı ve Njoftime / Dua Pune iş arama kanalları. MFA, e-Visa portalı ve Visa Regime for Foreign Citizens duyurularından doğrulayın."
+      ),
+      entry(
+        "bosna-hersek",
+        "Bosna-Hersek",
+        "ba",
+        "Bosna-Hersek",
+        "Work permit kotası, temporary residence ve adres kaydı ile ulusal vize süreçlerine giriş.",
+        "Bosna-Hersek Vize ve Oturum Rehberi 2026 | Work Permit, Saraybosna ve TRP",
+        "Schengen dışı ulusal göç, C/D vize, Employment Agency work permit ve 2026 kota (7.427 toplam); temporary residence, adres kaydı ve permanent residence yolu. Saraybosna kira bandı ve MojPosao iş arama özeti. Service for Foreigners’ Affairs, MFA ve eVisa duyurularından doğrulayın."
+      ),
       entry("karadag", "Karadağ", "me", "Karadağ", "Turistik ve yatırım temelli oturuma giriş.", "Karadağ vize rehberi | Vize Firmaları", "Karadağ vize ve oturum rehberi."),
       entry("kuzey-makedonya", "Kuzey Makedonya", "mk", "Kuzey Makedonya", "Ulusal vize süreçlerine giriş.", "Kuzey Makedonya vize rehberi | Vize Firmaları", "Kuzey Makedonya vize rehberi."),
       entry("sirbistan", "Sırbistan", "rs", "Sırbistan", "Batı Balkan vizeleri, çalışma izni ve oturum süreçlerine giriş.", "Sırbistan vize rehberi | Vize Firmaları", "Sırbistan için vize, çalışma ve oturum rehberi girişi."),

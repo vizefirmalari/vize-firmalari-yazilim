@@ -41,6 +41,14 @@ import { PortekizCountryGuideView } from "@/components/country-guides/portekiz-c
 import { RomanyaCountryGuideView } from "@/components/country-guides/romanya-country-guide-view";
 import { SlovakyaCountryGuideView } from "@/components/country-guides/slovakya-country-guide-view";
 import { SlovenyaCountryGuideView } from "@/components/country-guides/slovenya-country-guide-view";
+import { IngiltereCountryGuideView } from "@/components/country-guides/ingiltere-country-guide-view";
+import { IrlandaCountryGuideView } from "@/components/country-guides/irlanda-country-guide-view";
+import { UkraynaCountryGuideView } from "@/components/country-guides/ukrayna-country-guide-view";
+import { RusyaCountryGuideView } from "@/components/country-guides/rusya-country-guide-view";
+import { BelarusCountryGuideView } from "@/components/country-guides/belarus-country-guide-view";
+import { MoldovaCountryGuideView } from "@/components/country-guides/moldova-country-guide-view";
+import { ArnavutlukCountryGuideView } from "@/components/country-guides/arnavutluk-country-guide-view";
+import { BosnaHersekCountryGuideView } from "@/components/country-guides/bosna-hersek-country-guide-view";
 import { FransaCountryGuideView } from "@/components/country-guides/fransa-country-guide-view";
 import { HirvatistanCountryGuideView } from "@/components/country-guides/hirvatistan-country-guide-view";
 import { AvusturyaCountryGuideView } from "@/components/country-guides/avusturya-country-guide-view";
@@ -78,6 +86,14 @@ import { PORTEKIZ_SEO_KEYWORD_TAGS } from "@/lib/country-guides/portekiz-guide-s
 import { ROMANYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/romanya-guide-sections";
 import { SLOVAKYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/slovakya-guide-sections";
 import { SLOVENYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/slovenya-guide-sections";
+import { INGILTERE_SEO_KEYWORD_TAGS } from "@/lib/country-guides/ingiltere-guide-sections";
+import { IRLANDA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/irlanda-guide-sections";
+import { UKRAYNA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/ukrayna-guide-sections";
+import { RUSYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/rusya-guide-sections";
+import { BELARUS_SEO_KEYWORD_TAGS } from "@/lib/country-guides/belarus-guide-sections";
+import { MOLDOVA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/moldova-guide-sections";
+import { ARNAVUTLUK_SEO_KEYWORD_TAGS } from "@/lib/country-guides/arnavutluk-guide-sections";
+import { BOSNA_HERSEK_SEO_KEYWORD_TAGS } from "@/lib/country-guides/bosna-hersek-guide-sections";
 import { FRANSA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/fransa-guide-sections";
 import { HIRVATISTAN_SEO_KEYWORD_TAGS } from "@/lib/country-guides/hirvatistan-guide-sections";
 import { AVUSTURYA_SEO_KEYWORD_TAGS } from "@/lib/country-guides/avusturya-guide-sections";
@@ -117,6 +133,14 @@ const PORTEKIZ_SLUG = "portekiz";
 const ROMANYA_SLUG = "romanya";
 const SLOVAKYA_SLUG = "slovakya";
 const SLOVENYA_SLUG = "slovenya";
+const INGILTERE_SLUG = "ingiltere";
+const IRLANDA_SLUG = "irlanda";
+const UKRAYNA_SLUG = "ukrayna";
+const RUSYA_SLUG = "rusya";
+const BELARUS_SLUG = "belarus";
+const MOLDOVA_SLUG = "moldova";
+const ARNAVUTLUK_SLUG = "arnavutluk";
+const BOSNA_HERSEK_SLUG = "bosna-hersek";
 const FRANSA_SLUG = "fransa";
 const HIRVATISTAN_SLUG = "hirvatistan";
 const AVUSTURYA_SLUG = "avusturya";
@@ -361,7 +385,63 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                                                                       ),
                                                                       alt: "Bled Gölü, adadaki kilise ve kale — Slovenya vize ve oturum rehberi",
                                                                     }
-                                                                  : resolveDefaultSiteShareImage();
+                                                                  : slug === INGILTERE_SLUG
+                                                                    ? {
+                                                                        url: absoluteUrl(
+                                                                          "/country-guides/ingiltere/london-tower-bridge-thames-aerial.png"
+                                                                        ),
+                                                                        alt: "Londra Tower Bridge ve Thames — Birleşik Krallık vize ve oturum rehberi",
+                                                                      }
+                                                                    : slug === IRLANDA_SLUG
+                                                                      ? {
+                                                                          url: absoluteUrl(
+                                                                            "/country-guides/irlanda/dublin-liffey-beckett-bridge-dusk.png"
+                                                                          ),
+                                                                          alt: "Dublin Liffey ve Samuel Beckett Köprüsü — İrlanda vize ve oturum rehberi",
+                                                                        }
+                                                                      : slug === UKRAYNA_SLUG
+                                                                        ? {
+                                                                            url: absoluteUrl(
+                                                                              "/country-guides/ukrayna/kyiv-pechersk-lavra-dnipro-golden-hour.png"
+                                                                            ),
+                                                                            alt: "Kiev Pechersk Lavra ve Dnieper — Ukrayna vize ve oturum rehberi",
+                                                                          }
+                                                                        : slug === RUSYA_SLUG
+                                                                          ? {
+                                                                              url: absoluteUrl(
+                                                                                "/country-guides/rusya/moscow-kremlin-moskva-river-golden-hour.png"
+                                                                              ),
+                                                                              alt: "Moskova Kremlin ve Moskova Nehri — Rusya vize ve oturum rehberi",
+                                                                            }
+                                                                          : slug === BELARUS_SLUG
+                                                                            ? {
+                                                                                url: absoluteUrl(
+                                                                                  "/country-guides/belarus/minsk-riverside-residential-blue-hour.png"
+                                                                                ),
+                                                                                alt: "Minsk nehir kıyısı konut kompleksi — Belarus vize ve oturum rehberi",
+                                                                              }
+                                                                            : slug === MOLDOVA_SLUG
+                                                                              ? {
+                                                                                  url: absoluteUrl(
+                                                                                    "/country-guides/moldova/chisinau-nativity-cathedral-park-autumn.png"
+                                                                                  ),
+                                                                                  alt: "Kişinev Doğum Katedrali ve park — Moldova vize ve oturum rehberi",
+                                                                                }
+                                                                              : slug === ARNAVUTLUK_SLUG
+                                                                                ? {
+                                                                                    url: absoluteUrl(
+                                                                                      "/country-guides/arnavutluk/tirana-skanderbeg-square-panorama-day.png"
+                                                                                    ),
+                                                                                    alt: "Tiran Skanderbeg Meydanı ve simgeler — Arnavutluk vize ve oturum rehberi",
+                                                                                  }
+                                                                                : slug === BOSNA_HERSEK_SLUG
+                                                                                  ? {
+                                                                                      url: absoluteUrl(
+                                                                                        "/country-guides/bosna-hersek/mostar-stari-most-blue-hour-neretva.png"
+                                                                                      ),
+                                                                                      alt: "Mostar Eski Köprü ve Neretva — Bosna-Hersek vize ve oturum rehberi",
+                                                                                    }
+                                                                                  : resolveDefaultSiteShareImage();
   return {
     title: stripTrailingBrandPipeFromTitleSegment(entry.seoTitle),
     description: entry.metaDescription,
@@ -391,6 +471,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ...(slug === ROMANYA_SLUG ? { keywords: ROMANYA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === SLOVAKYA_SLUG ? { keywords: SLOVAKYA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === SLOVENYA_SLUG ? { keywords: SLOVENYA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === INGILTERE_SLUG ? { keywords: INGILTERE_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === IRLANDA_SLUG ? { keywords: IRLANDA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === UKRAYNA_SLUG ? { keywords: UKRAYNA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === RUSYA_SLUG ? { keywords: RUSYA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === BELARUS_SLUG ? { keywords: BELARUS_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === MOLDOVA_SLUG ? { keywords: MOLDOVA_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === ARNAVUTLUK_SLUG ? { keywords: ARNAVUTLUK_SEO_KEYWORD_TAGS } : {}),
+    ...(slug === BOSNA_HERSEK_SLUG ? { keywords: BOSNA_HERSEK_SEO_KEYWORD_TAGS } : {}),
     ...(slug === FRANSA_SLUG ? { keywords: FRANSA_SEO_KEYWORD_TAGS } : {}),
     ...(slug === HIRVATISTAN_SLUG ? { keywords: HIRVATISTAN_SEO_KEYWORD_TAGS } : {}),
     ...(slug === AVUSTURYA_SLUG ? { keywords: AVUSTURYA_SEO_KEYWORD_TAGS } : {}),
@@ -456,6 +544,14 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const isRomanya = slug === ROMANYA_SLUG;
   const isSlovakya = slug === SLOVAKYA_SLUG;
   const isSlovenya = slug === SLOVENYA_SLUG;
+  const isIngiltere = slug === INGILTERE_SLUG;
+  const isIrlanda = slug === IRLANDA_SLUG;
+  const isUkrayna = slug === UKRAYNA_SLUG;
+  const isRusya = slug === RUSYA_SLUG;
+  const isBelarus = slug === BELARUS_SLUG;
+  const isMoldova = slug === MOLDOVA_SLUG;
+  const isArnavutluk = slug === ARNAVUTLUK_SLUG;
+  const isBosnaHersek = slug === BOSNA_HERSEK_SLUG;
   const isFransa = slug === FRANSA_SLUG;
   const isHirvatistan = slug === HIRVATISTAN_SLUG;
   const isAvusturya = slug === AVUSTURYA_SLUG;
@@ -502,6 +598,14 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
   const romanyaFirms = isRomanya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const slovakyaFirms = isSlovakya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const slovenyaFirms = isSlovenya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const ingiltereFirms = isIngiltere ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const irlandaFirms = isIrlanda ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const ukraynaFirms = isUkrayna ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const rusyaFirms = isRusya ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const belarusFirms = isBelarus ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const moldovaFirms = isMoldova ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const arnavutlukFirms = isArnavutluk ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
+  const bosnaHersekFirms = isBosnaHersek ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const fransaFirms = isFransa ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel) : [];
   const hirvatistanFirms = isHirvatistan
     ? await getFirmsForCountryGuide(entry.firmCatalogCountryLabel)
@@ -593,6 +697,22 @@ export default async function CountryGuideCountryPage({ params }: PageProps) {
             <SlovakyaCountryGuideView entry={entry} region={region} firms={slovakyaFirms} />
           ) : isSlovenya ? (
             <SlovenyaCountryGuideView entry={entry} region={region} firms={slovenyaFirms} />
+          ) : isIngiltere ? (
+            <IngiltereCountryGuideView entry={entry} region={region} firms={ingiltereFirms} />
+          ) : isIrlanda ? (
+            <IrlandaCountryGuideView entry={entry} region={region} firms={irlandaFirms} />
+          ) : isUkrayna ? (
+            <UkraynaCountryGuideView entry={entry} region={region} firms={ukraynaFirms} />
+          ) : isRusya ? (
+            <RusyaCountryGuideView entry={entry} region={region} firms={rusyaFirms} />
+          ) : isBelarus ? (
+            <BelarusCountryGuideView entry={entry} region={region} firms={belarusFirms} />
+          ) : isMoldova ? (
+            <MoldovaCountryGuideView entry={entry} region={region} firms={moldovaFirms} />
+          ) : isArnavutluk ? (
+            <ArnavutlukCountryGuideView entry={entry} region={region} firms={arnavutlukFirms} />
+          ) : isBosnaHersek ? (
+            <BosnaHersekCountryGuideView entry={entry} region={region} firms={bosnaHersekFirms} />
           ) : isFransa ? (
             <FransaCountryGuideView entry={entry} region={region} firms={fransaFirms} />
           ) : isHirvatistan ? (
