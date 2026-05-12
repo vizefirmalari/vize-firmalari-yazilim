@@ -405,8 +405,13 @@ export function FirmForm({
     const primary = ADMIN_FIRM_MAIN_SERVICE_CATEGORY_ORDER.filter((n) =>
       mainServiceOptions.includes(n)
     );
-    const orphan = form.main_services.filter((n) => !primary.includes(n));
-    return [...primary, ...orphan];
+    const primarySet = new Set(primary);
+    const orphan = form.main_services.filter((n) => !primarySet.has(n));
+    const rest = mainServiceOptions.filter(
+      (n) => !primarySet.has(n) && !orphan.includes(n)
+    );
+    rest.sort((a, b) => a.localeCompare(b, "tr"));
+    return [...primary, ...orphan, ...rest];
   }, [mainServiceOptions, form.main_services]);
 
   useEffect(() => {
