@@ -48,7 +48,21 @@ function exploreMatches(cat: ExploreCategoryDef, query: string): boolean {
   return parts.some((p) => textMatchesQuery(p, query));
 }
 
-function firmSearchBlob(f: Pick<FirmRow, "name" | "slug" | "short_description" | "brand_name" | "countries" | "main_services" | "services" | "sub_services" | "visa_regions">): string {
+function firmSearchBlob(
+  f: Pick<
+    FirmRow,
+    | "name"
+    | "slug"
+    | "short_description"
+    | "brand_name"
+    | "countries"
+    | "main_services"
+    | "services"
+    | "sub_services"
+    | "visa_regions"
+    | "custom_specializations"
+  >
+): string {
   const chunks = [
     f.name,
     f.brand_name ?? "",
@@ -59,6 +73,13 @@ function firmSearchBlob(f: Pick<FirmRow, "name" | "slug" | "short_description" |
     ...(f.services ?? []),
     ...(f.sub_services ?? []),
   ];
+  for (const c of f.custom_specializations ?? []) {
+    if (c?.label) chunks.push(c.label);
+    if (c?.slug) {
+      chunks.push(c.slug);
+      chunks.push(c.slug.replace(/-/g, " "));
+    }
+  }
   return chunks.filter(Boolean).join(" ");
 }
 
@@ -88,6 +109,7 @@ export function computeGlobalSearchPayload(
       | "business_visa_support"
       | "family_reunion_support"
       | "appeal_support"
+      | "custom_specializations"
     >[];
   }
 ): GlobalSearchPayload {
@@ -175,13 +197,22 @@ export function computeGlobalSearchPayload(
           Boolean((f as unknown as Record<string, unknown>)[key]) &&
           (textMatchesQuery(label, query) || textMatchesQuery(key.replace(/_/g, " "), query))
       );
-      const hit = nameHit || brandHit || blobHit || specHit;
+      const customSpecHit =
+        Array.isArray(f.custom_specializations) &&
+        f.custom_specializations.some(
+          (c) =>
+            textMatchesQuery(c.label, query) ||
+            textMatchesQuery(c.slug, query) ||
+            textMatchesQuery(c.slug.replace(/-/g, " "), query)
+        );
+      const hit = nameHit || brandHit || blobHit || specHit || customSpecHit;
       if (!hit) return null;
       let score = 0;
       if (nameHit) score += 5;
       if (brandHit) score += 3;
       if (blobHit) score += 1;
       if (specHit) score += 2;
+      if (customSpecHit) score += 2;
       return { f, score };
     })
     .filter((x): x is NonNullable<typeof x> => x !== null)

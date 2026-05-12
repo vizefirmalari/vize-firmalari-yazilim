@@ -5,6 +5,7 @@ import { getPublicFilterCountries, getPublicFilterServiceTypes } from "@/lib/dat
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/env";
 import { normalizeFirmRow } from "@/lib/data/firms";
+import { attachFirmCustomSpecializations } from "@/lib/data/specialization-taxonomy";
 import type { FirmRow } from "@/lib/types/firm";
 
 const FIRM_SEARCH_SELECT =
@@ -54,6 +55,7 @@ export async function GET(req: NextRequest) {
     | "business_visa_support"
     | "family_reunion_support"
     | "appeal_support"
+    | "custom_specializations"
   >[] = [];
 
   if (isSupabaseConfigured()) {
@@ -90,8 +92,36 @@ export async function GET(req: NextRequest) {
             business_visa_support: r.business_visa_support ?? null,
             family_reunion_support: r.family_reunion_support ?? null,
             appeal_support: r.appeal_support ?? null,
+            custom_specializations: r.custom_specializations ?? [],
           };
         });
+        if (firms.length > 0) {
+          const enriched = await attachFirmCustomSpecializations(
+            supabase,
+            firms as unknown as FirmRow[]
+          );
+          firms = enriched.map((r) => ({
+            id: r.id,
+            name: r.name,
+            slug: r.slug,
+            short_description: r.short_description ?? null,
+            brand_name: r.brand_name ?? null,
+            countries: r.countries ?? [],
+            main_services: r.main_services ?? [],
+            services: r.services ?? [],
+            sub_services: r.sub_services ?? [],
+            visa_regions: r.visa_regions ?? [],
+            schengen_expert: r.schengen_expert ?? null,
+            usa_visa_expert: r.usa_visa_expert ?? null,
+            student_visa_support: r.student_visa_support ?? null,
+            work_visa_support: r.work_visa_support ?? null,
+            tourist_visa_support: r.tourist_visa_support ?? null,
+            business_visa_support: r.business_visa_support ?? null,
+            family_reunion_support: r.family_reunion_support ?? null,
+            appeal_support: r.appeal_support ?? null,
+            custom_specializations: r.custom_specializations ?? [],
+          }));
+        }
       }
     }
   }
