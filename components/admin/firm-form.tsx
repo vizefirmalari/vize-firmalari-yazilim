@@ -1864,135 +1864,151 @@ export function FirmForm({
 
         <div className={subsection}>
           <p className={groupTitle}>Uzmanlık alanları</p>
-          <p className="mt-1 text-xs text-[#1A1A1A]/45">
+          <FieldHelp>
             Sabit uzmanlıklar mevcut sistemdeki boolean alanlarla saklanır ve skor kuralları aynı kalır. Ek
-            uzmanlıklar taxonomy tablosunda tutulur; yalnızca oluştururken veya kayıtta “skora dahil”
+            uzmanlıklar taxonomy tablosunda tutulur; yalnızca oluştururken veya kayıtta &quot;skora dahil&quot;
             işaretlenen ek alanlar Kurumsallık skorundaki uzmanlık tavanına eklenir (varsayılan kapalı).
-          </p>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {SPECIALIZATION_OPTIONS.map(({ key, label }) => (
-              <label
-                key={key}
-                className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D]"
-              >
-                <input
-                  type="checkbox"
-                  checked={Boolean(form[key as keyof FirmFormState])}
-                  onChange={(e) =>
-                    patch(
-                      key as keyof FirmFormState,
-                      e.target.checked as FirmFormState[keyof FirmFormState]
-                    )
-                  }
-                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                />
-                {label}
-              </label>
-            ))}
-          </div>
+          </FieldHelp>
 
-          <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1A1A]/45">
-            Ek uzmanlık alanları
-          </p>
-          <p className="mt-1 text-xs text-[#1A1A1A]/45">
-            Panelde tanımlı ek uzmanlıkları seçin veya yeni bir alan ekleyin; eklenen alan tüm firmalarda
-            yeniden kullanılabilir.
-          </p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {specTaxonomyRows.map((row) => {
-              const selected = form.custom_specialization_slugs.includes(row.slug);
-              if (!row.is_active && !selected) return null;
-              return (
+          <div className="mt-5 rounded-xl border border-[#0B3C5D]/10 bg-white p-4 shadow-[0_4px_18px_rgba(11,60,93,0.05)]">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#0B3C5D]/80">
+              Sabit uzmanlıklar
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-[#1A1A1A]/50">
+              Aşağıdaki kutular doğrudan firma kaydındaki uzmanlık bayraklarına yazılır (Schengen, ABD, öğrenci vb.).
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {SPECIALIZATION_OPTIONS.map(({ key, label }) => (
                 <label
-                  key={row.slug}
-                  className={`flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D] ${!row.is_active ? "opacity-80" : ""}`}
+                  key={key}
+                  className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/10 bg-[#FAFBFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D]"
                 >
                   <input
                     type="checkbox"
-                    checked={selected}
+                    checked={Boolean(form[key as keyof FirmFormState])}
                     onChange={(e) =>
-                      row.is_active || selected
-                        ? toggleCustomSpecializationSlug(row.slug, e.target.checked)
-                        : undefined
+                      patch(
+                        key as keyof FirmFormState,
+                        e.target.checked as FirmFormState[keyof FirmFormState]
+                      )
                     }
-                    className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                    className="h-4 w-4 shrink-0 rounded border-[#0B3C5D]/25 text-[#328CC1]"
                   />
-                  <span className="min-w-0 flex-1 leading-snug">
-                    {row.label}
-                    {row.affects_corporate_score ? (
-                      <span className="ml-1.5 text-[10px] font-normal text-[#1A1A1A]/40">
-                        (skor)
-                      </span>
-                    ) : null}
-                    {!row.is_active ? (
-                      <span className="ml-1.5 text-[10px] font-normal text-[#1A1A1A]/40">
-                        (pasif)
-                      </span>
-                    ) : null}
-                  </span>
+                  <span className="min-w-0 leading-snug">{label}</span>
                 </label>
-              );
-            })}
+              ))}
+            </div>
           </div>
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-            <label className={`${labelClass} min-w-0 flex-1`}>
-              Yeni uzmanlık alanı adı
+          <div className="mt-5 rounded-xl border border-[#0B3C5D]/10 bg-[#FAFBFC] p-4 shadow-[0_4px_18px_rgba(11,60,93,0.04)]">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#0B3C5D]/80">
+              Ek uzmanlık alanları
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-[#1A1A1A]/50">
+              Panelde tanımlı ek uzmanlıkları seçin veya alttan yeni alan ekleyin; eklenen alan tüm firmalarda yeniden
+              kullanılabilir.
+            </p>
+            <div className="mt-3 max-h-[min(55vh,22rem)] overflow-y-auto rounded-xl border border-[#0B3C5D]/10 bg-white p-2 sm:p-3">
+              <div className="grid gap-2 sm:grid-cols-2">
+                {specTaxonomyRows.map((row) => {
+                  const selected = form.custom_specialization_slugs.includes(row.slug);
+                  if (!row.is_active && !selected) return null;
+                  return (
+                    <label
+                      key={row.slug}
+                      className={`flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D] ${!row.is_active ? "opacity-80" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={(e) =>
+                          row.is_active || selected
+                            ? toggleCustomSpecializationSlug(row.slug, e.target.checked)
+                            : undefined
+                        }
+                        className="h-4 w-4 shrink-0 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                      />
+                      <span className="min-w-0 flex-1 leading-snug">
+                        {row.label}
+                        {row.affects_corporate_score ? (
+                          <span className="ml-1.5 text-[10px] font-normal text-[#1A1A1A]/40">
+                            (skor)
+                          </span>
+                        ) : null}
+                        {!row.is_active ? (
+                          <span className="ml-1.5 text-[10px] font-normal text-[#1A1A1A]/40">
+                            (pasif)
+                          </span>
+                        ) : null}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+              <label className={`${labelClass} min-w-0 flex-1`}>
+                Yeni uzmanlık alanı adı
+                <input
+                  value={newSpecializationDraft}
+                  onChange={(e) => setNewSpecializationDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void addSpecializationInline();
+                    }
+                  }}
+                  placeholder="Örn. Sporcu Vizesi"
+                  maxLength={120}
+                  className={inputClass}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => void addSpecializationInline()}
+                disabled={creatingPicklist === "specialization"}
+                className="shrink-0 rounded-xl border border-[#0B3C5D]/15 bg-white px-4 py-2.5 text-sm font-semibold text-[#0B3C5D] hover:bg-[#eef2f6] disabled:opacity-60"
+              >
+                {creatingPicklist === "specialization" ? "Ekleniyor…" : "Ekle"}
+              </button>
+            </div>
+            <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs font-medium text-[#1A1A1A]/55">
               <input
-                value={newSpecializationDraft}
-                onChange={(e) => setNewSpecializationDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    void addSpecializationInline();
-                  }
-                }}
-                placeholder="Örn. Sporcu Vizesi"
-                maxLength={120}
-                className={inputClass}
+                type="checkbox"
+                checked={newSpecializationAffectsScore}
+                onChange={(e) => setNewSpecializationAffectsScore(e.target.checked)}
+                className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
               />
+              Yeni alanı Kurumsallık skoruna dahil et (varsayılan kapalı; yalnızca bilinçli tercih)
             </label>
-            <button
-              type="button"
-              onClick={() => void addSpecializationInline()}
-              disabled={creatingPicklist === "specialization"}
-              className="shrink-0 rounded-xl border border-[#0B3C5D]/15 px-4 py-2.5 text-sm font-semibold text-[#0B3C5D] hover:bg-[#eef2f6] disabled:opacity-60"
-            >
-              {creatingPicklist === "specialization" ? "Ekleniyor…" : "Ekle"}
-            </button>
           </div>
-          <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs font-medium text-[#1A1A1A]/55">
-            <input
-              type="checkbox"
-              checked={newSpecializationAffectsScore}
-              onChange={(e) => setNewSpecializationAffectsScore(e.target.checked)}
-              className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-            />
-            Yeni alanı Kurumsallık skoruna dahil et (varsayılan kapalı; yalnızca bilinçli tercih)
-          </label>
         </div>
 
         <div className={subsection}>
           <p className={groupTitle}>1 — Ana hizmet kategorileri</p>
-          <p className="mt-1 text-xs text-[#1A1A1A]/45">
-            Firmanın hangi ana hatlarda hizmet verdiğini işaretleyin. Yönetim picklist’inden gelen kategoriler
-            listelenir; istediğiniz kadarını işaretleyebilirsiniz ({form.main_services.length} seçili).
-          </p>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {mainServiceOptions.map((cat) => (
-              <label
-                key={cat}
-                className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#F8FAFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D]"
-              >
-                <input
-                  type="checkbox"
-                  checked={form.main_services.includes(cat)}
-                  onChange={() => toggleMainCategory(cat)}
-                  className="h-4 w-4 rounded border-[#0B3C5D]/25 text-[#328CC1]"
-                />
-                {cat}
-              </label>
-            ))}
+          <FieldHelp>
+            Firmanın hangi ana hatlarda hizmet verdiğini işaretleyin. Liste yönetim panelindeki ana hizmet
+            kategorileri picklist’inden gelir. Şu an {form.main_services.length} kategori seçili — uzun listeler
+            aşağıda kaydırılarak kullanılır.
+          </FieldHelp>
+          <div className="mt-4 max-h-[min(70vh,36rem)] overflow-y-auto rounded-xl border border-[#0B3C5D]/10 bg-white p-3 shadow-[0_4px_18px_rgba(11,60,93,0.05)]">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {mainServiceOptions.map((cat) => (
+                <label
+                  key={cat}
+                  className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#FAFBFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D]"
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.main_services.includes(cat)}
+                    onChange={() => toggleMainCategory(cat)}
+                    className="h-4 w-4 shrink-0 rounded border-[#0B3C5D]/25 text-[#328CC1]"
+                  />
+                  <span className="min-w-0 leading-snug">{cat}</span>
+                </label>
+              ))}
+            </div>
           </div>
           <div className="mt-3 flex gap-2">
             <input
