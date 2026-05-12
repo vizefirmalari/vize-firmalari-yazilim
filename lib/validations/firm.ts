@@ -244,7 +244,7 @@ const firmFormSchemaObject = z.object({
 
   country_ids: z.array(z.string().uuid()),
   featured_country_ids: z.array(z.string().uuid()),
-  main_services: z.array(z.string().max(80)).max(12).default([]),
+  main_services: z.array(z.string().max(80)).max(120).default([]),
   sub_services: z.array(z.string().max(120)).max(120).default([]),
   custom_service_labels: z.array(z.string().max(80)).max(80).default([]),
   tags: z.array(z.string().max(120)).max(80).default([]),

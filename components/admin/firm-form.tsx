@@ -1975,7 +1975,8 @@ export function FirmForm({
         <div className={subsection}>
           <p className={groupTitle}>1 — Ana hizmet kategorileri</p>
           <p className="mt-1 text-xs text-[#1A1A1A]/45">
-            Firmanın hangi ana hatlarda hizmet verdiğini işaretleyin.
+            Firmanın hangi ana hatlarda hizmet verdiğini işaretleyin. Yönetim picklist’inden gelen kategoriler
+            listelenir; istediğiniz kadarını işaretleyebilirsiniz ({form.main_services.length} seçili).
           </p>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {mainServiceOptions.map((cat) => (
