@@ -31,6 +31,11 @@ import {
 } from "@/lib/actions/filters-admin";
 import { createSpecializationTaxonomyFromPanel } from "@/lib/actions/specialization-taxonomy-admin";
 import type { SpecializationTaxonomyRow } from "@/lib/data/specialization-taxonomy";
+import {
+  ADMIN_FIRM_MAIN_SERVICE_CATEGORY_ORDER,
+  ADMIN_FIRM_SPECIALIZATION_TAXONOMY_SLUG_ORDER,
+  ADMIN_SPECIALIZATION_CHECKBOX_LABEL,
+} from "@/lib/constants/admin-firm-form-services-ui";
 import { SPECIALIZATION_OPTIONS } from "@/lib/constants/firm-specializations";
 import { deriveVisaRegions } from "@/lib/visa-regions/derive";
 import { isExcludedCountryPicklistName } from "@/lib/visa-regions/picklist-exclusions";
@@ -369,6 +374,40 @@ export function FirmForm({
     subServices,
     specializationTaxonomyBoot,
   ]);
+
+  const specTaxonomyBySlug = useMemo(
+    () => new Map(specTaxonomyRows.map((r) => [r.slug, r])),
+    [specTaxonomyRows]
+  );
+
+  const orderedEkSpecRows = useMemo(() => {
+    const out: SpecializationTaxonomyRow[] = [];
+    const used = new Set<string>();
+    for (const slug of ADMIN_FIRM_SPECIALIZATION_TAXONOMY_SLUG_ORDER) {
+      const row = specTaxonomyBySlug.get(slug);
+      if (!row) continue;
+      const selected = form.custom_specialization_slugs.includes(slug);
+      if (!row.is_active && !selected) continue;
+      out.push(row);
+      used.add(slug);
+    }
+    for (const row of specTaxonomyRows) {
+      if (used.has(row.slug)) continue;
+      const selected = form.custom_specialization_slugs.includes(row.slug);
+      if (!row.is_active && !selected) continue;
+      out.push(row);
+      used.add(row.slug);
+    }
+    return out;
+  }, [specTaxonomyBySlug, specTaxonomyRows, form.custom_specialization_slugs]);
+
+  const orderedMainServiceCheckboxNames = useMemo(() => {
+    const primary = ADMIN_FIRM_MAIN_SERVICE_CATEGORY_ORDER.filter((n) =>
+      mainServiceOptions.includes(n)
+    );
+    const orphan = form.main_services.filter((n) => !primary.includes(n));
+    return [...primary, ...orphan];
+  }, [mainServiceOptions, form.main_services]);
 
   useEffect(() => {
     if (mode !== "edit" || !initialSectionTab) return;
@@ -1865,17 +1904,15 @@ export function FirmForm({
         <div className={subsection}>
           <p className={groupTitle}>Uzmanlık alanları</p>
           <FieldHelp>
-            Sabit uzmanlıklar mevcut sistemdeki boolean alanlarla saklanır ve skor kuralları aynı kalır. Ek
-            uzmanlıklar taxonomy tablosunda tutulur; yalnızca oluştururken veya kayıtta &quot;skora dahil&quot;
-            işaretlenen ek alanlar Kurumsallık skorundaki uzmanlık tavanına eklenir (varsayılan kapalı).
+            Sabit uzmanlıklar mevcut sistemdeki boolean alanlarla saklanır ve skor kuralları aynı kalır. Bu alanlar
+            firmanın uzmanlaştığı ana süreçleri temsil eder. Ek uzmanlıklar taxonomy tablosunda tutulur; yalnızca
+            oluştururken veya kayıtta &quot;skora dahil&quot; işaretlenen ek alanlar Kurumsallık skorundaki uzmanlık
+            tavanına eklenir (varsayılan kapalı).
           </FieldHelp>
 
           <div className="mt-5 rounded-xl border border-[#0B3C5D]/10 bg-white p-4 shadow-[0_4px_18px_rgba(11,60,93,0.05)]">
             <p className="text-xs font-semibold uppercase tracking-widest text-[#0B3C5D]/80">
               Sabit uzmanlıklar
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-[#1A1A1A]/50">
-              Aşağıdaki kutular doğrudan firma kaydındaki uzmanlık bayraklarına yazılır (Schengen, ABD, öğrenci vb.).
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {SPECIALIZATION_OPTIONS.map(({ key, label }) => (
@@ -1905,14 +1942,15 @@ export function FirmForm({
               Ek uzmanlık alanları
             </p>
             <p className="mt-1 text-xs leading-relaxed text-[#1A1A1A]/50">
-              Panelde tanımlı ek uzmanlıkları seçin veya alttan yeni alan ekleyin; eklenen alan tüm firmalarda yeniden
-              kullanılabilir.
+              Liste sırası aşağıda sabittir. Katalogda olup bu blokta yer almayan taxonomy kayıtları veya panelden
+              yeni eklediğiniz alanlar listenin sonunda görünür.
             </p>
-            <div className="mt-3 max-h-[min(55vh,22rem)] overflow-y-auto rounded-xl border border-[#0B3C5D]/10 bg-white p-2 sm:p-3">
+            <div className="mt-3 rounded-xl border border-[#0B3C5D]/10 bg-white p-2 sm:p-3">
               <div className="grid gap-2 sm:grid-cols-2">
-                {specTaxonomyRows.map((row) => {
+                {orderedEkSpecRows.map((row) => {
                   const selected = form.custom_specialization_slugs.includes(row.slug);
-                  if (!row.is_active && !selected) return null;
+                  const checkboxLabel =
+                    ADMIN_SPECIALIZATION_CHECKBOX_LABEL[row.slug] ?? row.label;
                   return (
                     <label
                       key={row.slug}
@@ -1929,7 +1967,7 @@ export function FirmForm({
                         className="h-4 w-4 shrink-0 rounded border-[#0B3C5D]/25 text-[#328CC1]"
                       />
                       <span className="min-w-0 flex-1 leading-snug">
-                        {row.label}
+                        {checkboxLabel}
                         {row.affects_corporate_score ? (
                           <span className="ml-1.5 text-[10px] font-normal text-[#1A1A1A]/40">
                             (skor)
@@ -1986,15 +2024,14 @@ export function FirmForm({
         </div>
 
         <div className={subsection}>
-          <p className={groupTitle}>1 — Ana hizmet kategorileri</p>
+          <p className={groupTitle}>Ana hizmet kategorileri</p>
           <FieldHelp>
-            Firmanın hangi ana hatlarda hizmet verdiğini işaretleyin. Liste yönetim panelindeki ana hizmet
-            kategorileri picklist’inden gelir. Şu an {form.main_services.length} kategori seçili — uzun listeler
-            aşağıda kaydırılarak kullanılır.
+            Firmanın sunduğu operasyonel, teknik ve destek hizmetlerini temsil eder. Seçimler ana hizmet
+            kategorileri picklist’ine yazılır. Şu an {form.main_services.length} kategori seçili.
           </FieldHelp>
-          <div className="mt-4 max-h-[min(70vh,36rem)] overflow-y-auto rounded-xl border border-[#0B3C5D]/10 bg-white p-3 shadow-[0_4px_18px_rgba(11,60,93,0.05)]">
+          <div className="mt-4 rounded-xl border border-[#0B3C5D]/10 bg-white p-3 shadow-[0_4px_18px_rgba(11,60,93,0.05)]">
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {mainServiceOptions.map((cat) => (
+              {orderedMainServiceCheckboxNames.map((cat) => (
                 <label
                   key={cat}
                   className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B3C5D]/8 bg-[#FAFBFC] px-3 py-2.5 text-sm font-medium text-[#0B3C5D]"
