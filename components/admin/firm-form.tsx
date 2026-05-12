@@ -240,6 +240,8 @@ type FirmFormProps = {
   subServices: string[];
   /** Panel taxonomy — ek uzmanlık seçenekleri + inline ekleme listesi */
   initialSpecializationTaxonomy?: SpecializationTaxonomyRow[];
+  /** `/admin/firms/[id]/edit?tab=` — salt okunur yönlendirme (Kurumsallık paneli) */
+  initialSectionTab?: string;
 };
 
 const inputClass =
@@ -265,6 +267,7 @@ export function FirmForm({
   mainServiceCategories,
   subServices,
   initialSpecializationTaxonomy = [],
+  initialSectionTab,
 }: FirmFormProps) {
   const router = useRouter();
 
@@ -366,6 +369,12 @@ export function FirmForm({
     subServices,
     specializationTaxonomyBoot,
   ]);
+
+  useEffect(() => {
+    if (mode !== "edit" || !initialSectionTab) return;
+    const id = initialSectionTab as TabId;
+    if (TABS.some((t) => t.id === id)) setTab(id);
+  }, [mode, initialSectionTab]);
 
   function patch<K extends keyof FirmFormState>(key: K, value: FirmFormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));

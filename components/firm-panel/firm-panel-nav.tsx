@@ -22,6 +22,11 @@ function buildNavItems(firmId: string): NavItem[] {
     { href: `/panel/${firmId}/reklam`, label: "Reklam ver", icon: "◎" },
     { href: `/panel/${firmId}/abonelik`, label: "Abonelikler", icon: "◇" },
     { href: `/panel/${firmId}/hesap`, label: "Hesap güvenliği", icon: "⚙" },
+    {
+      href: `/panel/${firmId}/kurumsallik-verileri`,
+      label: "Kurumsallık Skoru Verilerim",
+      icon: "◈",
+    },
   ];
 }
 

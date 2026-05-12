@@ -9,16 +9,21 @@ import {
 } from "@/lib/data/admin-filters";
 import { getFirmForAdmin } from "@/lib/data/admin-firm-detail";
 import { listSpecializationTaxonomyForAdmin } from "@/lib/data/specialization-taxonomy-admin-list";
+import { isFirmAdminFormTabId } from "@/lib/firm-panel/corporateness-gap-complete-href";
 
 export const metadata = {
   title: "Firma düzenle",
   robots: { index: false, follow: false },
 };
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
+};
 
-export default async function EditFirmPage({ params }: PageProps) {
+export default async function EditFirmPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const { tab: tabParam } = await searchParams;
   const detail = await getFirmForAdmin(id);
   if (!detail) notFound();
 
@@ -30,6 +35,8 @@ export default async function EditFirmPage({ params }: PageProps) {
       getPicklistSubServices(),
       listSpecializationTaxonomyForAdmin(),
     ]);
+
+  const initialSectionTab = tabParam && isFirmAdminFormTabId(tabParam) ? tabParam : undefined;
 
   return (
     <div className="space-y-6">
@@ -73,6 +80,7 @@ export default async function EditFirmPage({ params }: PageProps) {
         mainServiceCategories={mainServiceCategories}
         subServices={subServices}
         initialSpecializationTaxonomy={specializationTaxonomy}
+        initialSectionTab={initialSectionTab}
       />
     </div>
   );
