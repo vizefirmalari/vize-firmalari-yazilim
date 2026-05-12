@@ -382,24 +382,22 @@ export function FirmForm({
 
   const orderedEkSpecRows = useMemo(() => {
     const out: SpecializationTaxonomyRow[] = [];
-    const used = new Set<string>();
+    const curated = new Set(ADMIN_FIRM_SPECIALIZATION_TAXONOMY_SLUG_ORDER);
     for (const slug of ADMIN_FIRM_SPECIALIZATION_TAXONOMY_SLUG_ORDER) {
       const row = specTaxonomyBySlug.get(slug);
       if (!row) continue;
       const selected = form.custom_specialization_slugs.includes(slug);
       if (!row.is_active && !selected) continue;
       out.push(row);
-      used.add(slug);
     }
-    for (const row of specTaxonomyRows) {
-      if (used.has(row.slug)) continue;
-      const selected = form.custom_specialization_slugs.includes(row.slug);
-      if (!row.is_active && !selected) continue;
+    for (const slug of form.custom_specialization_slugs) {
+      if (curated.has(slug)) continue;
+      const row = specTaxonomyBySlug.get(slug);
+      if (!row) continue;
       out.push(row);
-      used.add(row.slug);
     }
     return out;
-  }, [specTaxonomyBySlug, specTaxonomyRows, form.custom_specialization_slugs]);
+  }, [specTaxonomyBySlug, form.custom_specialization_slugs]);
 
   const orderedMainServiceCheckboxNames = useMemo(() => {
     const primary = ADMIN_FIRM_MAIN_SERVICE_CATEGORY_ORDER.filter((n) =>
@@ -407,11 +405,7 @@ export function FirmForm({
     );
     const primarySet = new Set(primary);
     const orphan = form.main_services.filter((n) => !primarySet.has(n));
-    const rest = mainServiceOptions.filter(
-      (n) => !primarySet.has(n) && !orphan.includes(n)
-    );
-    rest.sort((a, b) => a.localeCompare(b, "tr"));
-    return [...primary, ...orphan, ...rest];
+    return [...primary, ...orphan];
   }, [mainServiceOptions, form.main_services]);
 
   useEffect(() => {
@@ -1947,8 +1941,8 @@ export function FirmForm({
               Ek uzmanlık alanları
             </p>
             <p className="mt-1 text-xs leading-relaxed text-[#1A1A1A]/50">
-              Liste sırası aşağıda sabittir. Katalogda olup bu blokta yer almayan taxonomy kayıtları veya panelden
-              yeni eklediğiniz alanlar listenin sonunda görünür.
+              Aşağıdaki sıra sabittir. Daha önce seçilmiş olup bu listede artık yer almayan ek uzmanlıklar varsa
+              listenin en altında gösterilir (işareti kaldırabilirsiniz).
             </p>
             <div className="mt-3 rounded-xl border border-[#0B3C5D]/10 bg-white p-2 sm:p-3">
               <div className="grid gap-2 sm:grid-cols-2">
@@ -1956,6 +1950,8 @@ export function FirmForm({
                   const selected = form.custom_specialization_slugs.includes(row.slug);
                   const checkboxLabel =
                     ADMIN_SPECIALIZATION_CHECKBOX_LABEL[row.slug] ?? row.label;
+                  const showScoreSuffix =
+                    row.affects_corporate_score && !checkboxLabel.includes("(skor)");
                   return (
                     <label
                       key={row.slug}
@@ -1973,7 +1969,7 @@ export function FirmForm({
                       />
                       <span className="min-w-0 flex-1 leading-snug">
                         {checkboxLabel}
-                        {row.affects_corporate_score ? (
+                        {showScoreSuffix ? (
                           <span className="ml-1.5 text-[10px] font-normal text-[#1A1A1A]/40">
                             (skor)
                           </span>
@@ -2031,8 +2027,9 @@ export function FirmForm({
         <div className={subsection}>
           <p className={groupTitle}>Ana hizmet kategorileri</p>
           <FieldHelp>
-            Firmanın sunduğu operasyonel, teknik ve destek hizmetlerini temsil eder. Seçimler ana hizmet
-            kategorileri picklist’ine yazılır. Şu an {form.main_services.length} kategori seçili.
+            Firmanın sunduğu operasyonel, teknik ve destek hizmetlerini temsil eder; seçimler ana hizmet
+            picklist’ine yazılır. Aşağıdaki sıra sabittir. Şu an {form.main_services.length} kategori seçili.
+            Daha önce kayıtlı olup bu listede yer almayan bir ana hizmet varsa en altta gösterilir.
           </FieldHelp>
           <div className="mt-4 rounded-xl border border-[#0B3C5D]/10 bg-white p-3 shadow-[0_4px_18px_rgba(11,60,93,0.05)]">
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

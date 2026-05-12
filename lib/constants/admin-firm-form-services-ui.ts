@@ -1,21 +1,18 @@
 /**
- * Admin firma formu — Hizmetler sekmesi: ek uzmanlık (taxonomy) ve ana hizmet checkbox sırası.
- * Veri hâlâ DB’deki slug / main_service_categories adlarıyla saklanır; burada yalnızca panel sırası ve kısa etiket düzeltmeleri.
+ * Admin firma formu — Hizmetler sekmesi: ek uzmanlık (taxonomy slug) ve ana hizmet (picklist adı) sırası.
+ * Kayıt yine `custom_specialization_slugs` / `main_services` alanlarında; burada yalnızca panelde hangi satırların hangi sırada gösterileceği.
  */
 
-/** taxonomy.slug — «Ek uzmanlık alanları» bloğu (sıra sabit) */
+/** «Ek uzmanlık alanları» — yalnızca bu slug sırası (taxonomy) */
 export const ADMIN_FIRM_SPECIALIZATION_TAXONOMY_SLUG_ORDER: readonly string[] = [
   "golden-visa",
   "yunanistan-golden-visa",
   "kanada-vizesi",
   "ingiltere-vizesi",
   "dubai-vizesi",
-  "egitim-vizesi",
-  "erasmus-vizesi",
   "yurtdisi-egitim-danismanligi",
   "oturum",
   "vatandaslik",
-  "calisma-izni",
   "goc-ve-entegrasyon-danismanligi",
   "nitelikli-isci-gocu",
   "uluslararasi-kariyer-danismanligi",
@@ -29,33 +26,50 @@ export const ADMIN_FIRM_SPECIALIZATION_TAXONOMY_SLUG_ORDER: readonly string[] = 
   "mesleki-denklik",
   "green-card-basvurulari",
   "turizm-ve-seyahat",
+  "yatirim-yoluyla-vatandaslik",
+  "yatirim-yoluyla-oturum",
 ] as const;
 
-/** Checkbox’ta gösterilecek kısa etiket (DB etiketinden farklıysa) */
+/** Checkbox metni (DB etiketinden farklıysa); (skor) burada ise ayrıca gri «(skor)» etiketi basılmaz */
 export const ADMIN_SPECIALIZATION_CHECKBOX_LABEL: Readonly<
   Record<string, string>
 > = {
   "yurtdisi-egitim-danismanligi": "Yurtdışı Eğitim",
   "uluslararasi-kariyer-danismanligi": "Uluslararası Kariyer",
   "hukuki-danismanlik": "Hukuki Süreçler",
+  "yunanistan-golden-visa": "Yunanistan Golden Visa(skor)",
 };
 
 /**
- * main_service_categories.name — «Ana hizmet kategorileri» bloğu (074 ile birebir; yeni satırlar 076 migration).
+ * «Ana hizmet kategorileri» — main_service_categories.name sırası (074/076 ile uyumlu yazım).
  */
 export const ADMIN_FIRM_MAIN_SERVICE_CATEGORY_ORDER: readonly string[] = [
+  "Eğitim Vizesi",
+  "Erasmus Vizesi",
+  "Çalışma İzni",
   "Startup Vizesi",
   "Girişimci Vizesi",
   "Freelancer Vizesi",
-  "Sporcu Vizesi",
-  "Sanatçı Vizesi",
-  "Tır Şoförü Vizesi",
+  "Vatandaşlık Hizmetleri",
+  "Soy Bağı ile Vatandaşlık",
+  "Oturum Hizmetleri",
+  "Otobüslü Avrupa Turları",
+  "Vizesiz Turlar",
+  "Balkan Turları",
+  "Gemi Turları",
+  "Yurt Dışı Kültür Turları",
+  "Otel Tatilleri",
+  "Yatırım Danışmanlığı",
+  "İş Kurma Danışmanlığı",
   "Transit Vizesi",
   "Fuar Vizesi",
   "Konferans Vizesi",
   "Ziyaret Vizesi",
   "Diplomatik Vize",
   "E-Vize",
+  "Sporcu Vizesi",
+  "Sanatçı Vizesi",
+  "Tır Şoförü Vizesi",
   "Akraba Ziyareti Vizesi",
   "Uzun dönemli / D tipi vizeler",
   "Aile Birleşimi Oturumu",
@@ -63,21 +77,6 @@ export const ADMIN_FIRM_MAIN_SERVICE_CATEGORY_ORDER: readonly string[] = [
   "Emeklilik Oturumu",
   "Soy Bağları Oturumu",
   "İş/Şirket Temsilcilik Oturumu",
-  "Soy Bağı ile Vatandaşlık",
-  "Yatırım Yoluyla Vatandaşlık",
-  "Yatırım Yoluyla Oturum",
-  "Vatandaşlık Hizmetleri",
-  "Oturum Hizmetleri",
-  "Kültür Turları",
-  "Otobüslü Avrupa Turları",
-  "Balkan Turları",
-  "Gemi Turları",
-  "Asya Turları",
-  "Vizesiz Turlar",
-  "Yurtiçi ve Yurtdışı Tur Programları",
-  "Otel Tatilleri",
-  "Yurt Dışı Kültür Turları",
-  "Yatırım Danışmanlığı",
   "Almanya Eğitim Danışmanlığı",
   "Nitelikli İşçi Yerleştirme",
   "Sağlık Çalışanı Yerleştirme",
@@ -85,6 +84,9 @@ export const ADMIN_FIRM_MAIN_SERVICE_CATEGORY_ORDER: readonly string[] = [
   "Avukat Desteği",
   "Yeminli Tercüman",
   "Tercüme",
+  "Kültür Turları",
+  "Asya Turları",
+  "Yurtiçi ve Yurtdışı Tur Programları",
   "Başvuru Süreç Yönetimi",
   "Dosya Hizmeti",
   "Randevu Hizmeti",
@@ -104,4 +106,9 @@ export const ADMIN_FIRM_MAIN_SERVICE_CATEGORY_ORDER: readonly string[] = [
   "Uluslararası Kariyer Danışmanlığı",
   "Emlak Danışmanlığı",
   "Kişiye Özel Tatil Hizmetleri",
+  "Gayrimenkul Danışmanlığı",
+  "Hukuki Danışmanlık",
+  "Turistik Vize",
+  "Yatırım Göçü Danışmanlığı",
+  "Yurtdışı Eğitim Danışmanlığı",
 ] as const;
