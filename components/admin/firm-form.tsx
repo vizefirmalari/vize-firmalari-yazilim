@@ -599,7 +599,7 @@ export function FirmForm({
           id: "",
           slug: res.slug,
           label: res.label,
-          affects_corporate_score: newSpecializationAffectsScore,
+          affects_corporate_score: res.affects_corporate_score,
           is_active: true,
           sort_order: nextSort,
         },

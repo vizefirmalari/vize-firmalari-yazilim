@@ -16,7 +16,10 @@ function normalizeLabel(raw: string): string {
 export async function createSpecializationTaxonomyFromPanel(
   labelRaw: string,
   affectsCorporateScore = false
-): Promise<{ ok: true; slug: string; label: string } | { ok: false; error: string }> {
+): Promise<
+  | { ok: true; slug: string; label: string; affects_corporate_score: boolean }
+  | { ok: false; error: string }
+> {
   const ctx = await getAdminContext();
   if (!ctx) return { ok: false, error: "Yetkisiz" };
 
@@ -55,10 +58,12 @@ export async function createSpecializationTaxonomyFromPanel(
     .maybeSingle();
   const sortOrder = (typeof maxRow?.sort_order === "number" ? maxRow.sort_order : 0) + 1;
 
+  const affects = Boolean(affectsCorporateScore);
+
   const { error } = await supabase.from("specialization_taxonomy").insert({
     slug,
     label,
-    affects_corporate_score: Boolean(affectsCorporateScore),
+    affects_corporate_score: affects,
     is_active: true,
     sort_order: sortOrder,
   });
@@ -70,5 +75,5 @@ export async function createSpecializationTaxonomyFromPanel(
     return { ok: false, error: error.message };
   }
 
-  return { ok: true, slug, label };
+  return { ok: true, slug, label, affects_corporate_score: affects };
 }

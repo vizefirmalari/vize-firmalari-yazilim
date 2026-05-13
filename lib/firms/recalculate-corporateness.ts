@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildFirmFormState, formStateToPayload } from "@/lib/admin/firm-form-initial";
 import { getFirmForAdmin } from "@/lib/data/admin-firm-detail";
+import { countActiveTaxonomySlugsForCorporateness } from "@/lib/data/specialization-taxonomy";
 import { computePersistedCorporatenessFields } from "@/lib/firms/corporateness-persist";
 import { resolveHypeBigintFromRow } from "@/lib/firms/hype-resolve";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -39,8 +40,13 @@ export async function recalculateCorporatenessScoreWithClient(
   }
 
   const hypeForTrust = resolveHypeBigintFromRow(detail.firm as Record<string, unknown>);
+  const customScore = await countActiveTaxonomySlugsForCorporateness(
+    supabase,
+    parsed.data.custom_specialization_slugs ?? []
+  );
   const persisted = computePersistedCorporatenessFields(parsed.data, {
     hypeForTrust: hypeForTrust,
+    customSpecializationScoreCount: customScore,
   });
 
   const { error } = await supabase

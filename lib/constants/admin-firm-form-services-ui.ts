@@ -38,6 +38,9 @@ export const ADMIN_SPECIALIZATION_CHECKBOX_LABEL: Readonly<
   "uluslararasi-kariyer-danismanligi": "Uluslararası Kariyer",
   "hukuki-danismanlik": "Hukuki Süreçler",
   "yunanistan-golden-visa": "Yunanistan Golden Visa(skor)",
+  "yatirim-danismanligi": "Yatırım Danışmanlığı",
+  "is-gelistirme-danismanligi": "İş Geliştirme Danışmanlığı",
+  "is-kurma-danismanligi": "İş Kurma Danışmanlığı",
 };
 
 /**
