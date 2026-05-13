@@ -26,6 +26,7 @@ export const ADMIN_FIRM_SPECIALIZATION_TAXONOMY_SLUG_ORDER: readonly string[] = 
   "mesleki-denklik",
   "green-card-basvurulari",
   "turizm-ve-seyahat",
+  "tur-organizasyonlari",
   "yatirim-yoluyla-vatandaslik",
   "yatirim-yoluyla-oturum",
 ] as const;
@@ -41,6 +42,7 @@ export const ADMIN_SPECIALIZATION_CHECKBOX_LABEL: Readonly<
   "yatirim-danismanligi": "Yatırım Danışmanlığı",
   "is-gelistirme-danismanligi": "İş Geliştirme Danışmanlığı",
   "is-kurma-danismanligi": "İş Kurma Danışmanlığı",
+  "tur-organizasyonlari": "Tur Organizasyonları",
 };
 
 /**
