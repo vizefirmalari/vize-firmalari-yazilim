@@ -4,8 +4,17 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 import { adminDeleteGrowthCategory, adminSaveGrowthCategory } from "@/lib/actions/growth-admin";
+import { STOREFRONT_HUB_KEYS, type StorefrontHubKey } from "@/lib/software/storefront-hubs";
 
-type Row = { id: string; name: string; slug: string; icon: string; sort_order: number; is_active: boolean };
+type Row = {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  sort_order: number;
+  is_active: boolean;
+  storefront_hubs: string[];
+};
 
 export function GrowthCategoriesManager({ rows: initialRows }: { rows: Row[] }) {
   const router = useRouter();
@@ -27,6 +36,7 @@ export function GrowthCategoriesManager({ rows: initialRows }: { rows: Row[] }) 
         icon: row.icon,
         sort_order: row.sort_order,
         is_active: row.is_active,
+        storefront_hubs: row.storefront_hubs,
       });
       setMessage(res.ok ? "Kaydedildi." : res.error);
       if (res.ok) router.refresh();
@@ -53,6 +63,7 @@ export function GrowthCategoriesManager({ rows: initialRows }: { rows: Row[] }) 
         icon,
         sort_order: sort,
         is_active: true,
+        storefront_hubs: [...STOREFRONT_HUB_KEYS],
       });
       if (!res.ok) {
         setMessage(res.error);
@@ -83,6 +94,7 @@ export function GrowthCategoriesManager({ rows: initialRows }: { rows: Row[] }) 
               <th className="px-4 py-3">Slug</th>
               <th className="px-4 py-3">İkon</th>
               <th className="px-4 py-3">Sıra</th>
+              <th className="px-4 py-3">Hub</th>
               <th className="px-4 py-3">Aktif</th>
               <th className="px-4 py-3">İşlem</th>
             </tr>
@@ -136,6 +148,12 @@ export function GrowthCategoriesManager({ rows: initialRows }: { rows: Row[] }) 
   );
 }
 
+const HUB_LABELS: Record<StorefrontHubKey, string> = {
+  "isini-buyut": "İşini büyüt",
+  "yazilim-cozumleri": "Yazılım",
+  "otomasyon-cozumleri": "Otomasyon",
+};
+
 function CategoryEditableRow({
   row,
   disabled,
@@ -152,6 +170,7 @@ function CategoryEditableRow({
   const [icon, setIcon] = useState(row.icon);
   const [sort, setSort] = useState(row.sort_order);
   const [isActive, setIsActive] = useState(row.is_active);
+  const [hubs, setHubs] = useState<string[]>(row.storefront_hubs?.length ? row.storefront_hubs : [...STOREFRONT_HUB_KEYS]);
 
   useEffect(() => {
     setName(row.name);
@@ -159,7 +178,16 @@ function CategoryEditableRow({
     setIcon(row.icon);
     setSort(row.sort_order);
     setIsActive(row.is_active);
+    setHubs(row.storefront_hubs?.length ? row.storefront_hubs : [...STOREFRONT_HUB_KEYS]);
   }, [row]);
+
+  function toggleHub(key: StorefrontHubKey) {
+    setHubs((prev) => {
+      const has = prev.includes(key);
+      const next = has ? prev.filter((x) => x !== key) : [...prev, key];
+      return next.length ? next : [key];
+    });
+  }
 
   return (
     <tr className="border-b border-[#0B3C5D]/08">
@@ -192,6 +220,16 @@ function CategoryEditableRow({
           className="w-full max-w-[6rem] rounded-lg border border-[#0B3C5D]/12 px-2 py-1.5 text-sm"
         />
       </td>
+      <td className="px-4 py-2 align-top">
+        <div className="flex min-w-[10rem] flex-col gap-1.5 text-[11px] font-medium text-[#1A1A1A]/70">
+          {STOREFRONT_HUB_KEYS.map((key) => (
+            <label key={key} className="flex cursor-pointer items-center gap-1.5">
+              <input type="checkbox" checked={hubs.includes(key)} onChange={() => toggleHub(key)} />
+              {HUB_LABELS[key]}
+            </label>
+          ))}
+        </div>
+      </td>
       <td className="px-4 py-2">
         <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
       </td>
@@ -199,7 +237,7 @@ function CategoryEditableRow({
         <button
           type="button"
           disabled={disabled}
-          onClick={() => onSave({ ...row, name, slug, icon, sort_order: sort, is_active: isActive })}
+          onClick={() => onSave({ ...row, name, slug, icon, sort_order: sort, is_active: isActive, storefront_hubs: hubs })}
           className="text-xs font-semibold text-[#0B3C5D] hover:underline disabled:opacity-50"
         >
           Kaydet

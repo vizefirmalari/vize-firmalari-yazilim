@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { GrowthHeroIllustration } from "@/components/firm-panel/growth/growth-hero-illustration";
 import { GrowthCategoriesSection } from "@/components/firm-panel/growth/growth-categories-section";
 import { loadActiveGrowthCatalog } from "@/lib/data/growth-catalog";
-import { getGrowthPaymentBankInfo } from "@/lib/firm-panel/growth-payment-config";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -28,11 +27,10 @@ const reachPillars = [
 
 export default async function FirmGrowthHubPage({ params }: PageProps) {
   const { firmId } = await params;
-  const membership = await requireFirmPanelAccess(firmId);
+  await requireFirmPanelAccess(firmId);
 
   const supabase = await createSupabaseServerClient();
   const catalog = supabase ? await loadActiveGrowthCatalog(supabase) : [];
-  const bank = getGrowthPaymentBankInfo();
   const firstCatWithServices = catalog.find((c) => c.services.length > 0);
 
   return (
@@ -70,6 +68,40 @@ export default async function FirmGrowthHubPage({ params }: PageProps) {
       </section>
 
       <section className="rounded-2xl border border-[#0B3C5D]/12 bg-white p-6 shadow-sm sm:p-8">
+        <h2 className="text-lg font-bold text-[#0B3C5D] sm:text-xl">Geniş vitrin</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#1A1A1A]/62">
+          Aynı kataloğu SEO uyumlu kamu sayfalarında inceleyin; paylaşım ve ön araştırma için uygundur. Satın alma ve
+          talep akışı yine panelinizdedir.
+        </p>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <a
+            href="/yazilim-cozumleri"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-[#0B3C5D]/18 bg-[#F7F9FB] px-4 py-2.5 text-sm font-semibold text-[#0B3C5D] transition hover:border-[#0B3C5D]/28"
+          >
+            Yazılım çözümleri vitrini
+          </a>
+          <a
+            href="/otomasyon-cozumleri"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-[#0B3C5D]/18 bg-[#F7F9FB] px-4 py-2.5 text-sm font-semibold text-[#0B3C5D] transition hover:border-[#0B3C5D]/28"
+          >
+            Otomasyon vitrini
+          </a>
+          <a
+            href="/isini-buyut"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-[#0B3C5D]/18 bg-[#F7F9FB] px-4 py-2.5 text-sm font-semibold text-[#0B3C5D] transition hover:border-[#0B3C5D]/28"
+          >
+            Genel vitrin özeti
+          </a>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#0B3C5D]/12 bg-white p-6 shadow-sm sm:p-8">
         <h2 className="text-lg font-bold text-[#0B3C5D] sm:text-xl">Neleri kapsıyor?</h2>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#1A1A1A]/62">
           Geniş erişim ağı ve içerik gücüyle firmanızı doğru kitleye taşıyın; paketler ihtiyaca göre seçilir, detaylar
@@ -89,12 +121,7 @@ export default async function FirmGrowthHubPage({ params }: PageProps) {
       </section>
 
       <Suspense fallback={<GrowthCatalogFallback />}>
-        <GrowthCategoriesSection
-          firmId={firmId}
-          firmName={membership.firmName}
-          bank={bank}
-          categories={catalog}
-        />
+        <GrowthCategoriesSection firmId={firmId} categories={catalog} />
       </Suspense>
 
       <div className="rounded-2xl border border-[#0B3C5D]/10 bg-white px-4 py-4 text-center text-sm font-medium text-[#1A1A1A]/68 shadow-sm sm:px-6">

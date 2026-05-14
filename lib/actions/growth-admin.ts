@@ -21,6 +21,7 @@ export async function adminSaveGrowthCategory(input: {
   icon: string;
   sort_order: number;
   is_active: boolean;
+  storefront_hubs?: string[];
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const supabase = await adminDb();
   if (!supabase) return { ok: false, error: "Bağlantı yok." };
@@ -31,6 +32,10 @@ export async function adminSaveGrowthCategory(input: {
   const slugRaw = input.slug?.trim() || slugifyGrowth(name);
   if (!slugRaw) return { ok: false, error: "Slug gerekli." };
 
+  const hubs = (input.storefront_hubs ?? []).map((x) => x.trim()).filter(Boolean);
+  const nextHubs: string[] =
+    hubs.length > 0 ? [...hubs] : ["isini-buyut", "yazilim-cozumleri", "otomasyon-cozumleri"];
+
   if (input.id) {
     const { error } = await supabase
       .from("growth_service_categories")
@@ -40,6 +45,7 @@ export async function adminSaveGrowthCategory(input: {
         icon: input.icon.trim() || "◆",
         sort_order: input.sort_order,
         is_active: input.is_active,
+        storefront_hubs: nextHubs,
       })
       .eq("id", input.id);
     if (error) {
@@ -59,6 +65,7 @@ export async function adminSaveGrowthCategory(input: {
       icon: input.icon.trim() || "◆",
       sort_order: input.sort_order,
       is_active: input.is_active,
+      storefront_hubs: [...nextHubs],
     })
     .select("id")
     .single();
@@ -123,6 +130,13 @@ export async function adminDeleteGrowthService(
   return { ok: true };
 }
 
+function revalidatePublicSoftwareStorefront(serviceSlug: string) {
+  revalidatePath("/isini-buyut");
+  revalidatePath("/yazilim-cozumleri");
+  revalidatePath("/otomasyon-cozumleri");
+  revalidatePath(`/yazilim-cozumleri/${serviceSlug}`);
+}
+
 export async function adminSaveGrowthService(input: {
   id?: string;
   category_id: string;
@@ -132,12 +146,28 @@ export async function adminSaveGrowthService(input: {
   long_description?: string | null;
   setup_price: number | null;
   monthly_price: number | null;
+  yearly_price?: number | null;
   is_custom_price: boolean;
   package_includes: string[];
   is_active: boolean;
   is_featured: boolean;
+  is_popular?: boolean;
+  is_new?: boolean;
+  is_fast_setup?: boolean;
+  public_storefront_enabled?: boolean;
   badge?: string | null;
   sort_order: number;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  canonical_path_override?: string | null;
+  og_image_url?: string | null;
+  hero_image_url?: string | null;
+  cover_image_url?: string | null;
+  thumbnail_image_url?: string | null;
+  mobile_cover_image_url?: string | null;
+  what_it_does?: string | null;
+  who_for?: string | null;
+  how_it_works?: string | null;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const supabase = await adminDb();
   if (!supabase) return { ok: false, error: "Bağlantı yok." };
@@ -159,12 +189,28 @@ export async function adminSaveGrowthService(input: {
     long_description: input.long_description?.trim() || null,
     setup_price: input.setup_price,
     monthly_price: input.monthly_price,
+    yearly_price: input.yearly_price ?? null,
     is_custom_price: input.is_custom_price,
     package_includes: includes,
     is_active: input.is_active,
     is_featured: input.is_featured,
+    is_popular: input.is_popular ?? false,
+    is_new: input.is_new ?? false,
+    is_fast_setup: input.is_fast_setup ?? false,
+    public_storefront_enabled: input.public_storefront_enabled ?? true,
     badge: input.badge?.trim() || null,
     sort_order: input.sort_order,
+    seo_title: input.seo_title?.trim() || null,
+    seo_description: input.seo_description?.trim() || null,
+    canonical_path_override: input.canonical_path_override?.trim() || null,
+    og_image_url: input.og_image_url?.trim() || null,
+    hero_image_url: input.hero_image_url?.trim() || null,
+    cover_image_url: input.cover_image_url?.trim() || null,
+    thumbnail_image_url: input.thumbnail_image_url?.trim() || null,
+    mobile_cover_image_url: input.mobile_cover_image_url?.trim() || null,
+    what_it_does: input.what_it_does?.trim() || null,
+    who_for: input.who_for?.trim() || null,
+    how_it_works: input.how_it_works?.trim() || null,
   };
 
   if (input.id) {
@@ -175,6 +221,7 @@ export async function adminSaveGrowthService(input: {
     }
     revalidatePath("/admin/growth/services");
     revalidatePath(`/admin/growth/services/${input.id}`);
+    revalidatePublicSoftwareStorefront(slugRaw);
     return { ok: true, id: input.id };
   }
 
@@ -185,6 +232,7 @@ export async function adminSaveGrowthService(input: {
   }
   const id = data.id as string;
   revalidatePath("/admin/growth/services");
+  revalidatePublicSoftwareStorefront(slugRaw);
   return { ok: true, id };
 }
 

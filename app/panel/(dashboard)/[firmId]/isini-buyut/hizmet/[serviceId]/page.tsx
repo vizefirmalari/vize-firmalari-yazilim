@@ -5,7 +5,6 @@ import { GrowthDetailPurchase } from "@/components/firm-panel/growth/growth-deta
 import { PackageFeatureList } from "@/components/firm-panel/growth/growth-package-features";
 import { growthServicePriceLine } from "@/lib/format/try-lira";
 import { loadGrowthServiceById } from "@/lib/data/growth-catalog";
-import { getGrowthPaymentBankInfo } from "@/lib/firm-panel/growth-payment-config";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -13,7 +12,7 @@ type PageProps = { params: Promise<{ firmId: string; serviceId: string }> };
 
 export default async function FirmGrowthServiceDetailPage({ params }: PageProps) {
   const { firmId, serviceId } = await params;
-  const membership = await requireFirmPanelAccess(firmId);
+  await requireFirmPanelAccess(firmId);
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) notFound();
@@ -24,8 +23,6 @@ export default async function FirmGrowthServiceDetailPage({ params }: PageProps)
   const priceLine = growthServicePriceLine(service.setup_price, service.monthly_price, service.is_custom_price);
   const badge = service.badge?.trim() || null;
   const body = (service.long_description || service.short_description).trim();
-  const bank = getGrowthPaymentBankInfo();
-
   return (
     <div className="space-y-8">
       <Link href={`/panel/${firmId}/isini-buyut`} className="text-sm font-semibold text-[#0B3C5D] hover:underline">
@@ -62,7 +59,7 @@ export default async function FirmGrowthServiceDetailPage({ params }: PageProps)
       </section>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <GrowthDetailPurchase firmId={firmId} firmName={membership.firmName} bank={bank} service={service} />
+        <GrowthDetailPurchase service={service} />
         <Link
           href={`/panel/${firmId}/isini-buyut`}
           className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#0B3C5D]/20 bg-white px-5 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"

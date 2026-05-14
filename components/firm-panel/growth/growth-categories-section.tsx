@@ -4,20 +4,17 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import type { GrowthCatalogCategory } from "@/lib/types/growth-commerce";
-import type { GrowthPurchaseModalBank } from "@/components/firm-panel/growth/growth-purchase-modal";
 
 import { GrowthServiceCard } from "./growth-service-card";
 
 type Props = {
   firmId: string;
-  firmName: string;
-  bank: GrowthPurchaseModalBank;
   categories: GrowthCatalogCategory[];
 };
 
 type SpotlightEntry = { serviceId: string; categoryName: string };
 
-export function GrowthCategoriesSection({ firmId, firmName, bank, categories }: Props) {
+export function GrowthCategoriesSection({ firmId, categories }: Props) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [autoOpenToken, setAutoOpenToken] = useState<string | null>(null);
@@ -79,8 +76,6 @@ export function GrowthCategoriesSection({ firmId, firmName, bank, categories }: 
                 <GrowthServiceCard
                   key={`spotlight-${svc.id}`}
                   firmId={firmId}
-                  firmName={firmName}
-                  bank={bank}
                   service={svc}
                   categoryLabel={categoryName}
                   variant="spotlight"
@@ -121,8 +116,6 @@ export function GrowthCategoriesSection({ firmId, firmName, bank, categories }: 
                     <GrowthServiceCard
                       key={s.id}
                       firmId={firmId}
-                      firmName={firmName}
-                      bank={bank}
                       service={s}
                       categoryLabel={cat.name}
                       variant="default"

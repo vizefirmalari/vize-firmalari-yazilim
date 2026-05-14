@@ -11,6 +11,7 @@ import {
 import { listPublicDocumentPages } from "@/lib/seo/public-routes";
 import { resolveToAbsoluteImageUrl } from "@/lib/seo/blog-og-image";
 import { getCachedAkisFeedCategoryLandingSitemapSlice } from "@/lib/seo/akis-feed-category-sitemap";
+import { listPublicStorefrontServiceSlugs } from "@/lib/data/software-storefront";
 
 /** Google sitemap urlset — priority 0.0–1.0 (opsiyonel). */
 export type SitemapUrl = {
@@ -322,6 +323,9 @@ function buildStaticSectionUrls(): SitemapUrl[] {
     { loc: normalizeCanonicalUrl("/"), changefreq: "daily", priority: 1 },
     { loc: normalizeCanonicalUrl("/akis"), changefreq: "daily", priority: 0.9 },
     { loc: normalizeCanonicalUrl("/kesfet"), changefreq: "weekly", priority: 0.85 },
+    { loc: normalizeCanonicalUrl("/isini-buyut"), changefreq: "weekly", priority: 0.74 },
+    { loc: normalizeCanonicalUrl("/yazilim-cozumleri"), changefreq: "weekly", priority: 0.76 },
+    { loc: normalizeCanonicalUrl("/otomasyon-cozumleri"), changefreq: "weekly", priority: 0.75 },
     { loc: normalizeCanonicalUrl(COUNTRY_GUIDE_CATALOG_BASE_PATH), changefreq: "weekly", priority: 0.85 },
   ];
   for (const path of VISA_SEO_LANDING_PATHS) {
@@ -381,6 +385,23 @@ export async function getIndexableUrlsBySection(section: SitemapSection): Promis
       entries = dedupeUrls([...entries, ...akisCategoryLandings]);
     } catch (e) {
       console.error("akis feed category sitemap error:", e);
+    }
+    try {
+      if (isSupabaseConfigured()) {
+        const supabase = createSupabasePublicClient();
+        if (supabase) {
+          const slugs = await listPublicStorefrontServiceSlugs(supabase);
+          const vitrin: SitemapUrl[] = slugs.map((slug) => ({
+            loc: normalizeCanonicalUrl(`/yazilim-cozumleri/${slug}`),
+            lastmod: nowIso,
+            changefreq: "weekly" as const,
+            priority: 0.71,
+          }));
+          entries = dedupeUrls([...entries, ...vitrin]);
+        }
+      }
+    } catch (e) {
+      console.error("software storefront sitemap error:", e);
     }
     return entries;
   }
