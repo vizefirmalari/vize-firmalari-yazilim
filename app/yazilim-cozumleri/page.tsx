@@ -47,6 +47,7 @@ export default async function YazilimCozumleriPage({ searchParams }: PageProps) 
   return (
     <StorefrontHubListing
       basePath="/yazilim-cozumleri"
+      heroEyebrow="Yazılım vitrin"
       heroTitle="Yazılım çözümleri"
       heroSubtitle="Reklam, web, içerik ve premium sistemleri tek vitrinde keşfedin; detay sayfaları SEO odaklı açılır. Satın alma ve abonelik süreçleri firma panelinizden yürür."
       catalog={catalog}

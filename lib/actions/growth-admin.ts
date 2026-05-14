@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "node:crypto";
 
 import { requireAdmin } from "@/lib/auth/admin";
 import { sendChatMessage } from "@/lib/actions/chat-message";
+import { normalizeGrowthContentBlocksForDb } from "@/lib/growth/growth-service-content-blocks";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { slugifyGrowth } from "@/lib/slug/growth-slug";
 
@@ -137,6 +139,79 @@ function revalidatePublicSoftwareStorefront(serviceSlug: string) {
   revalidatePath(`/yazilim-cozumleri/${serviceSlug}`);
 }
 
+const SURFACE_IMAGE_FIELDS = [
+  "hero_image_url",
+  "cover_image_url",
+  "thumbnail_image_url",
+  "mobile_cover_image_url",
+  "og_image_url",
+] as const;
+export type GrowthServiceSurfaceImageField = (typeof SURFACE_IMAGE_FIELDS)[number];
+
+function safeImageExt(name: string): string {
+  const ext = name.split(".").pop()?.toLowerCase() || "jpg";
+  return ["png", "jpg", "jpeg", "webp"].includes(ext) ? ext : "jpg";
+}
+
+export async function adminUploadGrowthServiceSurfaceImage(
+  formData: FormData
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const supabase = await adminDb();
+  if (!supabase) return { ok: false, error: "Bağlantı yok." };
+
+  const serviceId = String(formData.get("serviceId") ?? "").trim();
+  const fieldRaw = String(formData.get("field") ?? "").trim() as GrowthServiceSurfaceImageField;
+  if (!serviceId) return { ok: false, error: "Hizmet bulunamadı." };
+  if (!SURFACE_IMAGE_FIELDS.includes(fieldRaw)) return { ok: false, error: "Geçersiz alan." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Dosya seçin." };
+  }
+
+  const ext = safeImageExt(file.name);
+  const shortKey = fieldRaw.replace("_url", "");
+  const path = `growth-services/${serviceId}/${shortKey}-${randomUUID()}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error: upErr } = await supabase.storage.from("media").upload(path, buffer, {
+    contentType: file.type || "image/jpeg",
+    upsert: false,
+  });
+  if (upErr) return { ok: false, error: upErr.message };
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("media").getPublicUrl(path);
+
+  const patch: Record<string, string> = { [fieldRaw]: publicUrl };
+  const { error } = await supabase.from("growth_services").update(patch).eq("id", serviceId);
+  if (error) return { ok: false, error: "Görsel kaydedilemedi." };
+
+  const { data: slugRow } = await supabase.from("growth_services").select("slug").eq("id", serviceId).maybeSingle();
+  const slug = (slugRow as { slug?: string } | null)?.slug?.trim();
+  if (slug) revalidatePublicSoftwareStorefront(slug);
+  revalidatePath(`/admin/growth/services/${serviceId}`);
+  return { ok: true, url: publicUrl };
+}
+
+export async function adminClearGrowthServiceSurfaceImage(input: {
+  serviceId: string;
+  field: GrowthServiceSurfaceImageField;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await adminDb();
+  if (!supabase) return { ok: false, error: "Bağlantı yok." };
+  if (!SURFACE_IMAGE_FIELDS.includes(input.field)) return { ok: false, error: "Geçersiz alan." };
+
+  const { error } = await supabase.from("growth_services").update({ [input.field]: null }).eq("id", input.serviceId);
+  if (error) return { ok: false, error: "Kaldırılamadı." };
+
+  const { data: slugRow } = await supabase.from("growth_services").select("slug").eq("id", input.serviceId).maybeSingle();
+  const slug = (slugRow as { slug?: string } | null)?.slug?.trim();
+  if (slug) revalidatePublicSoftwareStorefront(slug);
+  revalidatePath(`/admin/growth/services/${input.serviceId}`);
+  return { ok: true };
+}
+
 export async function adminSaveGrowthService(input: {
   id?: string;
   category_id: string;
@@ -168,6 +243,10 @@ export async function adminSaveGrowthService(input: {
   what_it_does?: string | null;
   who_for?: string | null;
   how_it_works?: string | null;
+  content_blocks?: unknown;
+  robots_index?: boolean;
+  robots_follow?: boolean;
+  sitemap_include?: boolean;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const supabase = await adminDb();
   if (!supabase) return { ok: false, error: "Bağlantı yok." };
@@ -180,6 +259,8 @@ export async function adminSaveGrowthService(input: {
   if (!slugRaw) return { ok: false, error: "Slug gerekli." };
 
   const includes = normalizePackageIncludes(input.package_includes);
+
+  const contentBlocks = normalizeGrowthContentBlocksForDb(input.content_blocks ?? []);
 
   const row = {
     category_id: input.category_id,
@@ -211,6 +292,10 @@ export async function adminSaveGrowthService(input: {
     what_it_does: input.what_it_does?.trim() || null,
     who_for: input.who_for?.trim() || null,
     how_it_works: input.how_it_works?.trim() || null,
+    content_blocks: contentBlocks,
+    robots_index: input.robots_index !== false,
+    robots_follow: input.robots_follow !== false,
+    sitemap_include: input.sitemap_include !== false,
   };
 
   if (input.id) {

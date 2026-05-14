@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { publicMediaObjectUrl } from "@/lib/media/supabase-public";
 import { categoryHubContains, type StorefrontHubKey } from "@/lib/software/storefront-hubs";
+import { parseGrowthContentBlocksJson, toPublicStorefrontContentBlocks } from "@/lib/growth/growth-service-content-blocks";
 import type {
   PublicSoftwareProductBadgeRow,
   PublicSoftwareProductFaqRow,
@@ -11,6 +12,7 @@ import type {
   PublicSoftwareProductSeoRow,
   PublicStorefrontCatalogCategory,
   PublicStorefrontListParams,
+  PublicStorefrontMarketListParams,
   PublicStorefrontServiceRow,
   PublicStorefrontSortKey,
   StorefrontContentBlock,
@@ -160,6 +162,78 @@ export async function loadPublicStorefrontCatalog(
   return out.filter((c) => c.services.length > 0);
 }
 
+/**
+ * Ana vitrin (`/isini-buyut`): hub filtresi olmadan tüm aktif kategoriler + vitrindeki hizmetler.
+ */
+export async function loadPublicStorefrontMarketCatalog(
+  supabase: SupabaseClient,
+  params: PublicStorefrontMarketListParams
+): Promise<PublicStorefrontCatalogCategory[]> {
+  const { data: cats, error: cErr } = await supabase
+    .from("growth_service_categories")
+    .select("id,name,slug,icon,sort_order,storefront_hubs,is_active")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (cErr || !cats?.length) return [];
+
+  const { data: svcs, error: sErr } = await supabase
+    .from("growth_services")
+    .select(SVC_SELECT)
+    .eq("is_active", true)
+    .eq("public_storefront_enabled", true)
+    .order("sort_order", { ascending: true })
+    .order("title", { ascending: true });
+
+  if (sErr || !svcs) {
+    return (cats as Record<string, unknown>[]).map((c) => ({
+      id: String(c.id ?? ""),
+      name: String(c.name ?? ""),
+      slug: String(c.slug ?? ""),
+      icon: String(c.icon ?? ""),
+      sort_order: Number(c.sort_order ?? 0),
+      storefront_hubs: normalizeHubs(c.storefront_hubs),
+      services: [],
+    }));
+  }
+
+  const q = (params.q ?? "").trim().toLowerCase();
+  const byCat = new Map<string, PublicStorefrontServiceRow[]>();
+  for (const raw of svcs as Record<string, unknown>[]) {
+    const s = normalizeService(raw);
+    if (!(cats as { id?: string }[]).some((c) => String(c.id) === s.category_id)) continue;
+    if (q) {
+      const hay = `${s.title} ${s.short_description}`.toLowerCase();
+      if (!hay.includes(q)) continue;
+    }
+    const list = byCat.get(s.category_id) ?? [];
+    list.push(s);
+    byCat.set(s.category_id, list);
+  }
+
+  const sortKey = (params.sort ?? "featured") as PublicStorefrontSortKey;
+  const catsToShow = params.categoryId
+    ? (cats as Record<string, unknown>[]).filter((c) => String(c.id ?? "") === params.categoryId)
+    : cats;
+
+  const out: PublicStorefrontCatalogCategory[] = (catsToShow as Record<string, unknown>[]).map((c) => {
+    const id = String(c.id ?? "");
+    const services = sortServices(byCat.get(id) ?? [], sortKey);
+    return {
+      id,
+      name: String(c.name ?? ""),
+      slug: String(c.slug ?? ""),
+      icon: String(c.icon ?? ""),
+      sort_order: Number(c.sort_order ?? 0),
+      storefront_hubs: normalizeHubs(c.storefront_hubs),
+      services,
+    };
+  });
+
+  return out.filter((c) => c.services.length > 0);
+}
+
 const IMAGE_TYPES = new Set(["cover", "thumbnail", "gallery", "mobile_cover", "feature"]);
 
 function resolveSoftwareImageDisplayUrl(row: Record<string, unknown>): string | null {
@@ -170,19 +244,7 @@ function resolveSoftwareImageDisplayUrl(row: Record<string, unknown>): string | 
 }
 
 function parseContentBlocksJson(raw: unknown): StorefrontContentBlock[] {
-  if (!Array.isArray(raw)) return [];
-  const out: StorefrontContentBlock[] = [];
-  for (const item of raw) {
-    if (!item || typeof item !== "object") continue;
-    const o = item as Record<string, unknown>;
-    const heading = typeof o.heading === "string" ? o.heading.trim() : "";
-    const body = typeof o.body === "string" ? o.body.trim() : "";
-    if (!heading || !body) continue;
-    const sort_order = Number.isFinite(Number(o.sort_order)) ? Number(o.sort_order) : out.length;
-    out.push({ sort_order, heading, body });
-  }
-  out.sort((a, b) => a.sort_order - b.sort_order);
-  return out;
+  return toPublicStorefrontContentBlocks(parseGrowthContentBlocksJson(raw));
 }
 
 export function pickStorefrontDetailMainImage(
@@ -226,12 +288,14 @@ export async function loadPublicStorefrontServiceBySlug(
     what_it_does: string | null;
     who_for: string | null;
     how_it_works: string | null;
+    robots_index: boolean;
+    robots_follow: boolean;
   };
 } | null> {
   const { data: row, error } = await supabase
     .from("growth_services")
     .select(
-      `${SVC_SELECT},seo_title,seo_description,canonical_path_override,og_image_url,what_it_does,who_for,how_it_works,content_blocks`
+      `${SVC_SELECT},seo_title,seo_description,canonical_path_override,og_image_url,what_it_does,who_for,how_it_works,content_blocks,robots_index,robots_follow,sitemap_include`
     )
     .eq("slug", slug)
     .eq("is_active", true)
@@ -265,6 +329,7 @@ export async function loadPublicStorefrontServiceBySlug(
       .from("software_product_faq")
       .select("id,question,answer,sort_order")
       .eq("service_id", serviceId)
+      .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     supabase
       .from("software_product_features")
@@ -273,8 +338,9 @@ export async function loadPublicStorefrontServiceBySlug(
       .order("sort_order", { ascending: true }),
     supabase
       .from("software_product_related")
-      .select("id,related_service_id,sort_order")
+      .select("id,related_service_id,sort_order,is_active")
       .eq("service_id", serviceId)
+      .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     supabase.from("software_product_seo").select("og_title,og_description,structured_data").eq("service_id", serviceId).maybeSingle(),
     supabase
@@ -411,6 +477,8 @@ export async function loadPublicStorefrontServiceBySlug(
       what_it_does: r.what_it_does != null ? String(r.what_it_does) : null,
       who_for: r.who_for != null ? String(r.who_for) : null,
       how_it_works: r.how_it_works != null ? String(r.how_it_works) : null,
+      robots_index: (r as { robots_index?: unknown }).robots_index !== false,
+      robots_follow: (r as { robots_follow?: unknown }).robots_follow !== false,
     },
   };
 }
@@ -418,10 +486,13 @@ export async function loadPublicStorefrontServiceBySlug(
 export async function listPublicStorefrontServiceSlugs(supabase: SupabaseClient): Promise<string[]> {
   const { data, error } = await supabase
     .from("growth_services")
-    .select("slug")
+    .select("slug,sitemap_include")
     .eq("is_active", true)
     .eq("public_storefront_enabled", true);
 
   if (error || !data) return [];
-  return (data as { slug?: string }[]).map((r) => String(r.slug ?? "")).filter(Boolean);
+  return (data as { slug?: string; sitemap_include?: boolean }[])
+    .filter((r) => (r as { sitemap_include?: boolean }).sitemap_include !== false)
+    .map((r) => String(r.slug ?? ""))
+    .filter(Boolean);
 }

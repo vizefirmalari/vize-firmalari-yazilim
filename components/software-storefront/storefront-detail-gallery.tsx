@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
+import { StorefrontCategoryPlaceholder } from "@/components/software-storefront/storefront-category-placeholder";
 import { withSupabaseImageTransform } from "@/lib/images/supabase-transform";
 import type { PublicSoftwareProductImageRow } from "@/lib/types/software-storefront";
 
@@ -28,10 +29,14 @@ export function StorefrontServiceDetailGallery({
   images,
   serviceTitle,
   fallbackUrl,
+  categorySlug,
+  categoryName,
 }: {
   images: PublicSoftwareProductImageRow[];
   serviceTitle: string;
   fallbackUrl: string | null;
+  categorySlug: string;
+  categoryName: string;
 }) {
   const ordered = useMemo(() => sortGalleryImages(images), [images]);
   const [idx, setIdx] = useState(0);
@@ -48,22 +53,20 @@ export function StorefrontServiceDetailGallery({
 
   if (!main) {
     return (
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-surface">
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground/45">Vitrin</span>
-          <p className="text-sm font-semibold text-primary">Görsel hazırlanıyor</p>
-          <p className="max-w-xs text-xs leading-relaxed text-foreground/55">
-            Bu çözüm için henüz vitrin görseli tanımlanmadı. İçerik yönetiminden galeri ekleyebilir veya kapak URL alanlarını
-            doldurabilirsiniz.
-          </p>
-        </div>
+      <div className="overflow-hidden rounded-2xl border-2 border-border shadow-md">
+        <StorefrontCategoryPlaceholder
+          variant="detail"
+          categorySlug={categorySlug}
+          categoryName={categoryName}
+          headline={serviceTitle}
+        />
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-surface">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border-2 border-border bg-surface shadow-md">
         <Image
           src={main}
           alt={alt}
@@ -83,8 +86,8 @@ export function StorefrontServiceDetailGallery({
                 key={img.id}
                 type="button"
                 onClick={() => setIdx(i)}
-                className={`relative h-16 w-20 shrink-0 overflow-hidden rounded-lg border transition ${
-                  i === idx ? "border-secondary ring-2 ring-secondary/25" : "border-border opacity-90 hover:opacity-100"
+                className={`relative h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition ${
+                  i === idx ? "border-secondary ring-2 ring-secondary/30" : "border-border hover:border-secondary/25"
                 }`}
               >
                 <Image

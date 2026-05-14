@@ -46,6 +46,13 @@ export type PublicStorefrontListParams = {
   sort?: PublicStorefrontSortKey | null;
 };
 
+/** `/isini-buyut` ana katalog: hub filtresi yok, tüm aktif kategoriler + vitrin hizmetleri. */
+export type PublicStorefrontMarketListParams = {
+  categoryId?: string | null;
+  q?: string | null;
+  sort?: PublicStorefrontSortKey | null;
+};
+
 export type PublicSoftwareProductFaqRow = {
   id: string;
   question: string;

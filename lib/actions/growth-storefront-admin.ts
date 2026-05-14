@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 
 import { requireAdmin } from "@/lib/auth/admin";
+import { normalizeGrowthContentBlocksForDb } from "@/lib/growth/growth-service-content-blocks";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const IMAGE_TYPES = ["cover", "thumbnail", "gallery", "mobile_cover", "feature"] as const;
@@ -436,17 +437,7 @@ export async function adminSaveGrowthContentBlocks(input: {
   }
   if (!Array.isArray(parsed)) return { ok: false, error: "Kök dizi olmalı." };
 
-  const normalized: { sort_order: number; heading: string; body: string }[] = [];
-  for (const item of parsed) {
-    if (!item || typeof item !== "object") continue;
-    const o = item as Record<string, unknown>;
-    const heading = typeof o.heading === "string" ? o.heading.trim() : "";
-    const body = typeof o.body === "string" ? o.body.trim() : "";
-    if (!heading || !body) continue;
-    const sort_order = Number.isFinite(Number(o.sort_order)) ? Number(o.sort_order) : normalized.length;
-    normalized.push({ sort_order, heading, body });
-  }
-  normalized.sort((a, b) => a.sort_order - b.sort_order);
+  const normalized = normalizeGrowthContentBlocksForDb(parsed);
 
   const { error } = await supabase.from("growth_services").update({ content_blocks: normalized }).eq("id", input.serviceId);
   if (error) return { ok: false, error: "Kaydedilemedi." };

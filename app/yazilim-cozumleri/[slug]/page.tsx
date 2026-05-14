@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: titleBase,
     description,
-    robots: { index: true, follow: true },
+    robots: { index: row.content.robots_index !== false, follow: row.content.robots_follow !== false },
     alternates: { canonical },
     openGraph: {
       title: `${titleBase} | ${SITE_BRAND_NAME}`,

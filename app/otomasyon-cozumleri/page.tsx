@@ -47,6 +47,7 @@ export default async function OtomasyonCozumleriPage({ searchParams }: PageProps
   return (
     <StorefrontHubListing
       basePath="/otomasyon-cozumleri"
+      heroEyebrow="Otomasyon vitrin"
       heroTitle="Otomasyon çözümleri"
       heroSubtitle="Yapay zekâ karşılama, mesaj otomasyonları ve entegrasyon katmanları. Detay sayfaları için kanonik URL yapısı /yazilim-cozumleri altında birleştirilmiştir."
       catalog={catalog}

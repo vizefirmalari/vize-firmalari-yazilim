@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { GrowthServiceForm } from "@/components/admin/growth-service-form";
-import { GrowthServiceStorefrontExtras } from "@/components/admin/growth-service-storefront-extras";
+import { GrowthServiceEditShell } from "@/components/admin/growth-service-edit-shell";
 import { getAdminContext } from "@/lib/auth/admin";
+import { parseGrowthContentBlocksJson } from "@/lib/growth/growth-service-content-blocks";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { detailPathForServiceSlug } from "@/lib/software/storefront-hubs";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -26,7 +26,7 @@ export default async function AdminGrowthServiceEditPage({ params }: PageProps) 
       supabase
         .from("growth_services")
         .select(
-          "id,category_id,slug,title,short_description,long_description,setup_price,monthly_price,yearly_price,is_custom_price,package_includes,is_active,is_featured,is_popular,is_new,is_fast_setup,public_storefront_enabled,badge,sort_order,seo_title,seo_description,canonical_path_override,og_image_url,hero_image_url,cover_image_url,thumbnail_image_url,mobile_cover_image_url,what_it_does,who_for,how_it_works,content_blocks"
+          "id,category_id,slug,title,short_description,long_description,setup_price,monthly_price,yearly_price,is_custom_price,package_includes,is_active,is_featured,is_popular,is_new,is_fast_setup,public_storefront_enabled,badge,sort_order,seo_title,seo_description,canonical_path_override,og_image_url,hero_image_url,cover_image_url,thumbnail_image_url,mobile_cover_image_url,what_it_does,who_for,how_it_works,content_blocks,robots_index,robots_follow,sitemap_include"
         )
         .eq("id", id)
         .maybeSingle(),
@@ -84,8 +84,14 @@ export default async function AdminGrowthServiceEditPage({ params }: PageProps) 
     who_for?: string | null;
     how_it_works?: string | null;
     content_blocks?: unknown;
+    robots_index?: boolean | null;
+    robots_follow?: boolean | null;
+    sitemap_include?: boolean | null;
   };
   const pkg = raw.package_includes;
+  const categoryName = categories.find((c) => c.id === raw.category_id)?.name ?? "—";
+  const publicDetailPath = detailPathForServiceSlug(raw.slug);
+
   const initial = {
     id: raw.id,
     category_id: raw.category_id,
@@ -117,6 +123,10 @@ export default async function AdminGrowthServiceEditPage({ params }: PageProps) 
     what_it_does: raw.what_it_does ?? null,
     who_for: raw.who_for ?? null,
     how_it_works: raw.how_it_works ?? null,
+    content_blocks: parseGrowthContentBlocksJson(raw.content_blocks),
+    robots_index: raw.robots_index !== false,
+    robots_follow: raw.robots_follow !== false,
+    sitemap_include: raw.sitemap_include !== false,
   };
 
   const titleById = new Map((allSvcs ?? []).map((s) => [String((s as { id?: string }).id ?? ""), String((s as { title?: string }).title ?? "")]));
@@ -169,37 +179,22 @@ export default async function AdminGrowthServiceEditPage({ params }: PageProps) 
     };
   });
 
-  const contentBlocksJson = JSON.stringify(Array.isArray(raw.content_blocks) ? raw.content_blocks : [], null, 2);
   const allServices = (allSvcs ?? []).map((s) => ({
     id: String((s as { id?: string }).id ?? ""),
     title: String((s as { title?: string }).title ?? ""),
   }));
 
   return (
-    <div className="space-y-6">
-      <Link href="/admin/growth/services" className="text-sm font-semibold text-[#0B3C5D] hover:underline">
-        ← Hizmet listesi
-      </Link>
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-[#0B3C5D]">Hizmet düzenle</h1>
-      </div>
-      <GrowthServiceForm categories={categories} initial={initial} />
-
-      <div className="border-t border-[#0B3C5D]/10 pt-8">
-        <h2 className="text-xl font-bold text-[#0B3C5D]">Vitrin — faz 2</h2>
-        <p className="mt-1 text-sm text-[#1A1A1A]/55">Galeri, SSS, ilgili çözümler, özellik kartları ve süreç blokları.</p>
-        <div className="mt-4">
-          <GrowthServiceStorefrontExtras
-            serviceId={raw.id}
-            initialImages={initialImages}
-            initialFaq={initialFaq}
-            initialRelated={initialRelated}
-            initialFeatures={initialFeatures}
-            contentBlocksJson={contentBlocksJson}
-            allServices={allServices}
-          />
-        </div>
-      </div>
-    </div>
+    <GrowthServiceEditShell
+      categories={categories}
+      categoryName={categoryName}
+      publicDetailPath={publicDetailPath}
+      initial={initial}
+      initialImages={initialImages}
+      initialFaq={initialFaq}
+      initialRelated={initialRelated}
+      initialFeatures={initialFeatures}
+      allServices={allServices}
+    />
   );
 }
