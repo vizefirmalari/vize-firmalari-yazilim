@@ -158,7 +158,7 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
       </section>
 
       <section>
-        <h2 className="text-sm font-bold text-[#0B3C5D]">İşini Büyüt</h2>
+        <h2 className="text-sm font-bold text-[#0B3C5D]">Hizmet vitrini ve geçmiş</h2>
         <p className="mt-1 text-xs text-[#1A1A1A]/55">Hizmet abonelikleri ve açık satın alma talepleri.</p>
 
         {!hasGrowthActivity ? (
@@ -169,10 +169,10 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               <Link
-                href={`/panel/${firmId}/isini-buyut`}
+                href="/hizmet-vitrini"
                 className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0B3C5D] px-5 text-sm font-semibold text-white transition hover:bg-[#0A3552]"
               >
-                İşini Büyüt
+                Hizmet vitrini
               </Link>
               <Link
                 href={`/panel/${firmId}/satinalma-gecmisi`}
@@ -241,10 +241,10 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
                   </div>
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                     <Link
-                      href={`/panel/${firmId}/isini-buyut/hizmet/${o.service_id}`}
+                      href="/hizmet-vitrini"
                       className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-[#0B3C5D]/20 bg-white px-3 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
                     >
-                      Detay
+                      Vitrin
                     </Link>
                     <Link
                       href={adminMsgHref}
@@ -310,10 +310,10 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
                   </div>
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                     <Link
-                      href={`/panel/${firmId}/isini-buyut/hizmet/${o.service_id}`}
+                      href="/hizmet-vitrini"
                       className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-[#0B3C5D]/20 bg-white px-3 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
                     >
-                      Detay
+                      Vitrin
                     </Link>
                     <Link
                       href={`/panel/${firmId}/yonetici-mesaj?purchase=${encodeURIComponent(o.id)}`}

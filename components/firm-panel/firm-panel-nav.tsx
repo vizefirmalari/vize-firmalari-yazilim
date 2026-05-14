@@ -17,7 +17,6 @@ function buildNavItems(firmId: string): NavItem[] {
     { href: `/panel/${firmId}/formlar`, label: "Gelen başvurular", icon: "▤" },
     { href: `/panel/${firmId}/visa-operations`, label: "Vize Operasyonları", icon: "☰" },
     { href: `/panel/${firmId}/paylasim`, label: "Paylaşım", icon: "✦" },
-    { href: `/panel/${firmId}/isini-buyut`, label: "İşini Büyüt", icon: "↑" },
     { href: `/panel/${firmId}/satinalma-gecmisi`, label: "Satın alma geçmişi", icon: "▣" },
     { href: `/panel/${firmId}/reklam`, label: "Reklam ver", icon: "◎" },
     { href: `/panel/${firmId}/abonelik`, label: "Abonelikler", icon: "◇" },

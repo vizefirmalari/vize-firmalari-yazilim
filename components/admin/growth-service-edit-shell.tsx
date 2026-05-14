@@ -477,7 +477,7 @@ export function GrowthServiceEditShell(props: {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-2">
-          <Link href="/admin/growth/services" className="text-sm font-semibold text-[#0B3C5D] hover:underline">
+          <Link href="/admin/hizmet-vitrini/hizmetler" className="text-sm font-semibold text-[#0B3C5D] hover:underline">
             ← Hizmet listesi
           </Link>
           <div className="flex flex-wrap items-center gap-2">

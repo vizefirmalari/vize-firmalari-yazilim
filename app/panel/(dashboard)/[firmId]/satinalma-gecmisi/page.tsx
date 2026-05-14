@@ -48,10 +48,10 @@ export default async function FirmPurchaseHistoryPage({ params }: PageProps) {
             Henüz kayıtlı bir satın alma işleminiz bulunmuyor.
           </p>
           <Link
-            href={`/panel/${firmId}/isini-buyut`}
+            href="/hizmet-vitrini"
             className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0B3C5D] px-5 text-sm font-semibold text-white transition hover:bg-[#0A3552]"
           >
-            İşini Büyüt
+            Hizmet vitrini
           </Link>
         </div>
       ) : (

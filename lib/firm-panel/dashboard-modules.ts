@@ -21,11 +21,11 @@ export const FIRM_DASHBOARD_MODULES: readonly FirmDashboardModule[] = [
   },
   {
     id: "grow-business",
-    title: "İşini Büyüt",
-    description: "Reklam, otomasyon ve yazılım paketleriyle daha fazla müşteriye ulaşın.",
+    title: "Büyüme çözümleri",
+    description: "Yazılım, otomasyon ve büyüme hizmetlerinin vitrin kataloğunu inceleyin.",
     status: "aktif",
-    actionLabel: "Keşfet",
-    href: "/panel/{firmId}/isini-buyut",
+    actionLabel: "Vitrin",
+    href: "/hizmet-vitrini",
   },
   {
     id: "buy-ads",

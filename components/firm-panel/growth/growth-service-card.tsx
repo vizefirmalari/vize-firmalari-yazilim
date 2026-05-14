@@ -149,10 +149,10 @@ export function GrowthServiceCard({
           </span>
         )}
         <Link
-          href={`/panel/${firmId}/isini-buyut/hizmet/${service.id}`}
+          href="/hizmet-vitrini"
           className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#0B3C5D]/16 bg-white px-4 text-sm font-semibold text-[#0B3C5D] transition hover:border-[#0B3C5D]/26 hover:bg-white"
         >
-          Detayları Gör
+          Vitrini aç
         </Link>
       </div>
     </article>

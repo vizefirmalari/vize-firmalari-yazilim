@@ -19,7 +19,7 @@ const nav = [
   { href: "/admin/firm-panel", label: "Firma panel", icon: "▣" },
   { href: "/admin/firma-iletisim-analizi", label: "Firma İletişim Analizi", icon: "✉" },
   { href: "/admin/arama-analizi", label: "Arama analizi", icon: "⌕" },
-  { href: "/admin/growth", label: "İşini Büyüt", icon: "↑" },
+  { href: "/admin/hizmet-vitrini", label: "Hizmet Vitrini", icon: "◇" },
   { href: "/admin/firm-admin-messages", label: "Firma — yönetim sohbeti", icon: "✉" },
   { href: "/admin/filters/countries", label: "Ülkeler", icon: "⌖" },
   { href: "/admin/filters/services", label: "İşlem türleri", icon: "☰" },
@@ -67,7 +67,7 @@ export function AdminSidebar({ growthPurchaseUnreadCount = 0 }: SidebarProps) {
               </span>
               <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
                 <span className="truncate">{item.label}</span>
-                {item.href === "/admin/growth" && growthPurchaseUnreadCount > 0 ? (
+                {item.href === "/admin/hizmet-vitrini" && growthPurchaseUnreadCount > 0 ? (
                   <span className="shrink-0 rounded-full bg-[#D9A441] px-2 py-0.5 text-[10px] font-bold leading-none text-[#1A1A1A]">
                     {formatCompactBadge(growthPurchaseUnreadCount)}
                   </span>

@@ -192,7 +192,7 @@ export async function submitGrowthPurchaseRequest(input: {
       return { ok: false, error: "Talep güncellenemedi." };
     }
     revalidatePath(`/panel/${input.firmId}/abonelik`);
-    revalidatePath(`/panel/${input.firmId}/isini-buyut`);
+    revalidatePath("/hizmet-vitrini");
     revalidatePath(`/panel/${input.firmId}/satinalma-gecmisi`);
     revalidatePath("/admin/growth/purchase-requests");
     revalidatePath("/admin");
@@ -220,7 +220,7 @@ export async function submitGrowthPurchaseRequest(input: {
   }
 
   revalidatePath(`/panel/${input.firmId}/abonelik`);
-  revalidatePath(`/panel/${input.firmId}/isini-buyut`);
+  revalidatePath("/hizmet-vitrini");
   revalidatePath(`/panel/${input.firmId}/satinalma-gecmisi`);
   revalidatePath("/admin/growth/purchase-requests");
   revalidatePath("/admin");

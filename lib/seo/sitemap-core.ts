@@ -11,7 +11,7 @@ import {
 import { listPublicDocumentPages } from "@/lib/seo/public-routes";
 import { resolveToAbsoluteImageUrl } from "@/lib/seo/blog-og-image";
 import { getCachedAkisFeedCategoryLandingSitemapSlice } from "@/lib/seo/akis-feed-category-sitemap";
-import { listPublicStorefrontServiceSlugs } from "@/lib/data/software-storefront";
+import { listServiceStorefrontPublicSlugs } from "@/lib/data/service-storefront-public";
 
 /** Google sitemap urlset — priority 0.0–1.0 (opsiyonel). */
 export type SitemapUrl = {
@@ -323,8 +323,7 @@ function buildStaticSectionUrls(): SitemapUrl[] {
     { loc: normalizeCanonicalUrl("/"), changefreq: "daily", priority: 1 },
     { loc: normalizeCanonicalUrl("/akis"), changefreq: "daily", priority: 0.9 },
     { loc: normalizeCanonicalUrl("/kesfet"), changefreq: "weekly", priority: 0.85 },
-    { loc: normalizeCanonicalUrl("/isini-buyut"), changefreq: "weekly", priority: 0.74 },
-    { loc: normalizeCanonicalUrl("/yazilim-cozumleri"), changefreq: "weekly", priority: 0.76 },
+    { loc: normalizeCanonicalUrl("/hizmet-vitrini"), changefreq: "weekly", priority: 0.76 },
     { loc: normalizeCanonicalUrl("/otomasyon-cozumleri"), changefreq: "weekly", priority: 0.75 },
     { loc: normalizeCanonicalUrl(COUNTRY_GUIDE_CATALOG_BASE_PATH), changefreq: "weekly", priority: 0.85 },
   ];
@@ -390,9 +389,9 @@ export async function getIndexableUrlsBySection(section: SitemapSection): Promis
       if (isSupabaseConfigured()) {
         const supabase = createSupabasePublicClient();
         if (supabase) {
-          const slugs = await listPublicStorefrontServiceSlugs(supabase);
+          const slugs = await listServiceStorefrontPublicSlugs(supabase);
           const vitrin: SitemapUrl[] = slugs.map((slug) => ({
-            loc: normalizeCanonicalUrl(`/yazilim-cozumleri/${slug}`),
+            loc: normalizeCanonicalUrl(`/hizmet-vitrini/${slug}`),
             lastmod: nowIso,
             changefreq: "weekly" as const,
             priority: 0.71,
