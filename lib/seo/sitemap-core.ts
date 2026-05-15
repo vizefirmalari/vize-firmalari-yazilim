@@ -323,7 +323,7 @@ function buildStaticSectionUrls(): SitemapUrl[] {
     { loc: normalizeCanonicalUrl("/"), changefreq: "daily", priority: 1 },
     { loc: normalizeCanonicalUrl("/akis"), changefreq: "daily", priority: 0.9 },
     { loc: normalizeCanonicalUrl("/kesfet"), changefreq: "weekly", priority: 0.85 },
-    { loc: normalizeCanonicalUrl("/hizmet-vitrini"), changefreq: "weekly", priority: 0.76 },
+    { loc: normalizeCanonicalUrl("/yazilim-cozumleri"), changefreq: "weekly", priority: 0.76 },
     { loc: normalizeCanonicalUrl("/otomasyon-cozumleri"), changefreq: "weekly", priority: 0.75 },
     { loc: normalizeCanonicalUrl(COUNTRY_GUIDE_CATALOG_BASE_PATH), changefreq: "weekly", priority: 0.85 },
   ];
@@ -391,7 +391,7 @@ export async function getIndexableUrlsBySection(section: SitemapSection): Promis
         if (supabase) {
           const slugs = await listServiceStorefrontPublicSlugs(supabase);
           const vitrin: SitemapUrl[] = slugs.map((slug) => ({
-            loc: normalizeCanonicalUrl(`/hizmet-vitrini/${slug}`),
+            loc: normalizeCanonicalUrl(`/yazilim-cozumleri/${slug}`),
             lastmod: nowIso,
             changefreq: "weekly" as const,
             priority: 0.71,

@@ -13,9 +13,9 @@ const nextConfig: NextConfig = {
     return [
       { source: "/firma-panel", destination: "/panel", permanent: false },
       { source: "/firma-panel/:path*", destination: "/panel/:path*", permanent: false },
-      { source: "/yazilim-cozumleri", destination: "/hizmet-vitrini", permanent: true },
-      { source: "/yazilim-cozumleri/:slug", destination: "/hizmet-vitrini/:slug", permanent: true },
-      { source: "/isini-buyut", destination: "/hizmet-vitrini", permanent: true },
+      { source: "/hizmet-vitrini", destination: "/yazilim-cozumleri", permanent: true },
+      { source: "/hizmet-vitrini/:slug", destination: "/yazilim-cozumleri/:slug", permanent: true },
+      { source: "/isini-buyut", destination: "/yazilim-cozumleri", permanent: true },
     ];
   },
   images: {

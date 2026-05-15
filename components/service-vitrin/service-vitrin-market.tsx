@@ -41,7 +41,7 @@ export function ServiceVitrinMarket({ items, categories, cardImages, previewLine
     <div className="container-shell py-10 sm:py-12">
       <header className="max-w-3xl">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary/70">B2B vitrin</p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-primary sm:text-3xl">Hizmet vitrini</h1>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-primary sm:text-3xl">Yazılım çözümleri</h1>
         <p className="mt-3 text-sm leading-relaxed text-foreground/70">
           Kurulum ve abonelik modeliyle sunulan yazılım, otomasyon ve büyüme çözümleri. Kartlardan detaya gidin; satın alma için
           WhatsApp hattı üzerinden ekibimizle iletişime geçin.

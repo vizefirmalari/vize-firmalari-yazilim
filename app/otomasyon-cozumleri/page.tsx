@@ -49,7 +49,7 @@ export default async function OtomasyonCozumleriPage({ searchParams }: PageProps
       basePath="/otomasyon-cozumleri"
       heroEyebrow="Otomasyon vitrin"
       heroTitle="Otomasyon çözümleri"
-      heroSubtitle="Yapay zekâ karşılama, mesaj otomasyonları ve entegrasyon katmanları. Genel B2B hizmet kataloğu için /hizmet-vitrini sayfasına göz atabilirsiniz."
+      heroSubtitle="Yapay zekâ karşılama, mesaj otomasyonları ve entegrasyon katmanları. Genel B2B hizmet kataloğu için /yazilim-cozumleri sayfasına göz atabilirsiniz."
       catalog={catalog}
       q={q}
       sort={sort}

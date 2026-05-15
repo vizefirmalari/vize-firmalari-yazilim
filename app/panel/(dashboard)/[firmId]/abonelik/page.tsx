@@ -7,6 +7,7 @@ import {
   growthPurchaseStatusLabel,
   growthServiceSubscriptionStatusLabel,
 } from "@/lib/growth/growth-purchase-labels";
+import { SERVICE_STOREFRONT_PUBLIC_BASE } from "@/lib/constants/service-storefront";
 import { requireFirmPanelAccess } from "@/lib/auth/firm-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
@@ -111,7 +112,7 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
         </p>
         <h1 className="mt-2 text-2xl font-bold text-[#0B3C5D]">Abonelikler ve hizmetleriniz</h1>
         <p className="mt-2 text-sm text-[#1A1A1A]/60">
-          Platform görünürlük planınız, İşini Büyüt talepleriniz ve aktif hizmet abonelikleriniz.
+          Platform görünürlük planınız, yazılım çözümleri vitrininden gelen talepleriniz ve aktif hizmet abonelikleriniz.
         </p>
       </div>
 
@@ -158,7 +159,7 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
       </section>
 
       <section>
-        <h2 className="text-sm font-bold text-[#0B3C5D]">Hizmet vitrini ve geçmiş</h2>
+        <h2 className="text-sm font-bold text-[#0B3C5D]">Yazılım çözümleri ve geçmiş</h2>
         <p className="mt-1 text-xs text-[#1A1A1A]/55">Hizmet abonelikleri ve açık satın alma talepleri.</p>
 
         {!hasGrowthActivity ? (
@@ -169,10 +170,10 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               <Link
-                href="/hizmet-vitrini"
+                href={SERVICE_STOREFRONT_PUBLIC_BASE}
                 className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0B3C5D] px-5 text-sm font-semibold text-white transition hover:bg-[#0A3552]"
               >
-                Hizmet vitrini
+                Yazılım çözümleri
               </Link>
               <Link
                 href={`/panel/${firmId}/satinalma-gecmisi`}
@@ -241,7 +242,7 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
                   </div>
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                     <Link
-                      href="/hizmet-vitrini"
+                      href={SERVICE_STOREFRONT_PUBLIC_BASE}
                       className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-[#0B3C5D]/20 bg-white px-3 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
                     >
                       Vitrin
@@ -310,7 +311,7 @@ export default async function FirmPanelSubscriptionsPage({ params }: PageProps) 
                   </div>
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                     <Link
-                      href="/hizmet-vitrini"
+                      href={SERVICE_STOREFRONT_PUBLIC_BASE}
                       className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-[#0B3C5D]/20 bg-white px-3 text-sm font-semibold text-[#0B3C5D] transition hover:bg-[#F7F9FB]"
                     >
                       Vitrin

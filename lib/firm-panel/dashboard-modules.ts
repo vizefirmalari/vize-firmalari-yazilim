@@ -25,7 +25,7 @@ export const FIRM_DASHBOARD_MODULES: readonly FirmDashboardModule[] = [
     description: "Yazılım, otomasyon ve büyüme hizmetlerinin vitrin kataloğunu inceleyin.",
     status: "aktif",
     actionLabel: "Vitrin",
-    href: "/hizmet-vitrini",
+    href: "/yazilim-cozumleri",
   },
   {
     id: "buy-ads",

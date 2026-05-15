@@ -75,6 +75,18 @@ function numOrNull(v: string): number | null {
   return Number.isFinite(n) ? Math.max(0, Math.round(n)) : null;
 }
 
+const LEGACY_SERVICE_STOREFRONT_PUBLIC_BASE = "/hizmet-vitrini";
+
+/** Sunucudaki eski canonical path’leri editörde yeni public base ile gösterir. */
+function normalizeLegacyCanonicalPath(path: string | null | undefined): string {
+  const raw = path?.trim() ?? "";
+  if (!raw) return "";
+  if (raw === LEGACY_SERVICE_STOREFRONT_PUBLIC_BASE || raw.startsWith(`${LEGACY_SERVICE_STOREFRONT_PUBLIC_BASE}/`)) {
+    return `${SERVICE_STOREFRONT_PUBLIC_BASE}${raw.slice(LEGACY_SERVICE_STOREFRONT_PUBLIC_BASE.length)}`;
+  }
+  return raw;
+}
+
 const DEFAULT_CATS = [
   "Reklam & Müşteri Kazanımı",
   "Yapay Zeka & Otomasyon",
@@ -169,7 +181,7 @@ export function ServiceStorefrontEditShell(props: {
 
   const [seoTitle, setSeoTitle] = useState(svc.seo_title ?? "");
   const [seoDescription, setSeoDescription] = useState(svc.seo_description ?? "");
-  const [canonicalPath, setCanonicalPath] = useState(svc.canonical_path ?? "");
+  const [canonicalPath, setCanonicalPath] = useState(() => normalizeLegacyCanonicalPath(svc.canonical_path));
   const [seoFocus, setSeoFocus] = useState(svc.seo_focus_keyword ?? "");
   const [seoSecondary, setSeoSecondary] = useState((svc.seo_secondary_keywords ?? []).join(", "));
   const [ogUrl, setOgUrl] = useState(svc.og_image_url ?? "");
@@ -221,7 +233,7 @@ export function ServiceStorefrontEditShell(props: {
     setProcessDescription(s.process_description ?? "");
     setSeoTitle(s.seo_title ?? "");
     setSeoDescription(s.seo_description ?? "");
-    setCanonicalPath(s.canonical_path ?? "");
+    setCanonicalPath(normalizeLegacyCanonicalPath(s.canonical_path));
     setSeoFocus(s.seo_focus_keyword ?? "");
     setSeoSecondary((s.seo_secondary_keywords ?? []).join(", "));
     setOgUrl(s.og_image_url ?? "");

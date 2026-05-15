@@ -59,7 +59,7 @@ export function ServiceVitrinDetailView(data: Props) {
         </Link>
         <span className="mx-1.5 text-foreground/35">/</span>
         <Link href={SERVICE_STOREFRONT_PUBLIC_BASE} className="hover:text-primary">
-          Hizmet vitrini
+          Yazılım çözümleri
         </Link>
         <span className="mx-1.5 text-foreground/35">/</span>
         <Link href={categoryHref} className="hover:text-primary">
@@ -188,7 +188,7 @@ export function ServiceVitrinDetailView(data: Props) {
               <h2 className="text-base font-bold text-primary">Devam edin</h2>
               <div className="mt-4 flex flex-col gap-2 text-sm font-bold text-primary sm:flex-row sm:flex-wrap sm:gap-x-6">
                 <Link href={SERVICE_STOREFRONT_PUBLIC_BASE} className="hover:underline">
-                  Hizmet vitrini
+                  Yazılım çözümleri
                 </Link>
                 <Link href={categoryHref} className="hover:underline">
                   {item.category} kategorisi

@@ -7,5 +7,5 @@ type PageProps = { params: Promise<{ firmId: string; serviceId: string }> };
 export default async function FirmGrowthPurchaseRedirectPage({ params }: PageProps) {
   const { firmId } = await params;
   await requireFirmPanelAccess(firmId);
-  redirect("/hizmet-vitrini");
+  redirect("/yazilim-cozumleri");
 }

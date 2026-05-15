@@ -19,11 +19,11 @@ export const revalidate = 300;
 const SORTS: ServiceStorefrontSortKey[] = ["featured", "title", "setup_asc", "setup_desc"];
 
 export const metadata: Metadata = {
-  title: "Hizmet vitrini",
+  title: "Yazılım çözümleri",
   description: `Kurulum ve abonelik modeliyle sunulan yazılım, otomasyon ve büyüme çözümleri — ${SITE_BRAND_NAME} B2B vitrin.`,
   alternates: { canonical: absoluteUrl(SERVICE_STOREFRONT_PUBLIC_BASE) },
   openGraph: {
-    title: `Hizmet vitrini | ${SITE_BRAND_NAME}`,
+    title: `Yazılım çözümleri | ${SITE_BRAND_NAME}`,
     description: `Kurulum ve abonelik modeliyle sunulan yazılım, otomasyon ve büyüme çözümleri — ${SITE_BRAND_NAME} B2B vitrin.`,
     url: absoluteUrl(SERVICE_STOREFRONT_PUBLIC_BASE),
     siteName: SITE_BRAND_NAME,
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
 
 type PageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export default async function HizmetVitriniPage({ searchParams }: PageProps) {
+export default async function YazilimCozumleriPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q : "";
   const sortRaw = typeof sp.sort === "string" ? sp.sort : "featured";

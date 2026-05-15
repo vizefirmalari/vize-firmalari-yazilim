@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const titleBase = item.seo_title?.trim() || `${item.title} | ${SITE_BRAND_NAME}`;
   const description =
-    item.seo_description?.trim() || item.short_description || `${item.title} — ${SITE_BRAND_NAME} hizmet vitrini.`;
+    item.seo_description?.trim() || item.short_description || `${item.title} — ${SITE_BRAND_NAME} yazılım çözümleri vitrini.`;
 
   const defOg = resolveDefaultSiteShareImage();
   const mainImg = pickPrimaryServiceImage(data.images);
@@ -64,7 +64,7 @@ function buildServiceJsonLd(
 ) {
   const { item } = data;
   const description =
-    item.seo_description?.trim() || item.short_description || `${item.title} — ${SITE_BRAND_NAME} hizmet vitrini.`;
+    item.seo_description?.trim() || item.short_description || `${item.title} — ${SITE_BRAND_NAME} yazılım çözümleri.`;
 
   const parts: string[] = [];
   if (!item.custom_price && item.setup_price != null) {
@@ -110,7 +110,7 @@ function buildServiceJsonLd(
   };
 }
 
-export default async function HizmetVitriniDetailPage({ params }: PageProps) {
+export default async function YazilimCozumuDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = createSupabasePublicClient();
   if (!supabase || !isSupabaseConfigured()) notFound();

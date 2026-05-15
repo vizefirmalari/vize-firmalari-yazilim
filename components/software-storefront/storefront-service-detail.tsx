@@ -340,13 +340,13 @@ export function StorefrontServiceDetailView({
         <section className="space-y-4 rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
           <h2 className="text-base font-bold text-primary">Keşfet</h2>
           <div className="flex flex-col gap-3 text-sm font-bold text-primary sm:flex-row sm:flex-wrap sm:gap-x-8 sm:gap-y-3">
-            <Link href="/hizmet-vitrini" className="hover:underline">
-              Hizmet vitrini
+            <Link href="/yazilim-cozumleri" className="hover:underline">
+              Yazılım çözümleri
             </Link>
-            <Link href={`/hizmet-vitrini?category=${encodeURIComponent(category.name)}`} className="hover:underline">
+            <Link href={`/yazilim-cozumleri?category=${encodeURIComponent(category.name)}`} className="hover:underline">
               Bu kategorideki hizmetler
             </Link>
-            <Link href="/hizmet-vitrini" className="hover:underline">
+            <Link href="/yazilim-cozumleri" className="hover:underline">
               Tüm vitrin
             </Link>
             <Link href="/otomasyon-cozumleri" className="hover:underline">
