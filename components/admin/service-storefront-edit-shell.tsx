@@ -101,8 +101,12 @@ export type ServiceStorefrontEditInitial = {
   sort_order: number;
   setup_price: number | null;
   subscription_price: number | null;
+  yearly_price: number | null;
   subscription_period: string | null;
+  currency: string;
   custom_price: boolean;
+  seo_focus_keyword: string | null;
+  seo_secondary_keywords: string[];
   discount_label: string | null;
   delivery_time: string | null;
   setup_time: string | null;
@@ -144,7 +148,9 @@ export function ServiceStorefrontEditShell(props: {
 
   const [setup, setSetup] = useState(svc.setup_price != null ? String(svc.setup_price) : "");
   const [subPrice, setSubPrice] = useState(svc.subscription_price != null ? String(svc.subscription_price) : "");
+  const [yearlyPrice, setYearlyPrice] = useState(svc.yearly_price != null ? String(svc.yearly_price) : "");
   const [subPeriod, setSubPeriod] = useState(svc.subscription_period ?? "");
+  const [currency, setCurrency] = useState(svc.currency || "TRY");
   const [customPrice, setCustomPrice] = useState(svc.custom_price);
   const [discountLabel, setDiscountLabel] = useState(svc.discount_label ?? "");
 
@@ -162,6 +168,8 @@ export function ServiceStorefrontEditShell(props: {
   const [seoTitle, setSeoTitle] = useState(svc.seo_title ?? "");
   const [seoDescription, setSeoDescription] = useState(svc.seo_description ?? "");
   const [canonicalPath, setCanonicalPath] = useState(svc.canonical_path ?? "");
+  const [seoFocus, setSeoFocus] = useState(svc.seo_focus_keyword ?? "");
+  const [seoSecondary, setSeoSecondary] = useState((svc.seo_secondary_keywords ?? []).join(", "));
   const [ogUrl, setOgUrl] = useState(svc.og_image_url ?? "");
 
   const [status, setStatus] = useState(svc.status);
@@ -194,7 +202,9 @@ export function ServiceStorefrontEditShell(props: {
     setLongDescription(s.long_description ?? "");
     setSetup(s.setup_price != null ? String(s.setup_price) : "");
     setSubPrice(s.subscription_price != null ? String(s.subscription_price) : "");
+    setYearlyPrice(s.yearly_price != null ? String(s.yearly_price) : "");
     setSubPeriod(s.subscription_period ?? "");
+    setCurrency(s.currency || "TRY");
     setCustomPrice(s.custom_price);
     setDiscountLabel(s.discount_label ?? "");
     setDeliveryTime(s.delivery_time ?? "");
@@ -210,6 +220,8 @@ export function ServiceStorefrontEditShell(props: {
     setSeoTitle(s.seo_title ?? "");
     setSeoDescription(s.seo_description ?? "");
     setCanonicalPath(s.canonical_path ?? "");
+    setSeoFocus(s.seo_focus_keyword ?? "");
+    setSeoSecondary((s.seo_secondary_keywords ?? []).join(", "));
     setOgUrl(s.og_image_url ?? "");
     setStatus(s.status);
     setIsFeatured(s.is_featured);
@@ -291,8 +303,16 @@ export function ServiceStorefrontEditShell(props: {
         sort_order: sortOrder,
         setup_price: numOrNull(setup),
         subscription_price: numOrNull(subPrice),
+        yearly_price: numOrNull(yearlyPrice),
         subscription_period: subPeriod.trim() || null,
+        currency,
         custom_price: customPrice,
+        seo_focus_keyword: seoFocus.trim() || null,
+        seo_secondary_keywords: seoSecondary
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+          .slice(0, 30),
         discount_label: discountLabel.trim() || null,
         delivery_time: deliveryTime.trim() || null,
         setup_time: setupTime.trim() || null,
@@ -477,20 +497,33 @@ export function ServiceStorefrontEditShell(props: {
       {tab === "pricing" ? (
         <div className="grid gap-4 rounded-2xl border border-[#0B3C5D]/10 bg-white p-6 shadow-sm sm:grid-cols-2">
           <label className="text-xs font-bold text-[#1A1A1A]/55">
-            Kurulum (TL)
-            <input value={setup} onChange={(e) => setSetup(e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
+            Para birimi
+            <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm">
+              <option value="TRY">TRY</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+            </select>
+          </label>
+          <label className="flex items-end gap-2 pb-1 text-sm font-bold text-[#0B3C5D]">
+            <input type="checkbox" checked={customPrice} onChange={(e) => setCustomPrice(e.target.checked)} />
+            Teklif üzerinden
           </label>
           <label className="text-xs font-bold text-[#1A1A1A]/55">
-            Abonelik (TL)
-            <input value={subPrice} onChange={(e) => setSubPrice(e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
+            Kurulum
+            <input value={setup} onChange={(e) => setSetup(e.target.value)} disabled={customPrice} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm disabled:opacity-50" />
+          </label>
+          <label className="text-xs font-bold text-[#1A1A1A]/55">
+            Aylık abonelik
+            <input value={subPrice} onChange={(e) => setSubPrice(e.target.value)} disabled={customPrice} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm disabled:opacity-50" />
+          </label>
+          <label className="text-xs font-bold text-[#1A1A1A]/55">
+            Yıllık abonelik
+            <input value={yearlyPrice} onChange={(e) => setYearlyPrice(e.target.value)} disabled={customPrice} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm disabled:opacity-50" />
           </label>
           <label className="text-xs font-bold text-[#1A1A1A]/55">
             Abonelik dönemi
             <input value={subPeriod} onChange={(e) => setSubPeriod(e.target.value)} placeholder="örn. aylık, yıllık" className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
-          </label>
-          <label className="flex items-center gap-2 text-sm font-bold text-[#0B3C5D] sm:col-span-2">
-            <input type="checkbox" checked={customPrice} onChange={(e) => setCustomPrice(e.target.checked)} />
-            Teklif üzerinden
           </label>
           <label className="sm:col-span-2 text-xs font-bold text-[#1A1A1A]/55">
             İndirim etiketi (opsiyonel)
@@ -645,10 +678,26 @@ export function ServiceStorefrontEditShell(props: {
             <label className="text-xs font-bold text-[#1A1A1A]/55">
               Meta description ({seoDescription.trim().length})
               <textarea value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} rows={4} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
+              <span className="mt-1 block text-[11px] font-medium text-[#1A1A1A]/45">
+                {seoDescription.trim().length < 140
+                  ? "140–160 karakter önerilir."
+                  : seoDescription.trim().length > 160
+                    ? "160 karakter civarında tutmayı deneyin."
+                    : "İyi uzunluk."}
+              </span>
             </label>
             <label className="text-xs font-bold text-[#1A1A1A]/55">
               Canonical path
-              <input value={canonicalPath} onChange={(e) => setCanonicalPath(e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
+              <input value={canonicalPath} onChange={(e) => setCanonicalPath(e.target.value)} placeholder={previewPath} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
+              <span className="mt-1 block text-[11px] text-[#1A1A1A]/45">Boş bırakılırsa: {previewPath}</span>
+            </label>
+            <label className="text-xs font-bold text-[#1A1A1A]/55">
+              Odak anahtar kelime
+              <input value={seoFocus} onChange={(e) => setSeoFocus(e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
+            </label>
+            <label className="text-xs font-bold text-[#1A1A1A]/55">
+              İkincil anahtar kelimeler (virgülle)
+              <input value={seoSecondary} onChange={(e) => setSeoSecondary(e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
             </label>
             <label className="text-xs font-bold text-[#1A1A1A]/55">
               OG görsel URL

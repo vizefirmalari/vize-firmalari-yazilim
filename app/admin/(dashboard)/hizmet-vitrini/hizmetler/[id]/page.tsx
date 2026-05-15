@@ -100,8 +100,14 @@ export default async function AdminHizmetVitriniEditPage({ params }: PageProps) 
     sort_order: Number(raw.sort_order ?? 0),
     setup_price: raw.setup_price != null ? Number(raw.setup_price) : null,
     subscription_price: raw.subscription_price != null ? Number(raw.subscription_price) : null,
+    yearly_price: raw.yearly_price != null ? Number(raw.yearly_price) : null,
     subscription_period: raw.subscription_period != null ? String(raw.subscription_period) : null,
+    currency: raw.currency != null ? String(raw.currency) : "TRY",
     custom_price: Boolean(raw.custom_price),
+    seo_focus_keyword: raw.seo_focus_keyword != null ? String(raw.seo_focus_keyword) : null,
+    seo_secondary_keywords: Array.isArray(raw.seo_secondary_keywords)
+      ? (raw.seo_secondary_keywords as unknown[]).map((t) => String(t))
+      : [],
     discount_label: raw.discount_label != null ? String(raw.discount_label) : null,
     delivery_time: raw.delivery_time != null ? String(raw.delivery_time) : null,
     setup_time: raw.setup_time != null ? String(raw.setup_time) : null,

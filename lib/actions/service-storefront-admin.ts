@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 
 import { requireAdmin } from "@/lib/auth/admin";
+import { SERVICE_STOREFRONT_IMAGE_MAX_BYTES } from "@/lib/admin/service-storefront-form-constants";
 import { SERVICE_STOREFRONT_PUBLIC_BASE, serviceStorefrontDetailPath } from "@/lib/constants/service-storefront";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { slugifyGrowth } from "@/lib/slug/growth-slug";
@@ -33,7 +34,7 @@ async function itemSlugFor(supabase: NonNullable<Awaited<ReturnType<typeof creat
   return (data as { slug?: string } | null)?.slug?.trim() || null;
 }
 
-export async function adminSaveServiceStorefrontItem(input: {
+export type ServiceStorefrontItemSaveInput = {
   id?: string;
   title: string;
   slug?: string;
@@ -45,6 +46,8 @@ export async function adminSaveServiceStorefrontItem(input: {
   seo_description?: string | null;
   canonical_path?: string | null;
   og_image_url?: string | null;
+  seo_focus_keyword?: string | null;
+  seo_secondary_keywords?: string[];
   status: "draft" | "published" | "archived";
   is_featured: boolean;
   is_popular: boolean;
@@ -52,7 +55,9 @@ export async function adminSaveServiceStorefrontItem(input: {
   sort_order: number;
   setup_price: number | null;
   subscription_price: number | null;
+  yearly_price?: number | null;
   subscription_period?: string | null;
+  currency?: string | null;
   custom_price: boolean;
   discount_label?: string | null;
   delivery_time?: string | null;
@@ -68,7 +73,11 @@ export async function adminSaveServiceStorefrontItem(input: {
   robots_index?: boolean;
   robots_follow?: boolean;
   sitemap_include?: boolean;
-}): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+};
+
+export async function adminSaveServiceStorefrontItem(
+  input: ServiceStorefrontItemSaveInput
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const supabase = await adminDb();
   if (!supabase) return { ok: false, error: "Bağlantı yok." };
 
@@ -80,6 +89,11 @@ export async function adminSaveServiceStorefrontItem(input: {
   if (!slugRaw) return { ok: false, error: "Slug gerekli." };
 
   const tags = (input.tags ?? []).map((t) => t.trim()).filter(Boolean).slice(0, 40);
+  const seoSecondary = (input.seo_secondary_keywords ?? []).map((t) => t.trim()).filter(Boolean).slice(0, 30);
+  const currencyRaw = input.currency?.trim().toUpperCase() || "TRY";
+  const currency = ["TRY", "EUR", "USD", "GBP"].includes(currencyRaw) ? currencyRaw : "TRY";
+
+  const canonical_path = input.canonical_path?.trim() || serviceStorefrontDetailPath(slugRaw);
 
   const row = {
     title,
@@ -90,8 +104,10 @@ export async function adminSaveServiceStorefrontItem(input: {
     long_description: input.long_description?.trim() || null,
     seo_title: input.seo_title?.trim() || null,
     seo_description: input.seo_description?.trim() || null,
-    canonical_path: input.canonical_path?.trim() || null,
+    canonical_path,
     og_image_url: input.og_image_url?.trim() || null,
+    seo_focus_keyword: input.seo_focus_keyword?.trim() || null,
+    seo_secondary_keywords: seoSecondary,
     status: input.status,
     is_featured: input.is_featured,
     is_popular: input.is_popular,
@@ -99,7 +115,9 @@ export async function adminSaveServiceStorefrontItem(input: {
     sort_order: input.sort_order,
     setup_price: input.setup_price,
     subscription_price: input.subscription_price,
+    yearly_price: input.yearly_price ?? null,
     subscription_period: input.subscription_period?.trim() || null,
+    currency,
     custom_price: input.custom_price,
     discount_label: input.discount_label?.trim() || null,
     delivery_time: input.delivery_time?.trim() || null,
@@ -162,6 +180,7 @@ export async function adminUploadServiceStorefrontImage(formData: FormData): Pro
     : "square";
   const altText = String(formData.get("alt_text") ?? "").trim() || null;
   const manualUrl = String(formData.get("manual_url") ?? "").trim();
+  const isPrimary = String(formData.get("is_primary") ?? "") === "true";
   const file = formData.get("file");
   if (!serviceId) return { ok: false, error: "Hizmet seçilemedi." };
 
@@ -169,6 +188,9 @@ export async function adminUploadServiceStorefrontImage(formData: FormData): Pro
   let image_url: string | null = manualUrl || null;
 
   if (file instanceof File && file.size > 0) {
+    if (file.size > SERVICE_STOREFRONT_IMAGE_MAX_BYTES) {
+      return { ok: false, error: "Görsel en fazla 5 MB olabilir." };
+    }
     const ext = safeExt(file.name);
     const path = `hizmet-vitrini/${serviceId}/${randomUUID()}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -197,6 +219,10 @@ export async function adminUploadServiceStorefrontImage(formData: FormData): Pro
     ? Number((maxRow as { sort_order?: number }).sort_order) + 1
     : 0;
 
+  if (isPrimary) {
+    await supabase.from("service_storefront_images").update({ is_primary: false }).eq("service_id", serviceId);
+  }
+
   const { error } = await supabase.from("service_storefront_images").insert({
     service_id: serviceId,
     image_type,
@@ -204,7 +230,7 @@ export async function adminUploadServiceStorefrontImage(formData: FormData): Pro
     image_url: image_url ?? null,
     alt_text: altText,
     sort_order: nextSort,
-    is_primary: false,
+    is_primary: isPrimary,
     is_active: true,
   });
   if (error) return { ok: false, error: "Görsel kaydedilemedi." };
@@ -495,6 +521,84 @@ export async function adminDeleteServiceStorefrontRelated(input: { id: string; s
   const slug = await itemSlugFor(supabase, input.serviceId);
   revalidateVitrin(slug);
   return { ok: true } as const;
+}
+
+type CreateBundleFaq = { question: string; answer: string; sort_order: number; is_active: boolean };
+type CreateBundleFeature = {
+  title: string;
+  description?: string | null;
+  icon?: string | null;
+  sort_order: number;
+  is_active: boolean;
+};
+
+/** Yeni hizmet + görseller + SSS + avantajlar tek istekte (FormData). */
+export async function adminCreateServiceStorefrontBundle(
+  formData: FormData
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const payloadRaw = String(formData.get("payload") ?? "").trim();
+  if (!payloadRaw) return { ok: false, error: "Form verisi eksik." };
+
+  let parsed: {
+    item: ServiceStorefrontItemSaveInput;
+    faqs?: CreateBundleFaq[];
+    features?: CreateBundleFeature[];
+  };
+  try {
+    parsed = JSON.parse(payloadRaw) as typeof parsed;
+  } catch {
+    return { ok: false, error: "Form verisi okunamadı." };
+  }
+
+  const saveRes = await adminSaveServiceStorefrontItem(parsed.item);
+  if (!saveRes.ok) return saveRes;
+  const serviceId = saveRes.id;
+
+  const imageKeys = [...formData.keys()].filter((k) => k.startsWith("image_file_"));
+  for (const key of imageKeys) {
+    const idx = key.replace("image_file_", "");
+    const file = formData.get(key);
+    if (!(file instanceof File) || file.size === 0) continue;
+
+    const fd = new FormData();
+    fd.set("serviceId", serviceId);
+    fd.set("file", file);
+    fd.set("image_type", String(formData.get(`image_type_${idx}`) ?? "square"));
+    fd.set("alt_text", String(formData.get(`image_alt_${idx}`) ?? ""));
+    fd.set("is_primary", String(formData.get(`image_primary_${idx}`) ?? "") === "true" ? "true" : "false");
+    const manual = String(formData.get(`image_manual_${idx}`) ?? "").trim();
+    if (manual) fd.set("manual_url", manual);
+
+    const up = await adminUploadServiceStorefrontImage(fd);
+    if (!up.ok) return { ok: false, error: up.error };
+  }
+
+  for (const f of parsed.faqs ?? []) {
+    const res = await adminUpsertServiceStorefrontFaq({
+      serviceId,
+      question: f.question,
+      answer: f.answer,
+      sort_order: f.sort_order,
+      is_active: f.is_active,
+    });
+    if (!res.ok) return { ok: false, error: res.error };
+  }
+
+  for (const f of parsed.features ?? []) {
+    const res = await adminUpsertServiceStorefrontFeature({
+      serviceId,
+      title: f.title,
+      description: f.description ?? null,
+      icon: f.icon ?? null,
+      sort_order: f.sort_order,
+      is_active: f.is_active,
+    });
+    if (!res.ok) return { ok: false, error: res.error };
+  }
+
+  revalidatePath("/admin/hizmet-vitrini/hizmetler");
+  revalidatePath(`/admin/hizmet-vitrini/hizmetler/${serviceId}`);
+  return { ok: true, id: serviceId };
 }
 
 export async function adminReorderServiceStorefrontRelated(input: { serviceId: string; orderedIds: string[] }) {
