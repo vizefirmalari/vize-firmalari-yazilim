@@ -8,6 +8,7 @@ import {
 } from "@/lib/constants/service-storefront";
 import type { ServiceStorefrontPublicDetail } from "@/lib/data/service-storefront-public";
 import { pickPrimaryServiceImage } from "@/lib/data/service-storefront-public";
+import { EMOJI_TEXT_CLASS } from "@/lib/admin/service-emoji";
 import { growthServicePriceLine } from "@/lib/format/try-lira";
 
 type Props = ServiceStorefrontPublicDetail;
@@ -94,9 +95,9 @@ export function ServiceVitrinDetailView(data: Props) {
           <section className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-xl font-bold text-primary sm:text-2xl">Genel bakış</h2>
             {item.long_description?.trim() ? (
-              <div className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-foreground/80 sm:text-base">{item.long_description}</div>
+              <div className={`mt-4 whitespace-pre-wrap text-sm leading-relaxed text-foreground/80 sm:text-base ${EMOJI_TEXT_CLASS}`}>{item.long_description}</div>
             ) : (
-              <p className="mt-4 text-sm leading-relaxed text-foreground/70">{item.short_description}</p>
+              <p className={`mt-4 text-sm leading-relaxed text-foreground/70 ${EMOJI_TEXT_CLASS}`}>{item.short_description}</p>
             )}
           </section>
 
@@ -112,7 +113,7 @@ export function ServiceVitrinDetailView(data: Props) {
                     <div className="min-w-0">
                       <p className="font-bold text-primary">{f.title}</p>
                       {f.description?.trim() ? (
-                        <p className="mt-1 text-sm leading-relaxed text-foreground/72">{f.description}</p>
+                        <p className={`mt-1 text-sm leading-relaxed text-foreground/72 ${EMOJI_TEXT_CLASS}`}>{f.description}</p>
                       ) : null}
                     </div>
                   </li>
@@ -128,7 +129,7 @@ export function ServiceVitrinDetailView(data: Props) {
                 {info.map((row) => (
                   <div key={row.label} className="rounded-xl border border-border/60 bg-surface/25 p-4">
                     <dt className="text-[11px] font-bold uppercase tracking-wide text-foreground/50">{row.label}</dt>
-                    <dd className="mt-1 text-sm font-semibold leading-relaxed text-foreground/85">{row.value}</dd>
+                    <dd className={`mt-1 text-sm font-semibold leading-relaxed text-foreground/85 ${EMOJI_TEXT_CLASS}`}>{row.value}</dd>
                   </div>
                 ))}
               </dl>
@@ -138,7 +139,7 @@ export function ServiceVitrinDetailView(data: Props) {
           {item.process_description?.trim() ? (
             <section className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
               <h2 className="text-xl font-bold text-primary sm:text-2xl">Uygulama süreci</h2>
-              <div className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-foreground/78">{item.process_description}</div>
+              <div className={`mt-4 whitespace-pre-wrap text-sm leading-relaxed text-foreground/78 ${EMOJI_TEXT_CLASS}`}>{item.process_description}</div>
             </section>
           ) : null}
 
@@ -207,7 +208,7 @@ export function ServiceVitrinDetailView(data: Props) {
             {item.tags.length ? (
               <p className="mt-2 text-xs font-medium text-foreground/50">{item.tags.join(" · ")}</p>
             ) : null}
-            <p className="mt-4 text-sm leading-relaxed text-foreground/72">{item.short_description}</p>
+            <p className={`mt-4 text-sm leading-relaxed text-foreground/72 ${EMOJI_TEXT_CLASS}`}>{item.short_description}</p>
 
             <div className="mt-6 border-t border-border/70 pt-6">
               {!item.custom_price && (item.setup_price != null || item.subscription_price != null) ? (

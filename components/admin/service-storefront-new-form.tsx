@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 
+import { EmojiTextarea } from "@/components/admin/emoji-textarea";
+import { EMOJI_TEXT_CLASS } from "@/lib/admin/service-emoji";
 import {
   adminCreateServiceStorefrontBundle,
   type ServiceStorefrontImageType,
@@ -331,13 +333,13 @@ export function ServiceStorefrontNewForm() {
               Etiketler (virgülle)
               <input value={tagsText} onChange={(e) => setTagsText(e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
             </label>
-            <label className="text-xs font-bold text-[#1A1A1A]/55">
+            <label className="block text-xs font-bold text-[#1A1A1A]/55">
               Kısa açıklama *
-              <textarea value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} rows={3} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" required />
+              <EmojiTextarea value={shortDescription} onChange={setShortDescription} rows={3} required />
             </label>
-            <label className="text-xs font-bold text-[#1A1A1A]/55">
+            <label className="block text-xs font-bold text-[#1A1A1A]/55">
               Uzun açıklama
-              <textarea value={longDescription} onChange={(e) => setLongDescription(e.target.value)} rows={8} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
+              <EmojiTextarea value={longDescription} onChange={setLongDescription} rows={8} />
             </label>
           </div>
         </Card>
@@ -510,9 +512,9 @@ export function ServiceStorefrontNewForm() {
               ["Gerekli ön bilgiler", prerequisites, setPrerequisites],
               ["Süreç nasıl işler?", processDescription, setProcessDescription],
             ].map(([label, val, set]) => (
-              <label key={String(label)} className="text-xs font-bold text-[#1A1A1A]/55">
+              <label key={String(label)} className="block text-xs font-bold text-[#1A1A1A]/55">
                 {String(label)}
-                <textarea value={val as string} onChange={(e) => (set as (s: string) => void)(e.target.value)} rows={2} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
+                <EmojiTextarea value={val as string} onChange={set as (s: string) => void} rows={2} hint={null} />
               </label>
             ))}
           </div>
@@ -676,7 +678,7 @@ export function ServiceStorefrontNewForm() {
               <p className="text-xs font-bold uppercase text-[#1A1A1A]/50">Önizleme</p>
               <p className="mt-2 font-bold text-[#0B3C5D]">{seoTitle.trim() || title || "Hizmet başlığı"}</p>
               <p className="mt-1 break-all text-xs text-[#0B3C5D]/80">{previewCanonical}</p>
-              <p className="mt-2 text-xs text-[#1A1A1A]/70">{seoDescription.trim() || shortDescription || "Meta açıklama…"}</p>
+              <p className={`mt-2 text-xs text-[#1A1A1A]/70 ${EMOJI_TEXT_CLASS}`}>{seoDescription.trim() || shortDescription || "Meta açıklama…"}</p>
             </div>
           </div>
         </Card>

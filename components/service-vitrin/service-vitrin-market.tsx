@@ -6,6 +6,7 @@ import {
   SERVICE_STOREFRONT_WHATSAPP_URL,
   serviceStorefrontDetailPath,
 } from "@/lib/constants/service-storefront";
+import { EMOJI_TEXT_CLASS } from "@/lib/admin/service-emoji";
 import { growthServicePriceLine } from "@/lib/format/try-lira";
 import type { PublicServiceStorefrontItemRow, ServiceStorefrontSortKey } from "@/lib/data/service-storefront-public";
 
@@ -220,7 +221,7 @@ export function ServiceVitrinMarket({ items, categories, cardImages, previewLine
                             {it.title}
                           </Link>
                         </h2>
-                        <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-foreground/70">{it.short_description}</p>
+                        <p className={`mt-2 line-clamp-3 text-sm leading-relaxed text-foreground/70 ${EMOJI_TEXT_CLASS}`}>{it.short_description}</p>
                         {lines.length ? (
                           <ul className="mt-4 space-y-1.5 text-sm font-medium text-foreground/78">
                             {lines.slice(0, 3).map((line) => (
