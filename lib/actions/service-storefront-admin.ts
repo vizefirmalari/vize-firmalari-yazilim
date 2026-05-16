@@ -150,6 +150,7 @@ export async function adminSaveServiceStorefrontItem(
   const { data, error } = await supabase.from("service_storefront_items").insert(row).select("id").single();
   if (error || !data) {
     if (error?.code === "23505") return { ok: false, error: "Bu slug zaten kullanılıyor." };
+    if (error) console.error("service_storefront_items insert", error);
     return { ok: false, error: "Oluşturulamadı." };
   }
   const id = String((data as { id: string }).id);
@@ -189,7 +190,10 @@ export async function adminUploadServiceStorefrontImage(formData: FormData): Pro
 
   if (file instanceof File && file.size > 0) {
     if (file.size > SERVICE_STOREFRONT_IMAGE_MAX_BYTES) {
-      return { ok: false, error: "Görsel en fazla 5 MB olabilir." };
+      return {
+        ok: false,
+        error: `Görsel en fazla ${SERVICE_STOREFRONT_IMAGE_MAX_BYTES / (1024 * 1024)} MB olabilir.`,
+      };
     }
     const ext = safeExt(file.name);
     const path = `hizmet-vitrini/${serviceId}/${randomUUID()}.${ext}`;
@@ -521,84 +525,6 @@ export async function adminDeleteServiceStorefrontRelated(input: { id: string; s
   const slug = await itemSlugFor(supabase, input.serviceId);
   revalidateVitrin(slug);
   return { ok: true } as const;
-}
-
-type CreateBundleFaq = { question: string; answer: string; sort_order: number; is_active: boolean };
-type CreateBundleFeature = {
-  title: string;
-  description?: string | null;
-  icon?: string | null;
-  sort_order: number;
-  is_active: boolean;
-};
-
-/** Yeni hizmet + görseller + SSS + avantajlar tek istekte (FormData). */
-export async function adminCreateServiceStorefrontBundle(
-  formData: FormData
-): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const payloadRaw = String(formData.get("payload") ?? "").trim();
-  if (!payloadRaw) return { ok: false, error: "Form verisi eksik." };
-
-  let parsed: {
-    item: ServiceStorefrontItemSaveInput;
-    faqs?: CreateBundleFaq[];
-    features?: CreateBundleFeature[];
-  };
-  try {
-    parsed = JSON.parse(payloadRaw) as typeof parsed;
-  } catch {
-    return { ok: false, error: "Form verisi okunamadı." };
-  }
-
-  const saveRes = await adminSaveServiceStorefrontItem(parsed.item);
-  if (!saveRes.ok) return saveRes;
-  const serviceId = saveRes.id;
-
-  const imageKeys = [...formData.keys()].filter((k) => k.startsWith("image_file_"));
-  for (const key of imageKeys) {
-    const idx = key.replace("image_file_", "");
-    const file = formData.get(key);
-    if (!(file instanceof File) || file.size === 0) continue;
-
-    const fd = new FormData();
-    fd.set("serviceId", serviceId);
-    fd.set("file", file);
-    fd.set("image_type", String(formData.get(`image_type_${idx}`) ?? "square"));
-    fd.set("alt_text", String(formData.get(`image_alt_${idx}`) ?? ""));
-    fd.set("is_primary", String(formData.get(`image_primary_${idx}`) ?? "") === "true" ? "true" : "false");
-    const manual = String(formData.get(`image_manual_${idx}`) ?? "").trim();
-    if (manual) fd.set("manual_url", manual);
-
-    const up = await adminUploadServiceStorefrontImage(fd);
-    if (!up.ok) return { ok: false, error: up.error };
-  }
-
-  for (const f of parsed.faqs ?? []) {
-    const res = await adminUpsertServiceStorefrontFaq({
-      serviceId,
-      question: f.question,
-      answer: f.answer,
-      sort_order: f.sort_order,
-      is_active: f.is_active,
-    });
-    if (!res.ok) return { ok: false, error: res.error };
-  }
-
-  for (const f of parsed.features ?? []) {
-    const res = await adminUpsertServiceStorefrontFeature({
-      serviceId,
-      title: f.title,
-      description: f.description ?? null,
-      icon: f.icon ?? null,
-      sort_order: f.sort_order,
-      is_active: f.is_active,
-    });
-    if (!res.ok) return { ok: false, error: res.error };
-  }
-
-  revalidatePath("/admin/hizmet-vitrini/hizmetler");
-  revalidatePath(`/admin/hizmet-vitrini/hizmetler/${serviceId}`);
-  return { ok: true, id: serviceId };
 }
 
 export async function adminReorderServiceStorefrontRelated(input: { serviceId: string; orderedIds: string[] }) {

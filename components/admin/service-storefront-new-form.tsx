@@ -8,7 +8,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type 
 import { EmojiTextarea } from "@/components/admin/emoji-textarea";
 import { EMOJI_TEXT_CLASS } from "@/lib/admin/service-emoji";
 import {
-  adminCreateServiceStorefrontBundle,
+  adminSaveServiceStorefrontItem,
+  adminUploadServiceStorefrontImage,
+  adminUpsertServiceStorefrontFaq,
+  adminUpsertServiceStorefrontFeature,
   type ServiceStorefrontImageType,
 } from "@/lib/actions/service-storefront-admin";
 import {
@@ -18,6 +21,7 @@ import {
   SERVICE_STOREFRONT_IMAGE_MAX_BYTES,
   parseServiceStorefrontSecondaryKeywords,
   parseServiceStorefrontTags,
+  serviceStorefrontBundleFailureMessage,
   serviceStorefrontNumOrNull,
 } from "@/lib/admin/service-storefront-form-constants";
 import { SERVICE_STOREFRONT_PUBLIC_BASE, serviceStorefrontDetailPath } from "@/lib/constants/service-storefront";
@@ -153,7 +157,7 @@ export function ServiceStorefrontNewForm() {
     for (const file of list) {
       if (!file.type.startsWith("image/")) continue;
       if (file.size > SERVICE_STOREFRONT_IMAGE_MAX_BYTES) {
-        setMsg(`${file.name}: en fazla 5 MB.`);
+        setMsg(`${file.name}: en fazla ${SERVICE_STOREFRONT_IMAGE_MAX_BYTES / (1024 * 1024)} MB.`);
         continue;
       }
       next.push({
@@ -240,26 +244,101 @@ export function ServiceStorefrontNewForm() {
       return;
     }
     start(async () => {
-      const fd = new FormData();
       const payload = buildPayload();
       if (mode === "publish") payload.item.status = "published";
-      fd.set("payload", JSON.stringify(payload));
 
-      images.forEach((im, idx) => {
-        fd.set(`image_file_${idx}`, im.file);
-        fd.set(`image_type_${idx}`, im.image_type);
-        fd.set(`image_alt_${idx}`, im.alt_text);
-        fd.set(`image_primary_${idx}`, im.is_primary ? "true" : "false");
-        if (im.manual_url.trim()) fd.set(`image_manual_${idx}`, im.manual_url.trim());
-      });
-
-      const res = await adminCreateServiceStorefrontBundle(fd);
-      if (!res.ok) {
-        setMsg(res.error);
-        return;
+      for (const im of images) {
+        if (im.file.size > SERVICE_STOREFRONT_IMAGE_MAX_BYTES) {
+          setMsg(`Görsel boyutu sınırı aşıldı (en fazla ${SERVICE_STOREFRONT_IMAGE_MAX_BYTES / (1024 * 1024)} MB).`);
+          setTab("images");
+          return;
+        }
       }
-      router.replace(`/admin/hizmet-vitrini/hizmetler/${res.id}`);
-      router.refresh();
+
+      try {
+        const saveRes = await adminSaveServiceStorefrontItem(payload.item);
+        if (!saveRes.ok) {
+          setMsg(saveRes.error);
+          return;
+        }
+        const serviceId = saveRes.id;
+
+        for (const im of images) {
+          const hasFile = im.file.size > 0;
+          const manual = im.manual_url.trim();
+          if (!hasFile && !manual) continue;
+
+          const fd = new FormData();
+          fd.set("serviceId", serviceId);
+          if (hasFile) fd.set("file", im.file);
+          fd.set("image_type", im.image_type);
+          fd.set("alt_text", im.alt_text);
+          fd.set("is_primary", im.is_primary ? "true" : "false");
+          if (manual) fd.set("manual_url", manual);
+
+          const up = await adminUploadServiceStorefrontImage(fd);
+          if (!up.ok) {
+            setMsg(
+              `${up.error} Hizmet kaydı oluşturuldu; görselleri ve SSS/ avantajları düzenleme sayfasından tamamlayabilirsiniz.`
+            );
+            router.replace(`/admin/hizmet-vitrini/hizmetler/${serviceId}`);
+            router.refresh();
+            return;
+          }
+        }
+
+        for (const f of payload.faqs ?? []) {
+          if (!f.question.trim() || !f.answer.trim()) continue;
+          const res = await adminUpsertServiceStorefrontFaq({
+            serviceId,
+            question: f.question,
+            answer: f.answer,
+            sort_order: f.sort_order,
+            is_active: f.is_active,
+          });
+          if (!res.ok) {
+            setMsg(
+              `${res.error} Hizmet kaydı oluşturuldu; SSS ve diğer alanları düzenleme sayfasından tamamlayabilirsiniz.`
+            );
+            router.replace(`/admin/hizmet-vitrini/hizmetler/${serviceId}`);
+            router.refresh();
+            return;
+          }
+        }
+
+        for (const f of payload.features ?? []) {
+          if (!f.title.trim()) continue;
+          const res = await adminUpsertServiceStorefrontFeature({
+            serviceId,
+            title: f.title,
+            description: f.description ?? null,
+            icon: f.icon ?? null,
+            sort_order: f.sort_order,
+            is_active: f.is_active,
+          });
+          if (!res.ok) {
+            setMsg(
+              `${res.error} Hizmet kaydı oluşturuldu; avantajları düzenleme sayfasından tamamlayabilirsiniz.`
+            );
+            router.replace(`/admin/hizmet-vitrini/hizmetler/${serviceId}`);
+            router.refresh();
+            return;
+          }
+        }
+
+        router.replace(`/admin/hizmet-vitrini/hizmetler/${serviceId}`);
+        router.refresh();
+      } catch (e) {
+        if (
+          typeof e === "object" &&
+          e !== null &&
+          "digest" in e &&
+          String((e as { digest?: unknown }).digest).includes("NEXT_REDIRECT")
+        ) {
+          throw e;
+        }
+        setMsg(serviceStorefrontBundleFailureMessage(e, process.env.NODE_ENV === "development"));
+      }
     });
   }
 
