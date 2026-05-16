@@ -21,6 +21,8 @@ export type PublicServiceStorefrontItemRow = {
   subscription_period: string | null;
   custom_price: boolean;
   discount_label: string | null;
+  /** Liste kartı yedek görseli (og_image_url) */
+  og_image_url: string | null;
 };
 
 export type PublicServiceStorefrontImageRow = {
@@ -76,6 +78,7 @@ function normalizeServiceRow(raw: Record<string, unknown>): PublicServiceStorefr
     subscription_period: raw.subscription_period != null ? String(raw.subscription_period).trim() || null : null,
     custom_price: Boolean(raw.custom_price),
     discount_label: raw.discount_label != null && String(raw.discount_label).trim() ? String(raw.discount_label).trim() : null,
+    og_image_url: raw.og_image_url != null && String(raw.og_image_url).trim() ? String(raw.og_image_url).trim() : null,
   };
 }
 
@@ -95,7 +98,7 @@ export async function loadPublishedServiceStorefrontList(
   let q = supabase
     .from("service_storefront_items")
     .select(
-      "id,slug,title,category,tags,short_description,long_description,is_featured,is_popular,is_new,sort_order,setup_price,subscription_price,subscription_period,custom_price,discount_label"
+      "id,slug,title,category,tags,short_description,long_description,is_featured,is_popular,is_new,sort_order,setup_price,subscription_price,subscription_period,custom_price,discount_label,og_image_url"
     )
     .eq("status", "published");
 
@@ -357,10 +360,55 @@ export async function loadServiceStorefrontFeaturePreviewLines(
   return out;
 }
 
-/** Liste kartı için kare/kapak öncelikli tek görsel. */
+/** Liste kartı: square/thumbnail öncelikli; detay hero (cover) yalnızca kare yoksa. */
+export function pickListCardImageFromRows(rows: Record<string, unknown>[]): string | null {
+  type Entry = { url: string; type: string; isPrimary: boolean; sort: number };
+  const entries: Entry[] = [];
+  for (const row of rows) {
+    const url = resolveImageUrl(row);
+    if (!url) continue;
+    entries.push({
+      url,
+      type: String(row.image_type ?? ""),
+      isPrimary: Boolean(row.is_primary),
+      sort: Number.isFinite(Number(row.sort_order)) ? Number(row.sort_order) : 0,
+    });
+  }
+  if (!entries.length) return null;
+
+  const byType = (t: string) => entries.filter((e) => e.type === t);
+  const firstBySort = (list: Entry[]) =>
+    [...list].sort((a, b) => {
+      if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
+      return a.sort - b.sort;
+    })[0];
+
+  const primarySquare = entries.find((e) => e.isPrimary && e.type === "square");
+  if (primarySquare) return primarySquare.url;
+
+  const square = firstBySort(byType("square"));
+  if (square) return square.url;
+
+  const cover = firstBySort(byType("cover"));
+  if (cover) return cover.url;
+
+  const gallery = firstBySort(byType("gallery"));
+  if (gallery) return gallery.url;
+
+  const primaryNonCover = entries.find((e) => e.isPrimary && e.type !== "cover");
+  if (primaryNonCover) return primaryNonCover.url;
+
+  const detail = firstBySort(byType("detail"));
+  if (detail) return detail.url;
+
+  return firstBySort(entries)?.url ?? null;
+}
+
+/** Liste kartı için kare/thumbnail öncelikli tek görsel (toplu sorgu). */
 export async function loadServiceStorefrontCardImages(
   supabase: SupabaseClient,
-  serviceIds: string[]
+  serviceIds: string[],
+  ogFallbackByServiceId?: Record<string, string>
 ): Promise<Record<string, string>> {
   const out: Record<string, string> = {};
   if (!serviceIds.length) return out;
@@ -370,7 +418,15 @@ export async function loadServiceStorefrontCardImages(
     .in("service_id", serviceIds)
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
-  if (error || !data) return out;
+  if (error || !data) {
+    if (ogFallbackByServiceId) {
+      for (const sid of serviceIds) {
+        const og = ogFallbackByServiceId[sid]?.trim();
+        if (og) out[sid] = og;
+      }
+    }
+    return out;
+  }
   type Row = Record<string, unknown>;
   const byService = new Map<string, Row[]>();
   for (const raw of data as Row[]) {
@@ -380,25 +436,15 @@ export async function loadServiceStorefrontCardImages(
     list.push(raw);
     byService.set(sid, list);
   }
-  for (const [sid, rows] of byService) {
-    const urls = rows
-      .map((x) => resolveImageUrl(x))
-      .filter((u): u is string => Boolean(u));
-    if (!urls.length) continue;
-    const primary = rows.find((r) => Boolean(r.is_primary));
-    const primaryUrl = primary ? resolveImageUrl(primary as Row) : null;
-    if (primaryUrl) {
-      out[sid] = primaryUrl;
+  for (const sid of serviceIds) {
+    const rows = byService.get(sid);
+    const picked = rows?.length ? pickListCardImageFromRows(rows) : null;
+    if (picked) {
+      out[sid] = picked;
       continue;
     }
-    const square = rows.find((r) => String(r.image_type ?? "") === "square");
-    const squareUrl = square ? resolveImageUrl(square as Row) : null;
-    if (squareUrl) {
-      out[sid] = squareUrl;
-      continue;
-    }
-    const cover = rows.find((r) => String(r.image_type ?? "") === "cover");
-    out[sid] = (cover ? resolveImageUrl(cover as Row) : urls[0]) as string;
+    const og = ogFallbackByServiceId?.[sid]?.trim();
+    if (og) out[sid] = og;
   }
   return out;
 }

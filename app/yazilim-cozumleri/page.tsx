@@ -52,10 +52,13 @@ export default async function YazilimCozumleriPage({ searchParams }: PageProps) 
     : [[], []];
 
   const ids = items.map((i) => i.id);
+  const ogFallback = Object.fromEntries(
+    items.filter((i) => i.og_image_url).map((i) => [i.id, i.og_image_url as string])
+  );
   const [cardImages, previewLines] = configured && ids.length
     ? await Promise.all([
-        loadServiceStorefrontCardImages(supabase!, ids),
-        loadServiceStorefrontFeaturePreviewLines(supabase!, ids, 4),
+        loadServiceStorefrontCardImages(supabase!, ids, ogFallback),
+        loadServiceStorefrontFeaturePreviewLines(supabase!, ids, 3),
       ])
     : [{}, {}];
 

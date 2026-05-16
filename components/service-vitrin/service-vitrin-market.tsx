@@ -125,11 +125,26 @@ export function ServiceVitrinMarket({ items, categories, cardImages, previewLine
           </details>
         </aside>
 
-        <div className="min-w-0 flex-1 space-y-6">
-          <div className="flex flex-wrap gap-2">
+        <div className="min-w-0 flex-1 space-y-5">
+          <div className="space-y-3 lg:hidden">
+            <form action={SERVICE_STOREFRONT_PUBLIC_BASE} method="get" className="flex gap-2">
+              <input
+                name="q"
+                defaultValue={q}
+                placeholder="Hizmet ara…"
+                className="min-w-0 flex-1 rounded-xl border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-primary/35 focus:ring-2 focus:ring-primary/25"
+              />
+              {category ? <input type="hidden" name="category" value={category} /> : null}
+              <input type="hidden" name="sort" value={sort} />
+              <button type="submit" className="shrink-0 rounded-xl bg-primary px-4 text-sm font-bold text-white">
+                Ara
+              </button>
+            </form>
+          </div>
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex-wrap lg:overflow-visible">
             <Link
               href={buildListHref({ q: "", category: null, sort })}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition ${
                 !category ? "bg-primary text-white" : "border border-border bg-white text-primary hover:border-primary/30"
               }`}
             >
@@ -139,7 +154,7 @@ export function ServiceVitrinMarket({ items, categories, cardImages, previewLine
               <Link
                 key={c}
                 href={buildListHref({ q, category: c, sort })}
-                className={`max-w-full truncate rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                className={`max-w-[14rem] shrink-0 truncate rounded-full px-3 py-1.5 text-xs font-bold transition ${
                   category === c ? "bg-primary text-white" : "border border-border bg-white text-primary hover:border-primary/30"
                 }`}
               >
@@ -162,9 +177,9 @@ export function ServiceVitrinMarket({ items, categories, cardImages, previewLine
               </a>
             </div>
           ) : (
-            <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
               {items.map((it) => (
-                <li key={it.id}>
+                <li key={it.id} className="h-full min-w-0">
                   <ServiceVitrinMarketCard
                     item={it}
                     imageUrl={cardImages[it.id] ?? null}

@@ -140,16 +140,17 @@ function DecoBySlug({ slug, patternId }: { slug: string; patternId: string }) {
 type PlaceholderProps = {
   categorySlug: string;
   categoryName: string;
-  /** kart üstü (16/10) veya detay galeri (4/3) */
-  variant: "card" | "detail";
-  /** Kartta kısa etiket; detayda daha büyük */
+  /** card: 16/10 · market: kare liste kartı · detail: galeri */
+  variant: "card" | "detail" | "market";
+  /** Kartta kısa etiket; detayda daha büyük. market varyantında kullanılmaz (başlık tekrarı önlenir). */
   headline?: string;
 };
 
 export function StorefrontCategoryPlaceholder({ categorySlug, categoryName, variant, headline }: PlaceholderProps) {
   const grad = storefrontCategoryPlaceholderClass(categorySlug);
-  const aspect = variant === "card" ? "aspect-[16/10]" : "aspect-[4/3]";
-  const title = headline ?? categoryName;
+  const aspect =
+    variant === "detail" ? "aspect-[4/3]" : variant === "market" ? "aspect-square" : "aspect-[16/10]";
+  const title = variant === "market" ? categoryName : (headline ?? categoryName);
   const patternId = `sf-ph-${categorySlug.replace(/[^a-zA-Z0-9_-]/g, "") || "cat"}`;
 
   return (
@@ -161,10 +162,16 @@ export function StorefrontCategoryPlaceholder({ categorySlug, categoryName, vari
       <DecoBySlug slug={categorySlug} patternId={patternId} />
       <div className="relative z-10 flex h-full flex-col justify-end p-4 sm:p-5">
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/80">Vitrin</p>
-        <p className="mt-1 max-w-[20rem] text-sm font-bold leading-snug text-white sm:text-base">{title}</p>
-        <p className="mt-1 max-w-xs text-[11px] font-medium leading-relaxed text-white/75">
-          {categoryName} · Profesyonel vitrin önizlemesi
+        <p
+          className={`mt-1 max-w-[20rem] font-bold leading-snug text-white ${variant === "market" ? "text-xs sm:text-sm" : "text-sm sm:text-base"}`}
+        >
+          {title}
         </p>
+        {variant !== "market" ? (
+          <p className="mt-1 max-w-xs text-[11px] font-medium leading-relaxed text-white/75">
+            {categoryName} · Profesyonel vitrin önizlemesi
+          </p>
+        ) : null}
       </div>
     </div>
   );

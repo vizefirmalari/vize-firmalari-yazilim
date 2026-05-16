@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SITE_HEADER_LOGO_URL } from "@/lib/constants";
+import { SERVICE_STOREFRONT_PUBLIC_BASE } from "@/lib/constants/service-storefront";
 import { withSupabaseImageTransform } from "@/lib/images/supabase-transform";
 import { PLATFORM_WHATSAPP_PHONE, PLATFORM_WHATSAPP_URL } from "@/lib/constants/contact";
 import { siteLogoAltText } from "@/lib/seo/defaults";
@@ -123,16 +124,22 @@ export function SiteFooter() {
           Platformda yer alarak daha fazla müşteriye ulaşın
         </p>
       </div>
-      <div className="mt-4 flex flex-col gap-2.5 sm:mt-5 sm:flex-row sm:items-center sm:gap-3 lg:mt-0 lg:shrink-0">
+      <div className="mt-4 flex flex-col gap-2.5 sm:mt-5 sm:flex-row sm:flex-wrap sm:items-stretch sm:gap-3 lg:mt-0 lg:shrink-0 lg:justify-end">
         <Link
           href="/uye-is-yerimiz-olun"
-          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-accent/90"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-accent/90 sm:w-auto"
         >
           Üye İş Yerimiz Olun
         </Link>
         <Link
+          href={SERVICE_STOREFRONT_PUBLIC_BASE}
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border-2 border-primary/25 bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/92 sm:w-auto"
+        >
+          Yazılım Çözümleri
+        </Link>
+        <Link
           href="/firma-sikayet"
-          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-surface"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-surface sm:w-auto"
         >
           Firma Şikayet Et
         </Link>

@@ -47,6 +47,7 @@ function normalizePromoRow(raw: Record<string, unknown>): PublicServiceStorefron
     subscription_period: raw.subscription_period != null ? String(raw.subscription_period).trim() || null : null,
     custom_price: Boolean(raw.custom_price),
     discount_label: null,
+    og_image_url: null,
   };
 }
 
