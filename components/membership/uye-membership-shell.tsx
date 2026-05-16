@@ -4,10 +4,14 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 import { BusinessMembershipForm } from "@/components/forms/business-membership-form";
+import { UyeServiceVitrinFormStrip } from "@/components/membership/uye-service-vitrin-form-strip";
+import { UyeServiceVitrinPromoSection } from "@/components/membership/uye-service-vitrin-promo-section";
+import type { ServiceStorefrontPromoCard } from "@/lib/data/service-storefront-membership-promo";
 
 type Props = {
   /** Ödeme başarılı dönüşte forma kaydır (ileride entegrasyon) */
   scrollToFormOnPayment?: boolean;
+  promoServices?: ServiceStorefrontPromoCard[];
 };
 
 const JOURNEY_STEPS = [
@@ -50,7 +54,7 @@ function CheckIcon({ className }: { className?: string }) {
   );
 }
 
-export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
+export function UyeMembershipShell({ scrollToFormOnPayment, promoServices = [] }: Props) {
   const formAnchorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -69,6 +73,9 @@ export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
         aria-labelledby="uye-on-baslik"
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          {promoServices.length > 0 ? (
+            <UyeServiceVitrinPromoSection variant="panel-free" items={promoServices} className="mb-8" />
+          ) : null}
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/60">Ön başvuru</p>
             <h2
@@ -140,6 +147,7 @@ export function UyeMembershipShell({ scrollToFormOnPayment }: Props) {
                   </p>
                 </div>
                 <BusinessMembershipForm />
+                {promoServices.length > 0 ? <UyeServiceVitrinFormStrip items={promoServices} /> : null}
               </div>
             </div>
           </div>

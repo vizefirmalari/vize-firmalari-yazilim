@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { UyeMembershipShell } from "@/components/membership/uye-membership-shell";
+import { UyeServiceVitrinPromoSection } from "@/components/membership/uye-service-vitrin-promo-section";
+import type { ServiceStorefrontPromoCard } from "@/lib/data/service-storefront-membership-promo";
 
 const benefitCards = [
   {
@@ -41,9 +43,10 @@ const benefitCards = [
 type UyePageProps = {
   /** Ödeme tamamlandıktan sonra forma kaydır (URL: ?odeme=basarili) */
   scrollToFormOnPayment?: boolean;
+  promoServices?: ServiceStorefrontPromoCard[];
 };
 
-export function UyeIsYerimizOlunPage({ scrollToFormOnPayment }: UyePageProps) {
+export function UyeIsYerimizOlunPage({ scrollToFormOnPayment, promoServices = [] }: UyePageProps) {
   return (
     <>
       <SiteHeader />
@@ -130,10 +133,13 @@ export function UyeIsYerimizOlunPage({ scrollToFormOnPayment }: UyePageProps) {
           </div>
         </section>
 
-        <UyeMembershipShell scrollToFormOnPayment={scrollToFormOnPayment} />
+        <UyeMembershipShell scrollToFormOnPayment={scrollToFormOnPayment} promoServices={promoServices} />
 
         {/* Avantaj kartları */}
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
+          {promoServices.length > 0 ? (
+            <UyeServiceVitrinPromoSection variant="after-publish" items={promoServices} className="mb-10" />
+          ) : null}
           <h2 className="text-center text-xl font-bold tracking-tight text-primary sm:text-2xl">
             Yayında sizi neler bekliyor?
           </h2>

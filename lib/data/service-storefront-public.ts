@@ -147,6 +147,8 @@ export async function loadPublishedServiceStorefrontItemDetail(
   slug: string
 ): Promise<{
   item: PublicServiceStorefrontItemRow & {
+    yearly_price: number | null;
+    currency: string;
     seo_title: string | null;
     seo_description: string | null;
     canonical_path: string | null;
@@ -183,6 +185,8 @@ export async function loadPublishedServiceStorefrontItemDetail(
   const base = normalizeServiceRow(r);
   const item = {
     ...base,
+    yearly_price: numOrNull(r.yearly_price),
+    currency: r.currency != null ? String(r.currency).trim() || "TRY" : "TRY",
     seo_title: r.seo_title != null ? String(r.seo_title) : null,
     seo_description: r.seo_description != null ? String(r.seo_description) : null,
     canonical_path: r.canonical_path != null ? String(r.canonical_path) : null,

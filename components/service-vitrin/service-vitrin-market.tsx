@@ -1,13 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 
+import { ServiceVitrinMarketCard } from "@/components/service-vitrin/service-vitrin-market-card";
 import {
   SERVICE_STOREFRONT_PUBLIC_BASE,
   SERVICE_STOREFRONT_WHATSAPP_URL,
-  serviceStorefrontDetailPath,
 } from "@/lib/constants/service-storefront";
-import { EMOJI_TEXT_CLASS } from "@/lib/admin/service-emoji";
-import { growthServicePriceLine } from "@/lib/format/try-lira";
 import type { PublicServiceStorefrontItemRow, ServiceStorefrontSortKey } from "@/lib/data/service-storefront-public";
 
 const SORT_OPTIONS: { value: ServiceStorefrontSortKey; label: string }[] = [
@@ -42,7 +39,7 @@ export function ServiceVitrinMarket({ items, categories, cardImages, previewLine
       <header className="max-w-3xl">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary/70">B2B vitrin</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-primary sm:text-3xl">Yazılım çözümleri</h1>
-        <p className="mt-3 text-sm leading-relaxed text-foreground/70">
+        <p className="mt-3 text-sm leading-relaxed text-foreground/82">
           Kurulum ve abonelik modeliyle sunulan yazılım, otomasyon ve büyüme çözümleri. Kartlardan detaya gidin; satın alma için
           WhatsApp hattı üzerinden ekibimizle iletişime geçin.
         </p>
@@ -165,124 +162,16 @@ export function ServiceVitrinMarket({ items, categories, cardImages, previewLine
               </a>
             </div>
           ) : (
-            <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-2">
-              {items.map((it) => {
-                const img = cardImages[it.id];
-                const lines = previewLines[it.id] ?? [];
-                const priceLine = growthServicePriceLine(it.setup_price, it.subscription_price, it.custom_price);
-                const detailHref = serviceStorefrontDetailPath(it.slug);
-                return (
-                  <li key={it.id}>
-                    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition hover:border-secondary/35 hover:shadow-md">
-                      <Link href={detailHref} className="relative block aspect-square w-full bg-surface/50">
-                        {img ? (
-                          <Image
-                            src={img}
-                            alt={it.title}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width:640px) 100vw, (max-width:1280px) 50vw, 40vw"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-surface to-white p-6 text-center">
-                            <span className="text-xs font-semibold text-foreground/45">{it.title}</span>
-                          </div>
-                        )}
-                        {it.discount_label ? (
-                          <span className="absolute left-3 top-3 rounded-full bg-secondary/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">
-                            {it.discount_label}
-                          </span>
-                        ) : null}
-                      </Link>
-                      <div className="flex flex-1 flex-col p-5 sm:p-6">
-                        <div className="flex flex-wrap gap-1.5">
-                          <span className="max-w-full truncate rounded-full bg-surface px-2.5 py-0.5 text-[11px] font-semibold text-primary/85">
-                            {it.category}
-                          </span>
-                          {it.is_featured ? (
-                            <span className="rounded-full bg-secondary/20 px-2.5 py-0.5 text-[11px] font-bold text-primary">
-                              Öne çıkan
-                            </span>
-                          ) : null}
-                          {it.is_new ? (
-                            <span className="rounded-full bg-primary/8 px-2.5 py-0.5 text-[11px] font-bold text-primary">Yeni</span>
-                          ) : null}
-                          {it.is_popular ? (
-                            <span className="rounded-full bg-surface px-2.5 py-0.5 text-[11px] font-bold text-foreground/55">
-                              Popüler
-                            </span>
-                          ) : null}
-                        </div>
-                        {it.tags.length ? (
-                          <p className="mt-2 line-clamp-1 text-[11px] font-medium text-foreground/45">{it.tags.join(" · ")}</p>
-                        ) : null}
-                        <h2 className="mt-2 text-lg font-bold leading-snug text-primary">
-                          <Link href={detailHref} className="hover:underline">
-                            {it.title}
-                          </Link>
-                        </h2>
-                        <p className={`mt-2 line-clamp-3 text-sm leading-relaxed text-foreground/70 ${EMOJI_TEXT_CLASS}`}>{it.short_description}</p>
-                        {lines.length ? (
-                          <ul className="mt-4 space-y-1.5 text-sm font-medium text-foreground/78">
-                            {lines.slice(0, 3).map((line) => (
-                              <li key={line} className="flex gap-2">
-                                <span className="shrink-0 text-primary" aria-hidden>
-                                  ✓
-                                </span>
-                                <span className="min-w-0 leading-snug">{line}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : null}
-                        <div className="mt-5 min-h-4 flex-1" />
-                        <div className="mt-auto space-y-3 border-t border-border/70 pt-4">
-                          {!it.custom_price && (it.setup_price != null || it.subscription_price != null) ? (
-                            <div className="flex flex-wrap items-end justify-between gap-4">
-                              {it.setup_price != null ? (
-                                <div>
-                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-foreground/45">Kurulum</p>
-                                  <p className="text-lg font-bold tabular-nums text-primary sm:text-xl">
-                                    {it.setup_price.toLocaleString("tr-TR")} ₺
-                                  </p>
-                                </div>
-                              ) : null}
-                              {it.subscription_price != null ? (
-                                <div className="text-right">
-                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-foreground/45">Abonelik</p>
-                                  <p className="text-lg font-bold tabular-nums text-primary sm:text-xl">
-                                    {it.subscription_price.toLocaleString("tr-TR")} ₺
-                                    {it.subscription_period ? (
-                                      <span className="block text-[11px] font-semibold text-foreground/50">/{it.subscription_period}</span>
-                                    ) : null}
-                                  </p>
-                                </div>
-                              ) : null}
-                            </div>
-                          ) : (
-                            <p className="text-sm font-bold text-primary">{priceLine}</p>
-                          )}
-                          <div className="flex flex-col gap-2 sm:flex-row">
-                            <Link
-                              href={detailHref}
-                              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border-2 border-primary/20 bg-white px-4 text-sm font-bold text-primary transition hover:border-primary/35 hover:bg-surface/40"
-                            >
-                              Detay
-                            </Link>
-                            <a
-                              href={SERVICE_STOREFRONT_WHATSAPP_URL}
-                              target="_blank"
-                              rel="nofollow noopener noreferrer"
-                              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary/92"
-                            >
-                              Satın Al
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  </li>
-                );
-              })}
+            <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {items.map((it) => (
+                <li key={it.id}>
+                  <ServiceVitrinMarketCard
+                    item={it}
+                    imageUrl={cardImages[it.id] ?? null}
+                    previewLines={previewLines[it.id] ?? []}
+                  />
+                </li>
+              ))}
             </ul>
           )}
         </div>
